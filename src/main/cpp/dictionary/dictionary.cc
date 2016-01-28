@@ -10,7 +10,7 @@
 using namespace std;
 using namespace hdt;
 
-class DictionaryManager : ModifiableDictionary {
+class DictionaryManager {
 
   Dictionary *hdtDict;             // Dictionary from HDT file
   ModifiableDictionary *patchDict; // Additional dictionary
