@@ -12,18 +12,18 @@ int main() {
     PatchElement patchElement3(Triple("s3", "p3", "o3"), false);
     PatchElement patchElement4(Triple("s4", "p4", "o4"), true);
 
-    PatchElements patchElements1(patchElement1);
-    PatchElements patchElements2(patchElement2);
-    PatchElements patchElements3(patchElement3);
-    PatchElements patchElements4(patchElement4);
-
-    patchElements1.next = &patchElements2;
-    patchElements2.next = &patchElements3;
-    patchElements3.next = &patchElements4;
-    patchElements4.next = NULL;
+    PatchElements* patchElements = (PatchElements *) malloc(sizeof(PatchElements) * 4);
+    PatchElements* fillPatchElements = patchElements;
+    *fillPatchElements = PatchElements(patchElement1, true);
+    fillPatchElements += sizeof(PatchElements);
+    *fillPatchElements = PatchElements(patchElement2, true);
+    fillPatchElements += sizeof(PatchElements);
+    *fillPatchElements = PatchElements(patchElement3, true);
+    fillPatchElements += sizeof(PatchElements);
+    *fillPatchElements = PatchElements(patchElement4, false);
 
     PatchTree patchTree("true-patches.kch");
-    //patchTree.append(&patchElements1); // TODO: if you want to insert
+    patchTree.append(patchElements); // TODO: if you want to insert
 
     //PatchTreeKey key("s1", "p1", "o1");
     PatchTreeKey key("s2", "p2", "o2");

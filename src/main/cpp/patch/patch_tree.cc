@@ -42,12 +42,14 @@ PatchTree::~PatchTree() {
 
 void PatchTree::append(PatchElements* patch) {
     PatchElements* current = patch;
-    while(current != NULL) {
+    bool run = true;
+    while (run) {
         cout << "appending... " << current->patchElement.triple.subject << endl; // TODO
         PatchElement patchElement = current->patchElement;
         // TODO: value must be a map!
         db.set((const char *) &patchElement.triple, sizeof(patchElement.triple), (const char *) &patchElement.addition, sizeof(patchElement.addition));
-        current = current->next;
+        run = current->next;
+        current += sizeof(PatchElements);
     }
 }
 

@@ -24,8 +24,8 @@ typedef struct PatchElement {
 // A linked list of PatchElements
 typedef struct PatchElements {
     PatchElement patchElement;
-    PatchElements* next;
-    PatchElements(PatchElement patchElement) : patchElement(patchElement) {}
+    bool next;
+    PatchElements(PatchElement patchElement, bool next) : patchElement(patchElement), next(next) {}
 } PatchElements;
 
 // A key in the PatchTree is a triple
