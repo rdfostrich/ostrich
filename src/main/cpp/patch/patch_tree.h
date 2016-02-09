@@ -15,7 +15,7 @@ private:
 public:
     PatchTree(string file_name);
     ~PatchTree();
-    void append(PatchElements* patch);
+    void append(PatchElements* patch, int patch_id);
     PatchTreeIterator iterator(PatchTreeKey* key);
 };
 

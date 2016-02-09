@@ -8,7 +8,7 @@ PatchTreeIterator::~PatchTreeIterator() {
     delete cursor;
 }
 
-bool PatchTreeIterator::next(PatchTreeKey** key, bool** value) {
+bool PatchTreeIterator::next(PatchTreeKey** key, PatchTreeValue** value) {
     const char* kbp;
     size_t ksp;
     const char* vbp;
@@ -17,6 +17,6 @@ bool PatchTreeIterator::next(PatchTreeKey** key, bool** value) {
     if(!kbp) return false;
     cursor->step();
     *key = (PatchTreeKey *) kbp;
-    *value = (bool *) vbp;
+    *value = (PatchTreeValue *) vbp;
     return true;
 }

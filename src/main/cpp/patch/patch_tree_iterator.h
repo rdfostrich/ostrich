@@ -14,7 +14,7 @@ private:
 public:
     PatchTreeIterator(DB::Cursor* cursor);
     ~PatchTreeIterator();
-    bool next(PatchTreeKey** key, bool** value); // TODO: modify bool
+    bool next(PatchTreeKey** key, PatchTreeValue** value);
 };
 
 

@@ -13,7 +13,7 @@ PatchTree::PatchTree(string file_name) {
             PatchTreeKey* element1 = (PatchTreeKey*) akbuf;
             PatchTreeKey* element2 = (PatchTreeKey*) bkbuf;
             int comp_subject = element1->subject.compare(element2->subject);
-            cout << "comp: " << element1->subject << " ? " << element2->subject << " = " << comp_subject << endl; // TODO
+            //cout << "comp: " << element1->subject << " ? " << element2->subject << " = " << comp_subject << endl; // TODO
             if(!comp_subject) {
                 int comp_predicate = element1->predicate.compare(element2->predicate);
                 if(!comp_predicate) {
@@ -40,14 +40,44 @@ PatchTree::~PatchTree() {
     }
 }
 
-void PatchTree::append(PatchElements* patch) {
+void PatchTree::append(PatchElements* patch, int patch_id) {
     PatchElements* current = patch;
     bool run = true;
     while (run) {
         cout << "appending... " << current->patchElement.triple.subject << endl; // TODO
         PatchElement patchElement = current->patchElement;
-        // TODO: value must be a map!
-        db.set((const char *) &patchElement.triple, sizeof(patchElement.triple), (const char *) &patchElement.addition, sizeof(patchElement.addition));
+
+        // Look up the triple in the tree.
+        // If it does not exist, simply add our new element to the tree.
+        // Otherwise, we have to append our value to the existing element.
+        size_t value_size;
+        PatchTreeValue* value = (PatchTreeValue *) db.get((const char *) &patchElement.triple, sizeof(patchElement.triple), &value_size);
+        int patch_position = 0; // TODO: the relative position in the list.
+        PatchTreeValue newValueElement = PatchTreeValue(patch_id, patch_position, patchElement.addition, false);
+        int values = 1;
+        if(value) {
+            // Value already exists
+            PatchTreeValue* it = value;
+            while(it->next) {
+                if(it->patch_id == patch_id) {
+                    cerr << "Already found a patch with id: " << patch_id << endl;
+                    return;
+                }
+                it += sizeof(PatchTreeValue);
+                values++;
+            }
+            value = (PatchTreeValue *) realloc(value, sizeof(PatchTreeValue) * values);
+            it = value + sizeof(PatchTreeValue) * (values - 1);
+            it->next = true;
+            it += sizeof(PatchTreeValue);
+            *it = newValueElement;
+        } else {
+            // Value does not exist yet
+            value = (PatchTreeValue *) malloc(sizeof(PatchTreeValue));
+            *value = newValueElement;
+        }
+
+        db.set((const char *) &patchElement.triple, sizeof(patchElement.triple), (const char *) value, sizeof(PatchTreeValue) * values);
         run = current->next;
         current += sizeof(PatchElements);
     }

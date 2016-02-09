@@ -23,16 +23,17 @@ int main() {
     *fillPatchElements = PatchElements(patchElement4, false);
 
     PatchTree patchTree("true-patches.kch");
-    patchTree.append(patchElements); // TODO: if you want to insert
+    int patch_id = 0;
+    patchTree.append(patchElements, patch_id); // TODO: if you want to insert
 
     //PatchTreeKey key("s1", "p1", "o1");
     PatchTreeKey key("s2", "p2", "o2");
     PatchTreeIterator patchTreeIterator = patchTree.iterator(&key);
     PatchTreeKey* k;
-    bool* v;//PatchTreeValue* v; TODO
+    PatchTreeValue* v;
     cout << "BEGIN LOOP" << endl;
     while (patchTreeIterator.next(&k, &v)) {
-        cout << ">> " << k->subject << " " << k->predicate << " " << k->object << "." << ":" << *v << endl;
+        cout << ">> " << k->subject << " " << k->predicate << " " << k->object << "." << ": (" << v->addition << "; " << v->patch_id << ")" << endl;
     }
     cout << "END LOOP" << endl;
 
