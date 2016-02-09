@@ -1,10 +1,16 @@
 cmake_minimum_required(VERSION 3.3)
-project(tpfpatch_store)
+set(PROJECT_NAME_STR tpfpatch_store)
+project(${PROJECT_NAME_STR})
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 set(SOURCE_FILES
-        src/main/cpp/test.cc src/main/cpp/patch/patch_tree.cc src/main/cpp/patch/patch_tree.h src/main/cpp/patch/patch_tree_iterator.cc src/main/cpp/patch/patch_tree_iterator.h src/main/cpp/patch/patch.h)
+        src/main/cpp/test.cc
+        src/main/cpp/patch/patch_tree.cc src/main/cpp/patch/patch_tree.h
+        src/main/cpp/patch/patch_tree_iterator.cc src/main/cpp/patch/patch_tree_iterator.h
+        src/main/cpp/patch/patch.h)
+set(TEST_FILES
+        src/test/cpp/patch/test.cc)
 
 add_executable(tpfpatch_store ${SOURCE_FILES})
 
@@ -31,3 +37,34 @@ else (KYOTO_SHARED_LIBRARY MATCHES KYOTO_LIBRARY-NOTFOUND)
         add_definitions(-DHAS_KYOTO)
     endif (KYOTO_INCLUDE_DIR MATCHES KYOTO_INCLUDE_DIR-NOTFOUND)
 endif (KYOTO_SHARED_LIBRARY MATCHES KYOTO_LIBRARY-NOTFOUND)
+
+# Add gtest
+set(EXT_PROJECTS_DIR ${PROJECT_SOURCE_DIR}/ext)
+add_subdirectory(${EXT_PROJECTS_DIR}/gtest)
+enable_testing()
+set(PROJECT_TEST_NAME ${PROJECT_NAME_STR}_test)
+include_directories(${GTEST_INCLUDE_DIRS})
+
+file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/src/test/cpp/*.cpp)
+add_executable(${PROJECT_TEST_NAME} ${TEST_FILES})
+add_dependencies(${PROJECT_TEST_NAME} googletest)
+
+if(NOT WIN32)
+    target_link_libraries(${PROJECT_TEST_NAME}
+            ${GTEST_LIBS_DIR}/libgtest.a
+            ${GTEST_LIBS_DIR}/libgtest_main.a
+            )
+else()
+    target_link_libraries(${PROJECT_TEST_NAME}
+            debug ${GTEST_LIBS_DIR}/DebugLibs/${CMAKE_FIND_LIBRARY_PREFIXES}gtest${CMAKE_FIND_LIBRARY_SUFFIXES}
+            optimized ${GTEST_LIBS_DIR}/ReleaseLibs/${CMAKE_FIND_LIBRARY_PREFIXES}gtest${CMAKE_FIND_LIBRARY_SUFFIXES}
+            )
+    target_link_libraries(${PROJECT_TEST_NAME}
+            debug ${GTEST_LIBS_DIR}/DebugLibs/${CMAKE_FIND_LIBRARY_PREFIXES}gtest_main${CMAKE_FIND_LIBRARY_SUFFIXES}
+            optimized ${GTEST_LIBS_DIR}/ReleaseLibs/${CMAKE_FIND_LIBRARY_PREFIXES}gtest_main${CMAKE_FIND_LIBRARY_SUFFIXES}
+            )
+endif()
+
+target_link_libraries(${PROJECT_TEST_NAME} ${CMAKE_THREAD_LIBS_INIT})
+
+add_test(test1 ${PROJECT_TEST_NAME})
