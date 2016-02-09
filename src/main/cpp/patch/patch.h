@@ -14,20 +14,6 @@ typedef struct Triple {
             subject(subject), predicate(predicate), object(object) {}
 } Triple; // TODO: use dictionary
 
-// A triple annotated with addition or deletion
-typedef struct PatchElement {
-    Triple triple;
-    bool addition;
-    PatchElement(Triple triple, bool addition) : triple(triple), addition(addition) {}
-} PatchElement;
-
-// A linked list of PatchElements
-typedef struct PatchElements {
-    PatchElement patchElement;
-    bool next;
-    PatchElements(PatchElement patchElement, bool next) : patchElement(patchElement), next(next) {}
-} PatchElements;
-
 // A key in the PatchTree is a triple
 typedef Triple PatchTreeKey;
 

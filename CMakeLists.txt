@@ -5,14 +5,17 @@ project(${PROJECT_NAME_STR})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 set(SOURCE_FILES
-        src/main/cpp/test.cc
+        src/main/cpp/test.cc)
+set(COMMON_FILES
         src/main/cpp/patch/patch_tree.cc src/main/cpp/patch/patch_tree.h
         src/main/cpp/patch/patch_tree_iterator.cc src/main/cpp/patch/patch_tree_iterator.h
+        src/main/cpp/patch/patch_elements.cc src/main/cpp/patch/patch_elements.h
         src/main/cpp/patch/patch.h)
 set(TEST_FILES
-        src/test/cpp/patch/test.cc)
+        src/test/cpp/patch/test.cc
+        src/test/cpp/patch/test_patch_elements.cc)
 
-add_executable(tpfpatch_store ${SOURCE_FILES})
+add_executable(tpfpatch_store ${COMMON_FILES} ${SOURCE_FILES})
 
 find_library(KYOTO_SHARED_LIBRARY kyotocabinet PATHS ${KC_ROOT}/lib)
 find_path(KYOTO_INCLUDE_DIR kchashdb.h PATHS ${KC_ROOT}/include)
@@ -32,7 +35,7 @@ else (KYOTO_SHARED_LIBRARY MATCHES KYOTO_LIBRARY-NOTFOUND)
         # get the static version
         string(REGEX REPLACE "\\${CMAKE_SHARED_LIBRARY_SUFFIX}$" ".a" KYOTO_STATIC_LIBRARY ${KYOTO_SHARED_LIBRARY})
         message(STATUS "Kyoto Cabinet: ${KYOTO_STATIC_LIBRARY}" )
-        target_link_libraries(tpfpatch_store ${KYOTO_SHARED_LIBRARY})
+        target_link_libraries(${PROJECT_NAME_STR} ${KYOTO_SHARED_LIBRARY})
         include_directories(${KYOTO_INCLUDE_DIR})
         add_definitions(-DHAS_KYOTO)
     endif (KYOTO_INCLUDE_DIR MATCHES KYOTO_INCLUDE_DIR-NOTFOUND)
@@ -46,7 +49,7 @@ set(PROJECT_TEST_NAME ${PROJECT_NAME_STR}_test)
 include_directories(${GTEST_INCLUDE_DIRS})
 
 file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/src/test/cpp/*.cpp)
-add_executable(${PROJECT_TEST_NAME} ${TEST_FILES})
+add_executable(${PROJECT_TEST_NAME} ${TEST_FILES} ${COMMON_FILES})
 add_dependencies(${PROJECT_TEST_NAME} googletest)
 
 if(NOT WIN32)
@@ -65,6 +68,7 @@ else()
             )
 endif()
 
+target_link_libraries(${PROJECT_TEST_NAME} ${KYOTO_SHARED_LIBRARY})
 target_link_libraries(${PROJECT_TEST_NAME} ${CMAKE_THREAD_LIBS_INIT})
 
 add_test(test1 ${PROJECT_TEST_NAME})

@@ -2,6 +2,7 @@
 #include <kchashdb.h>
 
 #include "patch_tree.h"
+#include "patch_elements.h"
 
 using namespace std;
 using namespace kyotocabinet;
@@ -40,12 +41,10 @@ PatchTree::~PatchTree() {
     }
 }
 
-void PatchTree::append(PatchElements* patch, int patch_id) {
-    PatchElements* current = patch;
-    bool run = true;
-    while (run) {
-        cout << "appending... " << current->patchElement.triple.subject << endl; // TODO
-        PatchElement patchElement = current->patchElement;
+int PatchTree::append(PatchElements patch, int patch_id) {
+    for(int i = 0; i < patch.getSize(); i++) {
+        PatchElement patchElement = patch.get(i);
+        cout << "appending... " << patchElement.triple.subject << endl; // TODO
 
         // Look up the triple in the tree.
         // If it does not exist, simply add our new element to the tree.
@@ -61,7 +60,7 @@ void PatchTree::append(PatchElements* patch, int patch_id) {
             while(it->next) {
                 if(it->patch_id == patch_id) {
                     cerr << "Already found a patch with id: " << patch_id << endl;
-                    return;
+                    return -1;
                 }
                 it += sizeof(PatchTreeValue);
                 values++;
@@ -78,9 +77,8 @@ void PatchTree::append(PatchElements* patch, int patch_id) {
         }
 
         db.set((const char *) &patchElement.triple, sizeof(patchElement.triple), (const char *) value, sizeof(PatchTreeValue) * values);
-        run = current->next;
-        current += sizeof(PatchElements);
     }
+    return 0;
 }
 
 PatchTreeIterator PatchTree::iterator(PatchTreeKey *key) {

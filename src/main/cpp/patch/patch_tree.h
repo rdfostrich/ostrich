@@ -5,6 +5,7 @@
 #include <kchashdb.h>
 #include "patch_tree_iterator.h"
 #include "patch.h"
+#include "patch_elements.h"
 
 using namespace std;
 using namespace kyotocabinet;
@@ -15,7 +16,7 @@ private:
 public:
     PatchTree(string file_name);
     ~PatchTree();
-    void append(PatchElements* patch, int patch_id);
+    int append(PatchElements patch, int patch_id);
     PatchTreeIterator iterator(PatchTreeKey* key);
 };
 
