@@ -1,22 +1,31 @@
 cmake_minimum_required(VERSION 3.3)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+include("ext/hunter/HunterGate.cmake")
+HunterGate(
+    URL "https://github.com/ruslo/hunter/archive/v0.12.40.tar.gz"
+    SHA1 "0ccc3f3fd571676a1804723984598f9f90a4d6bc"
+)
+
 set(PROJECT_NAME_STR tpfpatch_store)
 project(${PROJECT_NAME_STR})
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 set(SOURCE_FILES
         src/main/cpp/test.cc)
 set(COMMON_FILES
+        src/main/cpp/patch/triple.cc src/main/cpp/patch/triple.h
         src/main/cpp/patch/patch_tree.cc src/main/cpp/patch/patch_tree.h
         src/main/cpp/patch/patch_tree_iterator.cc src/main/cpp/patch/patch_tree_iterator.h
         src/main/cpp/patch/patch_elements.cc src/main/cpp/patch/patch_elements.h
         src/main/cpp/patch/patch.h)
 set(TEST_FILES
         src/test/cpp/patch/test.cc
-        src/test/cpp/patch/test_patch_elements.cc)
+        src/test/cpp/patch/triple.cc
+        src/test/cpp/patch/test_patch_elements.cc
+        )
 
-add_executable(tpfpatch_store ${COMMON_FILES} ${SOURCE_FILES})
+add_executable(${PROJECT_NAME_STR} ${COMMON_FILES} ${SOURCE_FILES})
 
+# Add Kyoto Cabinet
 find_library(KYOTO_SHARED_LIBRARY kyotocabinet PATHS ${KC_ROOT}/lib)
 find_path(KYOTO_INCLUDE_DIR kchashdb.h PATHS ${KC_ROOT}/include)
 if (KYOTO_SHARED_LIBRARY MATCHES KYOTO_LIBRARY-NOTFOUND)
@@ -40,6 +49,21 @@ else (KYOTO_SHARED_LIBRARY MATCHES KYOTO_LIBRARY-NOTFOUND)
         add_definitions(-DHAS_KYOTO)
     endif (KYOTO_INCLUDE_DIR MATCHES KYOTO_INCLUDE_DIR-NOTFOUND)
 endif (KYOTO_SHARED_LIBRARY MATCHES KYOTO_LIBRARY-NOTFOUND)
+
+# Add Boost
+hunter_add_package(Boost COMPONENTS iostreams serialization)
+find_package(Boost CONFIG REQUIRED COMPONENTS iostreams serialization)
+target_link_libraries(${PROJECT_NAME_STR} Boost::iostreams Boost::serialization)
+#set(Boost_USE_STATIC_LIBS OFF)
+#find_package (Boost 1.55.0 REQUIRED COMPONENTS iostreams serialization)
+#if (Boost_FOUND)
+#    include_directories(SYSTEM ${Boost_INCLUDE_DIR})
+#    target_link_libraries(${PROJECT_NAME_STR} ${LIBSTDCXX} ${Boost_LIBRARIES})
+#    link_libraries(${Boost_LIBRARIES})
+#    message(STATUS "Boost Found")
+#else ()
+#    message("FATAL_ERROR Boost not found!")
+#endif ()
 
 # Add gtest
 set(EXT_PROJECTS_DIR ${PROJECT_SOURCE_DIR}/ext)
@@ -68,7 +92,9 @@ else()
             )
 endif()
 
+target_link_libraries(${PROJECT_TEST_NAME} ${LIBSTDCXX})
 target_link_libraries(${PROJECT_TEST_NAME} ${KYOTO_SHARED_LIBRARY})
+target_link_libraries(${PROJECT_TEST_NAME} Boost::iostreams Boost::serialization)
 target_link_libraries(${PROJECT_TEST_NAME} ${CMAKE_THREAD_LIBS_INIT})
 
 add_test(test1 ${PROJECT_TEST_NAME})
