@@ -26,6 +26,7 @@ TEST(TripleTest, Serialization) {
     tripleOut.deserialize(data, size);
 
     ASSERT_EQ(tripleIn.to_string(), tripleOut.to_string()) << "Serialization failed";
+    free((char*) data);
 }
 
 TEST(TripleTest, SerializationLong) {
@@ -40,6 +41,7 @@ TEST(TripleTest, SerializationLong) {
     tripleOut.deserialize(data, size);
 
     ASSERT_EQ(tripleIn.to_string(), tripleOut.to_string()) << "Serialization failed";
+    free((char*) data);
 }
 
 TEST(TripleTest, SerializationSize) {
@@ -50,4 +52,5 @@ TEST(TripleTest, SerializationSize) {
     const char* data = tripleIn.serialize(&size);
 
     ASSERT_EQ(8, size) << "Serialization length is too high";
+    free((char*) data);
 }

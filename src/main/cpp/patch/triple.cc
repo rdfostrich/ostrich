@@ -25,14 +25,12 @@ string Triple::to_string() {
 }
 
 const char* Triple::serialize(size_t* size) {
-    // TODO: Don't use vector
-    std::vector<char> bytes(subject.begin(), subject.end());
-    bytes.push_back('\0');
-    std::copy(predicate.begin(), predicate.end(), std::back_inserter(bytes));
-    bytes.push_back('\0');
-    std::copy(object.begin(), object.end(), std::back_inserter(bytes));
-    *size = bytes.size();
-    return bytes.data();
+    *size = subject.length() + predicate.length() + object.length() + 2;
+    char* bytes = (char *) malloc(*size);
+    memcpy(bytes, subject.c_str(), subject.length() + 1);
+    memcpy(&bytes[subject.length() + 1], predicate.c_str(), predicate.length() + 1);
+    memcpy(&bytes[subject.length() + predicate.length() + 2], object.c_str(), object.length());
+    return bytes;
 }
 
 void Triple::deserialize(const char* data, size_t size) {
