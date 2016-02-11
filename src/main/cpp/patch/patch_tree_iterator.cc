@@ -1,5 +1,7 @@
 #include <iostream>
 
+#include <kchashdb.h>
+
 #include "patch_tree_iterator.h"
 
 PatchTreeIterator::PatchTreeIterator(DB::Cursor *cursor) : cursor(cursor) {}

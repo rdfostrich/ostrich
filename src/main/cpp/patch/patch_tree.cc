@@ -47,43 +47,31 @@ int PatchTree::append(PatchElements patch, int patch_id) {
         PatchElement patchElement = patch.get(i);
         cout << "appending... " << patchElement.get_triple().get_subject() << endl; // TODO
 
-        // Look up the triple in the tree.
-        // If it does not exist, simply add our new element to the tree.
-        // Otherwise, we have to append our value to the existing element.
+        // Look up the value for the given triple key in the tree.
         size_t key_size, value_size;
-        const char * raw_key = patchElement.get_triple().serialize(&key_size);
-        PatchTreeValue* value = (PatchTreeValue *) db.get(raw_key, key_size, &value_size);
+        const char* raw_key = patchElement.get_triple().serialize(&key_size);
+        PatchTreeValue value;
+        const char* raw_value = db.get(raw_key, key_size, &value_size);
+        value.deserialize(raw_value, value_size);
+
+        // Modify the value
         int patch_position = 0; // TODO: the relative position in the list.
-        PatchTreeValue newValueElement = PatchTreeValue(patch_id, patch_position, patchElement.is_addition(), false);
-        int values = 1;
-        if(value) {
-            // Value already exists
-            PatchTreeValue* it = value;
-            while(it->next) {
-                if(it->patch_id == patch_id) {
-                    cerr << "Already found a patch with id: " << patch_id << endl;
-                    return -1;
-                }
-                it += sizeof(PatchTreeValue);
-                values++;
-            }
-            value = (PatchTreeValue *) realloc(value, sizeof(PatchTreeValue) * values);
-            it = value + sizeof(PatchTreeValue) * (values - 1);
-            it->next = true;
-            it += sizeof(PatchTreeValue);
-            *it = newValueElement;
+        if(!value.contains(patch_id)) {
+            value.add(PatchTreeValueElement(patch_id, patch_position, patchElement.is_addition()));
         } else {
-            // Value does not exist yet
-            value = (PatchTreeValue *) malloc(sizeof(PatchTreeValue));
-            *value = newValueElement;
+            cerr << "Already found a patch with id: " << patch_id << endl;
+            return -1;
         }
 
-        db.set(raw_key, key_size, (const char *) value, sizeof(PatchTreeValue) * values);
+        // Serialize the new value and store it
+        size_t new_value_size;
+        const char* new_raw_value = value.serialize(&new_value_size);
+        db.set(raw_key, key_size, new_raw_value, new_value_size);
     }
     return 0;
 }
 
-PatchTreeIterator PatchTree::iterator(PatchTreeKey *key) {
+PatchTreeIterator PatchTree::iterator(PatchTreeKey key) {
     DB::Cursor* cursor = db.cursor();
     cursor->jump((const char *) &key, sizeof(key));
     PatchTreeIterator patchTreeIterator(cursor);

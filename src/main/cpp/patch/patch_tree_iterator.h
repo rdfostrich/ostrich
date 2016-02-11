@@ -4,6 +4,7 @@
 #include <string>
 #include <kchashdb.h>
 #include "patch.h"
+#include "patch_tree_value.h"
 
 using namespace std;
 using namespace kyotocabinet;

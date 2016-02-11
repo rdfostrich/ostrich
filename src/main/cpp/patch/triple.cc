@@ -25,6 +25,7 @@ string Triple::to_string() {
 }
 
 const char* Triple::serialize(size_t* size) {
+    // TODO: Don't use vector
     std::vector<char> bytes(subject.begin(), subject.end());
     bytes.push_back('\0');
     std::copy(predicate.begin(), predicate.end(), std::back_inserter(bytes));
