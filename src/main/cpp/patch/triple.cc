@@ -35,6 +35,9 @@ const char* Triple::serialize(size_t* size) {
 
 void Triple::deserialize(const char* data, size_t size) {
     std::vector<string*> fields(3);
+    subject = "";
+    predicate = "";
+    object = "";
     fields[0] = &subject;
     fields[1] = &predicate;
     fields[2] = &object;
