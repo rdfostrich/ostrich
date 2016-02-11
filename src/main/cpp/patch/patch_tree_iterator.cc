@@ -10,7 +10,7 @@ PatchTreeIterator::~PatchTreeIterator() {
     delete cursor;
 }
 
-bool PatchTreeIterator::next(PatchTreeKey** key, PatchTreeValue** value) {
+bool PatchTreeIterator::next(PatchTreeKey* key, PatchTreeValue* value) {
     const char* kbp;
     size_t ksp;
     const char* vbp;
@@ -18,7 +18,7 @@ bool PatchTreeIterator::next(PatchTreeKey** key, PatchTreeValue** value) {
     kbp = cursor->get(&ksp, &vbp, &vsp);
     if(!kbp) return false;
     cursor->step();
-    *key = (PatchTreeKey *) kbp;
-    *value = (PatchTreeValue *) vbp;
+    key->deserialize(kbp, ksp);
+    value->deserialize(vbp, vsp);
     return true;
 }

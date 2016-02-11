@@ -15,7 +15,7 @@ private:
 public:
     PatchTreeIterator(DB::Cursor* cursor);
     ~PatchTreeIterator();
-    bool next(PatchTreeKey** key, PatchTreeValue** value);
+    bool next(PatchTreeKey* key, PatchTreeValue* value);
 };
 
 

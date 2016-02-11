@@ -5,6 +5,18 @@
 
 using namespace std;
 
+int PatchTreeValueElement::get_patch_id() {
+    return patch_id;
+}
+
+int PatchTreeValueElement::get_patch_position() {
+    return patch_position;
+}
+
+bool PatchTreeValueElement::is_addition() {
+    return addition;
+}
+
 PatchTreeValue::PatchTreeValue() {}
 
 void PatchTreeValue::add(PatchTreeValueElement element) {
@@ -13,7 +25,7 @@ void PatchTreeValue::add(PatchTreeValueElement element) {
 
 bool PatchTreeValue::contains(int patch_id) {
     for(int i = 0; i < elements.size(); i++) {
-        if(elements[i].patch_id == patch_id) {
+        if(elements[i].get_patch_id() == patch_id) {
             return true;
         }
     }
@@ -24,7 +36,7 @@ PatchTreeValueElement PatchTreeValue::get(int patch_id) {
     // This can alternatively be implemented as a map for improving lookup efficiency
     // But we have to make sure that serialization is fast
     for(int i = 0; i < elements.size(); i++) {
-        if(elements[i].patch_id == patch_id) {
+        if(elements[i].get_patch_id() == patch_id) {
             return elements[i];
         }
     }
@@ -37,8 +49,8 @@ string PatchTreeValue::to_string() {
     for(int i = 0; i < elements.size(); i++) {
         if(separator) ret += ",";
         separator = true;
-        ret += std::to_string(elements[i].patch_id) + ":" + std::to_string(elements[i].patch_position)
-              + "(" + (elements[i].addition ? "+" : "-") + ")";
+        ret += std::to_string(elements[i].get_patch_id()) + ":" + std::to_string(elements[i].get_patch_position())
+              + "(" + (elements[i].is_addition() ? "+" : "-") + ")";
     }
     ret += "}";
     return ret;

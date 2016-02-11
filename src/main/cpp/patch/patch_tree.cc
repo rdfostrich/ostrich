@@ -10,7 +10,7 @@ using namespace kyotocabinet;
 PatchTree::PatchTree(string file_name) {
     // Set the triple comparator
     // TODO: this comparator should eventually be removed if serialization is fully implemented
-    class ComparatorImpl : public Comparator {
+    /*class ComparatorImpl : public Comparator {
         int32_t compare(const char* akbuf, size_t aksiz, const char* bkbuf, size_t bksiz) {
             PatchTreeKey* element1 = (PatchTreeKey*) akbuf;
             PatchTreeKey* element2 = (PatchTreeKey*) bkbuf;
@@ -27,7 +27,7 @@ PatchTree::PatchTree(string file_name) {
         };
     };
     ComparatorImpl* comparator = new ComparatorImpl();
-    db.tune_comparator(comparator);
+    db.tune_comparator(comparator);*/
 
     // Open the database
     if (!db.open(file_name, HashDB::OWRITER | HashDB::OCREATE)) {
@@ -45,14 +45,15 @@ PatchTree::~PatchTree() {
 int PatchTree::append(PatchElements patch, int patch_id) {
     for(int i = 0; i < patch.getSize(); i++) {
         PatchElement patchElement = patch.get(i);
-        cout << "appending... " << patchElement.get_triple().get_subject() << endl; // TODO
 
         // Look up the value for the given triple key in the tree.
         size_t key_size, value_size;
         const char* raw_key = patchElement.get_triple().serialize(&key_size);
         PatchTreeValue value;
         const char* raw_value = db.get(raw_key, key_size, &value_size);
-        value.deserialize(raw_value, value_size);
+        if(raw_value) {
+            value.deserialize(raw_value, value_size);
+        }
 
         // Modify the value
         int patch_position = 0; // TODO: the relative position in the list.
@@ -71,9 +72,9 @@ int PatchTree::append(PatchElements patch, int patch_id) {
     return 0;
 }
 
-PatchTreeIterator PatchTree::iterator(PatchTreeKey key) {
+PatchTreeIterator PatchTree::iterator(PatchTreeKey* key) {
     DB::Cursor* cursor = db.cursor();
-    cursor->jump((const char *) &key, sizeof(key));
+    cursor->jump((const char *) key, sizeof(key));
     PatchTreeIterator patchTreeIterator(cursor);
     return patchTreeIterator;
 }

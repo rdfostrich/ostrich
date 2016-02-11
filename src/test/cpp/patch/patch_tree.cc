@@ -7,7 +7,6 @@
 // The fixture for testing class PatchTree.
 class PatchTreeTest : public ::testing::Test {
 protected:
-
     PatchTree* patchTree;
 
     PatchTreeTest() : patchTree(NULL) {}
@@ -34,19 +33,18 @@ TEST_F(PatchTreeTest, AppendNew) {
 }
 
 TEST_F(PatchTreeTest, AppendContains) {
-    /*PatchElements patch;
+    PatchElements patch;
     patch.add(PatchElement(Triple("s1", "p1", "o1"), true));
     patchTree->append(patch, 0);
 
-    PatchTreeIterator it = patchTree->iterator(Triple("s1", "p1", "o1"));
-    PatchTreeKey* key;
-    PatchTreeValue* value;
+    PatchTreeKey iteratorKey = Triple("s1", "p1", "o1");
+    PatchTreeIterator it = patchTree->iterator(&iteratorKey);
+    PatchTreeKey key;
+    PatchTreeValue value;
     ASSERT_EQ(true, it.next(&key, &value)) << "Iterator does not contain an element after append";
-    ASSERT_EQ("s1 p1 o1.", key->to_string()) << "Found key is incorrect";
-    ASSERT_EQ(true, value->addition) << "Found value is incorrect";
-    ASSERT_EQ(0, value->patch_id) << "Found value is incorrect";
-    ASSERT_EQ(0, value->patch_position) << "Found value is incorrect";
-    ASSERT_EQ(false, value->next) << "Found value is incorrect";
-    ASSERT_EQ(false, it.next(&key, &value)) << "Iterator contains another element after a single append";*/
-    // TODO
+    ASSERT_EQ("s1 p1 o1.", key.to_string()) << "Found key is incorrect";
+    ASSERT_EQ(true, value.get(0).is_addition()) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get(0).get_patch_id()) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get(0).get_patch_position()) << "Found value is incorrect";
+    ASSERT_EQ(false, it.next(&key, &value)) << "Iterator contains another element after a single append";
 }

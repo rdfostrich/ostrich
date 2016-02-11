@@ -17,7 +17,7 @@ public:
     PatchTree(string file_name);
     ~PatchTree();
     int append(PatchElements patch, int patch_id);
-    PatchTreeIterator iterator(PatchTreeKey key);
+    PatchTreeIterator iterator(PatchTreeKey* key);
 };
 
 #endif //TPFPATCH_STORE_PATCH_TREE_H
