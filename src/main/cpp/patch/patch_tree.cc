@@ -24,7 +24,7 @@ PatchTree::~PatchTree() {
     }
 }
 
-int PatchTree::append(PatchElements patch, int patch_id) {
+int PatchTree::append(Patch patch, int patch_id) {
     for(int i = 0; i < patch.getSize(); i++) {
         PatchElement patchElement = patch.get(i);
 

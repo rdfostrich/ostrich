@@ -27,13 +27,13 @@ protected:
 };
 
 TEST_F(PatchTreeTest, AppendNew) {
-    PatchElements patch;
+    Patch patch;
     patch.add(PatchElement(Triple("s1", "p1", "o1"), true));
     ASSERT_EQ(0, patchTree->append(patch, 0)) << "Appending a patch with one elements failed";
 }
 
 TEST_F(PatchTreeTest, AppendContains) {
-    PatchElements patch;
+    Patch patch;
     patch.add(PatchElement(Triple("s1", "p1", "o1"), true));
     patchTree->append(patch, 0);
 
@@ -52,7 +52,7 @@ TEST_F(PatchTreeTest, AppendContains) {
 }
 
 TEST_F(PatchTreeTest, IteratorOrder) {
-    PatchElements patch;
+    Patch patch;
     patch.add(PatchElement(Triple("g", "p", "o"), false));
     patch.add(PatchElement(Triple("a", "p", "o"), true));
     patch.add(PatchElement(Triple("s", "z", "o"), false));

@@ -1,25 +1,25 @@
 #include <stdlib.h>
 #include <iostream>
-#include "patch_elements.h"
+#include "patch.h"
 
-PatchElements::PatchElements() : elements() {}
+Patch::Patch() : elements() {}
 
-void PatchElements::add(PatchElement element) {
+void Patch::add(PatchElement element) {
     elements.push_back(element);
 }
 
-unsigned long PatchElements::getSize() {
+unsigned long Patch::getSize() {
     return elements.size();
 }
 
-PatchElement PatchElements::get(int index) {
+PatchElement Patch::get(int index) {
     if(index < 0 || index >= getSize()) {
         throw std::invalid_argument("Index out of bounds");
     }
     return elements[index];
 }
 
-string PatchElements::to_string() {
+string Patch::to_string() {
     string ret;
     for(int i = 0; i < elements.size(); i++) {
         ret += elements[i].to_string() + "\n";

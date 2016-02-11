@@ -1,12 +1,38 @@
-#ifndef TPFPATCH_STORE_PATCH_H
-#define TPFPATCH_STORE_PATCH_H
+#ifndef TPFPATCH_STORE_PATCH_ELEMENTS_H
+#define TPFPATCH_STORE_PATCH_ELEMENTS_H
 
-#include <string>
-#include "triple.h"
-
-using namespace std;
+#include <vector>
+#include "patch.h"
+#include "patch_element.h"
 
 // A key in the PatchTree is a triple
 typedef Triple PatchTreeKey;
 
-#endif //TPFPATCH_STORE_PATCH_H
+class Patch {
+protected:
+    std::vector<PatchElement> elements;
+public:
+    Patch();
+    /**
+     * Add an element to the patch
+     * @param element The element to add
+     */
+    void add(PatchElement element);
+    /**
+     * The current size of the patch.
+     * @return The size
+     */
+    unsigned long getSize();
+    /**
+     * Get the patch element at the given position.
+     * @param index The index to get a patch element from
+     * @return The patch element, will throw an exception if the index is out of bounds.
+     */
+    PatchElement get(int index);
+    /**
+     * @return The string representation of this patch.
+     */
+    string to_string();
+};
+
+#endif //TPFPATCH_STORE_PATCH_ELEMENTS_H

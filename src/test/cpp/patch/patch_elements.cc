@@ -2,15 +2,15 @@
 
 #include "../../../main/cpp/patch/patch_tree.h"
 
-// The fixture for testing class PatchElements.
+// The fixture for testing class Patch.
 class PatchElementsTest : public ::testing::Test {
 protected:
-    PatchElements patchElements;
+    Patch patchElements;
 
     PatchElementsTest() : patchElements() {}
 
     virtual void SetUp() {
-        patchElements = PatchElements();
+        patchElements = Patch();
     }
 };
 

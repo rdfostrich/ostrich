@@ -7,7 +7,7 @@ using namespace std;
 using namespace kyotocabinet;
 
 int main() {
-    PatchElements patch;
+    Patch patch;
     patch.add(PatchElement(Triple("s1", "p1", "o1"), true));
     patch.add(PatchElement(Triple("s2", "p2", "o2"), false));
     patch.add(PatchElement(Triple("s3", "p3", "o3"), false));
