@@ -42,7 +42,7 @@ int PatchTree::append(PatchElements patch, int patch_id) {
         if(!value.contains(patch_id)) {
             value.add(PatchTreeValueElement(patch_id, patch_position, patchElement.is_addition()));
         } else {
-            cerr << "Already found a patch with id: " << patch_id << endl;
+            cerr << "Already found a patch with id: " << patch_id << " Skipping this patch." << endl;
             return -1;
         }
 
