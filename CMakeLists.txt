@@ -13,14 +13,16 @@ set(SOURCE_FILES
         src/main/cpp/test.cc)
 set(COMMON_FILES
         src/main/cpp/patch/triple.cc src/main/cpp/patch/triple.h
+        src/main/cpp/patch/patch_element.cc src/main/cpp/patch/patch_element.h
+        src/main/cpp/patch/patch_elements.cc src/main/cpp/patch/patch_elements.h
         src/main/cpp/patch/patch_tree.cc src/main/cpp/patch/patch_tree.h
         src/main/cpp/patch/patch_tree_iterator.cc src/main/cpp/patch/patch_tree_iterator.h
-        src/main/cpp/patch/patch_elements.cc src/main/cpp/patch/patch_elements.h
         src/main/cpp/patch/patch.h)
 set(TEST_FILES
         src/test/cpp/patch/test.cc
         src/test/cpp/patch/triple.cc
-        src/test/cpp/patch/test_patch_elements.cc
+        src/test/cpp/patch/patch_element.cc
+        src/test/cpp/patch/patch_elements.cc
         )
 
 add_executable(${PROJECT_NAME_STR} ${COMMON_FILES} ${SOURCE_FILES})

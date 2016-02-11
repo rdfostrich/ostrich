@@ -80,10 +80,10 @@ TEST_F(PatchElementsTest, GetSingle) {
     patchElements.add(patchElement1);
     PatchElement patchElement1Got = patchElements.get(0);
 
-    ASSERT_EQ(patchElement1.addition, patchElement1Got.addition) << "Retrieved patch type does not equal the inserted patch type";
-    ASSERT_EQ(patchElement1.triple.subject, patchElement1Got.triple.subject) << "Retrieved patch subject does not equal the inserted patch subject";
-    ASSERT_EQ(patchElement1.triple.predicate, patchElement1Got.triple.predicate) << "Retrieved patch predicate does not equal the inserted patch predicate";
-    ASSERT_EQ(patchElement1.triple.object, patchElement1Got.triple.object) << "Retrieved patch object does not equal the inserted patch object";
+    ASSERT_EQ(patchElement1.is_addition(), patchElement1Got.is_addition()) << "Retrieved patch type does not equal the inserted patch type";
+    ASSERT_EQ(patchElement1.get_triple().get_subject(), patchElement1Got.get_triple().get_subject()) << "Retrieved patch subject does not equal the inserted patch subject";
+    ASSERT_EQ(patchElement1.get_triple().get_predicate(), patchElement1Got.get_triple().get_predicate()) << "Retrieved patch predicate does not equal the inserted patch predicate";
+    ASSERT_EQ(patchElement1.get_triple().get_object(), patchElement1Got.get_triple().get_object()) << "Retrieved patch object does not equal the inserted patch object";
 }
 
 TEST_F(PatchElementsTest, GetMultiple) {
@@ -100,23 +100,23 @@ TEST_F(PatchElementsTest, GetMultiple) {
     PatchElement patchElement3Got = patchElements.get(2);
     PatchElement patchElement4Got = patchElements.get(3);
 
-    ASSERT_EQ(patchElement1.addition, patchElement1Got.addition) << "Retrieved patch 1 type does not equal the inserted patch type";
-    ASSERT_EQ(patchElement1.triple.subject, patchElement1Got.triple.subject) << "Retrieved patch 1 subject does not equal the inserted patch subject";
-    ASSERT_EQ(patchElement1.triple.predicate, patchElement1Got.triple.predicate) << "Retrieved patch 1 predicate does not equal the inserted patch predicate";
-    ASSERT_EQ(patchElement1.triple.object, patchElement1Got.triple.object) << "Retrieved patch 1 object does not equal the inserted patch object";
+    ASSERT_EQ(patchElement1.is_addition(), patchElement1Got.is_addition()) << "Retrieved patch 1 type does not equal the inserted patch type";
+    ASSERT_EQ(patchElement1.get_triple().get_subject(), patchElement1Got.get_triple().get_subject()) << "Retrieved patch 1 subject does not equal the inserted patch subject";
+    ASSERT_EQ(patchElement1.get_triple().get_predicate(), patchElement1Got.get_triple().get_predicate()) << "Retrieved patch 1 predicate does not equal the inserted patch predicate";
+    ASSERT_EQ(patchElement1.get_triple().get_object(), patchElement1Got.get_triple().get_object()) << "Retrieved patch 1 object does not equal the inserted patch object";
 
-    ASSERT_EQ(patchElement2.addition, patchElement2Got.addition) << "Retrieved patch 2 type does not equal the inserted patch type";
-    ASSERT_EQ(patchElement2.triple.subject, patchElement2Got.triple.subject) << "Retrieved patch 2 subject does not equal the inserted patch subject";
-    ASSERT_EQ(patchElement2.triple.predicate, patchElement2Got.triple.predicate) << "Retrieved patch 2 predicate does not equal the inserted patch predicate";
-    ASSERT_EQ(patchElement2.triple.object, patchElement2Got.triple.object) << "Retrieved patch 2 object does not equal the inserted patch object";
+    ASSERT_EQ(patchElement2.is_addition(), patchElement2Got.is_addition()) << "Retrieved patch 2 type does not equal the inserted patch type";
+    ASSERT_EQ(patchElement2.get_triple().get_subject(), patchElement2Got.get_triple().get_subject()) << "Retrieved patch 2 subject does not equal the inserted patch subject";
+    ASSERT_EQ(patchElement2.get_triple().get_predicate(), patchElement2Got.get_triple().get_predicate()) << "Retrieved patch 2 predicate does not equal the inserted patch predicate";
+    ASSERT_EQ(patchElement2.get_triple().get_object(), patchElement2Got.get_triple().get_object()) << "Retrieved patch 2 object does not equal the inserted patch object";
 
-    ASSERT_EQ(patchElement3.addition, patchElement3Got.addition) << "Retrieved patch 3 type does not equal the inserted patch type";
-    ASSERT_EQ(patchElement3.triple.subject, patchElement3Got.triple.subject) << "Retrieved patch 3 subject does not equal the inserted patch subject";
-    ASSERT_EQ(patchElement3.triple.predicate, patchElement3Got.triple.predicate) << "Retrieved patch 3 predicate does not equal the inserted patch predicate";
-    ASSERT_EQ(patchElement3.triple.object, patchElement3Got.triple.object) << "Retrieved patch 3 object does not equal the inserted patch object";
+    ASSERT_EQ(patchElement3.is_addition(), patchElement3Got.is_addition()) << "Retrieved patch 3 type does not equal the inserted patch type";
+    ASSERT_EQ(patchElement3.get_triple().get_subject(), patchElement3Got.get_triple().get_subject()) << "Retrieved patch 3 subject does not equal the inserted patch subject";
+    ASSERT_EQ(patchElement3.get_triple().get_predicate(), patchElement3Got.get_triple().get_predicate()) << "Retrieved patch 3 predicate does not equal the inserted patch predicate";
+    ASSERT_EQ(patchElement3.get_triple().get_object(), patchElement3Got.get_triple().get_object()) << "Retrieved patch 3 object does not equal the inserted patch object";
 
-    ASSERT_EQ(patchElement4.addition, patchElement4Got.addition) << "Retrieved patch 4 type does not equal the inserted patch type";
-    ASSERT_EQ(patchElement4.triple.subject, patchElement4Got.triple.subject) << "Retrieved patch 4 subject does not equal the inserted patch subject";
-    ASSERT_EQ(patchElement4.triple.predicate, patchElement4Got.triple.predicate) << "Retrieved patch 4 predicate does not equal the inserted patch predicate";
-    ASSERT_EQ(patchElement4.triple.object, patchElement4Got.triple.object) << "Retrieved patch 4 object does not equal the inserted patch object";
+    ASSERT_EQ(patchElement4.is_addition(), patchElement4Got.is_addition()) << "Retrieved patch 4 type does not equal the inserted patch type";
+    ASSERT_EQ(patchElement4.get_triple().get_subject(), patchElement4Got.get_triple().get_subject()) << "Retrieved patch 4 subject does not equal the inserted patch subject";
+    ASSERT_EQ(patchElement4.get_triple().get_predicate(), patchElement4Got.get_triple().get_predicate()) << "Retrieved patch 4 predicate does not equal the inserted patch predicate";
+    ASSERT_EQ(patchElement4.get_triple().get_object(), patchElement4Got.get_triple().get_object()) << "Retrieved patch 4 object does not equal the inserted patch object";
 }

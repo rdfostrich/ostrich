@@ -9,16 +9,17 @@ using namespace kyotocabinet;
 
 PatchTree::PatchTree(string file_name) {
     // Set the triple comparator
+    // TODO: this comparator should eventually be removed if serialization is fully implemented
     class ComparatorImpl : public Comparator {
         int32_t compare(const char* akbuf, size_t aksiz, const char* bkbuf, size_t bksiz) {
             PatchTreeKey* element1 = (PatchTreeKey*) akbuf;
             PatchTreeKey* element2 = (PatchTreeKey*) bkbuf;
-            int comp_subject = element1->subject.compare(element2->subject);
+            int comp_subject = element1->get_subject().compare(element2->get_subject());
             //cout << "comp: " << element1->subject << " ? " << element2->subject << " = " << comp_subject << endl; // TODO
             if(!comp_subject) {
-                int comp_predicate = element1->predicate.compare(element2->predicate);
+                int comp_predicate = element1->get_predicate().compare(element2->get_predicate());
                 if(!comp_predicate) {
-                    return element1->object.compare(element2->object);
+                    return element1->get_object().compare(element2->get_object());
                 }
                 return comp_predicate;
             }
@@ -44,15 +45,16 @@ PatchTree::~PatchTree() {
 int PatchTree::append(PatchElements patch, int patch_id) {
     for(int i = 0; i < patch.getSize(); i++) {
         PatchElement patchElement = patch.get(i);
-        cout << "appending... " << patchElement.triple.subject << endl; // TODO
+        cout << "appending... " << patchElement.get_triple().get_subject() << endl; // TODO
 
         // Look up the triple in the tree.
         // If it does not exist, simply add our new element to the tree.
         // Otherwise, we have to append our value to the existing element.
-        size_t value_size;
-        PatchTreeValue* value = (PatchTreeValue *) db.get((const char *) &patchElement.triple, sizeof(patchElement.triple), &value_size);
+        size_t key_size, value_size;
+        const char * raw_key = patchElement.get_triple().serialize(&key_size);
+        PatchTreeValue* value = (PatchTreeValue *) db.get(raw_key, key_size, &value_size);
         int patch_position = 0; // TODO: the relative position in the list.
-        PatchTreeValue newValueElement = PatchTreeValue(patch_id, patch_position, patchElement.addition, false);
+        PatchTreeValue newValueElement = PatchTreeValue(patch_id, patch_position, patchElement.is_addition(), false);
         int values = 1;
         if(value) {
             // Value already exists
@@ -76,7 +78,7 @@ int PatchTree::append(PatchElements patch, int patch_id) {
             *value = newValueElement;
         }
 
-        db.set((const char *) &patchElement.triple, sizeof(patchElement.triple), (const char *) value, sizeof(PatchTreeValue) * values);
+        db.set(raw_key, key_size, (const char *) value, sizeof(PatchTreeValue) * values);
     }
     return 0;
 }

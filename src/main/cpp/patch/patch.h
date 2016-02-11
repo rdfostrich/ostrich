@@ -2,17 +2,9 @@
 #define TPFPATCH_STORE_PATCH_H
 
 #include <string>
+#include "triple.h"
 
 using namespace std;
-
-// S, P, O holder
-typedef struct Triple {
-    string subject;
-    string predicate;
-    string object;
-    Triple(string subject, string predicate, string object) :
-            subject(subject), predicate(predicate), object(object) {}
-} Triple; // TODO: use dictionary
 
 // A key in the PatchTree is a triple
 typedef Triple PatchTreeKey;

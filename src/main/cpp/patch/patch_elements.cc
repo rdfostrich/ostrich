@@ -2,23 +2,14 @@
 #include <iostream>
 #include "patch_elements.h"
 
-PatchElements::PatchElements() : elements(NULL), amount(0) {}
-
-PatchElements::~PatchElements() {
-    free(elements);
-}
+PatchElements::PatchElements() : elements() {}
 
 void PatchElements::add(PatchElement element) {
-    if(elements) {
-        elements = (PatchElement *) realloc(elements, sizeof(PatchElement) * (amount + 1));
-    } else {
-        elements = (PatchElement *) malloc(sizeof(PatchElement));
-    }
-    elements[amount++] = element;
+    elements.push_back(element);
 }
 
-int PatchElements::getSize() {
-    return amount;
+unsigned long PatchElements::getSize() {
+    return elements.size();
 }
 
 PatchElement PatchElements::get(int index) {
