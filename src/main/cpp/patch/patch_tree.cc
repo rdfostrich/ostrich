@@ -40,7 +40,8 @@ int PatchTree::append(Patch patch, int patch_id) {
 
         // Modify the value
         int patch_position = 0; // TODO: the relative position in the list.
-        if(!value.contains(patch_id)) {
+        long existing_patch_index = value.get_patchvalue_index(patch_id);
+        if(existing_patch_index == -1) {
             value.add(PatchTreeValueElement(patch_id, patch_position, patchElement.is_addition()));
         } else {
             cerr << "Already found a patch with id: " << patch_id << " Skipping this patch." << endl;

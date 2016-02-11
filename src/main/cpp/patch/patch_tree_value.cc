@@ -25,19 +25,22 @@ void PatchTreeValue::add(PatchTreeValueElement element) {
     elements.insert(itToInsert, element);
 }
 
-bool PatchTreeValue::contains(int patch_id) {
-    return std::binary_search(elements.begin(), elements.end(), PatchTreeValueElement(patch_id, -1, -1));
-}
-
-PatchTreeValueElement PatchTreeValue::get(int patch_id) {
+long PatchTreeValue::get_patchvalue_index(int patch_id) {
     PatchTreeValueElement item(patch_id, -1, -1);
     std::vector<PatchTreeValueElement>::iterator findIt = std::lower_bound(elements.begin(), elements.end(), item);
     if (findIt != elements.end() && findIt->get_patch_id() == patch_id) {
-        size_t i = std::distance(elements.begin(), findIt);
-        return elements[i];
+        return std::distance(elements.begin(), findIt);
     } else {
-        throw std::invalid_argument("Patch id not present.");
+        return -1;
     }
+}
+
+PatchTreeValueElement PatchTreeValue::get_patch(long element) {
+    return elements[element];
+}
+
+PatchTreeValueElement PatchTreeValue::get(int patch_id) {
+    return get_patch(get_patchvalue_index(patch_id));
 }
 
 string PatchTreeValue::to_string() {

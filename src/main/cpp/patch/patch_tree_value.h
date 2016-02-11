@@ -29,7 +29,22 @@ protected:
 public:
     PatchTreeValue();
     void add(PatchTreeValueElement element);
-    bool contains(int patch_id);
+    /**
+     * Get the index of the given patch in this value list.
+     * @param patch_id The id of the patch to find
+     * @return The index of the given patch in this value list. -1 if not found.
+     */
+    long get_patchvalue_index(int patch_id);
+    /**
+     * Get the patch of the given element.
+     * @param element The element index in this value list. This can be the result of get_patchvalue_index().
+     * @return The patch.
+     */
+    PatchTreeValueElement get_patch(long element);
+    /**
+     * @param patch_id The patch id
+     * @return The patch.
+     */
     PatchTreeValueElement get(int patch_id);
     string to_string();
     const char* serialize(size_t* size);
