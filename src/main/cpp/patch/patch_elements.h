@@ -5,6 +5,7 @@
 #include "patch.h"
 #include "patch_element.h"
 
+// TODO: rename this to Patch
 class PatchElements {
 protected:
     std::vector<PatchElement> elements;
@@ -26,6 +27,10 @@ public:
      * @return The patch element, will throw an exception if the index is out of bounds.
      */
     PatchElement get(int index);
+    /**
+     * @return The string representation of this patch.
+     */
+    string to_string();
 };
 
 #endif //TPFPATCH_STORE_PATCH_ELEMENTS_H

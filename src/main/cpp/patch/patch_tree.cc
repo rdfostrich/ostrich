@@ -2,32 +2,14 @@
 #include <kchashdb.h>
 
 #include "patch_tree.h"
-#include "patch_elements.h"
+#include "patch_tree_key_comparator.h"
 
 using namespace std;
 using namespace kyotocabinet;
 
 PatchTree::PatchTree(string file_name) {
     // Set the triple comparator
-    // TODO: this comparator should eventually be removed if serialization is fully implemented
-    /*class ComparatorImpl : public Comparator {
-        int32_t compare(const char* akbuf, size_t aksiz, const char* bkbuf, size_t bksiz) {
-            PatchTreeKey* element1 = (PatchTreeKey*) akbuf;
-            PatchTreeKey* element2 = (PatchTreeKey*) bkbuf;
-            int comp_subject = element1->get_subject().compare(element2->get_subject());
-            //cout << "comp: " << element1->subject << " ? " << element2->subject << " = " << comp_subject << endl; // TODO
-            if(!comp_subject) {
-                int comp_predicate = element1->get_predicate().compare(element2->get_predicate());
-                if(!comp_predicate) {
-                    return element1->get_object().compare(element2->get_object());
-                }
-                return comp_predicate;
-            }
-            return comp_subject;
-        };
-    };
-    ComparatorImpl* comparator = new ComparatorImpl();
-    db.tune_comparator(comparator);*/
+    db.tune_comparator(new PatchTreeKeyComparator());
 
     // Open the database
     if (!db.open(file_name, HashDB::OWRITER | HashDB::OCREATE)) {

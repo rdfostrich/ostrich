@@ -16,6 +16,7 @@ set(COMMON_FILES
         src/main/cpp/patch/patch_element.cc src/main/cpp/patch/patch_element.h
         src/main/cpp/patch/patch_elements.cc src/main/cpp/patch/patch_elements.h
         src/main/cpp/patch/patch_tree_value.cc src/main/cpp/patch/patch_tree_value.h
+        src/main/cpp/patch/patch_tree_key_comparator.cc src/main/cpp/patch/patch_tree_key_comparator.h
         src/main/cpp/patch/patch_tree.cc src/main/cpp/patch/patch_tree.h
         src/main/cpp/patch/patch_tree_iterator.cc src/main/cpp/patch/patch_tree_iterator.h
         src/main/cpp/patch/patch.h)
@@ -24,6 +25,7 @@ set(TEST_FILES
         src/test/cpp/patch/patch_element.cc
         src/test/cpp/patch/patch_elements.cc
         src/test/cpp/patch/patch_tree_value.cc
+        src/test/cpp/patch/patch_tree_key_comparator.cc
         src/test/cpp/patch/patch_tree.cc
         )
 

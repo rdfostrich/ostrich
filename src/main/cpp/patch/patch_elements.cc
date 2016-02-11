@@ -18,3 +18,11 @@ PatchElement PatchElements::get(int index) {
     }
     return elements[index];
 }
+
+string PatchElements::to_string() {
+    string ret;
+    for(int i = 0; i < elements.size(); i++) {
+        ret += elements[i].to_string() + "\n";
+    }
+    return ret;
+}
