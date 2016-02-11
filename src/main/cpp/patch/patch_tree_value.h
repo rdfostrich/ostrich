@@ -19,6 +19,7 @@ public:
     PatchTreeValueElement() : patch_id(-1), patch_position(-1), addition(false) {} // Required for vector#resize
     PatchTreeValueElement(int patch_id, int patch_position, bool addition) :
             patch_id(patch_id), patch_position(patch_position), addition(addition) {}
+    bool operator < (const PatchTreeValueElement &rhs) const { return patch_id < rhs.patch_id; }
 };
 
 // A value in the PatchTree is a linked list of PatchTreeValueElements

@@ -20,27 +20,24 @@ bool PatchTreeValueElement::is_addition() {
 PatchTreeValue::PatchTreeValue() {}
 
 void PatchTreeValue::add(PatchTreeValueElement element) {
-    elements.push_back(element);
+    std::vector<PatchTreeValueElement>::iterator itToInsert = std::lower_bound(
+            elements.begin(), elements.end(), element);
+    elements.insert(itToInsert, element);
 }
 
 bool PatchTreeValue::contains(int patch_id) {
-    for(int i = 0; i < elements.size(); i++) {
-        if(elements[i].get_patch_id() == patch_id) {
-            return true;
-        }
-    }
-    return false;
+    return std::binary_search(elements.begin(), elements.end(), PatchTreeValueElement(patch_id, -1, -1));
 }
 
 PatchTreeValueElement PatchTreeValue::get(int patch_id) {
-    // This can alternatively be implemented as a map for improving lookup efficiency
-    // But we have to make sure that serialization is fast
-    for(int i = 0; i < elements.size(); i++) {
-        if(elements[i].get_patch_id() == patch_id) {
-            return elements[i];
-        }
+    PatchTreeValueElement item(patch_id, -1, -1);
+    std::vector<PatchTreeValueElement>::iterator findIt = std::lower_bound(elements.begin(), elements.end(), item);
+    if (findIt != elements.end() && findIt->get_patch_id() == patch_id) {
+        size_t i = std::distance(elements.begin(), findIt);
+        return elements[i];
+    } else {
+        throw std::invalid_argument("Patch id not present.");
     }
-    throw std::invalid_argument("Patch id not present.");
 }
 
 string PatchTreeValue::to_string() {

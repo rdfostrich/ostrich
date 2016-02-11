@@ -16,7 +16,7 @@ TEST(PatchTreeValueTest, ToString) {
     value.add(PatchTreeValueElement(1, 82, false));
     value.add(PatchTreeValueElement(20, 3, false));
     value.add(PatchTreeValueElement(10, 742, true));
-    ASSERT_EQ("{0:1(+),1:82(-),20:3(-),10:742(+)}", value.to_string()) << "to_string is incorrect";
+    ASSERT_EQ("{0:1(+),1:82(-),10:742(+),20:3(-)}", value.to_string()) << "to_string is incorrect";
 }
 
 TEST(PatchTreeValueTest, Lookup) {

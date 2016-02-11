@@ -57,19 +57,7 @@ else (KYOTO_SHARED_LIBRARY MATCHES KYOTO_LIBRARY-NOTFOUND)
 endif (KYOTO_SHARED_LIBRARY MATCHES KYOTO_LIBRARY-NOTFOUND)
 
 # Add Boost
-hunter_add_package(Boost COMPONENTS iostreams serialization)
-find_package(Boost CONFIG REQUIRED COMPONENTS iostreams serialization)
-target_link_libraries(${PROJECT_NAME_STR} Boost::iostreams Boost::serialization)
-#set(Boost_USE_STATIC_LIBS OFF)
-#find_package (Boost 1.55.0 REQUIRED COMPONENTS iostreams serialization)
-#if (Boost_FOUND)
-#    include_directories(SYSTEM ${Boost_INCLUDE_DIR})
-#    target_link_libraries(${PROJECT_NAME_STR} ${LIBSTDCXX} ${Boost_LIBRARIES})
-#    link_libraries(${Boost_LIBRARIES})
-#    message(STATUS "Boost Found")
-#else ()
-#    message("FATAL_ERROR Boost not found!")
-#endif ()
+find_package(Boost CONFIG REQUIRED COMPONENTS container)
 
 # Add gtest
 set(EXT_PROJECTS_DIR ${PROJECT_SOURCE_DIR}/ext)
@@ -100,7 +88,6 @@ endif()
 
 target_link_libraries(${PROJECT_TEST_NAME} ${LIBSTDCXX})
 target_link_libraries(${PROJECT_TEST_NAME} ${KYOTO_SHARED_LIBRARY})
-target_link_libraries(${PROJECT_TEST_NAME} Boost::iostreams Boost::serialization)
 target_link_libraries(${PROJECT_TEST_NAME} ${CMAKE_THREAD_LIBS_INIT})
 
 add_test(test1 ${PROJECT_TEST_NAME})

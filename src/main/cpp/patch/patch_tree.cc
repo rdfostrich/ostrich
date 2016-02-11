@@ -9,7 +9,8 @@ using namespace kyotocabinet;
 
 PatchTree::PatchTree(string file_name) {
     // Set the triple comparator
-    db.tune_comparator(new PatchTreeKeyComparator());
+    keyComparator = new PatchTreeKeyComparator();
+    db.tune_comparator(keyComparator);
 
     // Open the database
     if (!db.open(file_name, HashDB::OWRITER | HashDB::OCREATE)) {

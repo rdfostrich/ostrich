@@ -6,6 +6,7 @@
 #include "patch_tree_iterator.h"
 #include "patch.h"
 #include "patch.h"
+#include "patch_tree_key_comparator.h"
 
 using namespace std;
 using namespace kyotocabinet;
@@ -13,6 +14,7 @@ using namespace kyotocabinet;
 class PatchTree {
 private:
     TreeDB db;
+    PatchTreeKeyComparator* keyComparator;
 public:
     PatchTree(string file_name);
     ~PatchTree();
