@@ -25,6 +25,18 @@ TEST_F(PatchElementsTest, AddMultiple) {
     patchElements.add(PatchElement(Triple("s4", "p4", "o4"), true));
 }
 
+TEST_F(PatchElementsTest, ToString) {
+    patchElements.add(PatchElement(Triple("s1", "p1", "o1"), true));
+    patchElements.add(PatchElement(Triple("s2", "p2", "o2"), false));
+    patchElements.add(PatchElement(Triple("s3", "p3", "o3"), false));
+    patchElements.add(PatchElement(Triple("s4", "p4", "o4"), true));
+
+    ASSERT_EQ("s1 p1 o1. (+)\n"
+              "s2 p2 o2. (-)\n"
+              "s3 p3 o3. (-)\n"
+              "s4 p4 o4. (+)\n", patchElements.to_string()) << "to_string() is invalid";
+}
+
 TEST_F(PatchElementsTest, GetSize) {
     ASSERT_EQ(0, patchElements.getSize()) << "Size of empty patch must be 0";
 
@@ -119,4 +131,16 @@ TEST_F(PatchElementsTest, GetMultiple) {
     ASSERT_EQ(patchElement4.get_triple().get_subject(), patchElement4Got.get_triple().get_subject()) << "Retrieved patch 4 subject does not equal the inserted patch subject";
     ASSERT_EQ(patchElement4.get_triple().get_predicate(), patchElement4Got.get_triple().get_predicate()) << "Retrieved patch 4 predicate does not equal the inserted patch predicate";
     ASSERT_EQ(patchElement4.get_triple().get_object(), patchElement4Got.get_triple().get_object()) << "Retrieved patch 4 object does not equal the inserted patch object";
+}
+
+TEST_F(PatchElementsTest, Order) {
+    patchElements.add(PatchElement(Triple("s3", "p3", "o3"), false));
+    patchElements.add(PatchElement(Triple("s1", "p1", "o1"), false));
+    patchElements.add(PatchElement(Triple("s4", "p4", "o4"), true));
+    patchElements.add(PatchElement(Triple("s2", "p2", "o2"), true));
+
+    ASSERT_EQ("s1 p1 o1. (-)", patchElements.get(0).to_string()) << "First element is incorrect";
+    ASSERT_EQ("s2 p2 o2. (-)", patchElements.get(1).to_string()) << "Second element is incorrect";
+    ASSERT_EQ("s3 p3 o3. (-)", patchElements.get(2).to_string()) << "Third element is incorrect";
+    ASSERT_EQ("s4 p4 o4. (-)", patchElements.get(3).to_string()) << "Fourth element is incorrect";
 }

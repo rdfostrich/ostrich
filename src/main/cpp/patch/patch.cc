@@ -5,7 +5,9 @@
 Patch::Patch() : elements() {}
 
 void Patch::add(PatchElement element) {
-    elements.push_back(element);
+    std::vector<PatchElement>::iterator itToInsert = std::lower_bound(
+            elements.begin(), elements.end(), element);
+    elements.insert(itToInsert, element);
 }
 
 unsigned long Patch::getSize() {

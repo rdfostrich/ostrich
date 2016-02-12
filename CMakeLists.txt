@@ -23,7 +23,7 @@ set(COMMON_FILES
 set(TEST_FILES
         src/test/cpp/patch/triple.cc
         src/test/cpp/patch/patch_element.cc
-        src/test/cpp/patch/patch_elements.cc
+        src/test/cpp/patch/patch.cc
         src/test/cpp/patch/patch_tree_value.cc
         src/test/cpp/patch/patch_tree_key_comparator.cc
         src/test/cpp/patch/patch_tree.cc
