@@ -19,10 +19,15 @@ public:
      */
     void add(PatchElement element);
     /**
+     * Copy all patch elements from the given patch into this patch.
+     * @param patch The patch to get all elements from
+     */
+    void addAll(Patch patch);
+    /**
      * The current size of the patch.
      * @return The size
      */
-    unsigned long getSize();
+    unsigned long get_size();
     /**
      * Get the patch element at the given position.
      * @param index The index to get a patch element from

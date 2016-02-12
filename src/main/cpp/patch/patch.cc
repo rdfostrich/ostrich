@@ -10,12 +10,18 @@ void Patch::add(PatchElement element) {
     elements.insert(itToInsert, element);
 }
 
-unsigned long Patch::getSize() {
+void Patch::addAll(Patch patch) {
+    for(int i = 0; i < patch.get_size(); i++) {
+        add(patch.get(i));
+    }
+}
+
+unsigned long Patch::get_size() {
     return elements.size();
 }
 
 PatchElement Patch::get(int index) {
-    if(index < 0 || index >= getSize()) {
+    if(index < 0 || index >= get_size()) {
         throw std::invalid_argument("Index out of bounds");
     }
     return elements[index];

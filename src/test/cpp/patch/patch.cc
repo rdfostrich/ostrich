@@ -25,6 +25,22 @@ TEST_F(PatchElementsTest, AddMultiple) {
     patchElements.add(PatchElement(Triple("s4", "p4", "o4"), true));
 }
 
+TEST_F(PatchElementsTest, AddAll) {
+    Patch patch2;
+
+    patchElements.add(PatchElement(Triple("s1", "p1", "o1"), true));
+    patchElements.add(PatchElement(Triple("s3", "p3", "o3"), false));
+
+    patch2.add(PatchElement(Triple("s2", "p2", "o2"), false));
+    patch2.add(PatchElement(Triple("s4", "p4", "o4"), true));
+    patchElements.addAll(patch2);
+
+    ASSERT_EQ("s1 p1 o1. (+)", patchElements.get(0).to_string()) << "First element is incorrect";
+    ASSERT_EQ("s2 p2 o2. (-)", patchElements.get(1).to_string()) << "Second element is incorrect";
+    ASSERT_EQ("s3 p3 o3. (-)", patchElements.get(2).to_string()) << "Third element is incorrect";
+    ASSERT_EQ("s4 p4 o4. (+)", patchElements.get(3).to_string()) << "Fourth element is incorrect";
+}
+
 TEST_F(PatchElementsTest, ToString) {
     patchElements.add(PatchElement(Triple("s1", "p1", "o1"), true));
     patchElements.add(PatchElement(Triple("s2", "p2", "o2"), false));
@@ -38,15 +54,15 @@ TEST_F(PatchElementsTest, ToString) {
 }
 
 TEST_F(PatchElementsTest, GetSize) {
-    ASSERT_EQ(0, patchElements.getSize()) << "Size of empty patch must be 0";
+    ASSERT_EQ(0, patchElements.get_size()) << "Size of empty patch must be 0";
 
     patchElements.add(PatchElement(Triple("s1", "p1", "o1"), true));
-    ASSERT_EQ(1, patchElements.getSize()) << "Size of patch with one element must be 1";
+    ASSERT_EQ(1, patchElements.get_size()) << "Size of patch with one element must be 1";
 
     patchElements.add(PatchElement(Triple("s2", "p2", "o2"), false));
     patchElements.add(PatchElement(Triple("s3", "p3", "o3"), false));
     patchElements.add(PatchElement(Triple("s4", "p4", "o4"), true));
-    ASSERT_EQ(4, patchElements.getSize()) << "Size of patch with four elements must be 4";
+    ASSERT_EQ(4, patchElements.get_size()) << "Size of patch with four elements must be 4";
 }
 
 TEST_F(PatchElementsTest, GetInvalidEmpty) {
@@ -140,7 +156,7 @@ TEST_F(PatchElementsTest, Order) {
     patchElements.add(PatchElement(Triple("s2", "p2", "o2"), true));
 
     ASSERT_EQ("s1 p1 o1. (-)", patchElements.get(0).to_string()) << "First element is incorrect";
-    ASSERT_EQ("s2 p2 o2. (-)", patchElements.get(1).to_string()) << "Second element is incorrect";
+    ASSERT_EQ("s2 p2 o2. (+)", patchElements.get(1).to_string()) << "Second element is incorrect";
     ASSERT_EQ("s3 p3 o3. (-)", patchElements.get(2).to_string()) << "Third element is incorrect";
-    ASSERT_EQ("s4 p4 o4. (-)", patchElements.get(3).to_string()) << "Fourth element is incorrect";
+    ASSERT_EQ("s4 p4 o4. (+)", patchElements.get(3).to_string()) << "Fourth element is incorrect";
 }
