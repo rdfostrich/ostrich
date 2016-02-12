@@ -11,6 +11,7 @@
 using namespace std;
 using namespace kyotocabinet;
 
+// A PatchTree can store Patches which are persisted to a file
 class PatchTree {
 private:
     TreeDB db;
@@ -43,8 +44,22 @@ public:
      * @return If the patch is present in the tree.
      */
     bool contains(PatchElement patch_element, int patch_id, bool ignore_type);
+    /**
+     * Reconstruct a patch based on the given patch id.
+     * It will loop over the tree and rebuild the patch.
+     * @param The patch id
+     * @return The reconstructed patch
+     */
     Patch reconstruct_patch(int patch_id);
+    /**
+     * Get an iterator starting from the given key.
+     * @return The iterator that will loop over the tree from the given key.
+     */
     PatchTreeIterator iterator(PatchTreeKey* key);
+    /**
+     * Get an iterator starting from the start of the tree and only emitting the elements in the given patch.
+     * @return The iterator that will loop over the tree for the given patch.
+     */
     PatchTreeIterator iterator(int patch_id);
 };
 

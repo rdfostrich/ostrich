@@ -9,6 +9,7 @@
 // A key in the PatchTree is a triple
 typedef Triple PatchTreeKey;
 
+// A Patch contains an ordered list of PatchElements
 class Patch {
 protected:
     std::vector<PatchElement> elements;

@@ -17,7 +17,17 @@ private:
 public:
     PatchTreeIterator(DB::Cursor* cursor);
     ~PatchTreeIterator();
+    /**
+     * Set the patch id to filter by
+     * @param patch_id The patch id to filter by
+     */
     void set_filter(int patch_id);
+    /**
+     * Point to the next element
+     * @param key The key the iterator is currently pointing at.
+     * @param value The value the iterator is currently pointing at.
+     * @return If this next element exists, otherwise the key and value will be invalid and should be ignored.
+     */
     bool next(PatchTreeKey* key, PatchTreeValue* value);
 };
 

@@ -9,6 +9,8 @@ using namespace std;
 
 typedef long PatchPosition; // TODO: Maybe we can convert this to an int, to reduce tree size
 
+// A PatchTreeValueElement contains a patch id, a relative patch position and
+// an indication whether or not this is an addition or deletion.
 class PatchTreeValueElement {
 protected:
     int patch_id;
@@ -24,12 +26,19 @@ public:
     bool operator < (const PatchTreeValueElement &rhs) const { return patch_id < rhs.patch_id; }
 };
 
-// A value in the PatchTree is a linked list of PatchTreeValueElements
+// A PatchTreeValue in a PatchTree is a sorted list of PatchTreeValueElements
+// It contains the information corresponding to one triple in the patch tree.
+// It can be seen as a mapping from patch id to the pair of relative patch
+// position and element type (addition or deletion).
 class PatchTreeValue {
 protected:
     std::vector<PatchTreeValueElement> elements;
 public:
     PatchTreeValue();
+    /**
+     * Add the given element.
+     * @param element The value element to add
+     */
     void add(PatchTreeValueElement element);
     /**
      * Get the index of the given patch in this value list.
@@ -48,8 +57,21 @@ public:
      * @return The patch.
      */
     PatchTreeValueElement get(int patch_id);
+    /**
+     * @return The string representation of this patch.
+     */
     string to_string();
+    /**
+     * Serialize this value to a byte array
+     * @param size This will contain the size of the returned byte array
+     * @return The byte array
+     */
     const char* serialize(size_t* size);
+    /**
+     * Deserialize the given byte array to this object.
+     * @param data The data to deserialize from.
+     * @param size The size of the byte array
+     */
     void deserialize(const char* data, size_t size);
 };
 

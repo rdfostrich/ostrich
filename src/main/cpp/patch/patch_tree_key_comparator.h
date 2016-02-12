@@ -6,6 +6,7 @@
 
 using namespace kyotocabinet;
 
+// A PatchTreeKeyComparator can be used in a Kyoto Cabinet TreeDB for ordering by PatchTreeKey.
 class PatchTreeKeyComparator : public Comparator {
 public:
     int32_t compare(const char* akbuf, size_t aksiz, const char* bkbuf, size_t bksiz);
