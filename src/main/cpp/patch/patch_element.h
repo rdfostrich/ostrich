@@ -13,7 +13,7 @@ public:
     Triple get_triple();
     bool is_addition();
     string to_string();
-    bool operator < (const PatchElement &rhs) const { return triple < rhs.triple || (!addition && rhs.addition); }
+    bool operator < (const PatchElement &rhs) const { return triple < rhs.triple || (triple == rhs.triple && !addition && rhs.addition); }
 };
 
 
