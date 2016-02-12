@@ -25,8 +25,14 @@ PatchTree::~PatchTree() {
     }
 }
 
+Patch PatchTree::reconstruct_patch(int patch_id) {
+    // TODO: loop over complete tree to reconstruct the patch
+}
+
 int PatchTree::append(Patch patch, int patch_id) {
-    for(int i = 0; i < patch.getSize(); i++) {
+    // TODO: reconstruct patch
+    // TODO: merge 2 patches
+    for(int i = 0; i < patch.get_size(); i++) {
         PatchElement patchElement = patch.get(i);
 
         // Look up the value for the given triple key in the tree.
@@ -39,7 +45,7 @@ int PatchTree::append(Patch patch, int patch_id) {
         }
 
         // Modify the value
-        int patch_position = 0; // TODO: the relative position in the list.
+        int patch_position = 0; // TODO: the relative position in the merged patch.
         long existing_patch_index = value.get_patchvalue_index(patch_id);
         if(existing_patch_index == -1) {
             value.add(PatchTreeValueElement(patch_id, patch_position, patchElement.is_addition()));
@@ -60,5 +66,13 @@ PatchTreeIterator PatchTree::iterator(PatchTreeKey* key) {
     DB::Cursor* cursor = db.cursor();
     cursor->jump((const char *) key, sizeof(key));
     PatchTreeIterator patchTreeIterator(cursor);
+    return patchTreeIterator;
+}
+
+PatchTreeIterator PatchTree::iterator(int patch_id) {
+    DB::Cursor* cursor = db.cursor();
+    cursor->jump();
+    PatchTreeIterator patchTreeIterator(cursor);
+    patchTreeIterator.set_filter(patch_id);
     return patchTreeIterator;
 }

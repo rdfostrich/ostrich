@@ -60,7 +60,7 @@ TEST_F(PatchTreeTest, IteratorOrder) {
     patchTree->append(patch, 0);
 
     PatchTreeKey iteratorKey = Triple("a", "a", "a");
-    PatchTreeIterator it = patchTree->iterator(&iteratorKey);
+    PatchTreeIterator it = patchTree->iterator(&iteratorKey); // Iterate starting from the given triple.
     PatchTreeKey key;
     PatchTreeValue value;
 
@@ -87,6 +87,51 @@ TEST_F(PatchTreeTest, IteratorOrder) {
     ASSERT_EQ(false, value.get(0).is_addition()) << "Fourth value is incorrect";
     ASSERT_EQ(0, value.get(0).get_patch_id()) << "Fourth value is incorrect";
     ASSERT_EQ(0, value.get(0).get_patch_position()) << "Fourth value is incorrect";
+
+    ASSERT_EQ(false, it.next(&key, &value)) << "Iterator should be finished";
+}
+
+TEST_F(PatchTreeTest, PatchIterator) {
+    Patch patch1;
+    patch1.add(PatchElement(Triple("g", "p", "o"), false));
+    patch1.add(PatchElement(Triple("a", "p", "o"), true));
+    patch1.add(PatchElement(Triple("s", "z", "o"), false));
+    patch1.add(PatchElement(Triple("s", "a", "o"), true));
+    patchTree->append(patch1, 1);
+
+    Patch patch2;
+    patch2.add(PatchElement(Triple("q", "p", "o"), false));
+    patch2.add(PatchElement(Triple("g", "p", "o"), true));
+    patch2.add(PatchElement(Triple("s", "z", "o"), false));
+    patch2.add(PatchElement(Triple("s", "a", "o"), true));
+    patchTree->append(patch2, 2);
+
+    Patch patch3;
+    patch3.add(PatchElement(Triple("g", "p", "o"), false));
+    patch3.add(PatchElement(Triple("a", "p", "o"), false));
+    patch3.add(PatchElement(Triple("h", "z", "o"), false));
+    patch3.add(PatchElement(Triple("l", "a", "o"), true));
+    patchTree->append(patch3, 3);
+
+    PatchTreeIterator it = patchTree->iterator(2); // Iterate over all elements of patch 2
+    PatchTreeKey key;
+    PatchTreeValue value;
+
+    ASSERT_EQ(true, it.next(&key, &value)) << "Iterator has a no next value";
+    ASSERT_EQ("g p o.", key.to_string()) << "First key is incorrect";
+    ASSERT_EQ(true, value.get(2).is_addition()) << "First value is incorrect";
+
+    ASSERT_EQ(true, it.next(&key, &value)) << "Iterator has a no next value";
+    ASSERT_EQ("q p o.", key.to_string()) << "Second key is incorrect";
+    ASSERT_EQ(false, value.get(2).is_addition()) << "Second value is incorrect";
+
+    ASSERT_EQ(true, it.next(&key, &value)) << "Iterator has a no next value";
+    ASSERT_EQ("s a o.", key.to_string()) << "Third key is incorrect";
+    ASSERT_EQ(true, value.get(2).is_addition()) << "Third value is incorrect";
+
+    ASSERT_EQ(true, it.next(&key, &value)) << "Iterator has a no next value";
+    ASSERT_EQ("s z o.", key.to_string()) << "Fourth key is incorrect";
+    ASSERT_EQ(false, value.get(2).is_addition()) << "Fourth value is incorrect";
 
     ASSERT_EQ(false, it.next(&key, &value)) << "Iterator should be finished";
 }
