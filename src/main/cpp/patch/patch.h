@@ -35,6 +35,14 @@ public:
      */
     PatchElement get(int index);
     /**
+     * Find the position of the given element in this patch.
+     * Note that the element does not *have to* be present in the patch, it will just return the position
+     * at which it would be present.
+     * @param The element to look for
+     * @return The relative position
+     */
+    int position_of(PatchElement element);
+    /**
      * @return The string representation of this patch.
      */
     string to_string();

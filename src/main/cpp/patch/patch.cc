@@ -27,6 +27,11 @@ PatchElement Patch::get(int index) {
     return elements[index];
 }
 
+int Patch::position_of(PatchElement element) {
+    std::vector<PatchElement>::iterator findIt = std::lower_bound(elements.begin(), elements.end(), element);
+    return std::distance(elements.begin(), findIt); // TODO: carry on long
+}
+
 string Patch::to_string() {
     string ret;
     for(int i = 0; i < elements.size(); i++) {
