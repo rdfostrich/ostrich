@@ -48,7 +48,7 @@ int PatchTree::append_unsafe(Patch patch, int patch_id) {
         }
 
         // Modify the value
-        int patch_position = existing_patch.position_of(patchElement);
+        long patch_position = existing_patch.position_of(patchElement);
         // Give an error for elements in `patch` that are already present in the tree.
         if(patch.position_of_strict(patchElement) == -1 // If this element is one of the patch elements we are simply updating (not one that we are newly adding now)
            || value.get_patchvalue_index(patch_id) == -1) { // If this element is part of the elements we are adding now AND the element is not present in the tree already

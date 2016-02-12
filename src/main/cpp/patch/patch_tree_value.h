@@ -7,17 +7,19 @@
 
 using namespace std;
 
+typedef long PatchPosition; // TODO: Maybe we can convert this to an int, to reduce tree size
+
 class PatchTreeValueElement {
 protected:
     int patch_id;
-    int patch_position;
+    PatchPosition patch_position;
     bool addition;
 public:
     int get_patch_id();
-    int get_patch_position();
+    PatchPosition get_patch_position();
     bool is_addition();
     PatchTreeValueElement() : patch_id(-1), patch_position(-1), addition(false) {} // Required for vector#resize
-    PatchTreeValueElement(int patch_id, int patch_position, bool addition) :
+    PatchTreeValueElement(int patch_id, long patch_position, bool addition) :
             patch_id(patch_id), patch_position(patch_position), addition(addition) {}
     bool operator < (const PatchTreeValueElement &rhs) const { return patch_id < rhs.patch_id; }
 };

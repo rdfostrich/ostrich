@@ -9,7 +9,7 @@ int PatchTreeValueElement::get_patch_id() {
     return patch_id;
 }
 
-int PatchTreeValueElement::get_patch_position() {
+PatchPosition PatchTreeValueElement::get_patch_position() {
     return patch_position;
 }
 

@@ -27,15 +27,15 @@ PatchElement Patch::get(int index) {
     return elements[index];
 }
 
-int Patch::position_of(PatchElement element) {
+PatchPosition Patch::position_of(PatchElement element) {
     std::vector<PatchElement>::iterator findIt = std::lower_bound(elements.begin(), elements.end(), element);
-    return std::distance(elements.begin(), findIt); // TODO: carry on long
+    return std::distance(elements.begin(), findIt);
 }
 
-int Patch::position_of_strict(PatchElement element) {
+PatchPosition Patch::position_of_strict(PatchElement element) {
     std::vector<PatchElement>::iterator findIt = std::lower_bound(elements.begin(), elements.end(), element);
     if (findIt != elements.end() && *findIt == element) {
-        return std::distance(elements.begin(), findIt); // TODO: carry on long
+        return std::distance(elements.begin(), findIt);
     }
     return -1;
 }

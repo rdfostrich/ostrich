@@ -4,6 +4,7 @@
 #include <vector>
 #include "patch.h"
 #include "patch_element.h"
+#include "patch_tree_value.h"
 
 // A key in the PatchTree is a triple
 typedef Triple PatchTreeKey;
@@ -41,13 +42,13 @@ public:
      * @param The element to look for
      * @return The relative position
      */
-    int position_of(PatchElement element);
+    PatchPosition position_of(PatchElement element);
     /**
      * Find the position of the given element in this patch.
      * @param The element to look for
      * @return The relative position, -1 if not present in this patch.
      */
-    int position_of_strict(PatchElement element);
+    PatchPosition position_of_strict(PatchElement element);
     /**
      * @return The string representation of this patch.
      */

@@ -73,6 +73,6 @@ TEST(PatchTreeValueTest, SerializationSize) {
     size_t size;
     const char* data = valueIn.serialize(&size);
 
-    ASSERT_EQ(48, size) << "Serialization length is too high";
+    ASSERT_EQ(sizeof(PatchTreeValueElement) * 4, size) << "Serialization length is too high";
     free((char*) data);
 }
