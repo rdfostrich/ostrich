@@ -149,7 +149,7 @@ TEST_F(PatchElementsTest, GetMultiple) {
     ASSERT_EQ(patchElement4.get_triple().get_object(), patchElement4Got.get_triple().get_object()) << "Retrieved patch 4 object does not equal the inserted patch object";
 }
 
-TEST_F(PatchElementsTest, Order) {
+TEST_F(PatchElementsTest, Order1) {
     patchElements.add(PatchElement(Triple("s3", "p3", "o3"), false));
     patchElements.add(PatchElement(Triple("s1", "p1", "o1"), false));
     patchElements.add(PatchElement(Triple("s4", "p4", "o4"), true));
@@ -159,4 +159,40 @@ TEST_F(PatchElementsTest, Order) {
     ASSERT_EQ("s2 p2 o2. (+)", patchElements.get(1).to_string()) << "Second element is incorrect";
     ASSERT_EQ("s3 p3 o3. (-)", patchElements.get(2).to_string()) << "Third element is incorrect";
     ASSERT_EQ("s4 p4 o4. (+)", patchElements.get(3).to_string()) << "Fourth element is incorrect";
+}
+
+TEST_F(PatchElementsTest, Order2) {
+    patchElements.add(PatchElement(Triple("s4", "p4", "o4"), true));
+    patchElements.add(PatchElement(Triple("s3", "p3", "o3"), false));
+    patchElements.add(PatchElement(Triple("s2", "p2", "o2"), true));
+    patchElements.add(PatchElement(Triple("s1", "p1", "o1"), false));
+
+    ASSERT_EQ("s1 p1 o1. (-)", patchElements.get(0).to_string()) << "First element is incorrect";
+    ASSERT_EQ("s2 p2 o2. (+)", patchElements.get(1).to_string()) << "Second element is incorrect";
+    ASSERT_EQ("s3 p3 o3. (-)", patchElements.get(2).to_string()) << "Third element is incorrect";
+    ASSERT_EQ("s4 p4 o4. (+)", patchElements.get(3).to_string()) << "Fourth element is incorrect";
+}
+
+TEST_F(PatchElementsTest, Order3) {
+    patchElements.add(PatchElement(Triple("q", "p", "o"), false));
+    patchElements.add(PatchElement(Triple("g", "p", "o"), true));
+    patchElements.add(PatchElement(Triple("s", "z", "o"), false));
+    patchElements.add(PatchElement(Triple("s", "a", "o"), true));
+
+    ASSERT_EQ("g p o. (+)", patchElements.get(0).to_string()) << "First element is incorrect";
+    ASSERT_EQ("q p o. (-)", patchElements.get(1).to_string()) << "Second element is incorrect";
+    ASSERT_EQ("s a o. (+)", patchElements.get(2).to_string()) << "Third element is incorrect";
+    ASSERT_EQ("s z o. (-)", patchElements.get(3).to_string()) << "Fourth element is incorrect";
+}
+
+TEST_F(PatchElementsTest, Order4) {
+    patchElements.add(PatchElement(Triple("s", "z", "o"), false));
+    patchElements.add(PatchElement(Triple("g", "p", "o"), true));
+    patchElements.add(PatchElement(Triple("q", "p", "o"), false));
+    patchElements.add(PatchElement(Triple("s", "a", "o"), true));
+
+    ASSERT_EQ("g p o. (+)", patchElements.get(0).to_string()) << "First element is incorrect";
+    ASSERT_EQ("q p o. (-)", patchElements.get(1).to_string()) << "Second element is incorrect";
+    ASSERT_EQ("s a o. (+)", patchElements.get(2).to_string()) << "Third element is incorrect";
+    ASSERT_EQ("s z o. (-)", patchElements.get(3).to_string()) << "Fourth element is incorrect";
 }

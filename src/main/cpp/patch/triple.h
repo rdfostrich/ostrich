@@ -19,7 +19,11 @@ public:
     string to_string();
     const char* serialize(size_t* size);
     void deserialize(const char* data, size_t size);
-    bool operator < (const Triple &rhs) const { return subject < rhs.subject && predicate < rhs.predicate && object < rhs.object; }
+    bool operator < (const Triple &rhs) const {
+        return subject < rhs.subject ||
+                (subject == rhs.subject && (predicate < rhs.predicate ||
+                        (predicate == rhs.predicate && object < rhs.object)));
+    }
     bool operator == (const Triple &rhs) const { return subject == rhs.subject && predicate == rhs.predicate && object == rhs.object; }
 };
 

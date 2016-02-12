@@ -135,3 +135,54 @@ TEST_F(PatchTreeTest, PatchIterator) {
 
     ASSERT_EQ(false, it.next(&key, &value)) << "Iterator should be finished";
 }
+
+TEST_F(PatchTreeTest, ReconstructPatchSingle) {
+    Patch patch1;
+    patch1.add(PatchElement(Triple("g", "p", "o"), false));
+    patch1.add(PatchElement(Triple("a", "p", "o"), true));
+    patch1.add(PatchElement(Triple("s", "z", "o"), false));
+    patch1.add(PatchElement(Triple("s", "a", "o"), true));
+    patchTree->append(patch1, 1);
+
+    Patch patch2;
+    patch2.add(PatchElement(Triple("q", "p", "o"), false));
+    patch2.add(PatchElement(Triple("g", "p", "o"), true));
+    patch2.add(PatchElement(Triple("s", "z", "o"), false));
+    patch2.add(PatchElement(Triple("s", "a", "o"), true));
+    patchTree->append(patch2, 2);
+
+    Patch patch3;
+    patch3.add(PatchElement(Triple("g", "p", "o"), false));
+    patch3.add(PatchElement(Triple("a", "p", "o"), false));
+    patch3.add(PatchElement(Triple("h", "z", "o"), false));
+    patch3.add(PatchElement(Triple("l", "a", "o"), true));
+    patchTree->append(patch3, 3);
+
+    Patch patch2_copy = patchTree->reconstruct_patch(2);
+    ASSERT_EQ(patch2.to_string(), patch2_copy.to_string()) << "Reconstructed patch should be equal to inserted patch";
+}
+
+TEST_F(PatchTreeTest, ReconstructPatchComposite) {
+    Patch patch1;
+    patch1.add(PatchElement(Triple("g", "p", "o"), false));
+    patch1.add(PatchElement(Triple("a", "p", "o"), true));
+    patchTree->append(patch1, 1);
+
+    Patch patch2;
+    patch2.add(PatchElement(Triple("s", "z", "o"), false));
+    patch2.add(PatchElement(Triple("s", "a", "o"), true));
+    patchTree->append(patch2, 1);
+
+    Patch patch3;
+    patch3.add(PatchElement(Triple("g", "p", "o"), false));
+    patch3.add(PatchElement(Triple("a", "p", "o"), false));
+    patch3.add(PatchElement(Triple("h", "z", "o"), false));
+    patch3.add(PatchElement(Triple("l", "a", "o"), true));
+    patchTree->append(patch3, 2);
+
+    Patch patch2_copy = patchTree->reconstruct_patch(1);
+    ASSERT_EQ("a p o. (+)\n"
+              "g p o. (-)\n"
+              "s a o. (+)\n"
+              "s z o. (-)\n", patch2_copy.to_string()) << "Reconstructed patch should be equal to the given patch";
+}

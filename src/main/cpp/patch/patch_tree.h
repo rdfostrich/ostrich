@@ -18,8 +18,8 @@ private:
 public:
     PatchTree(string file_name);
     ~PatchTree();
-    Patch reconstruct_patch(int patch_id);
     int append(Patch patch, int patch_id);
+    Patch reconstruct_patch(int patch_id);
     PatchTreeIterator iterator(PatchTreeKey* key);
     PatchTreeIterator iterator(int patch_id);
 };

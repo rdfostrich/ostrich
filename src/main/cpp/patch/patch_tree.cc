@@ -25,10 +25,6 @@ PatchTree::~PatchTree() {
     }
 }
 
-Patch PatchTree::reconstruct_patch(int patch_id) {
-    // TODO: loop over complete tree to reconstruct the patch
-}
-
 int PatchTree::append(Patch patch, int patch_id) {
     // TODO: reconstruct patch
     // TODO: merge 2 patches
@@ -60,6 +56,17 @@ int PatchTree::append(Patch patch, int patch_id) {
         db.set(raw_key, key_size, new_raw_value, new_value_size);
     }
     return 0;
+}
+
+Patch PatchTree::reconstruct_patch(int patch_id) {
+    PatchTreeIterator it = iterator(patch_id);
+    PatchTreeKey key;
+    PatchTreeValue value;
+    Patch patch;
+    while(it.next(&key, &value)) {
+        patch.add(PatchElement(key, value.get(patch_id).is_addition()));
+    }
+    return patch;
 }
 
 PatchTreeIterator PatchTree::iterator(PatchTreeKey* key) {
