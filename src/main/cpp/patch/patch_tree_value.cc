@@ -40,7 +40,11 @@ PatchTreeValueElement PatchTreeValue::get_patch(long element) {
 }
 
 PatchTreeValueElement PatchTreeValue::get(int patch_id) {
-    return get_patch(get_patchvalue_index(patch_id));
+    long index = get_patchvalue_index(patch_id);
+    if(index < 0 || index >= elements.size()) {
+        throw std::invalid_argument("Index out of bounds");
+    }
+    return get_patch(index);
 }
 
 string PatchTreeValue::to_string() {

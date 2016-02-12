@@ -32,6 +32,14 @@ int Patch::position_of(PatchElement element) {
     return std::distance(elements.begin(), findIt); // TODO: carry on long
 }
 
+int Patch::position_of_strict(PatchElement element) {
+    std::vector<PatchElement>::iterator findIt = std::lower_bound(elements.begin(), elements.end(), element);
+    if (findIt != elements.end() && *findIt == element) {
+        return std::distance(elements.begin(), findIt); // TODO: carry on long
+    }
+    return -1;
+}
+
 string Patch::to_string() {
     string ret;
     for(int i = 0; i < elements.size(); i++) {

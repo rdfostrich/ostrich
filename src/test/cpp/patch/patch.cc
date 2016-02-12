@@ -220,3 +220,18 @@ TEST_F(PatchElementsTest, PositionNotPresent) {
     ASSERT_EQ(0, patchElements.position_of(PatchElement(Triple("a", "a", "a"), true ))) << "Found position is wrong";
     ASSERT_EQ(4, patchElements.position_of(PatchElement(Triple("s", "z", "z"), false))) << "Found position is wrong";
 }
+
+TEST_F(PatchElementsTest, PositionStrict) {
+    patchElements.add(PatchElement(Triple("s", "z", "o"), false));
+    patchElements.add(PatchElement(Triple("g", "p", "o"), true));
+    patchElements.add(PatchElement(Triple("q", "p", "o"), false));
+    patchElements.add(PatchElement(Triple("s", "a", "o"), true));
+
+    ASSERT_EQ(0, patchElements.position_of_strict(PatchElement(Triple("g", "p", "o"), true ))) << "Found position is wrong";
+    ASSERT_EQ(1, patchElements.position_of_strict(PatchElement(Triple("q", "p", "o"), false))) << "Found position is wrong";
+    ASSERT_EQ(2, patchElements.position_of_strict(PatchElement(Triple("s", "a", "o"), true ))) << "Found position is wrong";
+    ASSERT_EQ(3, patchElements.position_of_strict(PatchElement(Triple("s", "z", "o"), false))) << "Found position is wrong";
+
+    ASSERT_EQ(-1, patchElements.position_of_strict(PatchElement(Triple("g", "p", "o"), false))) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.position_of_strict(PatchElement(Triple("a", "a", "a"), false))) << "Found position is wrong";
+}

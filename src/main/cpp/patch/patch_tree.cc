@@ -26,10 +26,17 @@ PatchTree::~PatchTree() {
 }
 
 int PatchTree::append(Patch patch, int patch_id) {
-    // TODO: reconstruct patch
-    // TODO: merge 2 patches
-    for(int i = 0; i < patch.get_size(); i++) {
-        PatchElement patchElement = patch.get(i);
+    // Reconstruct the full patch and add the new elements.
+    // We need this for finding their relative positions.
+    Patch existing_patch = reconstruct_patch(patch_id);
+    existing_patch.addAll(patch);
+
+    // Loop over all elements in this reconstructed patch
+    // We don't only loop over the new elements, but all of them because
+    // the already available elements might have a different relative patch position,
+    // so these need to be updated.
+    for(int i = 0; i < existing_patch.get_size(); i++) {
+        PatchElement patchElement = existing_patch.get(i);
 
         // Look up the value for the given triple key in the tree.
         size_t key_size, value_size;
@@ -41,12 +48,13 @@ int PatchTree::append(Patch patch, int patch_id) {
         }
 
         // Modify the value
-        int patch_position = 0; // TODO: the relative position in the merged patch.
-        long existing_patch_index = value.get_patchvalue_index(patch_id);
-        if(existing_patch_index == -1) {
+        int patch_position = existing_patch.position_of(patchElement);
+        // Give an error for elements in `patch` that are already present in the tree.
+        if(patch.position_of_strict(patchElement) == -1 // If this element is one of the patch elements we are simply updating (not one that we are newly adding now)
+           || value.get_patchvalue_index(patch_id) == -1) { // If this element is part of the elements we are adding now AND the element is not present in the tree already
             value.add(PatchTreeValueElement(patch_id, patch_position, patchElement.is_addition()));
         } else {
-            cerr << "Already found a patch with id: " << patch_id << " Skipping this patch." << endl;
+            cerr << "Already found a patch element with id: " << patch_id << " Skipping this patch." << endl;
             return -1;
         }
 
