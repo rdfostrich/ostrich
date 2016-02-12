@@ -2,14 +2,13 @@
 
 #include "patch_tree_key_comparator.h"
 
-// TODO: see if we can use the built-in comparator instead, then we can avoid deserializing each time
+// TODO: use dictionary
 int32_t PatchTreeKeyComparator::compare(const char* akbuf, size_t aksiz, const char* bkbuf, size_t bksiz) {
     PatchTreeKey element1;
     PatchTreeKey element2;
     element1.deserialize(akbuf, aksiz);
     element2.deserialize(bkbuf, bksiz);
     int comp_subject = element1.get_subject().compare(element2.get_subject());
-    //cout << "comp: " << element1.to_string() << " ? " << element2.to_string() << endl; // TODO
     if(!comp_subject) {
         int comp_predicate = element1.get_predicate().compare(element2.get_predicate());
         if(!comp_predicate) {
