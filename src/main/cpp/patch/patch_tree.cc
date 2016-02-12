@@ -25,7 +25,7 @@ PatchTree::~PatchTree() {
     }
 }
 
-int PatchTree::append(Patch patch, int patch_id) {
+int PatchTree::append_unsafe(Patch patch, int patch_id) {
     // Reconstruct the full patch and add the new elements.
     // We need this for finding their relative positions.
     Patch existing_patch = reconstruct_patch(patch_id);
@@ -54,7 +54,6 @@ int PatchTree::append(Patch patch, int patch_id) {
            || value.get_patchvalue_index(patch_id) == -1) { // If this element is part of the elements we are adding now AND the element is not present in the tree already
             value.add(PatchTreeValueElement(patch_id, patch_position, patchElement.is_addition()));
         } else {
-            cerr << "Already found a patch element with id: " << patch_id << " Skipping this patch." << endl;
             return -1;
         }
 
@@ -64,6 +63,40 @@ int PatchTree::append(Patch patch, int patch_id) {
         db.set(raw_key, key_size, new_raw_value, new_value_size);
     }
     return 0;
+}
+
+bool PatchTree::append(Patch patch, int patch_id) {
+    for(long i = 0; i < patch.get_size(); i++) {
+        // We IGNORE the element type, because it makes no sense to have +/- in the same patch!
+        if(contains(patch.get(i), patch_id, true)) {
+            return false;
+        }
+    }
+    return append_unsafe(patch, patch_id) == 0;
+}
+
+bool PatchTree::contains(PatchElement patch_element, int patch_id, bool ignore_type) {
+    PatchTreeKey key = patch_element.get_triple();
+    size_t key_size, value_size;
+    const char* raw_key = key.serialize(&key_size);
+    const char* raw_value = db.get(raw_key, key_size, &value_size);
+
+    // First, we check if the key is present
+    bool ret = raw_value != NULL;
+    if(ret) {
+        // After that, we have to deserialize the value and check if for the given patch, the patch element
+        // type (addition/deletion) is the same.
+        PatchTreeValue value;
+        value.deserialize(raw_value, value_size);
+        long i = value.get_patchvalue_index(patch_id);
+        ret = i >= 0;
+        if(ret) {
+            ret = ignore_type || value.get_patch(i).is_addition() == patch_element.is_addition();
+        }
+    }
+    free((char*) raw_key);
+    free((char*) raw_value);
+    return ret;
 }
 
 Patch PatchTree::reconstruct_patch(int patch_id) {

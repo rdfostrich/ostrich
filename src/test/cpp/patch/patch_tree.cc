@@ -26,26 +26,26 @@ protected:
     }
 };
 
-TEST_F(PatchTreeTest, AppendNew) {
+TEST_F(PatchTreeTest, AppendUnsafeNew) {
     Patch patch;
     patch.add(PatchElement(Triple("s1", "p1", "o1"), true));
-    ASSERT_EQ(0, patchTree->append(patch, 0)) << "Appending a patch with one elements failed";
+    ASSERT_EQ(0, patchTree->append_unsafe(patch, 0)) << "Appending a patch with one elements failed";
 }
 
-TEST_F(PatchTreeTest, AppendNotNew) {
+TEST_F(PatchTreeTest, AppendUnsafeNotNew) {
     Patch patch1;
     patch1.add(PatchElement(Triple("s1", "p1", "o1"), true));
 
     Patch patch2;
     patch2.add(PatchElement(Triple("s1", "p1", "o1"), true));
-    ASSERT_EQ(0, patchTree->append(patch1, 0)) << "Appending a patch with one elements failed";
-    ASSERT_EQ(-1, patchTree->append(patch1, 0)) << "Appending a patch with one elements succeeded where it should have failed";
+    ASSERT_EQ(0, patchTree->append_unsafe(patch1, 0)) << "Appending a patch with one elements failed";
+    ASSERT_EQ(-1, patchTree->append_unsafe(patch2, 0)) << "Appending a patch with one elements succeeded where it should have failed";
 }
 
-TEST_F(PatchTreeTest, AppendContains) {
+TEST_F(PatchTreeTest, AppendUnsafeContains) {
     Patch patch;
     patch.add(PatchElement(Triple("s1", "p1", "o1"), true));
-    patchTree->append(patch, 0);
+    patchTree->append_unsafe(patch, 0);
 
     PatchTreeKey iteratorKey = Triple("s1", "p1", "o1");
     PatchTreeIterator it = patchTree->iterator(&iteratorKey);
@@ -59,6 +59,40 @@ TEST_F(PatchTreeTest, AppendContains) {
     ASSERT_EQ(0, value.get(0).get_patch_position()) << "Found value is incorrect";
 
     ASSERT_EQ(false, it.next(&key, &value)) << "Iterator contains another element after a single append";
+
+    ASSERT_EQ(true , patchTree->contains(PatchElement(Triple("s1", "p1", "o1"), true ), 0, false)) << "Contains is incorrect";
+    ASSERT_EQ(false, patchTree->contains(PatchElement(Triple("s1", "p1", "o1"), false), 0, false)) << "Contains is incorrect";
+    ASSERT_EQ(true , patchTree->contains(PatchElement(Triple("s1", "p1", "o1"), false), 0, true)) << "Contains is incorrect";
+    ASSERT_EQ(false, patchTree->contains(PatchElement(Triple("a", "a", "a")   , false), 0, false)) << "Contains is incorrect";
+    ASSERT_EQ(false, patchTree->contains(PatchElement(Triple("a", "a", "a")   , false), 0, true)) << "Contains is incorrect";
+}
+
+TEST_F(PatchTreeTest, AppendNew) {
+    Patch patch;
+    patch.add(PatchElement(Triple("s1", "p1", "o1"), true));
+    ASSERT_EQ(true, patchTree->append(patch, 0)) << "Appending a patch with one elements failed";
+}
+
+TEST_F(PatchTreeTest, AppendNotNew) {
+    Patch patch1;
+    patch1.add(PatchElement(Triple("s2", "p2", "o2"), true));
+
+    Patch patch2;
+    patch2.add(PatchElement(Triple("s1", "p1", "o1"), true));
+    patch2.add(PatchElement(Triple("s2", "p2", "o2"), true));
+    patch2.add(PatchElement(Triple("s3", "p3", "o3"), true));
+
+    Patch patch3;
+    patch3.add(PatchElement(Triple("s2", "p2", "o2"), false));
+
+    ASSERT_EQ(true, patchTree->append(patch1, 0)) << "Appending a patch with one elements failed";
+    ASSERT_EQ(false, patchTree->append(patch2, 0)) << "Appending a patch with 3 elements succeeded where it should have failed";
+
+    ASSERT_EQ(false, patchTree->contains(PatchElement(Triple("s1", "p1", "o1"), true), 0, false)) << "Failing to append a patch should not have (some) of its element added.";
+    ASSERT_EQ(true , patchTree->contains(PatchElement(Triple("s2", "p2", "o2"), true), 0, false)) << "Failing to append a patch should not have (some) of its element added.";
+    ASSERT_EQ(false, patchTree->contains(PatchElement(Triple("s3", "p3", "o3"), true), 0, false)) << "Failing to append a patch should not have (some) of its element added.";
+
+    ASSERT_EQ(false, patchTree->append(patch3, 0)) << "Appending a patch with one elements succeeded where it should have failed";
 }
 
 TEST_F(PatchTreeTest, IteratorOrder) {
@@ -67,7 +101,7 @@ TEST_F(PatchTreeTest, IteratorOrder) {
     patch.add(PatchElement(Triple("a", "p", "o"), true));
     patch.add(PatchElement(Triple("s", "z", "o"), false));
     patch.add(PatchElement(Triple("s", "a", "o"), true));
-    patchTree->append(patch, 0);
+    patchTree->append_unsafe(patch, 0);
 
     PatchTreeKey iteratorKey = Triple("a", "a", "a");
     PatchTreeIterator it = patchTree->iterator(&iteratorKey); // Iterate starting from the given triple.
@@ -107,21 +141,21 @@ TEST_F(PatchTreeTest, PatchIterator) {
     patch1.add(PatchElement(Triple("a", "p", "o"), true));
     patch1.add(PatchElement(Triple("s", "z", "o"), false));
     patch1.add(PatchElement(Triple("s", "a", "o"), true));
-    patchTree->append(patch1, 1);
+    patchTree->append_unsafe(patch1, 1);
 
     Patch patch2;
     patch2.add(PatchElement(Triple("q", "p", "o"), false));
     patch2.add(PatchElement(Triple("g", "p", "o"), true));
     patch2.add(PatchElement(Triple("s", "z", "o"), false));
     patch2.add(PatchElement(Triple("s", "a", "o"), true));
-    patchTree->append(patch2, 2);
+    patchTree->append_unsafe(patch2, 2);
 
     Patch patch3;
     patch3.add(PatchElement(Triple("g", "p", "o"), false));
     patch3.add(PatchElement(Triple("a", "p", "o"), false));
     patch3.add(PatchElement(Triple("h", "z", "o"), false));
     patch3.add(PatchElement(Triple("l", "a", "o"), true));
-    patchTree->append(patch3, 3);
+    patchTree->append_unsafe(patch3, 3);
 
     PatchTreeIterator it = patchTree->iterator(2); // Iterate over all elements of patch 2
     PatchTreeKey key;
@@ -152,21 +186,21 @@ TEST_F(PatchTreeTest, ReconstructPatchSingle) {
     patch1.add(PatchElement(Triple("a", "p", "o"), true));
     patch1.add(PatchElement(Triple("s", "z", "o"), false));
     patch1.add(PatchElement(Triple("s", "a", "o"), true));
-    patchTree->append(patch1, 1);
+    patchTree->append_unsafe(patch1, 1);
 
     Patch patch2;
     patch2.add(PatchElement(Triple("q", "p", "o"), false));
     patch2.add(PatchElement(Triple("g", "p", "o"), true));
     patch2.add(PatchElement(Triple("s", "z", "o"), false));
     patch2.add(PatchElement(Triple("s", "a", "o"), true));
-    patchTree->append(patch2, 2);
+    patchTree->append_unsafe(patch2, 2);
 
     Patch patch3;
     patch3.add(PatchElement(Triple("g", "p", "o"), false));
     patch3.add(PatchElement(Triple("a", "p", "o"), false));
     patch3.add(PatchElement(Triple("h", "z", "o"), false));
     patch3.add(PatchElement(Triple("l", "a", "o"), true));
-    patchTree->append(patch3, 3);
+    patchTree->append_unsafe(patch3, 3);
 
     Patch patch2_copy = patchTree->reconstruct_patch(2);
     ASSERT_EQ(patch2.to_string(), patch2_copy.to_string()) << "Reconstructed patch should be equal to inserted patch";
@@ -176,19 +210,19 @@ TEST_F(PatchTreeTest, ReconstructPatchComposite) {
     Patch patch1;
     patch1.add(PatchElement(Triple("g", "p", "o"), false));
     patch1.add(PatchElement(Triple("a", "p", "o"), true));
-    patchTree->append(patch1, 1);
+    patchTree->append_unsafe(patch1, 1);
 
     Patch patch2;
     patch2.add(PatchElement(Triple("s", "z", "o"), false));
     patch2.add(PatchElement(Triple("s", "a", "o"), true));
-    patchTree->append(patch2, 1);
+    patchTree->append_unsafe(patch2, 1);
 
     Patch patch3;
     patch3.add(PatchElement(Triple("g", "p", "o"), false));
     patch3.add(PatchElement(Triple("a", "p", "o"), false));
     patch3.add(PatchElement(Triple("h", "z", "o"), false));
     patch3.add(PatchElement(Triple("l", "a", "o"), true));
-    patchTree->append(patch3, 2);
+    patchTree->append_unsafe(patch3, 2);
 
     Patch patch2_copy = patchTree->reconstruct_patch(1);
     ASSERT_EQ("a p o. (+)\n"
@@ -201,24 +235,24 @@ TEST_F(PatchTreeTest, RelativePatchPositions) {
     Patch patch1;
     patch1.add(PatchElement(Triple("g", "p", "o"), false));
     patch1.add(PatchElement(Triple("a", "p", "o"), true));
-    patchTree->append(patch1, 1);
+    patchTree->append_unsafe(patch1, 1);
 
     Patch patch2;
     patch2.add(PatchElement(Triple("s", "z", "o"), false));
     patch2.add(PatchElement(Triple("s", "a", "o"), true));
-    patchTree->append(patch2, 1);
+    patchTree->append_unsafe(patch2, 1);
 
     Patch patch3;
     patch3.add(PatchElement(Triple("g", "p", "o"), false));
     patch3.add(PatchElement(Triple("a", "p", "o"), false));
     patch3.add(PatchElement(Triple("h", "z", "o"), false));
     patch3.add(PatchElement(Triple("l", "a", "o"), true));
-    patchTree->append(patch3, 2);
+    patchTree->append_unsafe(patch3, 2);
 
     Patch patch4;
     patch4.add(PatchElement(Triple("h", "p", "o"), false));
     patch4.add(PatchElement(Triple("s", "z", "o"), false));
-    patchTree->append(patch4, 4);
+    patchTree->append_unsafe(patch4, 4);
 
     PatchTreeIterator it = patchTree->iterator(1); // Iterate over all elements of patch 1
     PatchTreeKey key;
@@ -245,7 +279,7 @@ TEST_F(PatchTreeTest, RelativePatchPositions) {
     Patch patch5;
     patch5.add(PatchElement(Triple("a", "a", "a"), false));
     patch5.add(PatchElement(Triple("z", "z", "z"), false));
-    patchTree->append(patch5, 1);
+    patchTree->append_unsafe(patch5, 1);
 
     PatchTreeIterator it2 = patchTree->iterator(1); // Iterate over all elements of patch 1 again
 

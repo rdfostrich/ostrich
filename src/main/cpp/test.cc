@@ -15,7 +15,7 @@ int main() {
 
     PatchTree patchTree("true-patches.kch");
     int patch_id = 0;
-    patchTree.append(patch, patch_id); // TODO: if you want to insert
+    patchTree.append_unsafe(patch, patch_id); // TODO: if you want to insert
 
     //PatchTreeKey key("s1", "p1", "o1");
     PatchTreeKey key("s", "p", "o");
