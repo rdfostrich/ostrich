@@ -112,7 +112,10 @@ Patch PatchTree::reconstruct_patch(int patch_id) {
 
 PatchTreeIterator PatchTree::iterator(PatchTreeKey* key) {
     DB::Cursor* cursor = db.cursor();
-    cursor->jump((const char *) key, sizeof(key));
+    size_t size;
+    const char* data = key->serialize(&size);
+    cursor->jump(data, size);
+    free((char*) data);
     PatchTreeIterator patchTreeIterator(cursor);
     return patchTreeIterator;
 }
@@ -120,6 +123,17 @@ PatchTreeIterator PatchTree::iterator(PatchTreeKey* key) {
 PatchTreeIterator PatchTree::iterator(int patch_id) {
     DB::Cursor* cursor = db.cursor();
     cursor->jump();
+    PatchTreeIterator patchTreeIterator(cursor);
+    patchTreeIterator.set_filter(patch_id);
+    return patchTreeIterator;
+}
+
+PatchTreeIterator PatchTree::iterator(PatchTreeKey *key, int patch_id) {
+    DB::Cursor* cursor = db.cursor();
+    size_t size;
+    const char* data = key->serialize(&size);
+    cursor->jump(data, size);
+    free((char*) data);
     PatchTreeIterator patchTreeIterator(cursor);
     patchTreeIterator.set_filter(patch_id);
     return patchTreeIterator;

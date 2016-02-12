@@ -53,14 +53,23 @@ public:
     Patch reconstruct_patch(int patch_id);
     /**
      * Get an iterator starting from the given key.
+     * @param key The key to start from
      * @return The iterator that will loop over the tree from the given key.
      */
     PatchTreeIterator iterator(PatchTreeKey* key);
     /**
      * Get an iterator starting from the start of the tree and only emitting the elements in the given patch.
+     * @param patch_id The patch id to filter by
      * @return The iterator that will loop over the tree for the given patch.
      */
     PatchTreeIterator iterator(int patch_id);
+    /**
+     * Get an iterator starting from the given key and only emitting the elements in the given patch.
+     * @param key The key to start from
+     * @param patch_id The patch id to filter by
+     * @return The iterator that will loop over the tree for the given patch.
+     */
+    PatchTreeIterator iterator(PatchTreeKey* key, int patch_id);
 };
 
 #endif //TPFPATCH_STORE_PATCH_TREE_H
