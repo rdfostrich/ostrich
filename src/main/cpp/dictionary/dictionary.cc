@@ -25,11 +25,19 @@ public:
   };
 
   DictionaryManager() : bitmask(0x80000000) {
-    // Create additional dictionary
+    // Create two empty default dictionaries dictionary,
     hdtDict = new PlainDictionary();
     patchDict = new PlainDictionary();
   };
 
+  /**
+  * Probes HDT dictionary and patch dictionary for ID and return string.
+  * TODO: Uses the MSB of the id to distinguish HDT from patch. This is likely
+  * to create conflicts, so needs to be altered.
+  *
+  * @param id The id to translate
+  * @param position The position of the id in the triple
+  **/
   std::string idToString(unsigned int id, TripleComponentRole position) {
     // Check whether id is from HDT or not (MSB is not set)
     if (id & bitmask) {
@@ -39,17 +47,32 @@ public:
     return patchDict->idToString(id, position);
   }
 
-  unsigned int stringToId(std::string &key, TripleComponentRole position) {
+  /**
+  * Probes HDT dictionary and patch dictionary for string and return ID.
+  * TODO: Uses the MSB of the id to distinguish HDT from patch. This is likely
+  * to create conflicts, so needs to be altered.
+  *
+  * @param &str Reference to the string
+  * @param position The position of the string in the triple
+  **/
+  unsigned int stringToId(std::string &str, TripleComponentRole position) {
     // First ask HDT
     try {
-      return hdtDict->stringToId(key, position);
+      return hdtDict->stringToId(str, position);
     } catch (exception e) {
     } // ID is not in there
 
     // Set MSB to 1
-    return bitmask | patchDict->stringToId(key, position);
+    return bitmask | patchDict->stringToId(str, position);
   }
 
+  /**
+  * inserts a string in the patch dictionary if it's not already in the HDT
+  *
+  * @param &str Reference to the string
+  * @param position The position of the string in the triple
+  *
+  **/
   unsigned int insert(std::string &str, TripleComponentRole position) {
     // First ask HDT
     try {
