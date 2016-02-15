@@ -24,6 +24,12 @@ public:
     patchDict = new PlainDictionary(spec);
   };
 
+  DictionaryManager() : bitmask(0x80000000) {
+    // Create additional dictionary
+    hdtDict = new PlainDictionary();
+    patchDict = new PlainDictionary();
+  };
+
   std::string idToString(unsigned int id, TripleComponentRole position) {
     // Check whether id is from HDT or not (MSB is not set)
     if (id & bitmask) {
