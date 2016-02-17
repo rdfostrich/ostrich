@@ -133,3 +133,23 @@ PatchTreeIterator PatchTree::iterator(PatchTreeKey *key, int patch_id, bool exac
     patchTreeIterator.set_patch_filter(patch_id, exact);
     return patchTreeIterator;
 }
+
+PatchPosition PatchTree::deletion_count(Triple triple_pattern, int patch_id) {
+    DB::Cursor* cursor = db.cursor();
+    cursor->jump_back();
+    PatchTreeIterator patchTreeIterator(cursor);
+    patchTreeIterator.set_patch_filter(patch_id, true);
+    patchTreeIterator.set_type_filter(false);
+    patchTreeIterator.set_reverse();
+
+    PatchTreeKey key;
+    PatchTreeValue value;
+    while(patchTreeIterator.next(&key, &value)) {
+        if((triple_pattern.get_subject() == "" || triple_pattern.get_subject() == key.get_subject())
+           && (triple_pattern.get_predicate() == "" || triple_pattern.get_predicate() == key.get_predicate())
+           && (triple_pattern.get_object() == "" || triple_pattern.get_object() == key.get_object())) {
+            return value.get(patch_id).get_patch_positions().get_by_pattern(triple_pattern) + 1;
+        }
+    }
+    return 0;
+}

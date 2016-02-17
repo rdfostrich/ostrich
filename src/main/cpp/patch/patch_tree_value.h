@@ -4,6 +4,7 @@
 #include <string>
 #include <cstddef>
 #include <vector>
+#include "triple.h"
 
 using namespace std;
 
@@ -34,6 +35,19 @@ typedef struct PatchPositions {
         ret += " " + std::to_string(___);
         ret += " }";
         return ret;
+    }
+    PatchPosition get_by_pattern(Triple triple_pattern) {
+        bool s = triple_pattern.get_subject() != "";
+        bool p = triple_pattern.get_predicate() != "";
+        bool o = triple_pattern.get_object() != "";
+        if(s & p & o) return 0;
+        if(s & p & !o) return sp_;
+        if(s & !p & o) return s_o;
+        if(s & !p & !o) return s__;
+        if(!s & p & o) return _po;
+        if(!s & p & !o) return _p_;
+        if(!s & !p & o) return __o;
+        /*if(!s & !p & !o)*/ return ___;
     }
 } PatchPositions;
 

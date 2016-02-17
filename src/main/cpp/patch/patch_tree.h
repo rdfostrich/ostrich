@@ -74,6 +74,13 @@ public:
      * @return The iterator that will loop over the tree for the given patch.
      */
     PatchTreeIterator iterator(PatchTreeKey* key, int patch_id, bool exact);
+    /**
+     * Get the number of deletions.
+     * @param triple_pattern The triple pattern to match by.
+     * @param patch_id The patch id to get the deletions for, this patch id must exist within the tree!
+     * @return The amount of deletions matching the given triple pattern for the given patch id.
+     */
+    PatchPosition deletion_count(Triple triple_pattern, int patch_id);
 };
 
 #endif //TPFPATCH_STORE_PATCH_TREE_H

@@ -29,7 +29,7 @@ protected:
 TEST_F(PatchTreeTest, AppendUnsafeNew) {
     Patch patch;
     patch.add(PatchElement(Triple("s1", "p1", "o1"), true));
-    ASSERT_EQ(0, patchTree->append_unsafe(patch, 0)) << "Appending a patch with one elements failed";
+    patchTree->append_unsafe(patch, 0);
 }
 
 TEST_F(PatchTreeTest, AppendUnsafeContains) {
@@ -473,4 +473,41 @@ TEST_F(PatchTreeTest, RelativePatchPositions) {
     ASSERT_EQ(5, value.get(1).get_patch_positions().___) << "Found value is incorrect";
 
     ASSERT_EQ(false, it2.next(&key, &value)) << "Iterator should be finished";
+}
+
+TEST_F(PatchTreeTest, DeletionCount) {
+    Patch patch1;
+    patch1.add(PatchElement(Triple("g", "p", "o"), false));
+    patch1.add(PatchElement(Triple("a", "p", "o"), true));
+    patchTree->append(patch1, 1);
+
+    Patch patch2;
+    patch2.add(PatchElement(Triple("s", "z", "o"), false));
+    patch2.add(PatchElement(Triple("s", "a", "o"), true));
+    patchTree->append(patch2, 1);
+
+    Patch patch3;
+    patch3.add(PatchElement(Triple("g", "p", "o"), false));
+    patch3.add(PatchElement(Triple("a", "p", "o"), false));
+    patch3.add(PatchElement(Triple("h", "z", "o"), false));
+    patch3.add(PatchElement(Triple("l", "a", "o"), true));
+    patchTree->append(patch3, 2);
+
+    Patch patch4;
+    patch4.add(PatchElement(Triple("h", "p", "o"), false));
+    patch4.add(PatchElement(Triple("s", "z", "o"), false));
+    patchTree->append(patch4, 4);
+
+    // TODO: intentional failing tests; currently all triples are counted because patch_position takes into account + and -, it should only do -.
+    ASSERT_EQ(2, patchTree->deletion_count(Triple("", "", ""), 1)) << "Deletion count is incorrect";
+    ASSERT_EQ(1, patchTree->deletion_count(Triple("s", "", ""), 1)) << "Deletion count is incorrect";
+    ASSERT_EQ(0, patchTree->deletion_count(Triple("s", "a", ""), 1)) << "Deletion count is incorrect";
+    ASSERT_EQ(2, patchTree->deletion_count(Triple("", "", "o"), 1)) << "Deletion count is incorrect";
+    ASSERT_EQ(1, patchTree->deletion_count(Triple("", "p", "o"), 1)) << "Deletion count is incorrect";
+    ASSERT_EQ(1, patchTree->deletion_count(Triple("", "p", ""), 1)) << "Deletion count is incorrect";
+    ASSERT_EQ(1, patchTree->deletion_count(Triple("g", "p", ""), 1)) << "Deletion count is incorrect";
+
+    ASSERT_EQ(3, patchTree->deletion_count(Triple("", "", ""), 2)) << "Deletion count is incorrect";
+
+    ASSERT_EQ(4, patchTree->deletion_count(Triple("", "", ""), 4)) << "Deletion count is incorrect";
 }

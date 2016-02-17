@@ -6,7 +6,7 @@
 
 PatchTreeIterator::PatchTreeIterator(DB::Cursor *cursor)
         : cursor(cursor), is_patch_id_filter(false), is_patch_id_filter_exact(false), patch_id_filter(-1),
-          is_addition_filter(false), addition_filter(-1) {}
+          is_addition_filter(false), addition_filter(-1), reverse(false) {}
 
 PatchTreeIterator::~PatchTreeIterator() {
     delete cursor;
@@ -23,6 +23,10 @@ void PatchTreeIterator::set_type_filter(bool addition) {
     this->addition_filter = addition;
 }
 
+void PatchTreeIterator::set_reverse() {
+    this->reverse = true;
+}
+
 bool PatchTreeIterator::next(PatchTreeKey* key, PatchTreeValue* value) {
     bool filter_valid = false;
     const char* kbp;
@@ -35,21 +39,19 @@ bool PatchTreeIterator::next(PatchTreeKey* key, PatchTreeValue* value) {
     while (!filter_valid) {
         kbp = cursor->get(&ksp, &vbp, &vsp);
         if (!kbp) return false;
-        cursor->step();
+        reverse ? cursor->step_back() : cursor->step();
         value->deserialize(vbp, vsp);
 
         if(is_patch_id_filter) {
             if(is_patch_id_filter_exact) {
                 long element = value->get_patchvalue_index(patch_id_filter);
-                if(element >= 0
-                   && (!is_addition_filter || value->get_patch(element).is_addition() == addition_filter)) {
-                    filter_valid = true;
-                }
+                filter_valid = element >= 0
+                               && (!is_addition_filter || (value->get_patch(element).is_addition() == addition_filter));
             } else {
                 for(long i = value->get_size() - 1; i >= 0 && !filter_valid; i--) {
                     PatchTreeValueElement element = value->get_patch(i);
                     if(element.get_patch_id() <= patch_id_filter) {
-                        filter_valid = (!is_addition_filter || element.is_addition() == addition_filter);
+                        filter_valid = (!is_addition_filter || (element.is_addition() == addition_filter));
                     }
                 }
             }

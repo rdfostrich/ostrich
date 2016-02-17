@@ -17,6 +17,7 @@ private:
     int patch_id_filter;
     bool is_addition_filter;
     int addition_filter;
+    bool reverse;
 public:
     PatchTreeIterator(DB::Cursor* cursor);
     ~PatchTreeIterator();
@@ -32,6 +33,10 @@ public:
      * @param addition True if only additions should be returned, false for only deletions.
      */
     void set_type_filter(bool addition);
+    /**
+     * Indicate that this iterator should step backwards.
+     */
+    void set_reverse();
     /**
      * Point to the next element
      * @param key The key the iterator is currently pointing at.
