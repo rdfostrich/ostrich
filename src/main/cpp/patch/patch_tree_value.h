@@ -9,20 +9,48 @@ using namespace std;
 
 typedef long PatchPosition; // TODO: Maybe we can convert this to an int, to reduce tree size
 
+typedef struct PatchPositions {
+    // Positions for all triple pattern combinations
+    // NOT: S P O (this will always be 0)
+    PatchPosition sp_;
+    PatchPosition s_o;
+    PatchPosition s__;
+    PatchPosition _po;
+    PatchPosition _p_;
+    PatchPosition __o;
+    PatchPosition ___;
+    PatchPositions() : sp_(-1), s_o(-1), s__(-1), _po(-1), _p_(-1), __o(-1), ___(-1) {}
+    PatchPositions(PatchPosition sp_, PatchPosition s_o, PatchPosition s__, PatchPosition _po,
+                   PatchPosition _p_, PatchPosition __o, PatchPosition ___)
+            : sp_(sp_), s_o(s_o), s__(s__), _po(_po), _p_(_p_), __o(__o), ___(___) {}
+    string to_string() {
+        string ret = "{";
+        ret += " " + std::to_string(sp_);
+        ret += " " + std::to_string(s_o);
+        ret += " " + std::to_string(s__);
+        ret += " " + std::to_string(_po);
+        ret += " " + std::to_string(_p_);
+        ret += " " + std::to_string(__o);
+        ret += " " + std::to_string(___);
+        ret += " }";
+        return ret;
+    }
+} PatchPositions;
+
 // A PatchTreeValueElement contains a patch id, a relative patch position and
 // an indication whether or not this is an addition or deletion.
 class PatchTreeValueElement {
 protected:
     int patch_id;
-    PatchPosition patch_position;
+    PatchPositions patch_positions;
     bool addition;
 public:
     int get_patch_id();
-    PatchPosition get_patch_position();
+    PatchPositions get_patch_positions();
     bool is_addition();
-    PatchTreeValueElement() : patch_id(-1), patch_position(-1), addition(false) {} // Required for vector#resize
-    PatchTreeValueElement(int patch_id, long patch_position, bool addition) :
-            patch_id(patch_id), patch_position(patch_position), addition(addition) {}
+    PatchTreeValueElement() : patch_id(-1), patch_positions(PatchPositions()), addition(false) {} // Required for vector#resize
+    PatchTreeValueElement(int patch_id, PatchPositions patch_positions, bool addition) :
+            patch_id(patch_id), patch_positions(patch_positions), addition(addition) {}
     bool operator < (const PatchTreeValueElement &rhs) const { return patch_id < rhs.patch_id; }
 };
 

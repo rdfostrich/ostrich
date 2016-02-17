@@ -47,12 +47,12 @@ int PatchTree::append_unsafe(Patch patch, int patch_id) {
             value.deserialize(raw_value, value_size);
         }
 
-        // Modify the value
-        long patch_position = existing_patch.position_of(patchElement);
+        // Modify the patch positions for all triple patterns (except for S P O and ? ? ?, will be 0 anyways)
+        PatchPositions patch_positions = existing_patch.positions(patchElement);
         // Give an error for elements in `patch` that are already present in the tree.
         if(patch.position_of_strict(patchElement) == -1 // If this element is one of the patch elements we are simply updating (not one that we are newly adding now)
            || value.get_patchvalue_index(patch_id) == -1) { // If this element is part of the elements we are adding now AND the element is not present in the tree already
-            value.add(PatchTreeValueElement(patch_id, patch_position, patchElement.is_addition()));
+            value.add(PatchTreeValueElement(patch_id, patch_positions, patchElement.is_addition()));
         } else {
             return -1;
         }

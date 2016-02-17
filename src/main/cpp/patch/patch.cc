@@ -27,6 +27,49 @@ PatchElement Patch::get(int index) {
     return elements[index];
 }
 
+PatchPositions Patch::positions(PatchElement element) {
+    PatchPositions positions = PatchPositions();
+    // First find the position of the element in O(log n)
+    std::vector<PatchElement>::iterator findIt = std::lower_bound(elements.begin(), elements.end(), element);
+    // Count the matching patch elements from this position to the beginning for all triple patterns
+    while(findIt >= elements.begin()) {
+        PatchElement matching = *findIt;
+
+        bool s = matching.get_triple().get_subject() == element.get_triple().get_subject();
+        bool p = matching.get_triple().get_predicate() == element.get_triple().get_predicate();
+        bool o = matching.get_triple().get_object() == element.get_triple().get_object();
+
+        if(s && p) positions.sp_++;
+        if(s && o) positions.s_o++;
+        if(s) positions.s__++;
+        if(p && o) positions._po++;
+        if(p) positions._p_++;
+        if(o) positions.__o++;
+        positions.___++;
+
+        findIt--;
+    };
+    return positions;
+}
+
+PatchPosition Patch::position_of_pattern(PatchElement element, bool s, bool p, bool o, bool type) {
+    // First find the position of the element in O(log n)
+    std::vector<PatchElement>::iterator findIt = std::lower_bound(elements.begin(), elements.end(), element);
+    // Count the matching patch elements from this position to the beginning
+    int position = -1;
+    while(findIt >= elements.begin()) {
+        PatchElement matching = *findIt;
+        if((!s || matching.get_triple().get_subject() == element.get_triple().get_subject())
+           && (!p || matching.get_triple().get_predicate() == element.get_triple().get_predicate())
+           && (!o || matching.get_triple().get_object() == element.get_triple().get_object())
+           && (!type || matching.is_addition() == element.is_addition())) {
+            position++;
+        }
+        findIt--;
+    };
+    return position;
+}
+
 PatchPosition Patch::position_of(PatchElement element) {
     std::vector<PatchElement>::iterator findIt = std::lower_bound(elements.begin(), elements.end(), element);
     return std::distance(elements.begin(), findIt);

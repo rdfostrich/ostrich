@@ -9,8 +9,8 @@ int PatchTreeValueElement::get_patch_id() {
     return patch_id;
 }
 
-PatchPosition PatchTreeValueElement::get_patch_position() {
-    return patch_position;
+PatchPositions PatchTreeValueElement::get_patch_positions() {
+    return patch_positions;
 }
 
 bool PatchTreeValueElement::is_addition() {
@@ -26,7 +26,7 @@ void PatchTreeValue::add(PatchTreeValueElement element) {
 }
 
 long PatchTreeValue::get_patchvalue_index(int patch_id) {
-    PatchTreeValueElement item(patch_id, -1, -1);
+    PatchTreeValueElement item(patch_id, PatchPositions(), -1);
     std::vector<PatchTreeValueElement>::iterator findIt = std::lower_bound(elements.begin(), elements.end(), item);
     if (findIt != elements.end() && findIt->get_patch_id() == patch_id) {
         return std::distance(elements.begin(), findIt);
@@ -53,7 +53,7 @@ string PatchTreeValue::to_string() {
     for(int i = 0; i < elements.size(); i++) {
         if(separator) ret += ",";
         separator = true;
-        ret += std::to_string(elements[i].get_patch_id()) + ":" + std::to_string(elements[i].get_patch_position())
+        ret += std::to_string(elements[i].get_patch_id()) + ":" + elements[i].get_patch_positions().to_string()
               + "(" + (elements[i].is_addition() ? "+" : "-") + ")";
     }
     ret += "}";
