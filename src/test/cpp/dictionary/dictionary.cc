@@ -8,7 +8,7 @@
 
 DictionaryManager *dict = new DictionaryManager();
 
-TEST(InsertTest, Insert) {
+TEST(DictionaryInsertTest, Insert) {
 
   TripleComponentRole role = SUBJECT;
   std::string val = "http://example.org";
@@ -17,7 +17,7 @@ TEST(InsertTest, Insert) {
   ASSERT_EQ(1, id);
 }
 
-TEST(PatchDictionaryTest, Insert) {
+TEST(DictionaryPatchTest, Insert) {
 
   TripleComponentRole role = SUBJECT;
   std::string val = "http://example.org";

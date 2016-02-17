@@ -6,6 +6,7 @@ HunterGate(
     SHA1 "0ccc3f3fd571676a1804723984598f9f90a4d6bc"
 )
 
+# Build settings
 set(PROJECT_NAME_STR tpfpatch_store)
 project(${PROJECT_NAME_STR})
 
@@ -19,7 +20,9 @@ set(COMMON_FILES
         src/main/cpp/patch/patch_tree_key_comparator.cc src/main/cpp/patch/patch_tree_key_comparator.h
         src/main/cpp/patch/patch_tree.cc src/main/cpp/patch/patch_tree.h
         src/main/cpp/patch/patch_tree_iterator.cc src/main/cpp/patch/patch_tree_iterator.h
-        src/main/cpp/patch/patch.h)
+        src/main/cpp/patch/patch.h
+        #src/main/cpp/dictionary/dictionary.cc
+        )
 set(TEST_FILES
         src/test/cpp/patch/triple.cc
         src/test/cpp/patch/patch_element.cc
@@ -27,6 +30,7 @@ set(TEST_FILES
         src/test/cpp/patch/patch_tree_value.cc
         src/test/cpp/patch/patch_tree_key_comparator.cc
         src/test/cpp/patch/patch_tree.cc
+        #src/test/cpp/dictionary/dictionary.cc
         )
 
 add_executable(${PROJECT_NAME_STR} ${COMMON_FILES} ${SOURCE_FILES})
@@ -59,8 +63,11 @@ endif (KYOTO_SHARED_LIBRARY MATCHES KYOTO_LIBRARY-NOTFOUND)
 # Add Boost
 # find_package(Boost CONFIG REQUIRED COMPONENTS container)
 
-# Add gtest
+# 3rdparty Libraries
 set(EXT_PROJECTS_DIR ${PROJECT_SOURCE_DIR}/ext)
+# include(CMakeLists-External.txt)
+
+# Add gtest
 add_subdirectory(${EXT_PROJECTS_DIR}/gtest)
 enable_testing()
 set(PROJECT_TEST_NAME ${PROJECT_NAME_STR}_test)
