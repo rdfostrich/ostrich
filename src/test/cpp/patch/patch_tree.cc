@@ -32,16 +32,6 @@ TEST_F(PatchTreeTest, AppendUnsafeNew) {
     ASSERT_EQ(0, patchTree->append_unsafe(patch, 0)) << "Appending a patch with one elements failed";
 }
 
-TEST_F(PatchTreeTest, AppendUnsafeNotNew) {
-    Patch patch1;
-    patch1.add(PatchElement(Triple("s1", "p1", "o1"), true));
-
-    Patch patch2;
-    patch2.add(PatchElement(Triple("s1", "p1", "o1"), true));
-    ASSERT_EQ(0, patchTree->append_unsafe(patch1, 0)) << "Appending a patch with one elements failed";
-    ASSERT_EQ(-1, patchTree->append_unsafe(patch2, 0)) << "Appending a patch with one elements succeeded where it should have failed";
-}
-
 TEST_F(PatchTreeTest, AppendUnsafeContains) {
     Patch patch;
     patch.add(PatchElement(Triple("s1", "p1", "o1"), true));
@@ -193,7 +183,7 @@ TEST_F(PatchTreeTest, PatchIterator) {
     patchTree->append_unsafe(patch3, 3);
 
     PatchTreeKey iteratorKey = Triple("s", "a", "o");
-    PatchTreeIterator it = patchTree->iterator(&iteratorKey, 2); // Iterate over all elements of patch 2 starting from "s a o."
+    PatchTreeIterator it = patchTree->iterator(&iteratorKey, 2, false); // Iterate over all elements of patch 2 starting from "s a o."
     PatchTreeKey key;
     PatchTreeValue value;
 
@@ -230,9 +220,13 @@ TEST_F(PatchTreeTest, OffsetFilteredPatchIterator) {
     patch3.add(PatchElement(Triple("l", "a", "o"), true));
     patchTree->append(patch3, 3);
 
-    PatchTreeIterator it = patchTree->iterator(2); // Iterate over all elements of patch 2
+    PatchTreeIterator it = patchTree->iterator(2, false); // Iterate over all elements of patch only 2
     PatchTreeKey key;
     PatchTreeValue value;
+
+    ASSERT_EQ(true, it.next(&key, &value)) << "Iterator has a no next value";
+    ASSERT_EQ("a p o.", key.to_string()) << "First key is incorrect";
+    ASSERT_EQ(true, value.get(2).is_addition()) << "First value is incorrect";
 
     ASSERT_EQ(true, it.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("g p o.", key.to_string()) << "First key is incorrect";
@@ -251,6 +245,30 @@ TEST_F(PatchTreeTest, OffsetFilteredPatchIterator) {
     ASSERT_EQ(false, value.get(2).is_addition()) << "Fourth value is incorrect";
 
     ASSERT_EQ(false, it.next(&key, &value)) << "Iterator should be finished";
+
+    PatchTreeIterator it2 = patchTree->iterator(2, false); // Iterate over all elements of patch 2 and before
+
+    ASSERT_EQ(true, it2.next(&key, &value)) << "Iterator has a no next value";
+    ASSERT_EQ("a p o.", key.to_string()) << "First key is incorrect";
+    ASSERT_EQ(true, value.get(2).is_addition()) << "First value is incorrect";
+
+    ASSERT_EQ(true, it2.next(&key, &value)) << "Iterator has a no next value";
+    ASSERT_EQ("g p o.", key.to_string()) << "First key is incorrect";
+    ASSERT_EQ(true, value.get(2).is_addition()) << "First value is incorrect";
+
+    ASSERT_EQ(true, it2.next(&key, &value)) << "Iterator has a no next value";
+    ASSERT_EQ("q p o.", key.to_string()) << "Second key is incorrect";
+    ASSERT_EQ(false, value.get(2).is_addition()) << "Second value is incorrect";
+
+    ASSERT_EQ(true, it2.next(&key, &value)) << "Iterator has a no next value";
+    ASSERT_EQ("s a o.", key.to_string()) << "Third key is incorrect";
+    ASSERT_EQ(true, value.get(2).is_addition()) << "Third value is incorrect";
+
+    ASSERT_EQ(true, it2.next(&key, &value)) << "Iterator has a no next value";
+    ASSERT_EQ("s z o.", key.to_string()) << "Fourth key is incorrect";
+    ASSERT_EQ(false, value.get(2).is_addition()) << "Fourth value is incorrect";
+
+    ASSERT_EQ(false, it2.next(&key, &value)) << "Iterator should be finished";
 }
 
 TEST_F(PatchTreeTest, ReconstructPatchSingle) {
@@ -276,7 +294,7 @@ TEST_F(PatchTreeTest, ReconstructPatchSingle) {
     patchTree->append_unsafe(patch3, 3);
 
     Patch patch2_copy = patchTree->reconstruct_patch(2);
-    ASSERT_EQ(patch2.to_string(), patch2_copy.to_string()) << "Reconstructed patch should be equal to inserted patch";
+    ASSERT_EQ("a p o. (+)\ng p o. (+)\nq p o. (-)\ns a o. (+)\ns z o. (-)\n", patch2_copy.to_string()) << "Reconstructed patch should be equal to inserted patch";
 }
 
 TEST_F(PatchTreeTest, ReconstructPatchComposite) {
@@ -327,7 +345,7 @@ TEST_F(PatchTreeTest, RelativePatchPositions) {
     patch4.add(PatchElement(Triple("s", "z", "o"), false));
     patchTree->append_unsafe(patch4, 4);
 
-    PatchTreeIterator it = patchTree->iterator(1); // Iterate over all elements of patch 1
+    PatchTreeIterator it = patchTree->iterator(1, false); // Iterate over all elements of patch 1
     PatchTreeKey key;
     PatchTreeValue value;
 
@@ -384,7 +402,7 @@ TEST_F(PatchTreeTest, RelativePatchPositions) {
     patch5.add(PatchElement(Triple("z", "z", "z"), false));
     patchTree->append_unsafe(patch5, 1);
 
-    PatchTreeIterator it2 = patchTree->iterator(1); // Iterate over all elements of patch 1 again
+    PatchTreeIterator it2 = patchTree->iterator(1, false); // Iterate over all elements of patch 1 again
 
     // Expected order for patch 1:
     // a a a

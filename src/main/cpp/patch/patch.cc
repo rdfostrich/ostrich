@@ -7,7 +7,12 @@ Patch::Patch() : elements() {}
 void Patch::add(PatchElement element) {
     std::vector<PatchElement>::iterator itToInsert = std::lower_bound(
             elements.begin(), elements.end(), element);
-    elements.insert(itToInsert, element);
+    // Overwrite existing element if triple is already present, otherwise insert new element.
+    if(itToInsert != elements.end() && itToInsert->get_triple().to_string() == element.get_triple().to_string()) {
+        *itToInsert = element;
+    } else {
+        elements.insert(itToInsert, element);
+    }
 }
 
 void Patch::addAll(Patch patch) {

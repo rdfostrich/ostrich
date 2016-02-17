@@ -21,13 +21,13 @@ public:
     ~PatchTree();
     /**
      * Append the given patch elements to the tree with given patch id.
+     * This can OVERWRITE existing elements without a warning.
      * @param patch The patch elements
      * @param patch_id The id of the patch
-     * @return -1 if one of the patch elements were already present in the tree, 0 otherwise
      * @note If an error occurs, some elements might have already been added.
      * If you want to change this behaviour, you'll have to first check if the patch elements are really new.
      */
-    int append_unsafe(Patch patch, int patch_id);
+    void append_unsafe(Patch patch, int patch_id);
     /**
      * Append the given patch elements to the tree with given patch id.
      * This safe append will first check if the patch is completely new, only then it will add the data
@@ -59,17 +59,21 @@ public:
     PatchTreeIterator iterator(PatchTreeKey* key);
     /**
      * Get an iterator starting from the start of the tree and only emitting the elements in the given patch.
-     * @param patch_id The patch id to filter by
+     * @param patch_id The patch id to filter by, this includes all patches before this one.
+     * @param exact If only patches exactly matching the given id should be returned,
+     *              otherwise all patches with an id <= patch_id will be returned.
      * @return The iterator that will loop over the tree for the given patch.
      */
-    PatchTreeIterator iterator(int patch_id);
+    PatchTreeIterator iterator(int patch_id, bool exact);
     /**
      * Get an iterator starting from the given key and only emitting the elements in the given patch.
      * @param key The key to start from
-     * @param patch_id The patch id to filter by
+     * @param patch_id The patch id to filter by, this includes all patches before this one.
+     * @param exact If only patches exactly matching the given id should be returned,
+     *              otherwise all patches with an id <= patch_id will be returned.
      * @return The iterator that will loop over the tree for the given patch.
      */
-    PatchTreeIterator iterator(PatchTreeKey* key, int patch_id);
+    PatchTreeIterator iterator(PatchTreeKey* key, int patch_id, bool exact);
 };
 
 #endif //TPFPATCH_STORE_PATCH_TREE_H

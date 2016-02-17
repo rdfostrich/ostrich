@@ -41,6 +41,21 @@ TEST_F(PatchElementsTest, AddAll) {
     ASSERT_EQ("s4 p4 o4. (+)", patchElements.get(3).to_string()) << "Fourth element is incorrect";
 }
 
+TEST_F(PatchElementsTest, AddAllOverlap) {
+    Patch patch2;
+
+    patchElements.add(PatchElement(Triple("s1", "p1", "o1"), true));
+    patchElements.add(PatchElement(Triple("s3", "p3", "o3"), false));
+
+    patch2.add(PatchElement(Triple("s2", "p2", "o2"), false));
+    patch2.add(PatchElement(Triple("s1", "p1", "o1"), false));
+    patchElements.addAll(patch2);
+
+    ASSERT_EQ("s1 p1 o1. (-)", patchElements.get(0).to_string()) << "First element is incorrect";
+    ASSERT_EQ("s2 p2 o2. (-)", patchElements.get(1).to_string()) << "Second element is incorrect";
+    ASSERT_EQ("s3 p3 o3. (-)", patchElements.get(2).to_string()) << "Third element is incorrect";
+}
+
 TEST_F(PatchElementsTest, ToString) {
     patchElements.add(PatchElement(Triple("s1", "p1", "o1"), true));
     patchElements.add(PatchElement(Triple("s2", "p2", "o2"), false));

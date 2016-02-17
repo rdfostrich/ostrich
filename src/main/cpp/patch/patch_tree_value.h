@@ -75,6 +75,10 @@ public:
      */
     long get_patchvalue_index(int patch_id);
     /**
+     * @return The number of PatchTreeValueElement's stored in this value.
+     */
+    long get_size();
+    /**
      * Get the patch of the given element.
      * @param element The element index in this value list. This can be the result of get_patchvalue_index().
      * @return The patch.
@@ -85,6 +89,12 @@ public:
      * @return The patch.
      */
     PatchTreeValueElement get(int patch_id);
+    /**
+     * Check if this element represents an addition in the given patch id.
+     * @param patch_id The patch id
+     * @return If it is an addition
+     */
+    bool is_addition(int patch_id);
     /**
      * @return The string representation of this patch.
      */

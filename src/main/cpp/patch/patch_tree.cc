@@ -25,7 +25,7 @@ PatchTree::~PatchTree() {
     }
 }
 
-int PatchTree::append_unsafe(Patch patch, int patch_id) {
+void PatchTree::append_unsafe(Patch patch, int patch_id) {
     // Reconstruct the full patch and add the new elements.
     // We need this for finding their relative positions.
     Patch existing_patch = reconstruct_patch(patch_id);
@@ -49,20 +49,14 @@ int PatchTree::append_unsafe(Patch patch, int patch_id) {
 
         // Modify the patch positions for all triple patterns (except for S P O and ? ? ?, will be 0 anyways)
         PatchPositions patch_positions = existing_patch.positions(patchElement);
-        // Give an error for elements in `patch` that are already present in the tree.
-        if(patch.position_of_strict(patchElement) == -1 // If this element is one of the patch elements we are simply updating (not one that we are newly adding now)
-           || value.get_patchvalue_index(patch_id) == -1) { // If this element is part of the elements we are adding now AND the element is not present in the tree already
-            value.add(PatchTreeValueElement(patch_id, patch_positions, patchElement.is_addition()));
-        } else {
-            return -1;
-        }
+        // Add (or update) the value in the tree
+        value.add(PatchTreeValueElement(patch_id, patch_positions, patchElement.is_addition()));
 
         // Serialize the new value and store it
         size_t new_value_size;
         const char* new_raw_value = value.serialize(&new_value_size);
         db.set(raw_key, key_size, new_raw_value, new_value_size);
     }
-    return 0;
 }
 
 bool PatchTree::append(Patch patch, int patch_id) {
@@ -72,7 +66,8 @@ bool PatchTree::append(Patch patch, int patch_id) {
             return false;
         }
     }
-    return append_unsafe(patch, patch_id) == 0;
+    append_unsafe(patch, patch_id);
+    return true;
 }
 
 bool PatchTree::contains(PatchElement patch_element, int patch_id, bool ignore_type) {
@@ -100,12 +95,12 @@ bool PatchTree::contains(PatchElement patch_element, int patch_id, bool ignore_t
 }
 
 Patch PatchTree::reconstruct_patch(int patch_id) {
-    PatchTreeIterator it = iterator(patch_id);
+    PatchTreeIterator it = iterator(patch_id, false);
     PatchTreeKey key;
     PatchTreeValue value;
     Patch patch;
     while(it.next(&key, &value)) {
-        patch.add(PatchElement(key, value.get(patch_id).is_addition()));
+        patch.add(PatchElement(key, value.is_addition(patch_id)));
     }
     return patch;
 }
@@ -120,21 +115,21 @@ PatchTreeIterator PatchTree::iterator(PatchTreeKey* key) {
     return patchTreeIterator;
 }
 
-PatchTreeIterator PatchTree::iterator(int patch_id) {
+PatchTreeIterator PatchTree::iterator(int patch_id, bool exact) {
     DB::Cursor* cursor = db.cursor();
     cursor->jump();
     PatchTreeIterator patchTreeIterator(cursor);
-    patchTreeIterator.set_filter(patch_id);
+    patchTreeIterator.set_patch_filter(patch_id, exact);
     return patchTreeIterator;
 }
 
-PatchTreeIterator PatchTree::iterator(PatchTreeKey *key, int patch_id) {
+PatchTreeIterator PatchTree::iterator(PatchTreeKey *key, int patch_id, bool exact) {
     DB::Cursor* cursor = db.cursor();
     size_t size;
     const char* data = key->serialize(&size);
     cursor->jump(data, size);
     free((char*) data);
     PatchTreeIterator patchTreeIterator(cursor);
-    patchTreeIterator.set_filter(patch_id);
+    patchTreeIterator.set_patch_filter(patch_id, exact);
     return patchTreeIterator;
 }

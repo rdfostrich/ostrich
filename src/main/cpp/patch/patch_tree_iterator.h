@@ -12,16 +12,26 @@ using namespace kyotocabinet;
 class PatchTreeIterator {
 private:
     DB::Cursor* cursor;
-    bool filter;
+    bool is_patch_id_filter;
+    bool is_patch_id_filter_exact;
     int patch_id_filter;
+    bool is_addition_filter;
+    int addition_filter;
 public:
     PatchTreeIterator(DB::Cursor* cursor);
     ~PatchTreeIterator();
     /**
      * Set the patch id to filter by
      * @param patch_id The patch id to filter by
+     * @param exact If only patches exactly matching the given id should be returned,
+     *              otherwise all patches with an id <= patch_id will be returned.
      */
-    void set_filter(int patch_id);
+    void set_patch_filter(int patch_id, bool exact);
+    /**
+     * Set the patch id to filter by
+     * @param addition True if only additions should be returned, false for only deletions.
+     */
+    void set_type_filter(bool addition);
     /**
      * Point to the next element
      * @param key The key the iterator is currently pointing at.
