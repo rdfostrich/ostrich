@@ -37,7 +37,8 @@ public:
      */
     PatchElement get(int index);
     /**
-     * Find the positions of the given element in this patch for all triple patterns.
+     * Find the DELETION positions of the given element in this patch for all triple patterns.
+     * Additions are thus ignored when doing the counts
      * @param element The element to look for
      * @return The relative positions for all derived triple patterns.
      */

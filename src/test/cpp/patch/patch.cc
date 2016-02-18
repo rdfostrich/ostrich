@@ -235,37 +235,46 @@ TEST_F(PatchElementsTest, Positions) {
     // s a o +
     // s z o -
 
-    ASSERT_EQ(0, patchElements.positions(PatchElement(Triple("g", "p", "o"), true)).sp_) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.positions(PatchElement(Triple("g", "p", "o"), true)).s__) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.positions(PatchElement(Triple("g", "p", "o"), true)).s_o) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.positions(PatchElement(Triple("g", "p", "o"), true))._po) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.positions(PatchElement(Triple("g", "p", "o"), true))._p_) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.positions(PatchElement(Triple("g", "p", "o"), true)).__o) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.positions(PatchElement(Triple("g", "p", "o"), true)).___) << "Found position is wrong";
+    // All additions will have position -1, because these are not taken into account when determining positions!
+    ASSERT_EQ(-1, patchElements.positions(PatchElement(Triple("g", "p", "o"), true)).sp_) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.positions(PatchElement(Triple("g", "p", "o"), true)).s__) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.positions(PatchElement(Triple("g", "p", "o"), true)).s_o) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.positions(PatchElement(Triple("g", "p", "o"), true))._po) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.positions(PatchElement(Triple("g", "p", "o"), true))._p_) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.positions(PatchElement(Triple("g", "p", "o"), true)).__o) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.positions(PatchElement(Triple("g", "p", "o"), true)).___) << "Found position is wrong";
 
-    ASSERT_EQ(0, patchElements.positions(PatchElement(Triple("s", "a", "o"), true)).sp_) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.positions(PatchElement(Triple("s", "a", "o"), true)).s__) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.positions(PatchElement(Triple("s", "a", "o"), true)).s_o) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.positions(PatchElement(Triple("s", "a", "o"), true))._po) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.positions(PatchElement(Triple("s", "a", "o"), true))._p_) << "Found position is wrong";
-    ASSERT_EQ(2, patchElements.positions(PatchElement(Triple("s", "a", "o"), true)).__o) << "Found position is wrong";
-    ASSERT_EQ(2, patchElements.positions(PatchElement(Triple("s", "a", "o"), true)).___) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.positions(PatchElement(Triple("s", "a", "o"), true)).sp_) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.positions(PatchElement(Triple("s", "a", "o"), true)).s__) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.positions(PatchElement(Triple("s", "a", "o"), true)).s_o) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.positions(PatchElement(Triple("s", "a", "o"), true))._po) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.positions(PatchElement(Triple("s", "a", "o"), true))._p_) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.positions(PatchElement(Triple("s", "a", "o"), true)).__o) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.positions(PatchElement(Triple("s", "a", "o"), true)).___) << "Found position is wrong";
 
     ASSERT_EQ(0, patchElements.positions(PatchElement(Triple("s", "z", "o"), false)).sp_) << "Found position is wrong";
-    ASSERT_EQ(1, patchElements.positions(PatchElement(Triple("s", "z", "o"), false)).s__) << "Found position is wrong";
-    ASSERT_EQ(1, patchElements.positions(PatchElement(Triple("s", "z", "o"), false)).s_o) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.positions(PatchElement(Triple("s", "z", "o"), false)).s__) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.positions(PatchElement(Triple("s", "z", "o"), false)).s_o) << "Found position is wrong";
     ASSERT_EQ(0, patchElements.positions(PatchElement(Triple("s", "z", "o"), false))._po) << "Found position is wrong";
     ASSERT_EQ(0, patchElements.positions(PatchElement(Triple("s", "z", "o"), false))._p_) << "Found position is wrong";
-    ASSERT_EQ(3, patchElements.positions(PatchElement(Triple("s", "z", "o"), false)).__o) << "Found position is wrong";
-    ASSERT_EQ(3, patchElements.positions(PatchElement(Triple("s", "z", "o"), false)).___) << "Found position is wrong";
+    ASSERT_EQ(1, patchElements.positions(PatchElement(Triple("s", "z", "o"), false)).__o) << "Found position is wrong";
+    ASSERT_EQ(1, patchElements.positions(PatchElement(Triple("s", "z", "o"), false)).___) << "Found position is wrong";
 
-    ASSERT_EQ(0, patchElements.positions(PatchElement(Triple("g", "p", "o"), true)).sp_) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.positions(PatchElement(Triple("g", "p", "o"), true)).s__) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.positions(PatchElement(Triple("g", "p", "o"), true)).s_o) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.positions(PatchElement(Triple("g", "p", "o"), true))._po) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.positions(PatchElement(Triple("g", "p", "o"), true))._p_) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.positions(PatchElement(Triple("g", "p", "o"), true)).__o) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.positions(PatchElement(Triple("g", "p", "o"), true)).___) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.positions(PatchElement(Triple("g", "p", "o"), true)).sp_) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.positions(PatchElement(Triple("g", "p", "o"), true)).s__) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.positions(PatchElement(Triple("g", "p", "o"), true)).s_o) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.positions(PatchElement(Triple("g", "p", "o"), true))._po) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.positions(PatchElement(Triple("g", "p", "o"), true))._p_) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.positions(PatchElement(Triple("g", "p", "o"), true)).__o) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.positions(PatchElement(Triple("g", "p", "o"), true)).___) << "Found position is wrong";
+
+    ASSERT_EQ(0, patchElements.positions(PatchElement(Triple("q", "p", "o"), false)).sp_) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.positions(PatchElement(Triple("q", "p", "o"), false)).s__) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.positions(PatchElement(Triple("q", "p", "o"), false)).s_o) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.positions(PatchElement(Triple("q", "p", "o"), false))._po) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.positions(PatchElement(Triple("q", "p", "o"), false))._p_) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.positions(PatchElement(Triple("q", "p", "o"), false)).__o) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.positions(PatchElement(Triple("q", "p", "o"), false)).___) << "Found position is wrong";
 }
 
 TEST_F(PatchElementsTest, PositionPattern) {

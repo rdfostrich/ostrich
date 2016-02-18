@@ -34,7 +34,7 @@ TEST_F(PatchTreeTest, AppendUnsafeNew) {
 
 TEST_F(PatchTreeTest, AppendUnsafeContains) {
     Patch patch;
-    patch.add(PatchElement(Triple("s1", "p1", "o1"), true));
+    patch.add(PatchElement(Triple("s1", "p1", "o1"), false));
     patchTree->append_unsafe(patch, 0);
 
     PatchTreeKey iteratorKey = Triple("s1", "p1", "o1");
@@ -44,7 +44,7 @@ TEST_F(PatchTreeTest, AppendUnsafeContains) {
 
     ASSERT_EQ(true, it.next(&key, &value)) << "Iterator does not contain an element after append";
     ASSERT_EQ("s1 p1 o1.", key.to_string()) << "Found key is incorrect";
-    ASSERT_EQ(true, value.get(0).is_addition()) << "Found value is incorrect";
+    ASSERT_EQ(false, value.get(0).is_addition()) << "Found value is incorrect";
     ASSERT_EQ(0, value.get(0).get_patch_id()) << "Found value is incorrect";
     ASSERT_EQ(0, value.get(0).get_patch_positions().sp_) << "Found value is incorrect";
     ASSERT_EQ(0, value.get(0).get_patch_positions().s_o) << "Found value is incorrect";
@@ -56,9 +56,9 @@ TEST_F(PatchTreeTest, AppendUnsafeContains) {
 
     ASSERT_EQ(false, it.next(&key, &value)) << "Iterator contains another element after a single append";
 
-    ASSERT_EQ(true , patchTree->contains(PatchElement(Triple("s1", "p1", "o1"), true ), 0, false)) << "Contains is incorrect";
-    ASSERT_EQ(false, patchTree->contains(PatchElement(Triple("s1", "p1", "o1"), false), 0, false)) << "Contains is incorrect";
-    ASSERT_EQ(true , patchTree->contains(PatchElement(Triple("s1", "p1", "o1"), false), 0, true)) << "Contains is incorrect";
+    ASSERT_EQ(false, patchTree->contains(PatchElement(Triple("s1", "p1", "o1"), true ), 0, false)) << "Contains is incorrect";
+    ASSERT_EQ(true , patchTree->contains(PatchElement(Triple("s1", "p1", "o1"), false), 0, false)) << "Contains is incorrect";
+    ASSERT_EQ(true , patchTree->contains(PatchElement(Triple("s1", "p1", "o1"), true), 0, true)) << "Contains is incorrect";
     ASSERT_EQ(false, patchTree->contains(PatchElement(Triple("a", "a", "a")   , false), 0, false)) << "Contains is incorrect";
     ASSERT_EQ(false, patchTree->contains(PatchElement(Triple("a", "a", "a")   , false), 0, true)) << "Contains is incorrect";
 }
@@ -98,10 +98,10 @@ TEST_F(PatchTreeTest, IteratorOrder) {
     patch.add(PatchElement(Triple("s", "z", "o"), false));
     patch.add(PatchElement(Triple("s", "a", "o"), true));
     // Expected order:
-    // a p o
-    // g p o
-    // s a o
-    // s z o
+    // a p o +
+    // g p o -
+    // s a o +
+    // s z o -
     patchTree->append_unsafe(patch, 0);
 
     PatchTreeKey iteratorKey = Triple("a", "a", "a");
@@ -113,6 +113,18 @@ TEST_F(PatchTreeTest, IteratorOrder) {
     ASSERT_EQ("a p o.", key.to_string()) << "First key is incorrect";
     ASSERT_EQ(true, value.get(0).is_addition()) << "Found value is incorrect";
     ASSERT_EQ(0, value.get(0).get_patch_id()) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get(0).get_patch_positions().sp_) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get(0).get_patch_positions().s_o) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get(0).get_patch_positions().s__) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get(0).get_patch_positions()._po) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get(0).get_patch_positions()._p_) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get(0).get_patch_positions().__o) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get(0).get_patch_positions().___) << "Found value is incorrect";
+
+    ASSERT_EQ(true, it.next(&key, &value)) << "Iterator has a no next value";
+    ASSERT_EQ("g p o.", key.to_string()) << "Second key is incorrect";
+    ASSERT_EQ(false, value.get(0).is_addition()) << "Second value is incorrect";
+    ASSERT_EQ(0, value.get(0).get_patch_id()) << "Second value is incorrect";
     ASSERT_EQ(0, value.get(0).get_patch_positions().sp_) << "Found value is incorrect";
     ASSERT_EQ(0, value.get(0).get_patch_positions().s_o) << "Found value is incorrect";
     ASSERT_EQ(0, value.get(0).get_patch_positions().s__) << "Found value is incorrect";
@@ -122,40 +134,28 @@ TEST_F(PatchTreeTest, IteratorOrder) {
     ASSERT_EQ(0, value.get(0).get_patch_positions().___) << "Found value is incorrect";
 
     ASSERT_EQ(true, it.next(&key, &value)) << "Iterator has a no next value";
-    ASSERT_EQ("g p o.", key.to_string()) << "Second key is incorrect";
-    ASSERT_EQ(false, value.get(0).is_addition()) << "Second value is incorrect";
-    ASSERT_EQ(0, value.get(0).get_patch_id()) << "Second value is incorrect";
-    ASSERT_EQ(0, value.get(0).get_patch_positions().sp_) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(0).get_patch_positions().s_o) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(0).get_patch_positions().s__) << "Found value is incorrect";
-    ASSERT_EQ(1, value.get(0).get_patch_positions()._po) << "Found value is incorrect";
-    ASSERT_EQ(1, value.get(0).get_patch_positions()._p_) << "Found value is incorrect";
-    ASSERT_EQ(1, value.get(0).get_patch_positions().__o) << "Found value is incorrect";
-    ASSERT_EQ(1, value.get(0).get_patch_positions().___) << "Found value is incorrect";
-
-    ASSERT_EQ(true, it.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("s a o.", key.to_string()) << "Third key is incorrect";
     ASSERT_EQ(true, value.get(0).is_addition()) << "Third value is incorrect";
     ASSERT_EQ(0, value.get(0).get_patch_id()) << "Third value is incorrect";
-    ASSERT_EQ(0, value.get(0).get_patch_positions().sp_) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(0).get_patch_positions().s_o) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(0).get_patch_positions().s__) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(0).get_patch_positions()._po) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(0).get_patch_positions()._p_) << "Found value is incorrect";
-    ASSERT_EQ(2, value.get(0).get_patch_positions().__o) << "Found value is incorrect";
-    ASSERT_EQ(2, value.get(0).get_patch_positions().___) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get(0).get_patch_positions().sp_) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get(0).get_patch_positions().s_o) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get(0).get_patch_positions().s__) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get(0).get_patch_positions()._po) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get(0).get_patch_positions()._p_) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get(0).get_patch_positions().__o) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get(0).get_patch_positions().___) << "Found value is incorrect";
 
     ASSERT_EQ(true, it.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("s z o.", key.to_string()) << "Fourth key is incorrect";
     ASSERT_EQ(false, value.get(0).is_addition()) << "Fourth value is incorrect";
     ASSERT_EQ(0, value.get(0).get_patch_id()) << "Fourth value is incorrect";
     ASSERT_EQ(0, value.get(0).get_patch_positions().sp_) << "Found value is incorrect";
-    ASSERT_EQ(1, value.get(0).get_patch_positions().s_o) << "Found value is incorrect";
-    ASSERT_EQ(1, value.get(0).get_patch_positions().s__) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get(0).get_patch_positions().s_o) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get(0).get_patch_positions().s__) << "Found value is incorrect";
     ASSERT_EQ(0, value.get(0).get_patch_positions()._po) << "Found value is incorrect";
     ASSERT_EQ(0, value.get(0).get_patch_positions()._p_) << "Found value is incorrect";
-    ASSERT_EQ(3, value.get(0).get_patch_positions().__o) << "Found value is incorrect";
-    ASSERT_EQ(3, value.get(0).get_patch_positions().___) << "Found value is incorrect";
+    ASSERT_EQ(1, value.get(0).get_patch_positions().__o) << "Found value is incorrect";
+    ASSERT_EQ(1, value.get(0).get_patch_positions().___) << "Found value is incorrect";
 
     ASSERT_EQ(false, it.next(&key, &value)) << "Iterator should be finished";
 }
@@ -325,12 +325,13 @@ TEST_F(PatchTreeTest, ReconstructPatchComposite) {
 TEST_F(PatchTreeTest, RelativePatchPositions) {
     Patch patch1;
     patch1.add(PatchElement(Triple("g", "p", "o"), false));
-    patch1.add(PatchElement(Triple("a", "p", "o"), true));
+    patch1.add(PatchElement(Triple("a", "p", "o"), false));
     patchTree->append_unsafe(patch1, 1);
 
     Patch patch2;
     patch2.add(PatchElement(Triple("s", "z", "o"), false));
-    patch2.add(PatchElement(Triple("s", "a", "o"), true));
+    patch2.add(PatchElement(Triple("a", "b", "c"), true));
+    patch2.add(PatchElement(Triple("s", "a", "o"), false));
     patchTree->append_unsafe(patch2, 1);
 
     Patch patch3;
@@ -350,10 +351,21 @@ TEST_F(PatchTreeTest, RelativePatchPositions) {
     PatchTreeValue value;
 
     // Expected order for patch 1:
-    // a p o
-    // g p o
-    // s a o
-    // s z o
+    // a b c +
+    // a p o -
+    // g p o -
+    // s a o -
+    // s z o -
+
+    ASSERT_EQ(true, it.next(&key, &value)) << "Iterator has a no next value";
+    ASSERT_EQ("a b c.", key.to_string()) << "First key is incorrect";
+    ASSERT_EQ(-1, value.get(1).get_patch_positions().sp_) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get(1).get_patch_positions().s_o) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get(1).get_patch_positions().s__) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get(1).get_patch_positions()._po) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get(1).get_patch_positions()._p_) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get(1).get_patch_positions().__o) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get(1).get_patch_positions().___) << "Found value is incorrect";
 
     ASSERT_EQ(true, it.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("a p o.", key.to_string()) << "First key is incorrect";
@@ -405,12 +417,13 @@ TEST_F(PatchTreeTest, RelativePatchPositions) {
     PatchTreeIterator it2 = patchTree->iterator(1, false); // Iterate over all elements of patch 1 again
 
     // Expected order for patch 1:
-    // a a a
-    // a p o
-    // g p o
-    // s a o
-    // s z o
-    // z z z
+    // a a a -
+    // a b c +
+    // a p o -
+    // g p o -
+    // s a o -
+    // s z o -
+    // z z z -
 
     ASSERT_EQ(true, it2.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("a a a.", key.to_string()) << "First key is incorrect";
@@ -421,6 +434,16 @@ TEST_F(PatchTreeTest, RelativePatchPositions) {
     ASSERT_EQ(0, value.get(1).get_patch_positions()._p_) << "Found value is incorrect";
     ASSERT_EQ(0, value.get(1).get_patch_positions().__o) << "Found value is incorrect";
     ASSERT_EQ(0, value.get(1).get_patch_positions().___) << "Found value is incorrect";
+
+    ASSERT_EQ(true, it2.next(&key, &value)) << "Iterator has a no next value";
+    ASSERT_EQ("a b c.", key.to_string()) << "First key is incorrect";
+    ASSERT_EQ(-1, value.get(1).get_patch_positions().sp_) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get(1).get_patch_positions().s_o) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get(1).get_patch_positions().s__) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get(1).get_patch_positions()._po) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get(1).get_patch_positions()._p_) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get(1).get_patch_positions().__o) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get(1).get_patch_positions().___) << "Found value is incorrect";
 
     ASSERT_EQ(true, it2.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("a p o.", key.to_string()) << "Second key is incorrect";
@@ -498,7 +521,6 @@ TEST_F(PatchTreeTest, DeletionCount) {
     patch4.add(PatchElement(Triple("s", "z", "o"), false));
     patchTree->append(patch4, 4);
 
-    // TODO: intentional failing tests; currently all triples are counted because patch_position takes into account + and -, it should only do -.
     ASSERT_EQ(2, patchTree->deletion_count(Triple("", "", ""), 1)) << "Deletion count is incorrect";
     ASSERT_EQ(1, patchTree->deletion_count(Triple("s", "", ""), 1)) << "Deletion count is incorrect";
     ASSERT_EQ(0, patchTree->deletion_count(Triple("s", "a", ""), 1)) << "Deletion count is incorrect";
@@ -507,7 +529,7 @@ TEST_F(PatchTreeTest, DeletionCount) {
     ASSERT_EQ(1, patchTree->deletion_count(Triple("", "p", ""), 1)) << "Deletion count is incorrect";
     ASSERT_EQ(1, patchTree->deletion_count(Triple("g", "p", ""), 1)) << "Deletion count is incorrect";
 
-    ASSERT_EQ(3, patchTree->deletion_count(Triple("", "", ""), 2)) << "Deletion count is incorrect";
+    ASSERT_EQ(4, patchTree->deletion_count(Triple("", "", ""), 2)) << "Deletion count is incorrect";
 
-    ASSERT_EQ(4, patchTree->deletion_count(Triple("", "", ""), 4)) << "Deletion count is incorrect";
+    ASSERT_EQ(5, patchTree->deletion_count(Triple("", "", ""), 4)) << "Deletion count is incorrect";
 }

@@ -34,26 +34,28 @@ PatchElement Patch::get(int index) {
 
 PatchPositions Patch::positions(PatchElement element) {
     PatchPositions positions = PatchPositions();
-    // First find the position of the element in O(log n)
-    std::vector<PatchElement>::iterator findIt = std::lower_bound(elements.begin(), elements.end(), element);
-    // Count the matching patch elements from this position to the beginning for all triple patterns
-    while(findIt >= elements.begin()) {
-        PatchElement matching = *findIt;
+    if(!element.is_addition()) {
+        // First find the position of the element in O(log n)
+        std::vector<PatchElement>::iterator findIt = std::lower_bound(elements.begin(), elements.end(), element);
+        // Count the matching patch elements from this position to the beginning for all triple patterns
+        while (findIt >= elements.begin()) {
+            PatchElement matching = *findIt;
+            if(!matching.is_addition()) {
+                bool s = matching.get_triple().get_subject() == element.get_triple().get_subject();
+                bool p = matching.get_triple().get_predicate() == element.get_triple().get_predicate();
+                bool o = matching.get_triple().get_object() == element.get_triple().get_object();
 
-        bool s = matching.get_triple().get_subject() == element.get_triple().get_subject();
-        bool p = matching.get_triple().get_predicate() == element.get_triple().get_predicate();
-        bool o = matching.get_triple().get_object() == element.get_triple().get_object();
-
-        if(s && p) positions.sp_++;
-        if(s && o) positions.s_o++;
-        if(s) positions.s__++;
-        if(p && o) positions._po++;
-        if(p) positions._p_++;
-        if(o) positions.__o++;
-        positions.___++;
-
-        findIt--;
-    };
+                if (s && p) positions.sp_++;
+                if (s && o) positions.s_o++;
+                if (s) positions.s__++;
+                if (p && o) positions._po++;
+                if (p) positions._p_++;
+                if (o) positions.__o++;
+                positions.___++;
+            }
+            findIt--;
+        };
+    }
     return positions;
 }
 
