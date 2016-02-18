@@ -19,12 +19,12 @@ class DictionaryManager {
 
 public:
   DictionaryManager(Dictionary *hdtDict, HDTSpecification &spec)
-      : hdtDict(hdtDict), bitmask(0x80000000) {
+      : hdtDict(hdtDict), bitmask(2147483648) {
     // Create additional dictionary
     patchDict = new PlainDictionary(spec);
   };
 
-  DictionaryManager() : bitmask(0x80000000) {
+  DictionaryManager() : bitmask(2147483648) {
     // Create two empty default dictionaries dictionary,
     hdtDict = new PlainDictionary();
     patchDict = new PlainDictionary();
@@ -40,11 +40,11 @@ public:
   **/
   std::string idToString(unsigned int id, TripleComponentRole position) {
     // Check whether id is from HDT or not (MSB is not set)
-    if (id & bitmask) {
+    if (!(id & bitmask)) {
       return hdtDict->idToString(id, position);
     }
 
-    return patchDict->idToString(id, position);
+    return patchDict->idToString(id - bitmask, position);
   }
 
   /**
@@ -57,13 +57,18 @@ public:
   **/
   unsigned int stringToId(std::string &str, TripleComponentRole position) {
     // First ask HDT
+    unsigned int id;
     try {
-      return hdtDict->stringToId(str, position);
+      id = hdtDict->stringToId(str, position);
+      if (id > 0)
+        return id;
     } catch (exception e) {
     } // ID is not in there
+    // cout << "Snapshot dictionary does not have " << str << endl;
 
     // Set MSB to 1
-    return bitmask | patchDict->stringToId(str, position);
+    id = patchDict->stringToId(str, position);
+    return bitmask | id;
   }
 
   /**
@@ -75,11 +80,16 @@ public:
   **/
   unsigned int insert(std::string &str, TripleComponentRole position) {
     // First ask HDT
+    unsigned int id;
     try {
-      return hdtDict->stringToId(str, position);
+      id = hdtDict->stringToId(str, position);
+      if (id > 0)
+        return id;
     } catch (exception e) {
     } // ID is not in there
 
-    return patchDict->insert(str, position);
+    // cout << "Snapshot dictionary does not have " << str << endl;
+
+    return bitmask | patchDict->insert(str, position);
   }
 };

@@ -10,6 +10,19 @@ HunterGate(
 set(PROJECT_NAME_STR tpfpatch_store)
 project(${PROJECT_NAME_STR})
 
+include_directories(deps/hdt/libcds-v1.0.12/includes/ deps/hdt/hdt-lib/include/ deps/hdt/hdt-lib/src/dictionary/)
+
+set(HDT_FILES
+    #    deps/hdt/hdt-lib/include/Iterator.hpp
+    #    deps/hdt/hdt-lib/include/Dictionary.hpp
+    #    deps/hdt/hdt-lib/include/HDTSpecification.hpp
+    #    deps/hdt/hdt-lib/src/dictionary/PlainDictionary.hpp
+        deps/hdt/hdt-lib/src/util/crc16.cpp
+        deps/hdt/hdt-lib/src/util/propertyutil.cpp
+        deps/hdt/hdt-lib/src/hdt/ControlInformation.cpp
+        deps/hdt/hdt-lib/src/hdt/HDTSpecification.cpp
+        deps/hdt/hdt-lib/src/dictionary/PlainDictionary.cpp
+        )
 set(SOURCE_FILES
         src/main/cpp/test.cc)
 set(COMMON_FILES
@@ -21,7 +34,7 @@ set(COMMON_FILES
         src/main/cpp/patch/patch_tree.cc src/main/cpp/patch/patch_tree.h
         src/main/cpp/patch/patch_tree_iterator.cc src/main/cpp/patch/patch_tree_iterator.h
         src/main/cpp/patch/patch.h
-        #src/main/cpp/dictionary/dictionary.cc
+        src/main/cpp/dictionary/dictionary.cc
         )
 set(TEST_FILES
         src/test/cpp/patch/triple.cc
@@ -30,10 +43,10 @@ set(TEST_FILES
         src/test/cpp/patch/patch_tree_value.cc
         src/test/cpp/patch/patch_tree_key_comparator.cc
         src/test/cpp/patch/patch_tree.cc
-        #src/test/cpp/dictionary/dictionary.cc
+        src/test/cpp/dictionary/dictionary.cc
         )
 
-add_executable(${PROJECT_NAME_STR} ${COMMON_FILES} ${SOURCE_FILES})
+add_executable(${PROJECT_NAME_STR} ${HDT_FILES} ${COMMON_FILES} ${SOURCE_FILES})
 
 # Add Kyoto Cabinet
 find_library(KYOTO_SHARED_LIBRARY kyotocabinet PATHS ${KC_ROOT}/lib)
@@ -65,7 +78,7 @@ endif (KYOTO_SHARED_LIBRARY MATCHES KYOTO_LIBRARY-NOTFOUND)
 
 # 3rdparty Libraries
 set(EXT_PROJECTS_DIR ${PROJECT_SOURCE_DIR}/ext)
-# include(CMakeLists-External.txt)
+#include(CMakeLists-External.txt)
 
 # Add gtest
 add_subdirectory(${EXT_PROJECTS_DIR}/gtest)
@@ -74,7 +87,7 @@ set(PROJECT_TEST_NAME ${PROJECT_NAME_STR}_test)
 include_directories(${GTEST_INCLUDE_DIRS})
 
 file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/src/test/cpp/*.cpp)
-add_executable(${PROJECT_TEST_NAME} ${TEST_FILES} ${COMMON_FILES})
+add_executable(${PROJECT_TEST_NAME} ${TEST_FILES} ${HDT_FILES} ${COMMON_FILES})
 add_dependencies(${PROJECT_TEST_NAME} googletest)
 
 if(NOT WIN32)
