@@ -7,6 +7,7 @@
 #include "patch.h"
 #include "patch.h"
 #include "patch_tree_key_comparator.h"
+#include "positioned_triple_iterator.h"
 
 using namespace std;
 using namespace kyotocabinet;
@@ -81,6 +82,24 @@ public:
      * @return The amount of deletions matching the given triple pattern for the given patch id.
      */
     PatchPosition deletion_count(Triple triple_pattern, int patch_id);
+    /**
+     * Get an iterator that loops over all deletions starting from a given triple and only matching the
+     * given triple pattern.
+     * @param offset The triple to start from.
+     * @param patch_id The patch id to filter by, this includes all patches before this one.
+     * @param triple_pattern Only triples that match the given pattern will be returned in the iterator.
+     * @return The iterator that will loop over the tree for the given patch.
+     */
+    PositionedTripleIterator deletion_iterator_from(Triple offset, int patch_id, Triple triple_pattern);
+    /**
+     * Get an iterator that loops over all additions starting with a given offset and only matching the
+     * given triple pattern.
+     * @param offset The number of addition triples to skip.
+     * @param patch_id The patch id to filter by, this includes all patches before this one.
+     * @param triple_pattern Only triples that match the given pattern will be returned in the iterator.
+     * @return The iterator that will loop over the tree for the given patch.
+     */
+    PositionedTripleIterator addition_iterator_from(int offset, int patch_id, Triple triple_pattern);
 };
 
 #endif //TPFPATCH_STORE_PATCH_TREE_H

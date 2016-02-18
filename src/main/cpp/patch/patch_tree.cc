@@ -140,16 +140,40 @@ PatchPosition PatchTree::deletion_count(Triple triple_pattern, int patch_id) {
     PatchTreeIterator patchTreeIterator(cursor);
     patchTreeIterator.set_patch_filter(patch_id, true);
     patchTreeIterator.set_type_filter(false);
+    patchTreeIterator.set_triple_pattern_filter(triple_pattern);
     patchTreeIterator.set_reverse();
 
     PatchTreeKey key;
     PatchTreeValue value;
     while(patchTreeIterator.next(&key, &value)) {
-        if((triple_pattern.get_subject() == "" || triple_pattern.get_subject() == key.get_subject())
-           && (triple_pattern.get_predicate() == "" || triple_pattern.get_predicate() == key.get_predicate())
-           && (triple_pattern.get_object() == "" || triple_pattern.get_object() == key.get_object())) {
-            return value.get(patch_id).get_patch_positions().get_by_pattern(triple_pattern) + 1;
-        }
+        return value.get(patch_id).get_patch_positions().get_by_pattern(triple_pattern) + 1;
     }
     return 0;
+}
+
+PositionedTripleIterator PatchTree::deletion_iterator_from(Triple offset, int patch_id, Triple triple_pattern) {
+    DB::Cursor* cursor = db.cursor();
+    size_t size;
+    const char* data = offset.serialize(&size);
+    cursor->jump(data, size);
+    free((char*) data);
+    PatchTreeIterator* it = new PatchTreeIterator(cursor);
+    it->set_patch_filter(patch_id, false);
+    it->set_type_filter(false);
+    it->set_triple_pattern_filter(triple_pattern);
+    return PositionedTripleIterator(it, false, patch_id, triple_pattern);
+}
+
+PositionedTripleIterator PatchTree::addition_iterator_from(int offset, int patch_id, Triple triple_pattern) {
+    DB::Cursor* cursor = db.cursor();
+    cursor->jump();
+    PatchTreeIterator* it = new PatchTreeIterator(cursor);
+    it->set_patch_filter(patch_id, false);
+    it->set_type_filter(true);
+    it->set_triple_pattern_filter(triple_pattern);
+    // TODO: this ridiculous loop won't be needed anymore when we add a more efficient addition indexing structure.
+    PatchTreeKey key;
+    PatchTreeValue value;
+    while(offset-- > 0 && it->next(&key, &value));
+    return PositionedTripleIterator(it, true, patch_id, triple_pattern);
 }
