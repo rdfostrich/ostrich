@@ -26,6 +26,7 @@ set(HDT_FILES
 set(SOURCE_FILES
         src/main/cpp/test.cc)
 set(COMMON_FILES
+        src/main/cpp/controller/controller.cc src/main/cpp/controller/controller.h
         src/main/cpp/patch/triple.cc src/main/cpp/patch/triple.h
         src/main/cpp/patch/patch_element.cc src/main/cpp/patch/patch_element.h
         src/main/cpp/patch/patch.cc src/main/cpp/patch/patch.h
@@ -33,6 +34,7 @@ set(COMMON_FILES
         src/main/cpp/patch/patch_tree_key_comparator.cc src/main/cpp/patch/patch_tree_key_comparator.h
         src/main/cpp/patch/patch_tree.cc src/main/cpp/patch/patch_tree.h
         src/main/cpp/patch/patch_tree_iterator.cc src/main/cpp/patch/patch_tree_iterator.h
+        src/main/cpp/patch/positioned_triple_iterator.cc src/main/cpp/patch/positioned_triple_iterator.h
         src/main/cpp/patch/patch.h
         src/main/cpp/dictionary/dictionary.cc
         )

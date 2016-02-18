@@ -48,6 +48,26 @@ public:
                         (predicate == rhs.predicate && object < rhs.object)));
     }
     bool operator == (const Triple &rhs) const { return subject == rhs.subject && predicate == rhs.predicate && object == rhs.object; }
+
+    /**
+     * Check if the given triple matches with the triple pattern.
+     * @param triple The triple to check
+     * @param triple_pattern The triple pattern to match with the triple, empty elements are seen as blank.
+     * @return If the triple and pattern match.
+     */
+    static bool pattern_match_triple(Triple triple, Triple triple_pattern) {
+        return (triple_pattern.get_subject() == "" || triple_pattern.get_subject() == triple.get_subject())
+               && (triple_pattern.get_predicate() == "" || triple_pattern.get_predicate() == triple.get_predicate())
+               && (triple_pattern.get_object() == "" || triple_pattern.get_object() == triple.get_object());
+    }
+    /**
+     * Check if the given triple pattern has empty elements for S, P and O.
+     * @param triple_pattern The triple pattern to check.
+     * @return If the pattern is ? ? ?
+     */
+    static bool is_all_matching_pattern(Triple triple_pattern) {
+        return triple_pattern.get_subject() == "" && triple_pattern.get_predicate() == "" && triple_pattern.get_object() == "";
+    }
 };
 
 #endif //TPFPATCH_STORE_TRIPLE_H
