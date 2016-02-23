@@ -46,18 +46,10 @@ public:
     void construct_next_patch_tree(int patch_id_start);
     /**
      * Get the patchtree id that contains the given patch id.
-     * @param patch_id_start The id of the patchtree to load, which is the id of the first patch in this tree.
+     * @param patch_id_start The id of a patch.
      * @return The id of the patch tree, can be -1 if the patch_id is not present in any tree.
      */
-    int get_patch_tree_id(int patch_id_start);
-    /**
-     * Write the tree metadata to the METAFILE file
-     */
-    void write_treemeta();
-    /**
-     * Read the tree metadata from the METAFILE file
-     */
-    void read_treemeta();
+    int get_patch_tree_id(int patch_id);
 };
 
 

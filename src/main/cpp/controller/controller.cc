@@ -1,4 +1,5 @@
 #include <dirent.h>
+#include <iostream>
 #include "controller.h"
 
 Controller::Controller() : loaded_patches(detect_patch_trees()) {}
@@ -66,7 +67,16 @@ void Controller::construct_next_patch_tree(int patch_id_start) {
 }
 
 int Controller::get_patch_tree_id(int patch_id) {
-    // TODO
+    // lower_bound does binary search in the map, so this is quite efficient.
+    std::map<int, PatchTree*>::iterator it = loaded_patches.lower_bound(patch_id);
+    if(it == loaded_patches.end() || it->first > patch_id) {
+        if(it == loaded_patches.begin()) {
+            // In this case our patches did not start from id 0, but we still have to catch it.
+            return -1;
+        }
+        it--;
+    }
+    return it->first;
 }
 
 iterator<std::input_iterator_tag, Triple> Controller::get(Triple triple_pattern, int limit, int offset, int patch_id) {
@@ -74,13 +84,5 @@ iterator<std::input_iterator_tag, Triple> Controller::get(Triple triple_pattern,
 }
 
 bool Controller::append(Patch patch) {
-    // TODO
-}
-
-void Controller::write_treemeta() {
-    // TODO
-}
-
-void Controller::read_treemeta() {
     // TODO
 }

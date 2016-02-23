@@ -48,3 +48,34 @@ TEST_F(ControllerTest, DetectPatchTrees) {
     ASSERT_EQ(false, found_patches3.empty()) << "Two patch trees should be detected";
     ASSERT_EQ(2, found_patches3.size()) << "Two patch trees should be detected";
 }
+
+TEST_F(ControllerTest, GetPatchTreeId) {
+    ASSERT_EQ(-1, controller.get_patch_tree_id(-1));
+    ASSERT_EQ(-1, controller.get_patch_tree_id(0));
+    ASSERT_EQ(-1, controller.get_patch_tree_id(1));
+
+    controller.construct_next_patch_tree(0);
+    ASSERT_EQ(-1, controller.get_patch_tree_id(-1));
+    ASSERT_EQ(0, controller.get_patch_tree_id(0));
+    ASSERT_EQ(0, controller.get_patch_tree_id(1));
+
+    controller.construct_next_patch_tree(10);
+    ASSERT_EQ(-1, controller.get_patch_tree_id(-1));
+    ASSERT_EQ(0, controller.get_patch_tree_id(0));
+    ASSERT_EQ(0, controller.get_patch_tree_id(1));
+    ASSERT_EQ(0, controller.get_patch_tree_id(9));
+    ASSERT_EQ(10, controller.get_patch_tree_id(10));
+    ASSERT_EQ(10, controller.get_patch_tree_id(11));
+    ASSERT_EQ(10, controller.get_patch_tree_id(100));
+
+    controller.construct_next_patch_tree(100);
+    ASSERT_EQ(-1, controller.get_patch_tree_id(-1));
+    ASSERT_EQ(0, controller.get_patch_tree_id(0));
+    ASSERT_EQ(0, controller.get_patch_tree_id(1));
+    ASSERT_EQ(0, controller.get_patch_tree_id(9));
+    ASSERT_EQ(10, controller.get_patch_tree_id(10));
+    ASSERT_EQ(10, controller.get_patch_tree_id(11));
+    ASSERT_EQ(10, controller.get_patch_tree_id(99));
+    ASSERT_EQ(100, controller.get_patch_tree_id(100));
+    ASSERT_EQ(100, controller.get_patch_tree_id(101));
+}
