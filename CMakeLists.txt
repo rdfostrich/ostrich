@@ -39,6 +39,7 @@ set(COMMON_FILES
         src/main/cpp/dictionary/dictionary.cc
         )
 set(TEST_FILES
+        src/test/cpp/controller/controller.cc
         src/test/cpp/patch/triple.cc
         src/test/cpp/patch/patch_element.cc
         src/test/cpp/patch/patch.cc
