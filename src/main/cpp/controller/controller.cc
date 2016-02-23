@@ -41,7 +41,7 @@ std::map<int, PatchTree*> Controller::get_patch_trees() {
 }
 
 PatchTree* Controller::load_patch_tree(int patch_id_start) {
-    loaded_patches[patch_id_start] = new PatchTree(PATCHTREE_FILENAME(patch_id_start));
+    return loaded_patches[patch_id_start] = new PatchTree(PATCHTREE_FILENAME(patch_id_start));
 }
 
 PatchTree* Controller::get_patch_tree(int patch_id_start) {
@@ -62,8 +62,8 @@ PatchTree* Controller::get_patch_tree(int patch_id_start) {
     return it->second;
 }
 
-void Controller::construct_next_patch_tree(int patch_id_start) {
-    load_patch_tree(patch_id_start);
+PatchTree* Controller::construct_next_patch_tree(int patch_id_start) {
+    return load_patch_tree(patch_id_start);
 }
 
 int Controller::get_patch_tree_id(int patch_id) {
@@ -79,10 +79,26 @@ int Controller::get_patch_tree_id(int patch_id) {
     return it->first;
 }
 
+Patch Controller::get_patch(int patch_id) {
+    int patchtree_id = get_patch_tree_id(patch_id);
+    if(patchtree_id < 0) {
+        return Patch();
+    }
+    return get_patch_tree(patchtree_id)->reconstruct_patch(patch_id);
+}
+
 iterator<std::input_iterator_tag, Triple> Controller::get(Triple triple_pattern, int limit, int offset, int patch_id) {
     // TODO
 }
 
-bool Controller::append(Patch patch) {
-    // TODO
+bool Controller::append(Patch patch, int patch_id) {
+    // TODO: this will require some changes when we implement automatic snapshot creation.
+    int patchtree_id = get_patch_tree_id(patch_id);
+    PatchTree* patchtree;
+    if(patchtree_id < 0) {
+        patchtree = construct_next_patch_tree(patch_id);
+    } else {
+        patchtree = get_patch_tree(patchtree_id);
+    }
+    return patchtree->append(patch, patch_id);
 }

@@ -61,7 +61,7 @@ void PatchTree::append_unsafe(Patch patch, int patch_id) {
 
 bool PatchTree::append(Patch patch, int patch_id) {
     for(long i = 0; i < patch.get_size(); i++) {
-        // We IGNORE the element type, because it makes no sense to have +/- in the same patch!
+        // We IGNORE the element type, because it makes no sense to have +/- for the same triple in the same patch!
         if(contains(patch.get(i), patch_id, true)) {
             return false;
         }

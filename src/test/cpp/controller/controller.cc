@@ -79,3 +79,44 @@ TEST_F(ControllerTest, GetPatchTreeId) {
     ASSERT_EQ(100, controller.get_patch_tree_id(100));
     ASSERT_EQ(100, controller.get_patch_tree_id(101));
 }
+
+TEST_F(ControllerTest, AppendPatch) {
+    Patch patch1;
+    patch1.add(PatchElement(Triple("s1", "p1", "o1"), true));
+    patch1.add(PatchElement(Triple("s2", "p2", "o2"), false));
+    patch1.add(PatchElement(Triple("s3", "p3", "o3"), false));
+    patch1.add(PatchElement(Triple("s4", "p4", "o4"), true));
+
+    Patch patch2;
+    patch2.add(PatchElement(Triple("s1", "p1", "o1"), true));
+
+    Patch patch3;
+    patch3.add(PatchElement(Triple("a", "b", "c"), true));
+
+    ASSERT_EQ(true, controller.append(patch1, 0));
+    ASSERT_EQ(false, controller.append(patch1, 0)) << "Append shouldn't allow for double appends";
+    ASSERT_EQ(false, controller.append(patch2, 0)) << "Append shouldn't allow for double appends, not even partial";
+    ASSERT_EQ(true, controller.append(patch3, 1));
+}
+
+TEST_F(ControllerTest, GetPatch) {
+    Patch patch1;
+    patch1.add(PatchElement(Triple("s1", "p1", "o1"), true));
+    patch1.add(PatchElement(Triple("s2", "p2", "o2"), false));
+    patch1.add(PatchElement(Triple("s3", "p3", "o3"), false));
+    patch1.add(PatchElement(Triple("s4", "p4", "o4"), true));
+
+    Patch patch2;
+    patch2.add(PatchElement(Triple("a", "b", "c"), true));
+
+    Patch patch3;
+    patch3.add(PatchElement(Triple("s4", "p4", "o4"), false));
+
+    controller.append(patch1, 0);
+    controller.append(patch2, 1);
+    controller.append(patch3, 2);
+
+    ASSERT_EQ("s1 p1 o1. (+)\ns2 p2 o2. (-)\ns3 p3 o3. (-)\ns4 p4 o4. (+)\n", controller.get_patch(0).to_string());
+    ASSERT_EQ("a b c. (+)\ns1 p1 o1. (+)\ns2 p2 o2. (-)\ns3 p3 o3. (-)\ns4 p4 o4. (+)\n", controller.get_patch(1).to_string());
+    ASSERT_EQ("a b c. (+)\ns1 p1 o1. (+)\ns2 p2 o2. (-)\ns3 p3 o3. (-)\n", controller.get_patch(2).to_string());
+}
