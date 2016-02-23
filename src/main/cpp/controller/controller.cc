@@ -1,8 +1,7 @@
+#include <dirent.h>
 #include "controller.h"
 
-Controller::Controller() {
-    // TODO
-}
+Controller::Controller() : loaded_patches(detect_patch_trees()) {}
 
 Controller::~Controller() {
     std::map<int, PatchTree*>::iterator it = loaded_patches.begin();
@@ -14,7 +13,26 @@ Controller::~Controller() {
 }
 
 std::map<int, PatchTree*> Controller::detect_patch_trees() {
-    // TODO
+    std::regex r("patchtree_([0-9])*.kch");
+    std::smatch base_match;
+    std::map<int, PatchTree*> trees = std::map<int, PatchTree*>();
+    DIR *dir;
+    struct dirent *ent;
+    if ((dir = opendir(".")) != NULL) {
+        while ((ent = readdir(dir)) != NULL) {
+            if(std::regex_match(std::string(ent->d_name), base_match, r)) {
+                // The first sub_match is the whole string; the next
+                // sub_match is the first parenthesized expression.
+                if (base_match.size() == 2) {
+                    std::ssub_match base_sub_match = base_match[1];
+                    std::string base = (std::string) base_sub_match.str();
+                    trees[std::stoi(base)] = NULL; // Don't load the actual file, we do this lazily
+                }
+            }
+        }
+        closedir(dir);
+    }
+    return trees;
 }
 
 std::map<int, PatchTree*> Controller::get_patch_trees() {

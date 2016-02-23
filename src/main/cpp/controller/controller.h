@@ -3,6 +3,7 @@
 
 #define PATCHTREE_FILENAME(x) ("patchtree_" + std::to_string(x) + ".kch")
 
+#include <regex>
 #include <map>
 #include "../patch/patch_tree.h"
 
