@@ -18,10 +18,10 @@ class DictionaryManager {
   const unsigned int bitmask;
 
 public:
-  DictionaryManager(Dictionary *hdtDict, HDTSpecification &spec)
+  DictionaryManager(Dictionary *hdtDict)
       : hdtDict(hdtDict), bitmask(2147483648) {
     // Create additional dictionary
-    patchDict = new PlainDictionary(spec);
+    patchDict = new PlainDictionary();
   };
 
   DictionaryManager() : bitmask(2147483648) {
@@ -29,6 +29,11 @@ public:
     hdtDict = new PlainDictionary();
     patchDict = new PlainDictionary();
   };
+
+  ~DictionaryManager() {
+    delete hdtDict;
+    delete patchDict;
+  }
 
   /**
   * Probes HDT dictionary and patch dictionary for ID and return string.
