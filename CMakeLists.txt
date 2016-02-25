@@ -36,7 +36,7 @@ set(COMMON_FILES
         src/main/cpp/patch/patch_tree_iterator.cc src/main/cpp/patch/patch_tree_iterator.h
         src/main/cpp/patch/positioned_triple_iterator.cc src/main/cpp/patch/positioned_triple_iterator.h
         src/main/cpp/patch/patch.h
-        src/main/cpp/dictionary/dictionary.cc
+        src/main/cpp/dictionary/dictionary_manager.cc src/main/cpp/dictionary/dictionary_manager.h
         )
 set(TEST_FILES
         src/test/cpp/controller/controller.cc
@@ -46,7 +46,7 @@ set(TEST_FILES
         src/test/cpp/patch/patch_tree_value.cc
         src/test/cpp/patch/patch_tree_key_comparator.cc
         src/test/cpp/patch/patch_tree.cc
-        src/test/cpp/dictionary/dictionary.cc
+        src/test/cpp/dictionary/dictionary_manager.cc
         )
 
 add_executable(${PROJECT_NAME_STR} ${HDT_FILES} ${COMMON_FILES} ${SOURCE_FILES})
