@@ -21,6 +21,12 @@ public:
      */
     void add(PatchElement element);
     /**
+     * Overwrite the element at the given position.
+     * @param i The index to overwrite.
+     * @param element The element to set.
+     */
+    void overwrite(long i, PatchElement element);
+    /**
      * Copy all patch elements from the given patch into this patch.
      * @param patch The patch to get all elements from
      */
@@ -80,6 +86,13 @@ public:
      * @return The index of the found triple or -1.
      */
     long index_of_triple(Triple triple);
+    /**
+     * Derive a patch that detects local changes and correctly
+     * removed those patch elements that have been removed due to the
+     * local changes.
+     * @return The derived patch, with local change markings.
+     */
+    Patch apply_local_changes();
 };
 
 #endif //TPFPATCH_STORE_PATCH_ELEMENTS_H

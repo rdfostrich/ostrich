@@ -10,8 +10,8 @@ bool PatchElement::is_addition() {
     return addition;
 }
 
-void PatchElement::set_local_change() {
-    local_change = true;
+void PatchElement::set_local_change(bool local_change) {
+    this->local_change = local_change;
 }
 
 bool PatchElement::is_local_change() {

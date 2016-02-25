@@ -91,6 +91,46 @@ TEST_F(PatchTreeTest, AppendNotNew) {
     ASSERT_EQ(false, patchTree->append(patch3, 0)) << "Appending a patch with one elements succeeded where it should have failed";
 }
 
+TEST_F(PatchTreeTest, RepeatAppendRemove1) {
+    for(int i = 0; i < 10; i++) {
+        Patch patch;
+        patch.add(PatchElement(Triple("a", "a", "a"), i % 2));
+        ASSERT_EQ(true, patchTree->append(patch, i)) << "Appending a patch failed at an iteration";
+    }
+
+    ASSERT_EQ("a a a. (-)\n", patchTree->reconstruct_patch(0).to_string());
+    ASSERT_EQ("a a a. (+) L\n", patchTree->reconstruct_patch(1).to_string());
+    ASSERT_EQ("a a a. (-)\n", patchTree->reconstruct_patch(2).to_string());
+    ASSERT_EQ("a a a. (+) L\n", patchTree->reconstruct_patch(3).to_string());
+    ASSERT_EQ("a a a. (-)\n", patchTree->reconstruct_patch(4).to_string());
+    ASSERT_EQ("a a a. (+) L\n", patchTree->reconstruct_patch(5).to_string());
+    ASSERT_EQ("a a a. (-)\n", patchTree->reconstruct_patch(6).to_string());
+    ASSERT_EQ("a a a. (+) L\n", patchTree->reconstruct_patch(7).to_string());
+    ASSERT_EQ("a a a. (-)\n", patchTree->reconstruct_patch(8).to_string());
+    ASSERT_EQ("a a a. (+) L\n", patchTree->reconstruct_patch(9).to_string());
+    ASSERT_EQ("a a a. (+) L\n", patchTree->reconstruct_patch(10).to_string());
+}
+
+TEST_F(PatchTreeTest, RepeatAppendRemove2) {
+    for(int i = 0; i < 10; i++) {
+        Patch patch;
+        patch.add(PatchElement(Triple("a", "a", "a"), !(i % 2)));
+        ASSERT_EQ(true, patchTree->append(patch, i)) << "Appending a patch failed at an iteration";
+    }
+
+    ASSERT_EQ("a a a. (+)\n", patchTree->reconstruct_patch(0).to_string());
+    ASSERT_EQ("a a a. (-) L\n", patchTree->reconstruct_patch(1).to_string());
+    ASSERT_EQ("a a a. (+)\n", patchTree->reconstruct_patch(2).to_string());
+    ASSERT_EQ("a a a. (-) L\n", patchTree->reconstruct_patch(3).to_string());
+    ASSERT_EQ("a a a. (+)\n", patchTree->reconstruct_patch(4).to_string());
+    ASSERT_EQ("a a a. (-) L\n", patchTree->reconstruct_patch(5).to_string());
+    ASSERT_EQ("a a a. (+)\n", patchTree->reconstruct_patch(6).to_string());
+    ASSERT_EQ("a a a. (-) L\n", patchTree->reconstruct_patch(7).to_string());
+    ASSERT_EQ("a a a. (+)\n", patchTree->reconstruct_patch(8).to_string());
+    ASSERT_EQ("a a a. (-) L\n", patchTree->reconstruct_patch(9).to_string());
+    ASSERT_EQ("a a a. (-) L\n", patchTree->reconstruct_patch(10).to_string());
+}
+
 TEST_F(PatchTreeTest, IteratorOrder) {
     Patch patch;
     patch.add(PatchElement(Triple("g", "p", "o"), false));
@@ -294,7 +334,7 @@ TEST_F(PatchTreeTest, ReconstructPatchSingle) {
     patchTree->append_unsafe(patch3, 3);
 
     Patch patch2_copy = patchTree->reconstruct_patch(2);
-    ASSERT_EQ("a p o. (+)\ng p o. (+)\nq p o. (-)\ns a o. (+)\ns z o. (-)\n", patch2_copy.to_string()) << "Reconstructed patch should be equal to inserted patch";
+    ASSERT_EQ("a p o. (+)\ng p o. (+) L\nq p o. (-)\ns a o. (+)\ns z o. (-)\n", patch2_copy.to_string()) << "Reconstructed patch should be equal to inserted patch";
 }
 
 TEST_F(PatchTreeTest, ReconstructPatchComposite) {
@@ -356,7 +396,7 @@ TEST_F(PatchTreeTest, ReconstructPatchComposite2) {
               "s z o. (-)\n", patch1_copy.to_string()) << "Reconstructed patch should be equal to the given patch";
 
     Patch patch2_copy = patchTree->reconstruct_patch(2);
-    ASSERT_EQ("a p o. (-)\n"
+    ASSERT_EQ("a p o. (-) L\n"
               "g p o. (-)\n"
               "h z o. (-)\n"
               "l a o. (+)\n"
@@ -364,7 +404,7 @@ TEST_F(PatchTreeTest, ReconstructPatchComposite2) {
               "s z o. (-)\n", patch2_copy.to_string()) << "Reconstructed patch should be equal to the given patch";
 
     Patch patch4_copy = patchTree->reconstruct_patch(4);
-    ASSERT_EQ("a p o. (-)\n"
+    ASSERT_EQ("a p o. (-) L\n"
               "g p o. (-)\n"
               "h p o. (-)\n"
               "h z o. (-)\n"
@@ -373,9 +413,9 @@ TEST_F(PatchTreeTest, ReconstructPatchComposite2) {
               "s z o. (-)\n", patch4_copy.to_string()) << "Reconstructed patch should be equal to the given patch";
 
     Patch patch5_copy = patchTree->reconstruct_patch(5);
-    ASSERT_EQ("a p o. (-)\n"
+    ASSERT_EQ("a p o. (-) L\n"
               "g p o. (-)\n"
-              "h p o. (+)\n"
+              "h p o. (+) L\n"
               "h z o. (-)\n"
               "l a o. (+)\n"
               "s a o. (+)\n"

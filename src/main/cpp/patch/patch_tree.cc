@@ -30,6 +30,7 @@ void PatchTree::append_unsafe(Patch patch, int patch_id) {
     // We need this for finding their relative positions.
     Patch existing_patch = reconstruct_patch(patch_id);
     existing_patch.addAll(patch);
+    existing_patch = existing_patch.apply_local_changes();
 
     // Loop over all elements in this reconstructed patch
     // We don't only loop over the new elements, but all of them because
@@ -37,6 +38,8 @@ void PatchTree::append_unsafe(Patch patch, int patch_id) {
     // so these need to be updated.
     for(int i = 0; i < existing_patch.get_size(); i++) {
         PatchElement patchElement = existing_patch.get(i);
+        long index_in_inserting_patch = patch.index_of_triple(patchElement.get_triple());
+        bool is_in_inserting_patch = index_in_inserting_patch >= 0;
 
         // Look up the value for the given triple key in the tree.
         size_t key_size, value_size;
@@ -47,37 +50,11 @@ void PatchTree::append_unsafe(Patch patch, int patch_id) {
             value.deserialize(raw_value, value_size);
         }
 
-        // is_local_change means that we had an addition and deletion of the same triple in the same patch id,
-        // this means that we have a LOCAL patch change, meaning that there are additions/deletions internally
-        // in the patch, not relative to the snapshot.
-        // This is required for the relative positions calculations.
-        // Note that normally we would have to do this for all patch elements BEFORE calculating their positions,
-        // but since we go through them in an ordered manner, we can abuse this and only do one loop.
-        // This way, the local_change flag will always be correct for all elements before the current element.
-        if(!patchElement.is_local_change()) {
-            // Yes, this can be simplified, this is written this way to make is easily readable.
-            // Check if equal to element BEFORE
-            if (i > 0
-                && patchElement.get_triple() == existing_patch.get(i - 1).get_triple() &&
-                patchElement.is_addition() != existing_patch.get(i - 1).is_addition()) {
-                patchElement.set_local_change();
-                existing_patch.add(patchElement); // Override element in patch, because we are working with a local copy
-            }
-            // Check if equal to element AFTER
-            if (i + 1 < existing_patch.get_size()
-                && patchElement.get_triple() == existing_patch.get(i + 1).get_triple() &&
-                patchElement.is_addition() != existing_patch.get(i + 1).is_addition()) {
-                patchElement.set_local_change();
-                existing_patch.add(patchElement); // Override element in patch, because we are working with a local copy
-            }
-        }
-
         // Calculate the patch positions for all triple patterns (except for S P O and ? ? ?, will be 0 anyways)
         PatchPositions patch_positions = existing_patch.positions(patchElement);
         // Add (or update) the value in the tree
         // If the triple is added by the inserting patch (`patch`), then we give priority to the type (+/-) from the inserting patch.
-        long index_in_inserting_patch = patch.index_of_triple(patchElement.get_triple());
-        PatchTreeValueElement patchTreeValueElement(patch_id, patch_positions, index_in_inserting_patch >= 0
+        PatchTreeValueElement patchTreeValueElement(patch_id, patch_positions, is_in_inserting_patch
                                                                                ? patch.get(index_in_inserting_patch).is_addition()
                                                                                : patchElement.is_addition());
         if(patchElement.is_local_change()) {
@@ -135,9 +112,7 @@ Patch PatchTree::reconstruct_patch(int patch_id, bool ignore_local_changes) {
     Patch patch;
     while(it.next(&key, &value)) {
         PatchElement patchElement(key, value.is_addition(patch_id));
-        if(value.is_local_change(patch_id)) {
-            patchElement.set_local_change();
-        }
+        patchElement.set_local_change(value.is_local_change(patch_id));
         patch.add(patchElement);
     }
     return patch;

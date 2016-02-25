@@ -9,11 +9,15 @@ void Patch::add(PatchElement element) {
             elements.begin(), elements.end(), element);
     // Overwrite existing element if triple is already present, otherwise insert new element.
     if(itToInsert != elements.end() && itToInsert->get_triple().to_string() == element.get_triple().to_string()
-       && itToInsert->is_addition() == element.is_addition()) {
+       && itToInsert->is_addition() == element.is_addition() && itToInsert->is_local_change() == element.is_local_change()) {
         *itToInsert = element;
     } else {
         elements.insert(itToInsert, element);
     }
+}
+
+void Patch::overwrite(long i, PatchElement element) {
+    elements[i] = element;
 }
 
 void Patch::addAll(Patch patch) {
@@ -95,7 +99,11 @@ PatchPosition Patch::position_of_strict(PatchElement element) {
 string Patch::to_string() {
     string ret;
     for(int i = 0; i < elements.size(); i++) {
-        ret += elements[i].to_string() + "\n";
+        ret += elements[i].to_string();
+        if(elements[i].is_local_change()) {
+            ret += " L";
+        }
+        ret += "\n";
     }
     return ret;
 }
@@ -113,4 +121,22 @@ long Patch::index_of_triple(Triple triple) {
         return std::distance(elements.begin(), findIt2);
     }
     return -1;
+}
+
+Patch Patch::apply_local_changes() {
+    Patch newPatch;
+    for(int i = 0; i < get_size(); i++) {
+        PatchElement patchElement = get(i);
+        long existing_index = newPatch.index_of_triple(patchElement.get_triple());
+        if(existing_index >= 0) {
+            PatchElement existingElement = newPatch.get(existing_index);
+            if(existingElement.is_addition() != patchElement.is_addition() && !patchElement.is_local_change()) {
+                patchElement.set_local_change(!existingElement.is_local_change());
+                newPatch.overwrite(existing_index, patchElement);
+            }
+        } else {
+            newPatch.add(patchElement);
+        }
+    }
+    return newPatch;
 }

@@ -22,9 +22,10 @@ public:
      */
     bool is_addition();
     /**
-     * Mark this patch element as being a local change.
+     * Set the local change flag
+     * @param local_change If this is a local change.
      */
-    void set_local_change();
+    void set_local_change(bool local_change);
     /**
      * Check if this element is an element (+/-) relative to this patch itself,
      * For example in the series [t1+ t1- t1+], the element at index 1 is a local change,
