@@ -35,7 +35,7 @@ public:
      * @param index The index to get a patch element from
      * @return The patch element, will throw an exception if the index is out of bounds.
      */
-    PatchElement get(int index);
+    PatchElement get(long index);
     /**
      * Find the DELETION positions of the given element in this patch for all triple patterns.
      * Additions are thus ignored when doing the counts
@@ -75,6 +75,11 @@ public:
      * @return The string representation of this patch.
      */
     string to_string();
+    /**
+     * @param triple The triple to check
+     * @return The index of the found triple or -1.
+     */
+    long index_of_triple(Triple triple);
 };
 
 #endif //TPFPATCH_STORE_PATCH_ELEMENTS_H

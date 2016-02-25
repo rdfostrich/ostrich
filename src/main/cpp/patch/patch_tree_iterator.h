@@ -23,6 +23,8 @@ private:
     bool is_triple_pattern_filter;
     Triple triple_pattern_filter;
 
+    bool is_filter_local_changes;
+
     bool reverse;
 public:
     PatchTreeIterator(DB::Cursor* cursor);
@@ -44,6 +46,10 @@ public:
      * @param triple_pattern The triple pattern that will match all results from this iterator.
      */
     void set_triple_pattern_filter(Triple triple_pattern);
+    /**
+     * Indicate that this iterator should ignore local changes.
+     */
+    void set_filter_local_changes(bool filter_local_changes);
     /**
      * Indicate that this iterator should step backwards.
      */

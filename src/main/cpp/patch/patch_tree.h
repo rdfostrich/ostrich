@@ -48,10 +48,11 @@ public:
     /**
      * Reconstruct a patch based on the given patch id.
      * It will loop over the tree and rebuild the patch.
-     * @param The patch id
+     * @param patch_id The patch id
+     * @param ignore_local_changes If local changes should be ignored when reconstructing the patch, false by default.
      * @return The reconstructed patch
      */
-    Patch reconstruct_patch(int patch_id);
+    Patch reconstruct_patch(int patch_id, bool ignore_local_changes = false);
     /**
      * Get an iterator starting from the given key.
      * @param key The key to start from

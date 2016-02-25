@@ -8,7 +8,7 @@ PatchTreeIterator::PatchTreeIterator(DB::Cursor *cursor)
         : cursor(cursor), is_patch_id_filter(false), is_patch_id_filter_exact(false), patch_id_filter(-1),
           is_addition_filter(false), addition_filter(-1),
           is_triple_pattern_filter(false), triple_pattern_filter(Triple("", "", "")),
-          reverse(false) {}
+          reverse(false), is_filter_local_changes(false) {}
 
 PatchTreeIterator::~PatchTreeIterator() {
     delete cursor;
@@ -32,6 +32,10 @@ void PatchTreeIterator::set_triple_pattern_filter(Triple triple_pattern) {
         this->is_triple_pattern_filter = true;
         this->triple_pattern_filter = triple_pattern;
     }
+}
+
+void PatchTreeIterator::set_filter_local_changes(bool filter_local_changes) {
+    this->is_filter_local_changes = filter_local_changes;
 }
 
 void PatchTreeIterator::set_reverse() {
@@ -74,6 +78,10 @@ bool PatchTreeIterator::next(PatchTreeKey* key, PatchTreeValue* value) {
             } else {
                 filter_valid = true;
             }
+        }
+
+        if(filter_valid && is_filter_local_changes) {
+            filter_valid = !value->is_local_change(patch_id_filter);
         }
 
         if(filter_valid) {

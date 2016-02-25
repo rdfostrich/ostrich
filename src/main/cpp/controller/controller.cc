@@ -84,7 +84,7 @@ Patch Controller::get_patch(int patch_id) {
     if(patchtree_id < 0) {
         return Patch();
     }
-    return get_patch_tree(patchtree_id)->reconstruct_patch(patch_id);
+    return get_patch_tree(patchtree_id)->reconstruct_patch(patch_id, true);
 }
 
 iterator<std::input_iterator_tag, Triple> Controller::get(Triple triple_pattern, int limit, int offset, int patch_id) {

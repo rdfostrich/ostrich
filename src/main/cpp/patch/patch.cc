@@ -8,7 +8,8 @@ void Patch::add(PatchElement element) {
     std::vector<PatchElement>::iterator itToInsert = std::lower_bound(
             elements.begin(), elements.end(), element);
     // Overwrite existing element if triple is already present, otherwise insert new element.
-    if(itToInsert != elements.end() && itToInsert->get_triple().to_string() == element.get_triple().to_string()) {
+    if(itToInsert != elements.end() && itToInsert->get_triple().to_string() == element.get_triple().to_string()
+       && itToInsert->is_addition() == element.is_addition()) {
         *itToInsert = element;
     } else {
         elements.insert(itToInsert, element);
@@ -25,7 +26,7 @@ unsigned long Patch::get_size() {
     return elements.size();
 }
 
-PatchElement Patch::get(int index) {
+PatchElement Patch::get(long index) {
     if(index < 0 || index >= get_size()) {
         throw std::invalid_argument("Index out of bounds");
     }
@@ -40,7 +41,8 @@ PatchPositions Patch::positions(PatchElement element) {
         // Count the matching patch elements from this position to the beginning for all triple patterns
         while (findIt >= elements.begin()) {
             PatchElement matching = *findIt;
-            if(!matching.is_addition()) {
+            // For additions, we don't have to store the relative positions.
+            if(!matching.is_addition() && !matching.is_local_change()) {
                 bool s = matching.get_triple().get_subject() == element.get_triple().get_subject();
                 bool p = matching.get_triple().get_predicate() == element.get_triple().get_predicate();
                 bool o = matching.get_triple().get_object() == element.get_triple().get_object();
@@ -96,4 +98,19 @@ string Patch::to_string() {
         ret += elements[i].to_string() + "\n";
     }
     return ret;
+}
+
+long Patch::index_of_triple(Triple triple) {
+    PatchElement element1(triple, false);
+    std::vector<PatchElement>::iterator findIt1 = std::find(elements.begin(), elements.end(), element1);
+    if(findIt1 != elements.end()) {
+        return std::distance(elements.begin(), findIt1);
+    }
+
+    PatchElement element2(triple, true);
+    std::vector<PatchElement>::iterator findIt2 = std::find(elements.begin(), elements.end(), element2);
+    if(findIt2 != elements.end()) {
+        return std::distance(elements.begin(), findIt2);
+    }
+    return -1;
 }

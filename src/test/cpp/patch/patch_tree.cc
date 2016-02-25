@@ -558,6 +558,99 @@ TEST_F(PatchTreeTest, RelativePatchPositions) {
     ASSERT_EQ(false, it2.next(&key, &value)) << "Iterator should be finished";
 }
 
+TEST_F(PatchTreeTest, RelativePatchPositions2) {
+    Patch patch1;
+    patch1.add(PatchElement(Triple("a", "b", "c"), true));
+    patch1.add(PatchElement(Triple("a", "a", "a"), false));
+    patch1.add(PatchElement(Triple("z", "z", "z"), false));
+    patchTree->append_unsafe(patch1, 1);
+
+    Patch patch2;
+    patch2.add(PatchElement(Triple("a", "b", "c"), false));
+    patchTree->append_unsafe(patch2, 2);
+
+    PatchTreeIterator it1 = patchTree->iterator(1, false); // Iterate over all elements of patch 1
+    PatchTreeKey key;
+    PatchTreeValue value;
+
+    // Expected order for patch 1:
+    // a a a -
+    // a b c +
+    // z z z -
+
+    ASSERT_EQ(true, it1.next(&key, &value)) << "Iterator has a no next value";
+    ASSERT_EQ("a a a.", key.to_string()) << "Key is incorrect";
+    ASSERT_EQ(0, value.get(1).get_patch_positions().sp_) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get(1).get_patch_positions().s_o) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get(1).get_patch_positions().s__) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get(1).get_patch_positions()._po) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get(1).get_patch_positions()._p_) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get(1).get_patch_positions().__o) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get(1).get_patch_positions().___) << "Found value is incorrect";
+
+    ASSERT_EQ(true, it1.next(&key, &value)) << "Iterator has a no next value";
+    ASSERT_EQ("a b c.", key.to_string()) << "Key is incorrect";
+    ASSERT_EQ(-1, value.get(1).get_patch_positions().sp_) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get(1).get_patch_positions().s_o) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get(1).get_patch_positions().s__) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get(1).get_patch_positions()._po) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get(1).get_patch_positions()._p_) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get(1).get_patch_positions().__o) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get(1).get_patch_positions().___) << "Found value is incorrect";
+
+    ASSERT_EQ(true, it1.next(&key, &value)) << "Iterator has a no next value";
+    ASSERT_EQ("z z z.", key.to_string()) << "Key is incorrect";
+    ASSERT_EQ(0, value.get(1).get_patch_positions().sp_) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get(1).get_patch_positions().s_o) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get(1).get_patch_positions().s__) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get(1).get_patch_positions()._po) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get(1).get_patch_positions()._p_) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get(1).get_patch_positions().__o) << "Found value is incorrect";
+    ASSERT_EQ(1, value.get(1).get_patch_positions().___) << "Found value is incorrect";
+
+    ASSERT_EQ(false, it1.next(&key, &value)) << "Iterator should be finished";
+
+    PatchTreeIterator it2 = patchTree->iterator(2, false); // Iterate over all elements of patch 2
+    // Expected order for patch 2:
+    // a a a -
+    // a b c -
+    // z z z -
+
+    ASSERT_EQ(true, it2.next(&key, &value)) << "Iterator has a no next value";
+    ASSERT_EQ("a a a.", key.to_string()) << "Key is incorrect";
+    ASSERT_EQ(0, value.get(2).get_patch_positions().sp_) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get(2).get_patch_positions().s_o) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get(2).get_patch_positions().s__) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get(2).get_patch_positions()._po) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get(2).get_patch_positions()._p_) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get(2).get_patch_positions().__o) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get(2).get_patch_positions().___) << "Found value is incorrect";
+
+    ASSERT_EQ(true, it2.next(&key, &value)) << "Iterator has a no next value";
+    ASSERT_EQ("a b c.", key.to_string()) << "Key is incorrect";
+    // The positions are -1, this means that even though this is a deletion, it
+    // is not a deletion relative to the snapshot, but only internally inside the patch. (it did not exist in the snapshot)
+    ASSERT_EQ(-1, value.get(2).get_patch_positions().sp_) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get(2).get_patch_positions().s_o) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get(2).get_patch_positions().s__) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get(2).get_patch_positions()._po) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get(2).get_patch_positions()._p_) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get(2).get_patch_positions().__o) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get(2).get_patch_positions().___) << "Found value is incorrect";
+
+    ASSERT_EQ(true, it2.next(&key, &value)) << "Iterator has a no next value";
+    ASSERT_EQ("z z z.", key.to_string()) << "Key is incorrect";
+    ASSERT_EQ(0, value.get(2).get_patch_positions().sp_) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get(2).get_patch_positions().s_o) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get(2).get_patch_positions().s__) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get(2).get_patch_positions()._po) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get(2).get_patch_positions()._p_) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get(2).get_patch_positions().__o) << "Found value is incorrect";
+    ASSERT_EQ(1, value.get(2).get_patch_positions().___) << "Found value is incorrect";
+
+    ASSERT_EQ(false, it2.next(&key, &value)) << "Iterator should be finished";
+}
+
 TEST_F(PatchTreeTest, DeletionCount) {
     Patch patch1;
     patch1.add(PatchElement(Triple("g", "p", "o"), false));
@@ -581,6 +674,12 @@ TEST_F(PatchTreeTest, DeletionCount) {
     patch4.add(PatchElement(Triple("s", "z", "o"), false));
     patchTree->append(patch4, 4);
 
+    // Patch 1
+    // a p o +
+    // g p o -
+    // s a o +
+    // s z o -
+
     ASSERT_EQ(2, patchTree->deletion_count(Triple("", "", ""), 1)) << "Deletion count is incorrect";
     ASSERT_EQ(1, patchTree->deletion_count(Triple("s", "", ""), 1)) << "Deletion count is incorrect";
     ASSERT_EQ(0, patchTree->deletion_count(Triple("s", "a", ""), 1)) << "Deletion count is incorrect";
@@ -589,9 +688,26 @@ TEST_F(PatchTreeTest, DeletionCount) {
     ASSERT_EQ(1, patchTree->deletion_count(Triple("", "p", ""), 1)) << "Deletion count is incorrect";
     ASSERT_EQ(1, patchTree->deletion_count(Triple("g", "p", ""), 1)) << "Deletion count is incorrect";
 
-    ASSERT_EQ(4, patchTree->deletion_count(Triple("", "", ""), 2)) << "Deletion count is incorrect";
+    // Patch 2
+    // a p o +/-
+    // g p o -/- (=> ignored in count)
+    // h z o -
+    // l a o +
+    // s a o +
+    // s z o -
 
-    ASSERT_EQ(5, patchTree->deletion_count(Triple("", "", ""), 4)) << "Deletion count is incorrect";
+    ASSERT_EQ(3, patchTree->deletion_count(Triple("", "", ""), 2)) << "Deletion count is incorrect";
+
+    // Patch 4
+    // a p o +/-
+    // g p o -/- (=> ignored in count)
+    // h p o -
+    // h z o -
+    // l a o +
+    // s a o +
+    // s z o -/-
+
+    ASSERT_EQ(4, patchTree->deletion_count(Triple("", "", ""), 4)) << "Deletion count is incorrect";
 }
 
 TEST_F(PatchTreeTest, DeletionIterator) {
@@ -624,7 +740,7 @@ TEST_F(PatchTreeTest, DeletionIterator) {
     // s z o -
 
     // Expected patch 2:
-    // a p o -
+    // a p o +/- (=> ignored)
     // g p o -
     // h z o -
     // l a o +
@@ -632,7 +748,7 @@ TEST_F(PatchTreeTest, DeletionIterator) {
     // s z o -
 
     // Expected patch 4:
-    // a p o -
+    // a p o +/- (=> ignored)
     // g p o -
     // h p o -
     // h z o -
@@ -715,24 +831,20 @@ TEST_F(PatchTreeTest, DeletionIterator) {
     PositionedTripleIterator it7 = patchTree->deletion_iterator_from(Triple("", "", ""), 4, Triple("", "", ""));
 
     ASSERT_EQ(true, it7.next(&pt)) << "Iterator has a no next value";
-    ASSERT_EQ("a p o.", pt.triple.to_string()) << "Element is incorrect";
+    ASSERT_EQ("g p o.", pt.triple.to_string()) << "Element is incorrect";
     ASSERT_EQ(0, pt.position) << "Element is incorrect";
 
     ASSERT_EQ(true, it7.next(&pt)) << "Iterator has a no next value";
-    ASSERT_EQ("g p o.", pt.triple.to_string()) << "Element is incorrect";
+    ASSERT_EQ("h p o.", pt.triple.to_string()) << "Element is incorrect";
     ASSERT_EQ(1, pt.position) << "Element is incorrect";
 
     ASSERT_EQ(true, it7.next(&pt)) << "Iterator has a no next value";
-    ASSERT_EQ("h p o.", pt.triple.to_string()) << "Element is incorrect";
+    ASSERT_EQ("h z o.", pt.triple.to_string()) << "Element is incorrect";
     ASSERT_EQ(2, pt.position) << "Element is incorrect";
 
     ASSERT_EQ(true, it7.next(&pt)) << "Iterator has a no next value";
-    ASSERT_EQ("h z o.", pt.triple.to_string()) << "Element is incorrect";
-    ASSERT_EQ(3, pt.position) << "Element is incorrect";
-
-    ASSERT_EQ(true, it7.next(&pt)) << "Iterator has a no next value";
     ASSERT_EQ("s z o.", pt.triple.to_string()) << "Element is incorrect";
-    ASSERT_EQ(4, pt.position) << "Element is incorrect";
+    ASSERT_EQ(3, pt.position) << "Element is incorrect";
 
     ASSERT_EQ(false, it7.next(&pt)) << "Iterator should be finished";
 
@@ -797,7 +909,7 @@ TEST_F(PatchTreeTest, AdditionIterator) {
     // s z o -
 
     // Expected patch 2:
-    // a p o -
+    // a p o +/- (=> ignored)
     // g p o -
     // h z o -
     // l a o +
@@ -805,18 +917,18 @@ TEST_F(PatchTreeTest, AdditionIterator) {
     // s z o -
 
     // Expected patch 4:
-    // a p o -
+    // a p o +/- (=> ignored)
     // g p o -
     // h p o -
     // h z o -
     // l a o +
     // s a o +
-    // s z o -
+    // s z o -/-
 
     // Expected patch 5:
-    // a p o -
+    // a p o +/- (=> ignored)
     // g p o -
-    // h p o +
+    // h p o -/+ (=> ignored)
     // h z o -
     // l a o +
     // s a o +
@@ -874,9 +986,6 @@ TEST_F(PatchTreeTest, AdditionIterator) {
      * Looping over all additions in patch 5 starting from beginning
      */
     PositionedTripleIterator it5 = patchTree->addition_iterator_from(0, 5, Triple("", "", ""));
-
-    ASSERT_EQ(true, it5.next(&pt)) << "Iterator has a no next value";
-    ASSERT_EQ("h p o.", pt.triple.to_string()) << "Element is incorrect";
 
     ASSERT_EQ(true, it5.next(&pt)) << "Iterator has a no next value";
     ASSERT_EQ("l a o.", pt.triple.to_string()) << "Element is incorrect";

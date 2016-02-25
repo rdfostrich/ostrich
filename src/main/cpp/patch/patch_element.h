@@ -8,6 +8,7 @@ class PatchElement {
 protected:
     Triple triple;
     bool addition;
+    bool local_change;
 public:
     PatchElement(Triple triple, bool addition);
     /**
@@ -20,6 +21,17 @@ public:
      * @return If it is an addition
      */
     bool is_addition();
+    /**
+     * Mark this patch element as being a local change.
+     */
+    void set_local_change();
+    /**
+     * Check if this element is an element (+/-) relative to this patch itself,
+     * For example in the series [t1+ t1- t1+], the element at index 1 is a local change,
+     * while the others are global changes (with respect to the snapshot).
+     * @return If it is a local change.
+     */
+    bool is_local_change();
     /**
      * @return The string representation of this patch.
      */
