@@ -52,8 +52,9 @@ TEST_F(PatchElementsTest, AddAllOverlap) {
     patchElements.addAll(patch2);
 
     ASSERT_EQ("s1 p1 o1. (-)", patchElements.get(0).to_string()) << "First element is incorrect";
-    ASSERT_EQ("s2 p2 o2. (-)", patchElements.get(1).to_string()) << "Second element is incorrect";
-    ASSERT_EQ("s3 p3 o3. (-)", patchElements.get(2).to_string()) << "Third element is incorrect";
+    ASSERT_EQ("s1 p1 o1. (+)", patchElements.get(1).to_string()) << "Second element is incorrect";
+    ASSERT_EQ("s2 p2 o2. (-)", patchElements.get(2).to_string()) << "Third element is incorrect";
+    ASSERT_EQ("s3 p3 o3. (-)", patchElements.get(3).to_string()) << "Fourth element is incorrect";
 }
 
 TEST_F(PatchElementsTest, ToString) {
@@ -399,4 +400,29 @@ TEST_F(PatchElementsTest, PositionStrict) {
 
     ASSERT_EQ(-1, patchElements.position_of_strict(PatchElement(Triple("g", "p", "o"), false))) << "Found position is wrong";
     ASSERT_EQ(-1, patchElements.position_of_strict(PatchElement(Triple("a", "a", "a"), false))) << "Found position is wrong";
+}
+
+TEST_F(PatchElementsTest, ApplyLocalChanges) {
+    Patch p1;
+    p1.add(PatchElement(Triple("a", "a", "a"), false));
+    ASSERT_EQ("a a a. (-)\n", p1.apply_local_changes().to_string());
+
+    Patch p2;
+    p2.add(PatchElement(Triple("a", "a", "a"), false));
+    p2.add(PatchElement(Triple("a", "a", "a"), true));
+    ASSERT_EQ("a a a. (+) L\n", p2.apply_local_changes().to_string());
+
+    Patch p3;
+    PatchElement p3e = PatchElement(Triple("a", "a", "a"), false);
+    p3e.set_local_change(true);
+    p3.add(p3e);
+    p3.add(PatchElement(Triple("a", "a", "a"), true));
+    ASSERT_EQ("a a a. (+)\n", p3.apply_local_changes().to_string());
+
+    Patch p4;
+    PatchElement p4e = PatchElement(Triple("a", "a", "a"), true);
+    p4e.set_local_change(true);
+    p4.add(p4e);
+    p4.add(PatchElement(Triple("a", "a", "a"), false));
+    ASSERT_EQ("a a a. (-)\n", p4.apply_local_changes().to_string());
 }

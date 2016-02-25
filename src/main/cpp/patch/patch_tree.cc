@@ -30,6 +30,7 @@ void PatchTree::append_unsafe(Patch patch, int patch_id) {
     // We need this for finding their relative positions.
     Patch existing_patch = reconstruct_patch(patch_id);
     existing_patch.addAll(patch);
+    existing_patch = existing_patch.apply_local_changes();
 
     // Loop over all elements in this reconstructed patch
     // We don't only loop over the new elements, but all of them because
@@ -37,6 +38,8 @@ void PatchTree::append_unsafe(Patch patch, int patch_id) {
     // so these need to be updated.
     for(int i = 0; i < existing_patch.get_size(); i++) {
         PatchElement patchElement = existing_patch.get(i);
+        long index_in_inserting_patch = patch.index_of_triple(patchElement.get_triple());
+        bool is_in_inserting_patch = index_in_inserting_patch >= 0;
 
         // Look up the value for the given triple key in the tree.
         size_t key_size, value_size;
@@ -47,10 +50,17 @@ void PatchTree::append_unsafe(Patch patch, int patch_id) {
             value.deserialize(raw_value, value_size);
         }
 
-        // Modify the patch positions for all triple patterns (except for S P O and ? ? ?, will be 0 anyways)
+        // Calculate the patch positions for all triple patterns (except for S P O and ? ? ?, will be 0 anyways)
         PatchPositions patch_positions = existing_patch.positions(patchElement);
         // Add (or update) the value in the tree
-        value.add(PatchTreeValueElement(patch_id, patch_positions, patchElement.is_addition()));
+        // If the triple is added by the inserting patch (`patch`), then we give priority to the type (+/-) from the inserting patch.
+        PatchTreeValueElement patchTreeValueElement(patch_id, patch_positions, is_in_inserting_patch
+                                                                               ? patch.get(index_in_inserting_patch).is_addition()
+                                                                               : patchElement.is_addition());
+        if(patchElement.is_local_change()) {
+            patchTreeValueElement.set_local_change();
+        }
+        value.add(patchTreeValueElement);
 
         // Serialize the new value and store it
         size_t new_value_size;
@@ -94,13 +104,16 @@ bool PatchTree::contains(PatchElement patch_element, int patch_id, bool ignore_t
     return ret;
 }
 
-Patch PatchTree::reconstruct_patch(int patch_id) {
+Patch PatchTree::reconstruct_patch(int patch_id, bool ignore_local_changes) {
     PatchTreeIterator it = iterator(patch_id, false);
+    it.set_filter_local_changes(ignore_local_changes);
     PatchTreeKey key;
     PatchTreeValue value;
     Patch patch;
     while(it.next(&key, &value)) {
-        patch.add(PatchElement(key, value.is_addition(patch_id)));
+        PatchElement patchElement(key, value.is_addition(patch_id));
+        patchElement.set_local_change(value.is_local_change(patch_id));
+        patch.add(patchElement);
     }
     return patch;
 }
@@ -161,6 +174,7 @@ PositionedTripleIterator PatchTree::deletion_iterator_from(Triple offset, int pa
     it->set_patch_filter(patch_id, false);
     it->set_type_filter(false);
     it->set_triple_pattern_filter(triple_pattern);
+    it->set_filter_local_changes(true);
     return PositionedTripleIterator(it, false, patch_id, triple_pattern);
 }
 
@@ -171,6 +185,7 @@ PositionedTripleIterator PatchTree::addition_iterator_from(int offset, int patch
     it->set_patch_filter(patch_id, false);
     it->set_type_filter(true);
     it->set_triple_pattern_filter(triple_pattern);
+    it->set_filter_local_changes(true);
     // TODO: this ridiculous loop won't be needed anymore when we add a more efficient addition indexing structure.
     PatchTreeKey key;
     PatchTreeValue value;

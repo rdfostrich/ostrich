@@ -58,13 +58,25 @@ protected:
     int patch_id;
     PatchPositions patch_positions;
     bool addition;
+    bool local_change;
 public:
     int get_patch_id();
     PatchPositions get_patch_positions();
     bool is_addition();
-    PatchTreeValueElement() : patch_id(-1), patch_positions(PatchPositions()), addition(false) {} // Required for vector#resize
+    /**
+     * Mark this patch element as being a local change.
+     */
+    void set_local_change();
+    /**
+     * Check if this element is an element (+/-) relative to this patch itself,
+     * For example in the series [t1+ t1- t1+], the element at index 1 is a local change,
+     * while the others are global changes (with respect to the snapshot).
+     * @return If it is a local change.
+     */
+    bool is_local_change();
+    PatchTreeValueElement() : patch_id(-1), patch_positions(PatchPositions()), addition(false), local_change(false) {} // Required for vector#resize
     PatchTreeValueElement(int patch_id, PatchPositions patch_positions, bool addition) :
-            patch_id(patch_id), patch_positions(patch_positions), addition(addition) {}
+            patch_id(patch_id), patch_positions(patch_positions), addition(addition), local_change(false) {}
     bool operator < (const PatchTreeValueElement &rhs) const { return patch_id < rhs.patch_id; }
 };
 
@@ -109,6 +121,13 @@ public:
      * @return If it is an addition
      */
     bool is_addition(int patch_id);
+    /**
+     * Check if this element is an element (+/-) relative to the given patch itself,
+     * For example in the series [t1+ t1- t1+], the element at index 1 is a local change,
+     * while the others are global changes (with respect to the snapshot).
+     * @return If it is a local change.
+     */
+    bool is_local_change(int patch_id);
     /**
      * @return The string representation of this patch.
      */

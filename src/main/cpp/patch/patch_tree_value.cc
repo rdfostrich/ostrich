@@ -17,6 +17,15 @@ bool PatchTreeValueElement::is_addition() {
     return addition;
 }
 
+void PatchTreeValueElement::set_local_change() {
+    local_change = true;
+}
+
+bool PatchTreeValueElement::is_local_change() {
+    return local_change;
+}
+
+
 PatchTreeValue::PatchTreeValue() {}
 
 void PatchTreeValue::add(PatchTreeValueElement element) {
@@ -66,6 +75,17 @@ bool PatchTreeValue::is_addition(int patch_id) {
     }
     if(findIt >= elements.end()) findIt--;
     return findIt->is_addition();
+}
+
+bool PatchTreeValue::is_local_change(int patch_id) {
+    PatchTreeValueElement item(patch_id, PatchPositions(), -1);
+    std::vector<PatchTreeValueElement>::iterator findIt = std::lower_bound(elements.begin(), elements.end(), item);
+    if(findIt < elements.begin()) {
+        throw std::runtime_error("Tried to retrieve a patch_id that was too low. (PatchTreeValue::is_local_change),"
+                                         "tried to find " + std::to_string(patch_id) + " in " + this->to_string());
+    }
+    if(findIt >= elements.end()) findIt--;
+    return findIt->is_local_change();
 }
 
 string PatchTreeValue::to_string() {
