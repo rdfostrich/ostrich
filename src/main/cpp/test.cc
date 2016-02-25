@@ -7,8 +7,8 @@ using namespace std;
 using namespace kyotocabinet;
 
 int main() {
-  std::remove("true-patches.kch");
-  PatchTree patchTree("true-patches.kch");
+  std::remove("true-patches.kct");
+  PatchTree patchTree("true-patches.kct");
 
   cout << "-----" << endl;
   Patch patch1;

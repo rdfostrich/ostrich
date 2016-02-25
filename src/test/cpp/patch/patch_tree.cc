@@ -2,7 +2,7 @@
 
 #include "../../../main/cpp/patch/patch_tree.h"
 
-#define TREEFILE "_test_tree.kch"
+#define TREEFILE "_test_tree.kct"
 
 // The fixture for testing class PatchTree.
 class PatchTreeTest : public ::testing::Test {
