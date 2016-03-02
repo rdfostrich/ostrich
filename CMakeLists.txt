@@ -28,6 +28,7 @@ set(SOURCE_FILES
 set(COMMON_FILES
         src/main/cpp/controller/controller.cc src/main/cpp/controller/controller.h
         src/main/cpp/patch/triple.cc src/main/cpp/patch/triple.h
+        src/main/cpp/patch/triple_store.cc src/main/cpp/patch/triple_store.h
         src/main/cpp/patch/patch_element.cc src/main/cpp/patch/patch_element.h
         src/main/cpp/patch/patch.cc src/main/cpp/patch/patch.h
         src/main/cpp/patch/patch_tree_value.cc src/main/cpp/patch/patch_tree_value.h

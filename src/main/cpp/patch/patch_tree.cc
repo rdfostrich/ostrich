@@ -8,21 +8,11 @@ using namespace std;
 using namespace kyotocabinet;
 
 PatchTree::PatchTree(string file_name) {
-    // Set the triple comparator
-    keyComparator = new PatchTreeKeyComparator();
-    db.tune_comparator(keyComparator);
-
-    // Open the database
-    if (!db.open(file_name, HashDB::OWRITER | HashDB::OCREATE)) {
-        cerr << "open error: " << db.error().name() << endl;
-    }
+    tripleStore = new TripleStore(file_name);
 };
 
 PatchTree::~PatchTree() {
-    // Close the database
-    if (!db.close()) {
-        cerr << "close error: " << db.error().name() << endl;
-    }
+    delete tripleStore;
 }
 
 void PatchTree::append_unsafe(Patch patch, int patch_id) {
@@ -31,6 +21,8 @@ void PatchTree::append_unsafe(Patch patch, int patch_id) {
     Patch existing_patch = reconstruct_patch(patch_id);
     existing_patch.addAll(patch);
     existing_patch = existing_patch.apply_local_changes();
+
+    // TODO: also insert in other triplestore trees
 
     // Loop over all elements in this reconstructed patch
     // We don't only loop over the new elements, but all of them because
@@ -45,7 +37,7 @@ void PatchTree::append_unsafe(Patch patch, int patch_id) {
         size_t key_size, value_size;
         const char* raw_key = patchElement.get_triple().serialize(&key_size);
         PatchTreeValue value;
-        const char* raw_value = db.get(raw_key, key_size, &value_size);
+        const char* raw_value = tripleStore->getTree()->get(raw_key, key_size, &value_size);
         if(raw_value) {
             value.deserialize(raw_value, value_size);
         }
@@ -65,7 +57,7 @@ void PatchTree::append_unsafe(Patch patch, int patch_id) {
         // Serialize the new value and store it
         size_t new_value_size;
         const char* new_raw_value = value.serialize(&new_value_size);
-        db.set(raw_key, key_size, new_raw_value, new_value_size);
+        tripleStore->getTree()->set(raw_key, key_size, new_raw_value, new_value_size);
     }
 }
 
@@ -84,7 +76,7 @@ bool PatchTree::contains(PatchElement patch_element, int patch_id, bool ignore_t
     PatchTreeKey key = patch_element.get_triple();
     size_t key_size, value_size;
     const char* raw_key = key.serialize(&key_size);
-    const char* raw_value = db.get(raw_key, key_size, &value_size);
+    const char* raw_value = tripleStore->getTree()->get(raw_key, key_size, &value_size);
 
     // First, we check if the key is present
     bool ret = raw_value != NULL;
@@ -119,7 +111,7 @@ Patch PatchTree::reconstruct_patch(int patch_id, bool ignore_local_changes) {
 }
 
 PatchTreeIterator PatchTree::iterator(PatchTreeKey* key) {
-    DB::Cursor* cursor = db.cursor();
+    DB::Cursor* cursor = tripleStore->getTree()->cursor();
     size_t size;
     const char* data = key->serialize(&size);
     cursor->jump(data, size);
@@ -129,7 +121,7 @@ PatchTreeIterator PatchTree::iterator(PatchTreeKey* key) {
 }
 
 PatchTreeIterator PatchTree::iterator(int patch_id, bool exact) {
-    DB::Cursor* cursor = db.cursor();
+    DB::Cursor* cursor = tripleStore->getTree()->cursor();
     cursor->jump();
     PatchTreeIterator patchTreeIterator(cursor);
     patchTreeIterator.set_patch_filter(patch_id, exact);
@@ -137,7 +129,7 @@ PatchTreeIterator PatchTree::iterator(int patch_id, bool exact) {
 }
 
 PatchTreeIterator PatchTree::iterator(PatchTreeKey *key, int patch_id, bool exact) {
-    DB::Cursor* cursor = db.cursor();
+    DB::Cursor* cursor = tripleStore->getTree()->cursor();
     size_t size;
     const char* data = key->serialize(&size);
     cursor->jump(data, size);
@@ -148,7 +140,7 @@ PatchTreeIterator PatchTree::iterator(PatchTreeKey *key, int patch_id, bool exac
 }
 
 PatchPosition PatchTree::deletion_count(Triple triple_pattern, int patch_id) {
-    DB::Cursor* cursor = db.cursor();
+    DB::Cursor* cursor = tripleStore->getTree()->cursor();
     cursor->jump_back();
     PatchTreeIterator patchTreeIterator(cursor);
     patchTreeIterator.set_patch_filter(patch_id, true);
@@ -165,7 +157,7 @@ PatchPosition PatchTree::deletion_count(Triple triple_pattern, int patch_id) {
 }
 
 PositionedTripleIterator PatchTree::deletion_iterator_from(Triple offset, int patch_id, Triple triple_pattern) {
-    DB::Cursor* cursor = db.cursor();
+    DB::Cursor* cursor = tripleStore->getTree()->cursor();
     size_t size;
     const char* data = offset.serialize(&size);
     cursor->jump(data, size);
@@ -179,7 +171,7 @@ PositionedTripleIterator PatchTree::deletion_iterator_from(Triple offset, int pa
 }
 
 PositionedTripleIterator PatchTree::addition_iterator_from(int offset, int patch_id, Triple triple_pattern) {
-    DB::Cursor* cursor = db.cursor();
+    DB::Cursor* cursor = tripleStore->getTree(triple_pattern)->cursor();
     cursor->jump();
     PatchTreeIterator* it = new PatchTreeIterator(cursor);
     it->set_patch_filter(patch_id, false);

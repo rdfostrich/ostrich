@@ -3,6 +3,7 @@
 #include "../../../main/cpp/patch/patch_tree.h"
 
 #define TREEFILE "_test_tree.kct"
+#define TREEFILESUB(x) TREEFILE "_" x
 
 // The fixture for testing class PatchTree.
 class PatchTreeTest : public ::testing::Test {
@@ -22,7 +23,11 @@ protected:
 
     virtual void TearDown() {
         delete patchTree;
-        remove(TREEFILE);
+        remove(TREEFILESUB("spo"));
+        remove(TREEFILESUB("sop"));
+        remove(TREEFILESUB("pso"));
+        remove(TREEFILESUB("pos"));
+        remove(TREEFILESUB("osp"));
     }
 };
 

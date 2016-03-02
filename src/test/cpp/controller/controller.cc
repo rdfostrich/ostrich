@@ -20,7 +20,11 @@ protected:
         std::map<int, PatchTree*>::iterator it = patches.begin();
         while(it != patches.end()) {
             int id = it->first;
-            std::remove(PATCHTREE_FILENAME(id).c_str());
+            std::remove(PATCHTREE_FILENAME(id, "spo").c_str());
+            std::remove(PATCHTREE_FILENAME(id, "pos").c_str());
+            std::remove(PATCHTREE_FILENAME(id, "pso").c_str());
+            std::remove(PATCHTREE_FILENAME(id, "sop").c_str());
+            std::remove(PATCHTREE_FILENAME(id, "osp").c_str());
             it++;
         }
     }

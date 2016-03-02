@@ -8,6 +8,7 @@
 #include "patch.h"
 #include "patch_tree_key_comparator.h"
 #include "positioned_triple_iterator.h"
+#include "triple_store.h"
 
 using namespace std;
 using namespace kyotocabinet;
@@ -15,7 +16,7 @@ using namespace kyotocabinet;
 // A PatchTree can store Patches which are persisted to a file
 class PatchTree {
 private:
-    TreeDB db;
+    TripleStore* tripleStore;
     PatchTreeKeyComparator* keyComparator;
 public:
     PatchTree(string file_name);

@@ -14,7 +14,7 @@ Controller::~Controller() {
 }
 
 std::map<int, PatchTree*> Controller::detect_patch_trees() {
-    std::regex r("patchtree_([0-9])*.kch");
+    std::regex r("patchtree_([0-9])*.kct_spo");
     std::smatch base_match;
     std::map<int, PatchTree*> trees = std::map<int, PatchTree*>();
     DIR *dir;
@@ -41,7 +41,7 @@ std::map<int, PatchTree*> Controller::get_patch_trees() {
 }
 
 PatchTree* Controller::load_patch_tree(int patch_id_start) {
-    return loaded_patches[patch_id_start] = new PatchTree(PATCHTREE_FILENAME(patch_id_start));
+    return loaded_patches[patch_id_start] = new PatchTree(PATCHTREE_FILENAME_BASE(patch_id_start));
 }
 
 PatchTree* Controller::get_patch_tree(int patch_id_start) {
@@ -87,7 +87,7 @@ Patch Controller::get_patch(int patch_id) {
     return get_patch_tree(patchtree_id)->reconstruct_patch(patch_id, true);
 }
 
-iterator<std::input_iterator_tag, Triple> Controller::get(Triple triple_pattern, int limit, int offset, int patch_id) {
+iterator<std::input_iterator_tag, Triple> Controller::get(Triple triple_pattern, int offset, int patch_id) {
     // TODO
 }
 

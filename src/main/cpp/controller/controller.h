@@ -1,7 +1,8 @@
 #ifndef TPFPATCH_STORE_CONTROLLER_H
 #define TPFPATCH_STORE_CONTROLLER_H
 
-#define PATCHTREE_FILENAME(x) ("patchtree_" + std::to_string(x) + ".kch")
+#define PATCHTREE_FILENAME_BASE(id) ("patchtree_" + std::to_string(id) + ".kct")
+#define PATCHTREE_FILENAME(id,suffix) (PATCHTREE_FILENAME_BASE(id) + "_" + suffix)
 
 #include <regex>
 #include <map>
@@ -14,7 +15,7 @@ private:
 public:
     Controller();
     ~Controller();
-    iterator<std::input_iterator_tag, Triple> get(Triple triple_pattern, int limit, int offset, int patch_id);
+    iterator<std::input_iterator_tag, Triple> get(Triple triple_pattern, int offset, int patch_id);
     /**
      * Add the given patch to a patch tree.
      * @param patch The patch to add.
