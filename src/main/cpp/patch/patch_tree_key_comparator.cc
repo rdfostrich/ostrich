@@ -2,21 +2,24 @@
 
 #include "patch_tree_key_comparator.h"
 
+PatchTreeKeyComparator::PatchTreeKeyComparator(comp compare_1, comp compare_2, comp compare_3)
+        : compare_1(compare_1), compare_2(compare_2), compare_3(compare_3) {}
+
 // TODO: use dictionary
 int32_t PatchTreeKeyComparator::compare(const char* akbuf, size_t aksiz, const char* bkbuf, size_t bksiz) {
     PatchTreeKey element1;
     PatchTreeKey element2;
     element1.deserialize(akbuf, aksiz);
     element2.deserialize(bkbuf, bksiz);
-    int comp_subject = element1.get_subject().compare(element2.get_subject());
-    if(!comp_subject) {
-        int comp_predicate = element1.get_predicate().compare(element2.get_predicate());
-        if(!comp_predicate) {
-            return element1.get_object().compare(element2.get_object());
+    int comp_1 = compare_1(&element1, &element2);
+    if(!comp_1) {
+        int comp_2 = compare_2(&element1, &element2);
+        if(!comp_2) {
+            return compare_3(&element1, &element2);
         }
-        return comp_predicate;
+        return comp_2;
     }
-    return comp_subject;
+    return comp_1;
 };
 
 int32_t PatchTreeKeyComparator::compare(PatchTreeKey key1, PatchTreeKey key2) {

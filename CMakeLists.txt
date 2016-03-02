@@ -24,7 +24,7 @@ set(HDT_FILES
         deps/hdt/hdt-lib/src/dictionary/PlainDictionary.cpp
         )
 set(SOURCE_FILES
-        src/main/cpp/test.cc)
+        )
 set(COMMON_FILES
         src/main/cpp/controller/controller.cc src/main/cpp/controller/controller.h
         src/main/cpp/patch/triple.cc src/main/cpp/patch/triple.h

@@ -13,12 +13,11 @@ TripleStore::TripleStore(string base_file_name) {
     index_osp = new TreeDB();
 
     // Set the triple comparators
-    // TODO: other one for each index
-    index_spo->tune_comparator(new PatchTreeKeyComparator());
-    index_sop->tune_comparator(new PatchTreeKeyComparator());
-    index_pso->tune_comparator(new PatchTreeKeyComparator());
-    index_pos->tune_comparator(new PatchTreeKeyComparator());
-    index_osp->tune_comparator(new PatchTreeKeyComparator());
+    index_spo->tune_comparator(new PatchTreeKeyComparator(comp_s, comp_p, comp_o));
+    index_sop->tune_comparator(new PatchTreeKeyComparator(comp_s, comp_o, comp_p));
+    index_pso->tune_comparator(new PatchTreeKeyComparator(comp_p, comp_s, comp_o));
+    index_pos->tune_comparator(new PatchTreeKeyComparator(comp_p, comp_o, comp_s));
+    index_osp->tune_comparator(new PatchTreeKeyComparator(comp_o, comp_s, comp_p));
 
     // Open the databases
     open(index_spo, base_file_name + "_spo");
