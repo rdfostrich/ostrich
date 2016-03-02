@@ -8,7 +8,7 @@ PatchTreeIterator::PatchTreeIterator(DB::Cursor *cursor)
         : cursor(cursor), is_patch_id_filter(false), is_patch_id_filter_exact(false), patch_id_filter(-1),
           is_addition_filter(false), addition_filter(-1),
           is_triple_pattern_filter(false), triple_pattern_filter(Triple("", "", "")),
-          reverse(false), is_filter_local_changes(false) {}
+          reverse(false), is_filter_local_changes(false), deletion_tree(true) {}
 
 PatchTreeIterator::~PatchTreeIterator() {
     delete cursor;
@@ -38,11 +38,22 @@ void PatchTreeIterator::set_filter_local_changes(bool filter_local_changes) {
     this->is_filter_local_changes = filter_local_changes;
 }
 
+void PatchTreeIterator::set_deletion_tree(bool deletion_tree) {
+    this->deletion_tree = deletion_tree;
+}
+
+bool PatchTreeIterator::is_deletion_tree() {
+    return this->deletion_tree;
+}
+
 void PatchTreeIterator::set_reverse() {
     this->reverse = true;
 }
 
 bool PatchTreeIterator::next(PatchTreeKey* key, PatchTreeValue* value) {
+    if(!deletion_tree) {
+        throw std::invalid_argument("Tried to call PatchTreeIterator::next(PatchTreeKey* key, PatchTreeValue* value) on an addition tree.");
+    }
     bool filter_valid = false;
     const char* kbp;
     size_t ksp;
@@ -93,4 +104,50 @@ bool PatchTreeIterator::next(PatchTreeKey* key, PatchTreeValue* value) {
         //delete[] vbp; // Apparently kyoto cabinet does not require the values to be deleted
     }
     return true;
+}
+
+bool PatchTreeIterator::next(PatchTreeKey* key, PatchTreeAdditionValue* value) {
+    if(deletion_tree) {
+        throw std::invalid_argument("Tried to call PatchTreeIterator::next(PatchTreeKey* key, PatchTreeAdditionValue* value) on a deletion tree.");
+    }
+    bool filter_valid = false;
+    const char* kbp;
+    size_t ksp;
+    const char* vbp;
+    size_t vsp;
+
+    // Loop over all elements in the tree until we find an element matching the filter (patch_id)
+    // If the filter is not enabled, this loop will be executed only once.
+    while (!filter_valid) {
+        kbp = cursor->get(&ksp, &vbp, &vsp);
+        if (!kbp) return false;
+        reverse ? cursor->step_back() : cursor->step();
+        value->deserialize(vbp, vsp);
+
+        filter_valid = value->is_patch_id(patch_id_filter);
+        if(filter_valid) {
+            key->deserialize(kbp, ksp); // Small optimization to only deserialize the key when needed.
+            filter_valid = !is_triple_pattern_filter || Triple::pattern_match_triple(*key, triple_pattern_filter);
+        }
+
+        delete[] kbp;
+        //delete[] vbp; // Apparently kyoto cabinet does not require the values to be deleted
+    }
+    return true;
+}
+
+bool PatchTreeIterator::next_addition(PatchTreeKey* key, PatchTreeAdditionValue* value) {
+    if(deletion_tree) {
+        PatchTreeValue v;
+        bool ret = next(key, &v);
+        for(long i = 0; i < v.get_size(); i++) {
+            PatchTreeValueElement el = v.get_patch(i);
+            if(el.is_addition()) {
+                value->add(el.get_patch_id());
+            }
+        }
+        return ret;
+    } else {
+        return next(key, value);
+    }
 }

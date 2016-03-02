@@ -116,5 +116,4 @@ void PatchTreeValue::deserialize(const char* data, size_t size) {
     for(int i = 0; i < count; i++) {
         std::memcpy(&elements.data()[i], &data[i * sizeof(PatchTreeValueElement)], sizeof(PatchTreeValueElement));
     }
-
 }

@@ -5,6 +5,7 @@
 #include <kchashdb.h>
 #include "patch.h"
 #include "patch_tree_value.h"
+#include "patch_tree_addition_value.h"
 
 using namespace std;
 using namespace kyotocabinet;
@@ -24,6 +25,8 @@ private:
     Triple triple_pattern_filter;
 
     bool is_filter_local_changes;
+
+    bool deletion_tree;
 
     bool reverse;
 public:
@@ -51,16 +54,41 @@ public:
      */
     void set_filter_local_changes(bool filter_local_changes);
     /**
+     * Indicate if this iterator is iterating over a deletion tree or not.
+     */
+    void set_deletion_tree(bool deletion_tree);
+    /**
+     * @return If this iterator is iterating over a deletion tree.
+     */
+    bool is_deletion_tree();
+    /**
      * Indicate that this iterator should step backwards.
      */
     void set_reverse();
     /**
      * Point to the next element
+     * Can only be called if iterating over a deletion tree.
      * @param key The key the iterator is currently pointing at.
      * @param value The value the iterator is currently pointing at.
      * @return If this next element exists, otherwise the key and value will be invalid and should be ignored.
      */
     bool next(PatchTreeKey* key, PatchTreeValue* value);
+    /**
+     * Point to the next element
+     * Can only be called if iterating over an addition tree.
+     * @param key The key the iterator is currently pointing at.
+     * @param value The value the iterator is currently pointing at.
+     * @return If this next element exists, otherwise the key and value will be invalid and should be ignored.
+     */
+    bool next(PatchTreeKey* key, PatchTreeAdditionValue* value);
+    /**
+     * Point to the next element
+     * Can only be called for both an addition tree and deletion tree.
+     * @param key The key the iterator is currently pointing at.
+     * @param value The value the iterator is currently pointing at.
+     * @return If this next element exists, otherwise the key and value will be invalid and should be ignored.
+     */
+    bool next_addition(PatchTreeKey* key, PatchTreeAdditionValue* value);
 };
 
 

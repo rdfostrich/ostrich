@@ -3,6 +3,7 @@
 
 #include "patch_tree.h"
 #include "patch_tree_key_comparator.h"
+#include "triple_iterator.h"
 
 using namespace std;
 using namespace kyotocabinet;
@@ -22,7 +23,8 @@ void PatchTree::append_unsafe(Patch patch, int patch_id) {
     existing_patch.addAll(patch);
     existing_patch = existing_patch.apply_local_changes();
 
-    // TODO: also insert in other triplestore trees
+    // insert in other triplestore trees
+    tripleStore->insertAddition(&existing_patch, patch_id);
 
     // Loop over all elements in this reconstructed patch
     // We don't only loop over the new elements, but all of them because
@@ -170,7 +172,7 @@ PositionedTripleIterator PatchTree::deletion_iterator_from(Triple offset, int pa
     return PositionedTripleIterator(it, false, patch_id, triple_pattern);
 }
 
-PositionedTripleIterator PatchTree::addition_iterator_from(int offset, int patch_id, Triple triple_pattern) {
+TripleIterator PatchTree::addition_iterator_from(int offset, int patch_id, Triple triple_pattern) {
     DB::Cursor* cursor = tripleStore->getTree(triple_pattern)->cursor();
     cursor->jump();
     PatchTreeIterator* it = new PatchTreeIterator(cursor);
@@ -178,9 +180,10 @@ PositionedTripleIterator PatchTree::addition_iterator_from(int offset, int patch
     it->set_type_filter(true);
     it->set_triple_pattern_filter(triple_pattern);
     it->set_filter_local_changes(true);
-    // TODO: this ridiculous loop won't be needed anymore when we add a more efficient addition indexing structure.
+    it->set_deletion_tree(tripleStore->isDefaultTree(triple_pattern));
+    // TODO: If this this ridiculous loop becomes too inefficient, make an offset map
     PatchTreeKey key;
     PatchTreeValue value;
     while(offset-- > 0 && it->next(&key, &value));
-    return PositionedTripleIterator(it, true, patch_id, triple_pattern);
+    return TripleIterator(it, patch_id, triple_pattern);
 }

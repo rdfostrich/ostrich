@@ -35,6 +35,7 @@ set(COMMON_FILES
         src/main/cpp/patch/patch_tree_key_comparator.cc src/main/cpp/patch/patch_tree_key_comparator.h
         src/main/cpp/patch/patch_tree.cc src/main/cpp/patch/patch_tree.h
         src/main/cpp/patch/patch_tree_iterator.cc src/main/cpp/patch/patch_tree_iterator.h
+        src/main/cpp/patch/triple_iterator.cc src/main/cpp/patch/triple_iterator.h
         src/main/cpp/patch/positioned_triple_iterator.cc src/main/cpp/patch/positioned_triple_iterator.h
         src/main/cpp/patch/patch.h
         src/main/cpp/dictionary/dictionary_manager.cc src/main/cpp/dictionary/dictionary_manager.h
@@ -44,11 +45,12 @@ set(TEST_FILES
         src/test/cpp/patch/triple.cc
         src/test/cpp/patch/patch_element.cc
         src/test/cpp/patch/patch.cc
+        src/test/cpp/patch/patch_tree_addition_value.cc
         src/test/cpp/patch/patch_tree_value.cc
         src/test/cpp/patch/patch_tree_key_comparator.cc
         src/test/cpp/patch/patch_tree.cc
         src/test/cpp/dictionary/dictionary_manager.cc
-        )
+        src/main/cpp/patch/patch_tree_addition_value.cpp src/main/cpp/patch/patch_tree_addition_value.h)
 
 add_executable(${PROJECT_NAME_STR} ${HDT_FILES} ${COMMON_FILES} ${SOURCE_FILES})
 

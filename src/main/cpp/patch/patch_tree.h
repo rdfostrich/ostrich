@@ -9,6 +9,7 @@
 #include "patch_tree_key_comparator.h"
 #include "positioned_triple_iterator.h"
 #include "triple_store.h"
+#include "triple_iterator.h"
 
 using namespace std;
 using namespace kyotocabinet;
@@ -101,7 +102,7 @@ public:
      * @param triple_pattern Only triples that match the given pattern will be returned in the iterator.
      * @return The iterator that will loop over the tree for the given patch.
      */
-    PositionedTripleIterator addition_iterator_from(int offset, int patch_id, Triple triple_pattern);
+    TripleIterator addition_iterator_from(int offset, int patch_id, Triple triple_pattern);
 };
 
 #endif //TPFPATCH_STORE_PATCH_TREE_H

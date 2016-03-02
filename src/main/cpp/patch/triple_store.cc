@@ -1,5 +1,6 @@
 #include "triple_store.h"
 #include "patch_tree_key_comparator.h"
+#include "patch_tree_addition_value.h"
 
 using namespace std;
 using namespace kyotocabinet;
@@ -63,6 +64,45 @@ TreeDB* TripleStore::getTree(Triple triple_pattern) {
     /*if(!s & !p & !o) */return index_spo;
 }
 
+bool TripleStore::isDefaultTree(Triple triple_pattern) {
+    bool s = triple_pattern.get_subject() != "";
+    bool p = triple_pattern.get_predicate() != "";
+    bool o = triple_pattern.get_object() != "";
+
+    if( s &  p &  o) return true;
+    if( s &  p & !o) return true;
+    if(!s & !p & !o) return true;
+    return false;
+}
+
 TreeDB* TripleStore::getTree() {
     return index_spo;
+}
+
+void TripleStore::insertAddition(Patch* patch, int patch_id) {
+    for(int i = 0; i < patch->get_size(); i++) {
+        PatchElement patchElement = patch->get(i);
+        if(patchElement.is_addition() && !patchElement.is_local_change()) {
+            // Look up the value for the given triple key in the tree.
+            size_t key_size, value_size;
+            const char *raw_key = patchElement.get_triple().serialize(&key_size);
+            PatchTreeAdditionValue value;
+            // We assume that are indexes are sane, we only check one of them
+            const char *raw_value = index_sop->get(raw_key, key_size, &value_size);
+            if (raw_value) {
+                value.deserialize(raw_value, value_size);
+            }
+            value.add(patch_id);
+
+            // Serialize the new value and store it
+            size_t new_value_size;
+            const char *new_raw_value = value.serialize(&new_value_size);
+
+            // Don't insert into SPO, because that one has another type of values!
+            index_sop->set(raw_key, key_size, new_raw_value, new_value_size);
+            index_pso->set(raw_key, key_size, new_raw_value, new_value_size);
+            index_pos->set(raw_key, key_size, new_raw_value, new_value_size);
+            index_osp->set(raw_key, key_size, new_raw_value, new_value_size);
+        }
+    }
 }

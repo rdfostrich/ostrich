@@ -24,7 +24,9 @@ public:
     TripleStore(string base_file_name);
     ~TripleStore();
     TreeDB* getTree(Triple triple_pattern);
+    bool isDefaultTree(Triple triple_pattern);
     TreeDB* getTree();
+    void insertAddition(Patch* patch, int patch_id);
 };
 
 
