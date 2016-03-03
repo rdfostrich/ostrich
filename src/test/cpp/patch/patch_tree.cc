@@ -1068,6 +1068,10 @@ TEST_F(PatchTreeTest, AdditionIteratorOtherIndexes) {
     patch5.add(PatchElement(Triple("h", "p", "o"), true));
     patchTree->append(patch5, 5);
 
+    Patch patch6;
+    patch6.add(PatchElement(Triple("a", "p", "o"), true));
+    patchTree->append(patch6, 6);
+
     // Expected patch 1:
     // a p o +
     // g p o -
@@ -1093,6 +1097,15 @@ TEST_F(PatchTreeTest, AdditionIteratorOtherIndexes) {
 
     // Expected patch 5:
     // a p o +/- (=> ignored)
+    // g p o -
+    // h p o -/+ (=> ignored)
+    // h z o -
+    // l a o +
+    // s a o +
+    // s z o -
+
+    // Expected patch 6:
+    // a p o +
     // g p o -
     // h p o -/+ (=> ignored)
     // h z o -
@@ -1183,4 +1196,46 @@ TEST_F(PatchTreeTest, AdditionIteratorOtherIndexes) {
     ASSERT_EQ("s a o.", pt.to_string()) << "Element is incorrect";
 
     ASSERT_EQ(false, it7.next(&pt)) << "Iterator should be finished";
+
+    /*
+     * Looping over ? ? ? additions in patch 6
+     */
+    TripleIterator it8 = patchTree->addition_iterator_from(0, 6, Triple("", "", ""));
+
+    ASSERT_EQ(true, it8.next(&pt)) << "Iterator has a no next value";
+    ASSERT_EQ("a p o.", pt.to_string()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it8.next(&pt)) << "Iterator has a no next value";
+    ASSERT_EQ("l a o.", pt.to_string()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it8.next(&pt)) << "Iterator has a no next value";
+    ASSERT_EQ("s a o.", pt.to_string()) << "Element is incorrect";
+
+    ASSERT_EQ(false, it8.next(&pt)) << "Iterator should be finished";
+
+    /*
+     * Looping over ? ? o additions in patch 6
+     */
+    TripleIterator it9 = patchTree->addition_iterator_from(0, 6, Triple("", "", "o"));
+
+    ASSERT_EQ(true, it9.next(&pt)) << "Iterator has a no next value";
+    ASSERT_EQ("a p o.", pt.to_string()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it9.next(&pt)) << "Iterator has a no next value";
+    ASSERT_EQ("l a o.", pt.to_string()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it9.next(&pt)) << "Iterator has a no next value";
+    ASSERT_EQ("s a o.", pt.to_string()) << "Element is incorrect";
+
+    ASSERT_EQ(false, it9.next(&pt)) << "Iterator should be finished";
+
+    /*
+     * Looping over ? p ? additions in patch 6
+     */
+    TripleIterator it10 = patchTree->addition_iterator_from(0, 6, Triple("", "p", ""));
+
+    ASSERT_EQ(true, it10.next(&pt)) << "Iterator has a no next value";
+    ASSERT_EQ("a p o.", pt.to_string()) << "Element is incorrect";
+
+    ASSERT_EQ(false, it10.next(&pt)) << "Iterator should be finished";
 }
