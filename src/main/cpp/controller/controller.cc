@@ -8,13 +8,15 @@ Controller::~Controller() {
     std::map<int, PatchTree*>::iterator it = loaded_patches.begin();
     while(it != loaded_patches.end()) {
         PatchTree* patchtree = it->second;
-        delete patchtree;
+        if(patchtree != NULL) {
+            delete patchtree;
+        }
         it++;
     }
 }
 
 std::map<int, PatchTree*> Controller::detect_patch_trees() {
-    std::regex r("patchtree_([0-9])*.kct_spo");
+    std::regex r("patchtree_([0-9]*).kct_spo");
     std::smatch base_match;
     std::map<int, PatchTree*> trees = std::map<int, PatchTree*>();
     DIR *dir;
@@ -41,6 +43,7 @@ std::map<int, PatchTree*> Controller::get_patch_trees() {
 }
 
 PatchTree* Controller::load_patch_tree(int patch_id_start) {
+    // TODO: We might want to look into unloading patch trees if they aren't used for a while. (using splay-tree/queue?)
     return loaded_patches[patch_id_start] = new PatchTree(PATCHTREE_FILENAME_BASE(patch_id_start));
 }
 

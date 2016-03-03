@@ -2,7 +2,7 @@
 #include "../../../main/cpp/dictionary/dictionary_manager.h"
 #include <HDTEnums.hpp>
 #include <HDTSpecification.hpp>
-#include <PlainDictionary.hpp>
+#include <dictionary/PlainDictionary.hpp>
 #include <gtest/gtest.h>
 
 // using namespace hdt;

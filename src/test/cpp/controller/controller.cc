@@ -2,8 +2,6 @@
 
 #include "../../../main/cpp/controller/controller.h"
 
-#define METAFILE "_test_patchtree_meta.bin"
-
 // The fixture for testing class Controller.
 class ControllerTest : public ::testing::Test {
 protected:

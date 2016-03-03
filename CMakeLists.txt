@@ -8,11 +8,15 @@ HunterGate(
 
 # Add HDT
 # We may want to declare hdt as a library
-include_directories(deps/hdt/libcds-v1.0.12/includes/ deps/hdt/hdt-lib/include/ deps/hdt/hdt-lib/src/dictionary/)
+include_directories(
+        deps/hdt/libcds-v1.0.12/includes/
+        deps/hdt/hdt-lib/include/
+        deps/hdt/hdt-lib/src/
+)
 file(GLOB_RECURSE HDT_FILES
         "deps/hdt/hdt-lib/src/*.h"
         "deps/hdt/hdt-lib/src/*.cpp"
-        )
+)
 
 # Build settings
 set(PROJECT_NAME_STR tpfpatch_store)
@@ -36,7 +40,7 @@ set(COMMON_FILES
         src/main/cpp/patch/patch.h
         src/main/cpp/dictionary/dictionary_manager.cc src/main/cpp/dictionary/dictionary_manager.h
         src/main/cpp/snapshot/snapshot_manager.cc src/main/cpp/snapshot/snapshot_manager.h
-        )
+        src/main/cpp/snapshot/vector_triple_iterator.cc src/main/cpp/snapshot/vector_triple_iterator.h)
 set(TEST_FILES
         src/test/cpp/controller/controller.cc
         src/test/cpp/patch/triple.cc
@@ -46,7 +50,8 @@ set(TEST_FILES
         src/test/cpp/patch/patch_tree_value.cc
         src/test/cpp/patch/patch_tree_key_comparator.cc
         src/test/cpp/patch/patch_tree.cc
-        src/test/cpp/dictionary/dictionary_manager.cc)
+        src/test/cpp/dictionary/dictionary_manager.cc
+        src/test/cpp/snapshot/snapshot_manager.cc)
 
 add_executable(${PROJECT_NAME_STR} ${HDT_FILES} ${COMMON_FILES} ${SOURCE_FILES})
 

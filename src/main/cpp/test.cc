@@ -2,12 +2,22 @@
 #include <kchashdb.h>
 
 #include "patch/patch_tree.h"
+#include "snapshot/snapshot_manager.h"
 
 using namespace std;
 using namespace kyotocabinet;
 
 int main() {
-  std::remove("true-patches.kct");
+  SnapshotManager snapshotManager;
+  std::map<int, HDT*> snapshots = snapshotManager.detect_snapshots();
+  cout << snapshots.size() << endl;
+
+  cout << snapshotManager.get_latest_snapshot(0) << endl;
+  cout << snapshotManager.get_latest_snapshot(5) << endl;
+  cout << snapshotManager.get_latest_snapshot(10) << endl;
+  cout << snapshotManager.get_latest_snapshot(15) << endl;
+
+  /*std::remove("true-patches.kct");
   PatchTree patchTree("true-patches.kct");
 
   cout << "-----" << endl;
@@ -36,7 +46,7 @@ int main() {
   cout << "-" << patchTree.deletion_count(Triple("", "", ""), 3) << endl;
   cout << patchTree.reconstruct_patch(3, false).to_string() << endl;
   //cout << patchTree.reconstruct_patch(2).to_string() << endl;
-
+*/
   /*Patch p1;
   PatchElement pe = PatchElement(Triple("a", "p", "o"), false);
   //pe.set_local_change(true);

@@ -3,8 +3,8 @@
 
 #include <Dictionary.hpp>
 #include <HDTVocabulary.hpp>
-#include <PlainDictionary.hpp>
 #include <Triples.hpp>
+#include <dictionary/PlainDictionary.hpp>
 
 #include "dictionary_manager.h"
 
