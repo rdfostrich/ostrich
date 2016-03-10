@@ -183,7 +183,7 @@ PatchTreeTripleIterator * PatchTree::addition_iterator_from(long offset, int pat
     it->set_deletion_tree(tripleStore->isDefaultTree(triple_pattern));
     // TODO: If this this ridiculous loop becomes too inefficient, make an offset map
     PatchTreeKey key;
-    PatchTreeValue value;
-    while(offset-- > 0 && it->next(&key, &value));
+    PatchTreeAdditionValue value;
+    while(offset-- > 0 && it->next_addition(&key, &value));
     return new PatchTreeTripleIterator(it, patch_id, triple_pattern);
 }

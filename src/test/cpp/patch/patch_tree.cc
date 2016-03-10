@@ -1198,6 +1198,16 @@ TEST_F(PatchTreeTest, AdditionIteratorOtherIndexes) {
     ASSERT_EQ(false, it7.next(&pt)) << "Iterator should be finished";
 
     /*
+     * Looping over s ? o additions in patch 5
+     */
+    PatchTreeTripleIterator it7_2 = *patchTree->addition_iterator_from(0, 5, Triple("s", "", ""));
+
+    ASSERT_EQ(true, it7_2.next(&pt)) << "Iterator has a no next value";
+    ASSERT_EQ("s a o.", pt.to_string()) << "Element is incorrect";
+
+    ASSERT_EQ(false, it7_2.next(&pt)) << "Iterator should be finished";
+
+    /*
      * Looping over ? ? ? additions in patch 6
      */
     PatchTreeTripleIterator it8 = *patchTree->addition_iterator_from(0, 6, Triple("", "", ""));

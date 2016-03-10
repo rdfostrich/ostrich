@@ -71,6 +71,7 @@ bool TripleStore::isDefaultTree(Triple triple_pattern) {
 
     if( s &  p &  o) return true;
     if( s &  p & !o) return true;
+    if( s & !p & !o) return true;
     if(!s & !p & !o) return true;
     return false;
 }

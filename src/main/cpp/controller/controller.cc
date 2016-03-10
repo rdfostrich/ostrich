@@ -144,6 +144,7 @@ TripleIterator* Controller::get(Triple triple_pattern, int offset, int patch_id)
         snapshot_count++;
     }
 
+    // TODO: as an optimization, we should construct this iterator in a lazy manner?
     long addition_offset = offset - snapshot_count + patchTree->deletion_count(triple_pattern, patch_id);
     PatchTreeTripleIterator * addition_it = patchTree->addition_iterator_from(addition_offset, patch_id, triple_pattern);
 

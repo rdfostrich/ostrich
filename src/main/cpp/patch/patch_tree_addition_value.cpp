@@ -1,5 +1,6 @@
 #include <string>
 #include <stdlib.h>
+#include <iostream>
 #include "patch_tree_addition_value.h"
 
 PatchTreeAdditionValue::PatchTreeAdditionValue() : patches() {}
