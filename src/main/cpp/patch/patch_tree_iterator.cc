@@ -46,11 +46,15 @@ bool PatchTreeIterator::is_deletion_tree() {
     return this->deletion_tree;
 }
 
-void PatchTreeIterator::set_reverse() {
-    this->reverse = true;
+void PatchTreeIterator::set_reverse(bool reverse) {
+    this->reverse = reverse;
 }
 
-bool PatchTreeIterator::next(PatchTreeKey* key, PatchTreeValue* value) {
+bool PatchTreeIterator::is_reverse() {
+    return this->reverse;
+}
+
+bool PatchTreeIterator::next(PatchTreeKey* key, PatchTreeValue* value, bool silent_step) {
     if(!deletion_tree) {
         throw std::invalid_argument("Tried to call PatchTreeIterator::next(PatchTreeKey* key, PatchTreeValue* value) on an addition tree.");
     }
@@ -65,7 +69,6 @@ bool PatchTreeIterator::next(PatchTreeKey* key, PatchTreeValue* value) {
     while (!filter_valid) {
         kbp = cursor->get(&ksp, &vbp, &vsp);
         if (!kbp) return false;
-        reverse ? cursor->step_back() : cursor->step();
         value->deserialize(vbp, vsp);
 
         if(is_patch_id_filter) {
@@ -102,6 +105,10 @@ bool PatchTreeIterator::next(PatchTreeKey* key, PatchTreeValue* value) {
 
         delete[] kbp;
         //delete[] vbp; // Apparently kyoto cabinet does not require the values to be deleted
+
+        if(!silent_step || !filter_valid) {
+            reverse ? cursor->step_back() : cursor->step();
+        }
     }
     return true;
 }

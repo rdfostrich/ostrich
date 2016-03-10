@@ -7,15 +7,17 @@
 #include <regex>
 #include <map>
 #include "../patch/patch_tree.h"
+#include "../snapshot/snapshot_manager.h"
 
 class Controller {
 private:
     // Mapping from LOADED patchtree_id -> patch_id
     std::map<int, PatchTree*> loaded_patches;
+    SnapshotManager* snapshotManager;
 public:
     Controller();
     ~Controller();
-    iterator<std::input_iterator_tag, Triple> get(Triple triple_pattern, int offset, int patch_id);
+    TripleIterator* get(Triple triple_pattern, int offset, int patch_id);
     /**
      * Add the given patch to a patch tree.
      * @param patch The patch to add.
@@ -65,6 +67,10 @@ public:
      * @return The id of a patch.
      */
     Patch get_patch(int patch_id);
+    /**
+     * @return The internal snapshot manager.
+     */
+    SnapshotManager* get_snapshot_manager();
 };
 
 

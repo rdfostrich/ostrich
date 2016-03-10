@@ -93,7 +93,7 @@ public:
      * @param triple_pattern Only triples that match the given pattern will be returned in the iterator.
      * @return The iterator that will loop over the tree for the given patch.
      */
-    PositionedTripleIterator deletion_iterator_from(Triple offset, int patch_id, Triple triple_pattern);
+    PositionedTripleIterator* deletion_iterator_from(Triple offset, int patch_id, Triple triple_pattern);
     /**
      * Get an iterator that loops over all additions starting with a given offset and only matching the
      * given triple pattern.
@@ -102,7 +102,7 @@ public:
      * @param triple_pattern Only triples that match the given pattern will be returned in the iterator.
      * @return The iterator that will loop over the tree for the given patch.
      */
-    TripleIterator addition_iterator_from(int offset, int patch_id, Triple triple_pattern);
+    PatchTreeTripleIterator * addition_iterator_from(long offset, int patch_id, Triple triple_pattern);
 };
 
 #endif //TPFPATCH_STORE_PATCH_TREE_H

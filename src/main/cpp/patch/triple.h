@@ -2,8 +2,10 @@
 #define TPFPATCH_STORE_TRIPLE_H
 
 #include <string>
+#include <SingleTriple.hpp>
 
 using namespace std;
+using namespace hdt;
 
 // A Triple holds a subject, predicate and object
 class Triple {
@@ -48,6 +50,15 @@ public:
                         (predicate == rhs.predicate && object < rhs.object)));
     }
     bool operator == (const Triple &rhs) const { return subject == rhs.subject && predicate == rhs.predicate && object == rhs.object; }
+    bool operator < (TripleString* rhs) const {
+        return subject < rhs->getSubject() ||
+               (subject == rhs->getSubject() && (predicate < rhs->getPredicate() ||
+                                           (predicate == rhs->getPredicate() && object < rhs->getObject())));
+    }
+    bool operator > (TripleString* rhs) const {
+        return !(*this < rhs);
+    }
+    bool operator == (TripleString* rhs) const { return subject == rhs->getSubject() && predicate == rhs->getPredicate() && object == rhs->getObject(); }
 
     /**
      * Check if the given triple matches with the triple pattern.

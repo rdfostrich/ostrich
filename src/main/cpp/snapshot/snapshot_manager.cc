@@ -83,3 +83,11 @@ std::map<int, HDT*> SnapshotManager::detect_snapshots() {
 std::map<int, HDT*> SnapshotManager::get_snapshots() {
     return this->loaded_snapshots;
 }
+
+IteratorTripleString *SnapshotManager::search_with_offset(HDT *hdt, Triple triple_pattern, long offset) {
+    TripleString tripleString(triple_pattern.get_subject(), triple_pattern.get_predicate(), triple_pattern.get_object());
+    IteratorTripleString* it = hdt->search(tripleString);
+    // TODO: for efficiency reasons, we may want to do something like this: https://github.com/RubenVerborgh/HDT-Node/blob/master/lib/HdtDocument.cc#L127
+    while(offset-- > 0 && it->hasNext()) it->next();
+    return it;
+}

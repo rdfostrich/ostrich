@@ -8,10 +8,10 @@ PositionedTripleIterator::~PositionedTripleIterator() {
     delete it;
 }
 
-bool PositionedTripleIterator::next(PositionedTriple *positioned_triple) {
+bool PositionedTripleIterator::next(PositionedTriple *positioned_triple, bool silent_step) {
     PatchTreeKey key;
     PatchTreeValue value;
-    bool ret = it->next(&key, &value);
+    bool ret = it->next(&key, &value, silent_step);
     if(ret) {
         positioned_triple->triple = key;
         if(!addition) {

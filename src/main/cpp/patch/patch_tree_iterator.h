@@ -62,17 +62,23 @@ public:
      */
     bool is_deletion_tree();
     /**
-     * Indicate that this iterator should step backwards.
+     * Indicate if this iterator should step backwards.
+     * @param reverse If it should go reverse.
      */
-    void set_reverse();
+    void set_reverse(bool reverse);
+    /**
+     * @return If this iterator goes in reverse.
+     */
+    bool is_reverse();
     /**
      * Point to the next element
      * Can only be called if iterating over a deletion tree.
      * @param key The key the iterator is currently pointing at.
      * @param value The value the iterator is currently pointing at.
+     * @param silent_step If the cursor doesn't need to be moved.
      * @return If this next element exists, otherwise the key and value will be invalid and should be ignored.
      */
-    bool next(PatchTreeKey* key, PatchTreeValue* value);
+    bool next(PatchTreeKey* key, PatchTreeValue* value, bool silent_step = false);
     /**
      * Point to the next element
      * Can only be called if iterating over an addition tree.

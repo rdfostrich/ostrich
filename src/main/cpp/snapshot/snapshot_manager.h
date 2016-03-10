@@ -46,6 +46,14 @@ public:
      * @return The snapshots
      */
     std::map<int, HDT*> get_snapshots();
+    /**
+     * Search the given triple pattern in the given hdt file with a certain offset.
+     * @param hdt A hdt file
+     * @param triple_pattern A triple pattern
+     * @param offset The offset the iterator should start from.
+     * @return the iterator.
+     */
+    static IteratorTripleString* search_with_offset(HDT* hdt, Triple triple_pattern, long offset);
 };
 
 
