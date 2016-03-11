@@ -29,13 +29,24 @@ public:
      */
     HDT* get_snapshot(int snapshot_id);
     /**
-     * Get the HDT file for the given snapshot id.
+     * Create a HDT file for the given snapshot id.
      * It will automatically be persisted in this manager.
      * @param snapshot_id The id for the new snapshot
      * @param triples The stream of triples to create a snapshot from.
+     * @param base_uri The base uri for the triples graph.
      * @return The created snapshot
      */
-    HDT* create_snapshot(int snapshot_id, IteratorTripleString* triples);
+    HDT* create_snapshot(int snapshot_id, IteratorTripleString* triples, string base_uri);
+    /**
+     * Create a HDT file for the given snapshot id.
+     * It will automatically be persisted in this manager.
+     * @param snapshot_id The id for the new snapshot
+     * @param triples_file The RDF file to load triples from.
+     * @param base_uri The base uri for the triples graph.
+     * @param notation The RDF serialization type of the file.
+     * @return The created snapshot
+     */
+    HDT* create_snapshot(int snapshot_id, string triples_file, string base_uri, RDFNotation notation);
     /**
      * Find all snapshots in the current directory.
      * @return The found patch trees

@@ -3,6 +3,8 @@
 #include "../../../main/cpp/snapshot/snapshot_manager.h"
 #include "../../../main/cpp/snapshot/vector_triple_iterator.h"
 
+#define BASEURI "<http://example.org>"
+
 // The fixture for testing class SnapshotManager.
 class SnapshotManagerTest : public ::testing::Test {
 protected:
@@ -35,27 +37,27 @@ protected:
 
 TEST_F(SnapshotManagerTest, ConstructSnapshot) {
     ASSERT_EQ((HDT*) NULL, snapshotManager.get_snapshot(100));
-    snapshotManager.create_snapshot(100, it);
+    snapshotManager.create_snapshot(100, it, BASEURI);
     ASSERT_NE((HDT*) NULL, snapshotManager.get_snapshot(100));
 }
 
 TEST_F(SnapshotManagerTest, DetectSnapshotsTrees) {
     ASSERT_EQ(0, snapshotManager.detect_snapshots().size());
-    snapshotManager.create_snapshot(100, it);
+    snapshotManager.create_snapshot(100, it, BASEURI);
     ASSERT_EQ(1, snapshotManager.detect_snapshots().size());
-    snapshotManager.create_snapshot(200, it);
+    snapshotManager.create_snapshot(200, it, BASEURI);
     ASSERT_EQ(2, snapshotManager.detect_snapshots().size());
 }
 
 TEST_F(SnapshotManagerTest, GetSnapshot) {
-    HDT* snapshot = snapshotManager.create_snapshot(100, it);
+    HDT* snapshot = snapshotManager.create_snapshot(100, it, BASEURI);
     ASSERT_EQ(snapshot, snapshotManager.get_snapshot(100));
 }
 
 TEST_F(SnapshotManagerTest, GetByPatchId) {
-    snapshotManager.create_snapshot(0, it);
-    snapshotManager.create_snapshot(10, it);
-    snapshotManager.create_snapshot(100, it);
+    snapshotManager.create_snapshot(0, it, BASEURI);
+    snapshotManager.create_snapshot(10, it, BASEURI);
+    snapshotManager.create_snapshot(100, it, BASEURI);
 
     ASSERT_EQ(0, snapshotManager.get_latest_snapshot(0));
     ASSERT_EQ(0, snapshotManager.get_latest_snapshot(1));

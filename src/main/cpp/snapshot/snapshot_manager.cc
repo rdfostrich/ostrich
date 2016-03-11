@@ -51,9 +51,16 @@ HDT* SnapshotManager::get_snapshot(int snapshot_id) {
     return it->second;
 }
 
-HDT* SnapshotManager::create_snapshot(int snapshot_id, IteratorTripleString* triples) {
+HDT* SnapshotManager::create_snapshot(int snapshot_id, IteratorTripleString* triples, string base_uri) {
     BasicHDT* basicHdt = new BasicHDT();
-    basicHdt->loadFromTriples(triples, "<http://example.org/>"); // TODO: Not sure if this base uri should changeable.
+    basicHdt->loadFromTriples(triples, base_uri);
+    basicHdt->saveToHDT(SNAPSHOT_FILENAME_BASE(snapshot_id).c_str());
+    return load_snapshot(snapshot_id);
+}
+
+HDT* SnapshotManager::create_snapshot(int snapshot_id, string triples_file, string base_uri, RDFNotation notation) {
+    BasicHDT* basicHdt = new BasicHDT();
+    basicHdt->loadFromRDF(triples_file.c_str(), base_uri, notation);
     basicHdt->saveToHDT(SNAPSHOT_FILENAME_BASE(snapshot_id).c_str());
     return load_snapshot(snapshot_id);
 }

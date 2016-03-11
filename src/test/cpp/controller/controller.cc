@@ -3,6 +3,8 @@
 #include "../../../main/cpp/controller/controller.h"
 #include "../../../main/cpp/snapshot/vector_triple_iterator.h"
 
+#define BASEURI "<http://example.org>"
+
 // The fixture for testing class Controller.
 class ControllerTest : public ::testing::Test {
 protected:
@@ -142,7 +144,7 @@ TEST_F(ControllerTest, GetSimple) {
     triples.push_back(TripleString("<a>", "<a>", "<b>"));
     triples.push_back(TripleString("<a>", "<a>", "<c>"));
     VectorTripleIterator* it = new VectorTripleIterator(triples);
-    controller.get_snapshot_manager()->create_snapshot(0, it);
+    controller.get_snapshot_manager()->create_snapshot(0, it, BASEURI);
 
     // Apply a simple patch
     Patch patch1;
@@ -218,7 +220,7 @@ TEST_F(ControllerTest, GetComplex1) {
     triples.push_back(TripleString("h", "z", "o"));
     triples.push_back(TripleString("h", "p", "o"));
     VectorTripleIterator* it = new VectorTripleIterator(triples);
-    controller.get_snapshot_manager()->create_snapshot(0, it);
+    controller.get_snapshot_manager()->create_snapshot(0, it, BASEURI);
 
     Patch patch1;
     patch1.add(PatchElement(Triple("g", "p", "o"), false));
@@ -388,7 +390,7 @@ TEST_F(ControllerTest, GetComplex2) {
     triples.push_back(TripleString("h", "z", "o"));
     triples.push_back(TripleString("h", "p", "o"));
     VectorTripleIterator* it = new VectorTripleIterator(triples);
-    controller.get_snapshot_manager()->create_snapshot(0, it);
+    controller.get_snapshot_manager()->create_snapshot(0, it, BASEURI);
 
     Patch patch1;
     patch1.add(PatchElement(Triple("g", "p", "o"), false));
@@ -558,7 +560,7 @@ TEST_F(ControllerTest, GetComplex3) {
     triples.push_back(TripleString("h", "z", "o"));
     triples.push_back(TripleString("h", "p", "o"));
     VectorTripleIterator* it = new VectorTripleIterator(triples);
-    controller.get_snapshot_manager()->create_snapshot(0, it);
+    controller.get_snapshot_manager()->create_snapshot(0, it, BASEURI);
 
     Patch patch1;
     patch1.add(PatchElement(Triple("g", "p", "o"), false));
