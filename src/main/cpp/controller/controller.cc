@@ -14,7 +14,7 @@ Controller::~Controller() {
         }
         it++;
     }
-    //delete snapshotManager; // TODO: bug: this crashes, solve this to avoid memleaks
+    delete snapshotManager;
 }
 
 std::map<int, PatchTree*> Controller::detect_patch_trees() {
@@ -116,7 +116,7 @@ TripleIterator* Controller::get(Triple triple_pattern, int offset, int patch_id)
         // Determine the first triple in the original snapshot and use it as offset for the deletion iterator
         TripleString* tripleString = snapshot_it->next();
         Triple firstTriple(tripleString->getSubject(), tripleString->getPredicate(), tripleString->getObject());
-        // delete tripleString; // TODO: not freeing needed?
+        delete tripleString;
         deletion_it = patchTree->deletion_iterator_from(firstTriple, patch_id, triple_pattern);
 
         // Calculate a new offset, taking into account deletions.

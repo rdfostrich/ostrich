@@ -13,7 +13,7 @@ protected:
     ControllerTest() : controller() {}
 
     virtual void SetUp() {
-        controller = Controller();
+
     }
 
     virtual void TearDown() {
