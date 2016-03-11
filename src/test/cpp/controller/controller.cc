@@ -137,6 +137,52 @@ TEST_F(ControllerTest, GetPatch) {
     ASSERT_EQ("a b c. (+)\ns1 p1 o1. (+)\ns2 p2 o2. (-)\ns3 p3 o3. (-)\n", controller.get_patch(2).to_string());
 }
 
+TEST_F(ControllerTest, GetEdge) {
+    Triple t;
+
+    // Build a snapshot
+    std::vector<TripleString> triples;
+    triples.push_back(TripleString("<a>", "<a>", "<a>"));
+    triples.push_back(TripleString("<a>", "<a>", "<b>"));
+    triples.push_back(TripleString("<a>", "<a>", "<c>"));
+    VectorTripleIterator* it = new VectorTripleIterator(triples);
+    controller.get_snapshot_manager()->create_snapshot(0, it, BASEURI);
+
+    // Request version 1 (after snapshot before a patch id added)
+    TripleIterator* it1 = controller.get(Triple("", "", ""), 0, 1);
+
+    ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <a>.", t.to_string()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <b>.", t.to_string()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <c>.", t.to_string()) << "Element is incorrect";
+
+    ASSERT_EQ(false, it1->next(&t)) << "Iterator should be finished";
+
+    // Apply a simple patch
+    Patch patch1;
+    patch1.add(PatchElement(Triple("<a>", "<a>", "<b>"), false));
+    controller.append(patch1, 1);
+
+    // Request version -1 (before first snapshot)
+    TripleIterator* it0 = controller.get(Triple("", "", ""), 0, -1);
+    ASSERT_EQ(false, it0->next(&t)) << "Iterator should be empty";
+
+    // Request version 2 (after last patch)
+    TripleIterator* it2 = controller.get(Triple("", "", ""), 0, 2);
+
+    ASSERT_EQ(true, it2->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <a>.", t.to_string()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it2->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <c>.", t.to_string()) << "Element is incorrect";
+
+    ASSERT_EQ(false, it2->next(&t)) << "Iterator should be finished";
+}
+
 TEST_F(ControllerTest, GetSimple) {
     // Build a snapshot
     std::vector<TripleString> triples;

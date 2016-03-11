@@ -1,6 +1,12 @@
 #include <Triples.hpp>
 #include "triple_iterator.h"
 
+EmptyTripleIterator::EmptyTripleIterator() {}
+
+bool EmptyTripleIterator::next(Triple *triple) {
+    return false;
+}
+
 PatchTreeTripleIterator::PatchTreeTripleIterator(PatchTreeIterator* it, int patch_id, Triple triple_pattern)
         : it(it), patch_id(patch_id), triple_pattern(triple_pattern) {}
 

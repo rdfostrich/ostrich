@@ -9,6 +9,12 @@ public:
     virtual bool next(Triple* triple) = 0;
 };
 
+class EmptyTripleIterator : public TripleIterator {
+public:
+    EmptyTripleIterator();
+    bool next(Triple* triple);
+};
+
 class PatchTreeTripleIterator : public TripleIterator {
 protected:
     PatchTreeIterator* it;

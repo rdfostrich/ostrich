@@ -23,8 +23,11 @@ int SnapshotManager::get_latest_snapshot(int patch_id) {
             return it->first;
         }
         it--;
+    };
+    if(loaded_snapshots.begin()->first <= patch_id) {
+        return loaded_snapshots.begin()->first;
     }
-    return loaded_snapshots.begin()->first;
+    return -1;
 }
 
 HDT* SnapshotManager::load_snapshot(int snapshot_id) {

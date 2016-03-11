@@ -96,7 +96,8 @@ TripleIterator* Controller::get(Triple triple_pattern, int offset, int patch_id)
     // Find the snapshot
     int snapshot_id = snapshotManager->get_latest_snapshot(patch_id);
     if(snapshot_id < 0) {
-        throw std::invalid_argument("No snapshot was found for version " + std::to_string(patch_id)); // TODO: return empty iterator?
+        //throw std::invalid_argument("No snapshot was found for version " + std::to_string(patch_id));
+        return new EmptyTripleIterator();
     }
     HDT* snapshot = snapshotManager->get_snapshot(snapshot_id);
 
@@ -109,7 +110,7 @@ TripleIterator* Controller::get(Triple triple_pattern, int offset, int patch_id)
     // Otherwise, we have to prepare an iterator for a certain patch
     PatchTree* patchTree = get_patch_tree(patch_id);
     if(patchTree == NULL) {
-        throw std::invalid_argument("No patch for the given id was found for version " + std::to_string(patch_id)); // TODO: return empty iterator?
+        return new SnapshotTripleIterator(snapshot_it);
     }
     PositionedTripleIterator* deletion_it;
     if(snapshot_it->hasNext()) { // We have elements left in the snapshot we should apply deletions to

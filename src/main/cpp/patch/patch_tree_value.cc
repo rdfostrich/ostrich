@@ -60,8 +60,9 @@ PatchTreeValueElement PatchTreeValue::get_patch(long element) {
 PatchTreeValueElement PatchTreeValue::get(int patch_id) {
     long index = get_patchvalue_index(patch_id);
     if(index < 0 || index >= elements.size()) {
-        throw std::invalid_argument("Index out of bounds (PatchTreeValue::get),"
-                                            "tried to get patch id " + std::to_string(patch_id) + " in " +  this->to_string());
+        return get_patch(elements.size() - 1);
+        //throw std::invalid_argument("Index out of bounds (PatchTreeValue::get),"
+        //                                    "tried to get patch id " + std::to_string(patch_id) + " in " +  this->to_string());
     }
     return get_patch(index);
 }

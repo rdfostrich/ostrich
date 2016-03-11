@@ -59,6 +59,8 @@ TEST_F(SnapshotManagerTest, GetByPatchId) {
     snapshotManager.create_snapshot(10, it, BASEURI);
     snapshotManager.create_snapshot(100, it, BASEURI);
 
+    ASSERT_EQ(-1, snapshotManager.get_latest_snapshot(-100));
+    ASSERT_EQ(-1, snapshotManager.get_latest_snapshot(-1));
     ASSERT_EQ(0, snapshotManager.get_latest_snapshot(0));
     ASSERT_EQ(0, snapshotManager.get_latest_snapshot(1));
     ASSERT_EQ(0, snapshotManager.get_latest_snapshot(9));
