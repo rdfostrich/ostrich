@@ -41,7 +41,7 @@ set(COMMON_FILES
         src/main/cpp/dictionary/dictionary_manager.cc src/main/cpp/dictionary/dictionary_manager.h
         src/main/cpp/snapshot/snapshot_manager.cc src/main/cpp/snapshot/snapshot_manager.h
         src/main/cpp/snapshot/vector_triple_iterator.cc src/main/cpp/snapshot/vector_triple_iterator.h
-        src/main/cpp/controller/snapshot_patch_iterator_triple_string.cc src/main/cpp/controller/snapshot_patch_iterator_triple_string.h)
+        src/main/cpp/controller/snapshot_patch_iterator_triple_string.cc src/main/cpp/controller/snapshot_patch_iterator_triple_string.h src/main/cpp/snapshot/iterator_triple_id_to_string.cc src/main/cpp/snapshot/iterator_triple_id_to_string.h)
 set(TEST_FILES
         src/test/cpp/controller/controller.cc
         src/test/cpp/patch/triple.cc
