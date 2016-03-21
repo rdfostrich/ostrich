@@ -141,7 +141,7 @@ PatchTreeIterator PatchTree::iterator(PatchTreeKey *key, int patch_id, bool exac
     return patchTreeIterator;
 }
 
-PatchPosition PatchTree::deletion_count(Triple triple_pattern, int patch_id) {
+std::pair<PatchPosition, Triple> PatchTree::deletion_count(Triple triple_pattern, int patch_id) {
     DB::Cursor* cursor = tripleStore->getTree()->cursor();
     cursor->jump_back();
     PatchTreeIterator patchTreeIterator(cursor);
@@ -153,9 +153,9 @@ PatchPosition PatchTree::deletion_count(Triple triple_pattern, int patch_id) {
     PatchTreeKey key;
     PatchTreeValue value;
     while(patchTreeIterator.next(&key, &value)) {
-        return value.get(patch_id).get_patch_positions().get_by_pattern(triple_pattern) + 1;
+        return std::make_pair(value.get(patch_id).get_patch_positions().get_by_pattern(triple_pattern) + 1, key);
     }
-    return 0;
+    return std::make_pair(0, Triple());
 }
 
 PositionedTripleIterator* PatchTree::deletion_iterator_from(Triple offset, int patch_id, Triple triple_pattern) {

@@ -1,21 +1,83 @@
 #include <iostream>
 #include <kchashdb.h>
 
-#include "patch/patch_tree.h"
-#include "snapshot/snapshot_manager.h"
+#include "../../main/cpp/patch/patch_tree.h"
+#include "../../main/cpp/snapshot/snapshot_manager.h"
+#include "../../main/cpp/snapshot/vector_triple_iterator.h"
+#include "../../main/cpp/controller/controller.h"
+
+#define BASEURI "<http://example.org>"
 
 using namespace std;
 using namespace kyotocabinet;
 
 int main() {
-  SnapshotManager snapshotManager;
-  std::map<int, HDT*> snapshots = snapshotManager.detect_snapshots();
-  cout << snapshots.size() << endl;
+  Controller controller;
 
-  cout << snapshotManager.get_latest_snapshot(0) << endl;
+  // Build a snapshot
+  std::vector<TripleString> triples;
+  for(int i = 0; i < 10; i++) {
+    string e = std::to_string(i);
+    triples.push_back(TripleString(e, e, e));
+  }
+  VectorTripleIterator* it = new VectorTripleIterator(triples);
+  controller.get_snapshot_manager()->create_snapshot(0, it, BASEURI);
+
+  Patch patch1;
+  patch1.add(PatchElement(Triple("0", "0", "0"), false));
+  patch1.add(PatchElement(Triple("1", "1", "1"), false));
+  patch1.add(PatchElement(Triple("2", "2", "2"), false));
+  patch1.add(PatchElement(Triple("4", "4", "4"), false));
+  patch1.add(PatchElement(Triple("5", "5", "5"), false));
+  controller.append(patch1, 1);
+
+  // ----- TEST -----
+  TripleIterator* ti = controller.get(Triple("", "", ""), 0, 1);
+  Triple t;
+
+  ti->next(&t);
+  cout << t.to_string() << endl;
+
+  ti->next(&t);
+  cout << t.to_string() << endl;
+
+  ti->next(&t);
+  cout << t.to_string() << endl;
+
+
+  // ----- CLEANUP -----
+  // Delete patch files
+  std::map<int, PatchTree*> patches = controller.get_patch_trees();
+  std::map<int, PatchTree*>::iterator itP = patches.begin();
+  while(itP != patches.end()) {
+    int id = itP->first;
+    std::remove(PATCHTREE_FILENAME(id, "spo").c_str());
+    std::remove(PATCHTREE_FILENAME(id, "pos").c_str());
+    std::remove(PATCHTREE_FILENAME(id, "pso").c_str());
+    std::remove(PATCHTREE_FILENAME(id, "sop").c_str());
+    std::remove(PATCHTREE_FILENAME(id, "osp").c_str());
+    itP++;
+  }
+
+  // Delete snapshot files
+  std::map<int, HDT*> snapshots = controller.get_snapshot_manager()->get_snapshots();
+  std::map<int, HDT*>::iterator itS = snapshots.begin();
+  while(itS != snapshots.end()) {
+    int id = itS->first;
+    std::remove(SNAPSHOT_FILENAME_BASE(id).c_str());
+    std::remove((SNAPSHOT_FILENAME_BASE(id) + ".index").c_str());
+    itS++;
+  }
+
+
+  /*SnapshotManager snapshotManager;
+  std::map<int, HDT*> snapshots = snapshotManager.detect_snapshots();
+  cout << snapshots.size() << endl;*/
+
+  /*cout << snapshotManager.get_latest_snapshot(0) << endl;
   cout << snapshotManager.get_latest_snapshot(5) << endl;
   cout << snapshotManager.get_latest_snapshot(10) << endl;
-  cout << snapshotManager.get_latest_snapshot(15) << endl;
+  cout << snapshotManager.get_latest_snapshot(15) << endl;*/
 
   /*std::remove("true-patches.kct");
   PatchTree patchTree("true-patches.kct");

@@ -685,3 +685,65 @@ TEST_F(ControllerTest, GetComplex3) {
 
     ASSERT_EQ(false, it7->next(&t)) << "Iterator should be finished";
 }
+
+TEST_F(ControllerTest, EdgeCase1) {
+    /*
+     * This tests the special case where there are extra deletions that
+     * need to be taken into account when the first deletion count is applied
+     * as offset to the snapshot iterator.
+     *
+     * In this case, for offset = 3 we will find in the snapshot element "3".
+     * The number of deletions before this element is 3, so the new snapshot offset becomes 6 (= 3 + 3).
+     * The first element in this new snapshot iterator is "6", which is wrong because we expect "8".
+     * This is because deletion elements "4" and "5" weren't taken into account when applying this new offset.
+     * This is why we have to _loop_ when applying offsets until we apply one that contains no new deletions relative
+     * to the previous offset.
+     */
+
+    // Build a snapshot
+    std::vector<TripleString> triples;
+    triples.push_back(TripleString("0", "0", "0"));
+    triples.push_back(TripleString("1", "1", "1"));
+    triples.push_back(TripleString("2", "2", "2"));
+    triples.push_back(TripleString("3", "3", "3"));
+    triples.push_back(TripleString("4", "4", "4"));
+    triples.push_back(TripleString("5", "5", "5"));
+    triples.push_back(TripleString("6", "6", "6"));
+    triples.push_back(TripleString("7", "7", "7"));
+    triples.push_back(TripleString("8", "8", "8"));
+    triples.push_back(TripleString("9", "9", "9"));
+    VectorTripleIterator *it = new VectorTripleIterator(triples);
+    controller.get_snapshot_manager()->create_snapshot(0, it, BASEURI);
+
+    Patch patch1;
+    patch1.add(PatchElement(Triple("0", "0", "0"), false));
+    patch1.add(PatchElement(Triple("1", "1", "1"), false));
+    patch1.add(PatchElement(Triple("2", "2", "2"), false));
+    // No 3!
+    patch1.add(PatchElement(Triple("4", "4", "4"), false));
+    patch1.add(PatchElement(Triple("5", "5", "5"), false));
+    controller.append(patch1, 1);
+
+    Triple t;
+
+    // Request version 1, offset 0
+    TripleIterator* it0 = controller.get(Triple("", "", ""), 0, 1);
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("3 3 3.", t.to_string()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("6 6 6.", t.to_string()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("7 7 7.", t.to_string()) << "Element is incorrect";
+
+    // Request version 1, offset 3 (The actual edge case!)
+    TripleIterator* it1 = controller.get(Triple("", "", ""), 3, 1);
+
+    ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("8 8 8.", t.to_string()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("9 9 9.", t.to_string()) << "Element is incorrect";
+}

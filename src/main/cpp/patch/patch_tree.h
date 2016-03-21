@@ -82,9 +82,10 @@ public:
      * Get the number of deletions.
      * @param triple_pattern The triple pattern to match by.
      * @param patch_id The patch id to get the deletions for, this patch id must exist within the tree!
-     * @return The amount of deletions matching the given triple pattern for the given patch id.
+     * @return A pair of the amount of deletions matching the given triple pattern for the given patch id and the last triple.
+     *         This last triple will be undefined if the amount is zero.
      */
-    PatchPosition deletion_count(Triple triple_pattern, int patch_id);
+    std::pair<PatchPosition, Triple> deletion_count(Triple triple_pattern, int patch_id);
     /**
      * Get an iterator that loops over all deletions starting from a given triple and only matching the
      * given triple pattern.

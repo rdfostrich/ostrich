@@ -113,27 +113,54 @@ TripleIterator* Controller::get(Triple triple_pattern, int offset, int patch_id)
         return new SnapshotTripleIterator(snapshot_it);
     }
     PositionedTripleIterator* deletion_it;
-    if(snapshot_it->hasNext()) { // We have elements left in the snapshot we should apply deletions to
-        // Determine the first triple in the original snapshot and use it as offset for the deletion iterator
-        TripleString* tripleString = snapshot_it->next();
-        Triple firstTriple(tripleString->getSubject(), tripleString->getPredicate(), tripleString->getObject());
-        delete tripleString;
-        deletion_it = patchTree->deletion_iterator_from(firstTriple, patch_id, triple_pattern);
+    long added_offset = 0;
+    bool check_offseted_deletions = true;
+    // This loop continuously determines new snapshot iterators until it finds one that contains
+    // no new deletions with respect to the snapshot iterator from last iteration.
+    // This loop is required to handle special cases like the one in the ControllerTest::EdgeCase1.
+    // As worst-case, this loop will take O(n) (n:dataset size), as an optimization we can look
+    // into storing long consecutive chains of deletions more efficiently.
+    while(check_offseted_deletions) {
+        if (snapshot_it->hasNext()) { // We have elements left in the snapshot we should apply deletions to
+            // Determine the first triple in the original snapshot and use it as offset for the deletion iterator
+            TripleString *tripleString = snapshot_it->next();
+            Triple firstTriple(tripleString->getSubject(), tripleString->getPredicate(), tripleString->getObject());
+            delete tripleString;
+            deletion_it = patchTree->deletion_iterator_from(firstTriple, patch_id, triple_pattern);
 
-        // Calculate a new offset, taking into account deletions.
-        PositionedTriple first_triple;
-        long snapshot_offset = 0;
-        if(deletion_it->next(&first_triple, true)) {
-            snapshot_offset = first_triple.position;
+            // Calculate a new offset, taking into account deletions.
+            PositionedTriple first_deletion_triple;
+            long snapshot_offset = 0;
+            if (deletion_it->next(&first_deletion_triple, true)) {
+                snapshot_offset = first_deletion_triple.position;
+            } else {
+                std::pair<PatchPosition, Triple> data = patchTree->deletion_count(triple_pattern, patch_id);
+                if(data.first == 0) {
+                    snapshot_offset = 0;
+                } else {
+                    bool is_smaller_than_first = firstTriple < data.second;
+                    snapshot_offset = is_smaller_than_first ? 0 : data.first;
+                }
+            }
+            long previous_added_offset = added_offset;
+            added_offset = snapshot_offset;
+
+            // Make a new snapshot iterator for the new offset
+            delete snapshot_it;
+            snapshot_it = SnapshotManager::search_with_offset(snapshot, triple_pattern, offset + added_offset);
+
+            // Check if we need to loop again
+            check_offseted_deletions = previous_added_offset < added_offset;
+            if(check_offseted_deletions) {
+                // TODO: it may be more efficient to just reuse the current deletion_it and offset in there.
+                //       But probably not always.
+                delete deletion_it;
+            }
+        } else {
+            snapshot_it = NULL;
+            deletion_it = NULL;
+            check_offseted_deletions = false;
         }
-        long real_offset = offset + snapshot_offset;
-
-        // Make a new snapshot iterator for the new offset
-        delete snapshot_it;
-        snapshot_it = SnapshotManager::search_with_offset(snapshot, triple_pattern, real_offset);
-    } else {
-        snapshot_it = NULL;
-        deletion_it = NULL;
     }
 
     // Calculate the offset for our addition iterator.
@@ -146,7 +173,7 @@ TripleIterator* Controller::get(Triple triple_pattern, int offset, int patch_id)
     }
 
     // TODO: as an optimization, we should construct this iterator in a lazy manner?
-    long addition_offset = offset - snapshot_count + patchTree->deletion_count(triple_pattern, patch_id);
+    long addition_offset = offset - snapshot_count + patchTree->deletion_count(triple_pattern, patch_id).first;
     PatchTreeTripleIterator * addition_it = patchTree->addition_iterator_from(addition_offset, patch_id, triple_pattern);
 
     return new SnapshotPatchIteratorTripleString(snapshot_it, deletion_it, addition_it);
