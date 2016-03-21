@@ -47,6 +47,7 @@ void TripleStore::close(TreeDB* db, string name) {
     if (!db->close()) {
         cerr << "close " << name << " error: " << db->error().name() << endl;
     }
+    delete db;
 }
 
 TreeDB* TripleStore::getTree(Triple triple_pattern) {
