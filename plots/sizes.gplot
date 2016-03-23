@@ -1,0 +1,15 @@
+set style line 1 lc rgb "#D65153" linewidth 2
+set style line 2 lc rgb "#FACFA5" linewidth 2
+
+set datafile sep ','
+set auto x
+set auto y
+set xtics 10
+set terminal png font "Verdana" 16
+set ylabel "Total size (bytes)"
+set xlabel "Patch id (consecutive)"
+
+plot 'size-deletions-100.csv' using 1:2 title "-100 triples / patch" with lines, \
+'size-deletions-200.csv' using 1:2 title "-200 triples / patch" with lines, \
+'size-additions-100.csv' using 1:2 title "+100 triples / patch" with lines, \
+'size-additions-200.csv' using 1:2 title "+200 triples / patch" with lines
