@@ -48,9 +48,6 @@ public:
     bool operator < (const Triple &rhs) const;
     bool operator > (const Triple &rhs) const;
     bool operator == (const Triple &rhs) const;
-    bool operator < (TripleString* rhs) const;
-    bool operator > (TripleString* rhs) const;
-    bool operator == (TripleString* rhs) const;
 
     /**
      * Check if the given triple matches with the triple pattern.

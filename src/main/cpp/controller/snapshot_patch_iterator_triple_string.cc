@@ -10,6 +10,7 @@ bool SnapshotPatchIteratorTripleString::next(Triple* triple) {
         if (snapshot_it != NULL && snapshot_it->hasNext()) { // Emit triples from snapshot - deletions
             // Find snapshot triple
             TripleString* snapshot_triple = snapshot_it->next();
+            *triple = Triple(snapshot_triple->getSubject(), snapshot_triple->getPredicate(), snapshot_triple->getObject());
 
             // Start iterating over deletions.
             // If we find a match, we know that we DON'T have to emit this snapshot triple.
@@ -20,13 +21,13 @@ bool SnapshotPatchIteratorTripleString::next(Triple* triple) {
             bool found_triple_before_snapshot_triple = true;
             while (found_triple_before_snapshot_triple) {
                 if (deletion_it->next(&deleted_triple, true)) {
-                    if(deleted_triple.triple == snapshot_triple) {
+                    if(deleted_triple.triple == *triple) {
                         // This 'confirms' the iteration step, we won't need this element hereafter.
                         // TODO: this may be implemented more efficiently, but this will become a bit more complicated...
                         deletion_it->next(&deleted_triple);
                         emit_triple = false;
                         found_triple_before_snapshot_triple = false;
-                    } else if (deleted_triple.triple > snapshot_triple) {
+                    } else if (deleted_triple.triple > *triple) {
                         found_triple_before_snapshot_triple = false;
                     } else {
                         // This 'confirms' the iteration step, we won't need this element hereafter.
@@ -39,7 +40,6 @@ bool SnapshotPatchIteratorTripleString::next(Triple* triple) {
             }
 
             if(emit_triple) {
-                *triple = Triple(snapshot_triple->getSubject(), snapshot_triple->getPredicate(), snapshot_triple->getObject());
                 return true;
             }
         } else { // Emit additions
