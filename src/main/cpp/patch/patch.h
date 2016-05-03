@@ -1,8 +1,7 @@
-#ifndef TPFPATCH_STORE_PATCH_ELEMENTS_H
-#define TPFPATCH_STORE_PATCH_ELEMENTS_H
+#ifndef TPFPATCH_STORE_PATCH_H
+#define TPFPATCH_STORE_PATCH_H
 
 #include <vector>
-#include "patch.h"
 #include "patch_element.h"
 #include "patch_tree_value.h"
 
@@ -95,4 +94,4 @@ public:
     Patch apply_local_changes();
 };
 
-#endif //TPFPATCH_STORE_PATCH_ELEMENTS_H
+#endif //TPFPATCH_STORE_PATCH_H

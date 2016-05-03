@@ -44,21 +44,13 @@ public:
      * @param size The size of the byte array
      */
     void deserialize(const char* data, size_t size);
-    bool operator < (const Triple &rhs) const {
-        return subject < rhs.subject ||
-                (subject == rhs.subject && (predicate < rhs.predicate ||
-                        (predicate == rhs.predicate && object < rhs.object)));
-    }
-    bool operator == (const Triple &rhs) const { return subject == rhs.subject && predicate == rhs.predicate && object == rhs.object; }
-    bool operator < (TripleString* rhs) const {
-        return subject < rhs->getSubject() ||
-               (subject == rhs->getSubject() && (predicate < rhs->getPredicate() ||
-                                           (predicate == rhs->getPredicate() && object < rhs->getObject())));
-    }
-    bool operator > (TripleString* rhs) const {
-        return !(*this < rhs);
-    }
-    bool operator == (TripleString* rhs) const { return subject == rhs->getSubject() && predicate == rhs->getPredicate() && object == rhs->getObject(); }
+
+    bool operator < (const Triple &rhs) const;
+    bool operator > (const Triple &rhs) const;
+    bool operator == (const Triple &rhs) const;
+    bool operator < (TripleString* rhs) const;
+    bool operator > (TripleString* rhs) const;
+    bool operator == (TripleString* rhs) const;
 
     /**
      * Check if the given triple matches with the triple pattern.
@@ -66,19 +58,13 @@ public:
      * @param triple_pattern The triple pattern to match with the triple, empty elements are seen as blank.
      * @return If the triple and pattern match.
      */
-    static bool pattern_match_triple(Triple triple, Triple triple_pattern) {
-        return (triple_pattern.get_subject() == "" || triple_pattern.get_subject() == triple.get_subject())
-               && (triple_pattern.get_predicate() == "" || triple_pattern.get_predicate() == triple.get_predicate())
-               && (triple_pattern.get_object() == "" || triple_pattern.get_object() == triple.get_object());
-    }
+    static bool pattern_match_triple(Triple triple, Triple triple_pattern);
     /**
      * Check if the given triple pattern has empty elements for S, P and O.
      * @param triple_pattern The triple pattern to check.
      * @return If the pattern is ? ? ?
      */
-    static bool is_all_matching_pattern(Triple triple_pattern) {
-        return triple_pattern.get_subject() == "" && triple_pattern.get_predicate() == "" && triple_pattern.get_object() == "";
-    }
+    static bool is_all_matching_pattern(Triple triple_pattern);
 };
 
 #endif //TPFPATCH_STORE_TRIPLE_H

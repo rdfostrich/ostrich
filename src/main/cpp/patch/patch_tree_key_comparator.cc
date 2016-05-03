@@ -2,6 +2,8 @@
 
 #include "patch_tree_key_comparator.h"
 
+PatchTreeKeyComparator PatchTreeKeyComparator::comparator_spo(comp_s, comp_p, comp_o);
+
 PatchTreeKeyComparator::PatchTreeKeyComparator(comp compare_1, comp compare_2, comp compare_3)
         : compare_1(compare_1), compare_2(compare_2), compare_3(compare_3) {}
 

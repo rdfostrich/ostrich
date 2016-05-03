@@ -1,6 +1,7 @@
 #include <sstream>
 #include <vector>
 #include "triple.h"
+#include "patch_tree_key_comparator.h"
 
 // TODO: use dictionary
 Triple::Triple() {}
@@ -49,4 +50,40 @@ void Triple::deserialize(const char* data, size_t size) {
             *(fields[i]) += data[k];
         }
     }
+}
+
+bool Triple::operator < (const Triple &rhs) const {
+    return PatchTreeKeyComparator::comparator_spo.compare(*this, rhs) < 0;
+}
+
+bool Triple::operator > (const Triple &rhs) const {
+    return PatchTreeKeyComparator::comparator_spo.compare(*this, rhs) > 0;
+}
+
+bool Triple::operator == (const Triple &rhs) const {
+    return PatchTreeKeyComparator::comparator_spo.compare(*this, rhs) == 0;
+}
+
+bool Triple::operator < (TripleString* rhs) const {
+    return subject < rhs->getSubject() ||
+           (subject == rhs->getSubject() && (predicate < rhs->getPredicate() ||
+                                             (predicate == rhs->getPredicate() && object < rhs->getObject())));
+}
+
+bool Triple::operator > (TripleString* rhs) const {
+    return !(*this < rhs);
+}
+
+bool Triple::operator == (TripleString* rhs) const {
+    return subject == rhs->getSubject() && predicate == rhs->getPredicate() && object == rhs->getObject();
+}
+
+bool Triple::pattern_match_triple(Triple triple, Triple triple_pattern) {
+    return (triple_pattern.get_subject() == "" || triple_pattern.get_subject() == triple.get_subject())
+           && (triple_pattern.get_predicate() == "" || triple_pattern.get_predicate() == triple.get_predicate())
+           && (triple_pattern.get_object() == "" || triple_pattern.get_object() == triple.get_object());
+}
+
+bool Triple::is_all_matching_pattern(Triple triple_pattern) {
+    return triple_pattern.get_subject() == "" && triple_pattern.get_predicate() == "" && triple_pattern.get_object() == "";
 }

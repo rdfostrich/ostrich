@@ -1,6 +1,6 @@
 #include "triple_store.h"
-#include "patch_tree_key_comparator.h"
 #include "patch_tree_addition_value.h"
+#include "patch_tree_key_comparator.h"
 
 using namespace std;
 using namespace kyotocabinet;
@@ -14,7 +14,7 @@ TripleStore::TripleStore(string base_file_name) {
     index_osp = new TreeDB();
 
     // Set the triple comparators
-    index_spo->tune_comparator(new PatchTreeKeyComparator(comp_s, comp_p, comp_o));
+    index_spo->tune_comparator(&PatchTreeKeyComparator::comparator_spo);
     index_sop->tune_comparator(new PatchTreeKeyComparator(comp_s, comp_o, comp_p));
     index_pso->tune_comparator(new PatchTreeKeyComparator(comp_p, comp_s, comp_o));
     index_pos->tune_comparator(new PatchTreeKeyComparator(comp_p, comp_o, comp_s));
