@@ -110,14 +110,14 @@ string Patch::to_string() {
 
 long Patch::index_of_triple(Triple triple) {
     PatchElement element1(triple, false);
-    std::vector<PatchElement>::iterator findIt1 = std::find(elements.begin(), elements.end(), element1);
-    if(findIt1 != elements.end()) {
+    std::vector<PatchElement>::iterator findIt1 = std::lower_bound(elements.begin(), elements.end(), element1);
+    if(findIt1 != elements.end() && *findIt1 == element1) {
         return std::distance(elements.begin(), findIt1);
     }
 
     PatchElement element2(triple, true);
-    std::vector<PatchElement>::iterator findIt2 = std::find(elements.begin(), elements.end(), element2);
-    if(findIt2 != elements.end()) {
+    std::vector<PatchElement>::iterator findIt2 = std::lower_bound(elements.begin(), elements.end(), element2);
+    if(findIt2 != elements.end() && *findIt2 == element2) {
         return std::distance(elements.begin(), findIt2);
     }
     return -1;
