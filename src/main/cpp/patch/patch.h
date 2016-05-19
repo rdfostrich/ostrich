@@ -2,6 +2,7 @@
 #define TPFPATCH_STORE_PATCH_H
 
 #include <vector>
+#include <map>
 #include "patch_element.h"
 #include "patch_tree_value.h"
 
@@ -42,12 +43,19 @@ public:
      */
     PatchElement get(long index);
     /**
-     * Find the DELETION positions of the given element in this patch for all triple patterns.
+     * Find the DELETION positions of the given element in this patch based on the pattern-based caches.
      * Additions are thus ignored when doing the counts
      * @param element The element to look for
      * @return The relative positions for all derived triple patterns.
      */
-    PatchPositions positions(PatchElement element);
+    PatchPositions positions(PatchElement element,
+                             map<string, PatchPosition>& sp_,
+                             map<string, PatchPosition>& s_o,
+                             map<string, PatchPosition>& s__,
+                             map<string, PatchPosition>& _po,
+                             map<string, PatchPosition>& _p_,
+                             map<string, PatchPosition>& __o,
+                             PatchPosition& ___);
     /**
      * Find the position of the given element in this patch.
      * The boolean parameters are used to virtually include or exclude certain elements.

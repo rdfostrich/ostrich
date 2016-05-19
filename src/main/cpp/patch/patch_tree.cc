@@ -30,6 +30,13 @@ void PatchTree::append_unsafe(Patch patch, int patch_id) {
     // We don't only loop over the new elements, but all of them because
     // the already available elements might have a different relative patch position,
     // so these need to be updated.
+    map<string, PatchPosition> sp_;
+    map<string, PatchPosition> s_o;
+    map<string, PatchPosition> s__;
+    map<string, PatchPosition> _po;
+    map<string, PatchPosition> _p_;
+    map<string, PatchPosition> __o;
+    PatchPosition ___ = 0;
     for(int i = 0; i < existing_patch.get_size(); i++) {
         PatchElement patchElement = existing_patch.get(i);
         long index_in_inserting_patch = patch.index_of_triple(patchElement.get_triple());
@@ -45,7 +52,7 @@ void PatchTree::append_unsafe(Patch patch, int patch_id) {
         }
 
         // Calculate the patch positions for all triple patterns (except for S P O and ? ? ?, will be 0 anyways)
-        PatchPositions patch_positions = existing_patch.positions(patchElement);
+        PatchPositions patch_positions = existing_patch.positions(patchElement, sp_, s_o, s__, _po, _p_, __o, ___);
         // Add (or update) the value in the tree
         // If the triple is added by the inserting patch (`patch`), then we give priority to the type (+/-) from the inserting patch.
         PatchTreeValueElement patchTreeValueElement(patch_id, patch_positions, is_in_inserting_patch

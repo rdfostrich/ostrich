@@ -29,6 +29,8 @@ int main() {
   patch1.add(PatchElement(Triple("2", "2", "2"), false));
   patch1.add(PatchElement(Triple("4", "4", "4"), false));
   patch1.add(PatchElement(Triple("5", "5", "5"), false));
+  patch1.add(PatchElement(Triple("0", "6", "5"), false));
+  patch1.add(PatchElement(Triple("0", "6", "6"), false));
   controller.append(patch1, 1);
 
   // ----- TEST -----
@@ -47,7 +49,7 @@ int main() {
 
   // ----- CLEANUP -----
   // Delete patch files
-  std::map<int, PatchTree*> patches = controller.get_patch_trees();
+  std::map<int, PatchTree*> patches = controller.get_patch_tree_manager()->get_patch_trees();
   std::map<int, PatchTree*>::iterator itP = patches.begin();
   while(itP != patches.end()) {
     int id = itP->first;

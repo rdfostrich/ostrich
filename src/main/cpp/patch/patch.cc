@@ -37,30 +37,41 @@ PatchElement Patch::get(long index) {
     return elements[index];
 }
 
-PatchPositions Patch::positions(PatchElement element) {
-    PatchPositions positions = PatchPositions();
-    if(!element.is_addition()) {
-        // First find the position of the element in O(log n)
-        std::vector<PatchElement>::iterator findIt = std::lower_bound(elements.begin(), elements.end(), element);
-        // Count the matching patch elements from this position to the beginning for all triple patterns
-        while (findIt >= elements.begin()) {
-            PatchElement matching = *findIt;
-            // For additions, we don't have to store the relative positions.
-            if(!matching.is_addition() && !matching.is_local_change()) {
-                bool s = matching.get_triple().get_subject() == element.get_triple().get_subject();
-                bool p = matching.get_triple().get_predicate() == element.get_triple().get_predicate();
-                bool o = matching.get_triple().get_object() == element.get_triple().get_object();
+inline PatchPosition contains_and_increment_position(map<string, PatchPosition>& m, string& hash) {
+    std::map<string, PatchPosition>::iterator it = m.find(hash);
+    PatchPosition pos = 0;
+    if (it != m.end()) {
+        pos = it->second;
+    }
+    m[hash] = pos + 1;
+    return pos;
+}
 
-                if (s && p) positions.sp_++;
-                if (s && o) positions.s_o++;
-                if (s) positions.s__++;
-                if (p && o) positions._po++;
-                if (p) positions._p_++;
-                if (o) positions.__o++;
-                positions.___++;
-            }
-            findIt--;
-        };
+PatchPositions Patch::positions(PatchElement element,
+                                map<string, PatchPosition>& sp_,
+                                map<string, PatchPosition>& s_o,
+                                map<string, PatchPosition>& s__,
+                                map<string, PatchPosition>& _po,
+                                map<string, PatchPosition>& _p_,
+                                map<string, PatchPosition>& __o,
+                                PatchPosition& ___) {
+    PatchPositions positions = PatchPositions();
+    if(!element.is_addition() && !element.is_local_change()) {
+        // TODO: optimize with dict encoding
+        string hsp_ = element.get_triple().get_subject() + "$" + element.get_triple().get_predicate();
+        string hs_o = element.get_triple().get_subject() + "$" + element.get_triple().get_object();
+        string hs__ = element.get_triple().get_subject();
+        string h_po = element.get_triple().get_predicate() + "$" + element.get_triple().get_object();
+        string h_p_ = element.get_triple().get_predicate();
+        string h__o = element.get_triple().get_object();
+
+        positions.sp_ = contains_and_increment_position(sp_, hsp_);
+        positions.s_o = contains_and_increment_position(s_o, hs_o);
+        positions.s__ = contains_and_increment_position(s__, hs__);
+        positions._po = contains_and_increment_position(_po, h_po);
+        positions._p_ = contains_and_increment_position(_p_, h_p_);
+        positions.__o = contains_and_increment_position(__o, h__o);
+        positions.___ = ___++;
     }
     return positions;
 }
