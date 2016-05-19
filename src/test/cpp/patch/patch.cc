@@ -243,12 +243,12 @@ TEST_F(PatchElementsTest, Positions) {
     // s z o -
 
     // Calculate positions
-    map<string, PatchPosition> sp_;
-    map<string, PatchPosition> s_o;
-    map<string, PatchPosition> s__;
-    map<string, PatchPosition> _po;
-    map<string, PatchPosition> _p_;
-    map<string, PatchPosition> __o;
+    unordered_map<string, PatchPosition> sp_;
+    unordered_map<string, PatchPosition> s_o;
+    unordered_map<string, PatchPosition> s__;
+    unordered_map<string, PatchPosition> _po;
+    unordered_map<string, PatchPosition> _p_;
+    unordered_map<string, PatchPosition> __o;
     PatchPosition ___ = 0;
 
     // Simulate patch-position calculation

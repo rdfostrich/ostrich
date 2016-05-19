@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <map>
+#include <unordered_map>
 #include "patch_element.h"
 #include "patch_tree_value.h"
 
@@ -49,12 +50,12 @@ public:
      * @return The relative positions for all derived triple patterns.
      */
     PatchPositions positions(PatchElement element,
-                             map<string, PatchPosition>& sp_,
-                             map<string, PatchPosition>& s_o,
-                             map<string, PatchPosition>& s__,
-                             map<string, PatchPosition>& _po,
-                             map<string, PatchPosition>& _p_,
-                             map<string, PatchPosition>& __o,
+                             unordered_map<string, PatchPosition>& sp_,
+                             unordered_map<string, PatchPosition>& s_o,
+                             unordered_map<string, PatchPosition>& s__,
+                             unordered_map<string, PatchPosition>& _po,
+                             unordered_map<string, PatchPosition>& _p_,
+                             unordered_map<string, PatchPosition>& __o,
                              PatchPosition& ___);
     /**
      * Find the position of the given element in this patch.

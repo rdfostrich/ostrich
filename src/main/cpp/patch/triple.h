@@ -19,15 +19,15 @@ public:
     /**
      * @return The subject
      */
-    string get_subject();
+    string get_subject() const;
     /**
      * @return The predicate
      */
-    string get_predicate();
+    string get_predicate() const;
     /**
      * @return The object
      */
-    string get_object();
+    string get_object() const;
     /**
      * @return The string representation of this patch.
      */
@@ -63,5 +63,13 @@ public:
      */
     static bool is_all_matching_pattern(Triple triple_pattern);
 };
+
+namespace std {
+    template <>
+    struct hash<Triple> {
+        std::size_t operator()(const Triple& triple) const;
+    };
+}
+
 
 #endif //TPFPATCH_STORE_TRIPLE_H

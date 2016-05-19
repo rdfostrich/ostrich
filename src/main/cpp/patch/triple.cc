@@ -9,15 +9,15 @@ Triple::Triple() {}
 Triple::Triple(string subject, string predicate, string object) :
         subject(subject), predicate(predicate), object(object) {}
 
-string Triple::get_subject() {
+string Triple::get_subject() const {
     return subject;
 }
 
-string Triple::get_predicate() {
+string Triple::get_predicate() const {
     return predicate;
 }
 
-string Triple::get_object() {
+string Triple::get_object() const {
     return object;
 }
 
@@ -72,4 +72,14 @@ bool Triple::pattern_match_triple(Triple triple, Triple triple_pattern) {
 
 bool Triple::is_all_matching_pattern(Triple triple_pattern) {
     return triple_pattern.get_subject() == "" && triple_pattern.get_predicate() == "" && triple_pattern.get_object() == "";
+}
+
+std::size_t std::hash<Triple>::operator()(const Triple& triple) const {
+    using std::size_t;
+    using std::hash;
+    using std::string;
+    // TODO: use dict encoded values for even faster hashing!
+    return ((hash<string>()(triple.get_subject())
+          ^ (hash<string>()(triple.get_predicate()) << 1)) >> 1)
+          ^ (hash<string>()(triple.get_object()) << 1);
 }

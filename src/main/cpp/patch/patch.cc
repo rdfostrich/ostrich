@@ -37,8 +37,8 @@ PatchElement Patch::get(long index) {
     return elements[index];
 }
 
-inline PatchPosition contains_and_increment_position(map<string, PatchPosition>& m, string& hash) {
-    std::map<string, PatchPosition>::iterator it = m.find(hash);
+inline PatchPosition contains_and_increment_position(unordered_map<string, PatchPosition>& m, string& hash) {
+    std::unordered_map<string, PatchPosition>::iterator it = m.find(hash);
     PatchPosition pos = 0;
     if (it != m.end()) {
         pos = it->second;
@@ -48,12 +48,12 @@ inline PatchPosition contains_and_increment_position(map<string, PatchPosition>&
 }
 
 PatchPositions Patch::positions(PatchElement element,
-                                map<string, PatchPosition>& sp_,
-                                map<string, PatchPosition>& s_o,
-                                map<string, PatchPosition>& s__,
-                                map<string, PatchPosition>& _po,
-                                map<string, PatchPosition>& _p_,
-                                map<string, PatchPosition>& __o,
+                                unordered_map<string, PatchPosition>& sp_,
+                                unordered_map<string, PatchPosition>& s_o,
+                                unordered_map<string, PatchPosition>& s__,
+                                unordered_map<string, PatchPosition>& _po,
+                                unordered_map<string, PatchPosition>& _p_,
+                                unordered_map<string, PatchPosition>& __o,
                                 PatchPosition& ___) {
     PatchPositions positions = PatchPositions();
     if(!element.is_addition() && !element.is_local_change()) {

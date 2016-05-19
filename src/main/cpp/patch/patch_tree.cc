@@ -26,20 +26,30 @@ void PatchTree::append_unsafe(Patch patch, int patch_id) {
     // insert in other triplestore trees
     tripleStore->insertAddition(&existing_patch, patch_id);
 
+    // Pre-calculate all inserting-patch triple positions.
+    // We could instead do this during patch creation, but
+    // I'm not convinced that this would speed up anything
+    // since the total complexity will be the same.
+    unordered_map<Triple, long> inserting_patch_triple_positions;
+    for (long i = 0; i < patch.get_size(); i++) {
+        inserting_patch_triple_positions[patch.get(i).get_triple()] = i;
+    }
+
     // Loop over all elements in this reconstructed patch
     // We don't only loop over the new elements, but all of them because
     // the already available elements might have a different relative patch position,
     // so these need to be updated.
-    map<string, PatchPosition> sp_;
-    map<string, PatchPosition> s_o;
-    map<string, PatchPosition> s__;
-    map<string, PatchPosition> _po;
-    map<string, PatchPosition> _p_;
-    map<string, PatchPosition> __o;
+    unordered_map<string, PatchPosition> sp_;
+    unordered_map<string, PatchPosition> s_o;
+    unordered_map<string, PatchPosition> s__;
+    unordered_map<string, PatchPosition> _po;
+    unordered_map<string, PatchPosition> _p_;
+    unordered_map<string, PatchPosition> __o;
     PatchPosition ___ = 0;
     for(int i = 0; i < existing_patch.get_size(); i++) {
         PatchElement patchElement = existing_patch.get(i);
-        long index_in_inserting_patch = patch.index_of_triple(patchElement.get_triple());
+        unordered_map<Triple, long>::iterator it_in_inserting_patch = inserting_patch_triple_positions.find(patchElement.get_triple());
+        long index_in_inserting_patch = it_in_inserting_patch != inserting_patch_triple_positions.end() ? it_in_inserting_patch->second : -1;
         bool is_in_inserting_patch = index_in_inserting_patch >= 0;
 
         // Look up the value for the given triple key in the tree.
