@@ -12,22 +12,22 @@ private:
 public:
     Controller();
     ~Controller();
-    TripleIterator* get(Triple triple_pattern, int offset, int patch_id);
+    TripleIterator* get(const Triple& triple_pattern, int offset, int patch_id) const;
     /**
      * Add the given patch to a patch tree.
      * @param patch The patch to add.
      * @param patch_id The id of the patch to add.
      * @return If the append succeeded.
      */
-    bool append(Patch patch, int patch_id);
+    bool append(const Patch& patch, int patch_id);
     /**
      * @return The internal patchtree manager.
      */
-    PatchTreeManager* get_patch_tree_manager();
+    PatchTreeManager* get_patch_tree_manager() const;
     /**
      * @return The internal snapshot manager.
      */
-    SnapshotManager* get_snapshot_manager();
+    SnapshotManager* get_snapshot_manager() const;
 };
 
 

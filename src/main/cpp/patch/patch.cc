@@ -4,7 +4,7 @@
 
 Patch::Patch() : elements() {}
 
-void Patch::add(PatchElement element) {
+void Patch::add(const PatchElement& element) {
     std::vector<PatchElement>::iterator itToInsert = std::lower_bound(
             elements.begin(), elements.end(), element);
     // Overwrite existing element if triple is already present, otherwise insert new element.
@@ -16,29 +16,29 @@ void Patch::add(PatchElement element) {
     }
 }
 
-void Patch::overwrite(long i, PatchElement element) {
+void Patch::overwrite(long i, const PatchElement& element) {
     elements[i] = element;
 }
 
-void Patch::addAll(Patch patch) {
+void Patch::addAll(const Patch& patch) {
     for(int i = 0; i < patch.get_size(); i++) {
         add(patch.get(i));
     }
 }
 
-unsigned long Patch::get_size() {
+unsigned long Patch::get_size() const {
     return elements.size();
 }
 
-PatchElement Patch::get(long index) {
+const PatchElement& Patch::get(long index) const {
     if(index < 0 || index >= get_size()) {
         throw std::invalid_argument("Index out of bounds");
     }
     return elements[index];
 }
 
-inline PatchPosition contains_and_increment_position(unordered_map<string, PatchPosition>& m, string& hash) {
-    std::unordered_map<string, PatchPosition>::iterator it = m.find(hash);
+inline PatchPosition contains_and_increment_position(unordered_map<string, PatchPosition>& m, const string& hash) {
+    std::unordered_map<string, PatchPosition>::const_iterator it = m.find(hash);
     PatchPosition pos = 0;
     if (it != m.end()) {
         pos = it->second;
@@ -47,14 +47,14 @@ inline PatchPosition contains_and_increment_position(unordered_map<string, Patch
     return pos;
 }
 
-PatchPositions Patch::positions(PatchElement element,
-                                unordered_map<string, PatchPosition>& sp_,
-                                unordered_map<string, PatchPosition>& s_o,
-                                unordered_map<string, PatchPosition>& s__,
-                                unordered_map<string, PatchPosition>& _po,
-                                unordered_map<string, PatchPosition>& _p_,
-                                unordered_map<string, PatchPosition>& __o,
-                                PatchPosition& ___) {
+PatchPositions Patch::positions(const PatchElement& element,
+                                 unordered_map<string, PatchPosition>& sp_,
+                                 unordered_map<string, PatchPosition>& s_o,
+                                 unordered_map<string, PatchPosition>& s__,
+                                 unordered_map<string, PatchPosition>& _po,
+                                 unordered_map<string, PatchPosition>& _p_,
+                                 unordered_map<string, PatchPosition>& __o,
+                                 PatchPosition& ___) const {
     PatchPositions positions = PatchPositions();
     if(!element.is_addition() && !element.is_local_change()) {
         // TODO: optimize with dict encoding
@@ -76,9 +76,9 @@ PatchPositions Patch::positions(PatchElement element,
     return positions;
 }
 
-PatchPosition Patch::position_of_pattern(PatchElement element, bool s, bool p, bool o, bool type) {
+PatchPosition Patch::position_of_pattern(const PatchElement& element, bool s, bool p, bool o, bool type) const {
     // First find the position of the element in O(log n)
-    std::vector<PatchElement>::iterator findIt = std::lower_bound(elements.begin(), elements.end(), element);
+    std::vector<PatchElement>::const_iterator findIt = std::lower_bound(elements.begin(), elements.end(), element);
     // Count the matching patch elements from this position to the beginning
     int position = -1;
     while(findIt >= elements.begin()) {
@@ -94,20 +94,20 @@ PatchPosition Patch::position_of_pattern(PatchElement element, bool s, bool p, b
     return position;
 }
 
-PatchPosition Patch::position_of(PatchElement element) {
-    std::vector<PatchElement>::iterator findIt = std::lower_bound(elements.begin(), elements.end(), element);
+PatchPosition Patch::position_of(const PatchElement& element) const {
+    std::vector<PatchElement>::const_iterator findIt = std::lower_bound(elements.begin(), elements.end(), element);
     return std::distance(elements.begin(), findIt);
 }
 
-PatchPosition Patch::position_of_strict(PatchElement element) {
-    std::vector<PatchElement>::iterator findIt = std::lower_bound(elements.begin(), elements.end(), element);
+PatchPosition Patch::position_of_strict(const PatchElement& element) const {
+    std::vector<PatchElement>::const_iterator findIt = std::lower_bound(elements.begin(), elements.end(), element);
     if (findIt != elements.end() && *findIt == element) {
         return std::distance(elements.begin(), findIt);
     }
     return -1;
 }
 
-string Patch::to_string() {
+string Patch::to_string() const {
     string ret;
     for(int i = 0; i < elements.size(); i++) {
         ret += elements[i].to_string();
@@ -119,22 +119,22 @@ string Patch::to_string() {
     return ret;
 }
 
-long Patch::index_of_triple(Triple triple) {
+long Patch::index_of_triple(const Triple& triple) const {
     PatchElement element1(triple, false);
-    std::vector<PatchElement>::iterator findIt1 = std::lower_bound(elements.begin(), elements.end(), element1);
+    std::vector<PatchElement>::const_iterator findIt1 = std::lower_bound(elements.begin(), elements.end(), element1);
     if(findIt1 != elements.end() && *findIt1 == element1) {
         return std::distance(elements.begin(), findIt1);
     }
 
     PatchElement element2(triple, true);
-    std::vector<PatchElement>::iterator findIt2 = std::lower_bound(elements.begin(), elements.end(), element2);
+    std::vector<PatchElement>::const_iterator findIt2 = std::lower_bound(elements.begin(), elements.end(), element2);
     if(findIt2 != elements.end() && *findIt2 == element2) {
         return std::distance(elements.begin(), findIt2);
     }
     return -1;
 }
 
-Patch Patch::apply_local_changes() {
+Patch Patch::apply_local_changes() const {
     Patch newPatch;
     for(int i = 0; i < get_size(); i++) {
         PatchElement patchElement = get(i);

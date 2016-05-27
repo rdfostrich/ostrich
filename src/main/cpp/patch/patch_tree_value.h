@@ -24,7 +24,7 @@ typedef struct PatchPositions {
     PatchPositions(PatchPosition sp_, PatchPosition s_o, PatchPosition s__, PatchPosition _po,
                    PatchPosition _p_, PatchPosition __o, PatchPosition ___)
             : sp_(sp_), s_o(s_o), s__(s__), _po(_po), _p_(_p_), __o(__o), ___(___) {}
-    string to_string() {
+    string to_string() const {
         string ret = "{";
         ret += " " + std::to_string(sp_);
         ret += " " + std::to_string(s_o);
@@ -36,7 +36,7 @@ typedef struct PatchPositions {
         ret += " }";
         return ret;
     }
-    PatchPosition get_by_pattern(Triple triple_pattern) {
+    PatchPosition get_by_pattern(const Triple& triple_pattern) const {
         bool s = triple_pattern.get_subject() != "";
         bool p = triple_pattern.get_predicate() != "";
         bool o = triple_pattern.get_object() != "";
@@ -60,9 +60,9 @@ protected:
     bool addition;
     bool local_change;
 public:
-    int get_patch_id();
-    PatchPositions get_patch_positions();
-    bool is_addition();
+    int get_patch_id() const;
+    const PatchPositions& get_patch_positions() const;
+    bool is_addition() const;
     /**
      * Mark this patch element as being a local change.
      */
@@ -73,7 +73,7 @@ public:
      * while the others are global changes (with respect to the snapshot).
      * @return If it is a local change.
      */
-    bool is_local_change();
+    bool is_local_change() const;
     PatchTreeValueElement() : patch_id(-1), patch_positions(PatchPositions()), addition(false), local_change(false) {} // Required for vector#resize
     PatchTreeValueElement(int patch_id, PatchPositions patch_positions, bool addition) :
             patch_id(patch_id), patch_positions(patch_positions), addition(addition), local_change(false) {}
@@ -93,51 +93,51 @@ public:
      * Add the given element.
      * @param element The value element to add
      */
-    void add(PatchTreeValueElement element);
+    void add(const PatchTreeValueElement& element);
     /**
      * Get the index of the given patch in this value list.
      * @param patch_id The id of the patch to find
      * @return The index of the given patch in this value list. -1 if not found.
      */
-    long get_patchvalue_index(int patch_id);
+    long get_patchvalue_index(int patch_id) const;
     /**
      * @return The number of PatchTreeValueElement's stored in this value.
      */
-    long get_size();
+    long get_size() const;
     /**
      * Get the patch of the given element.
      * @param element The element index in this value list. This can be the result of get_patchvalue_index().
      * @return The patch.
      */
-    PatchTreeValueElement get_patch(long element);
+    const PatchTreeValueElement& get_patch(long element) const;
     /**
      * @param patch_id The patch id
      * @return The patch.
      */
-    PatchTreeValueElement get(int patch_id);
+    const PatchTreeValueElement& get(int patch_id) const;
     /**
      * Check if this element represents an addition in the given patch id.
      * @param patch_id The patch id
      * @return If it is an addition
      */
-    bool is_addition(int patch_id);
+    bool is_addition(int patch_id) const;
     /**
      * Check if this element is an element (+/-) relative to the given patch itself,
      * For example in the series [t1+ t1- t1+], the element at index 1 is a local change,
      * while the others are global changes (with respect to the snapshot).
      * @return If it is a local change.
      */
-    bool is_local_change(int patch_id);
+    bool is_local_change(int patch_id) const;
     /**
      * @return The string representation of this patch.
      */
-    string to_string();
+    string to_string() const;
     /**
      * Serialize this value to a byte array
      * @param size This will contain the size of the returned byte array
      * @return The byte array
      */
-    const char* serialize(size_t* size);
+    const char* serialize(size_t* size) const;
     /**
      * Deserialize the given byte array to this object.
      * @param data The data to deserialize from.

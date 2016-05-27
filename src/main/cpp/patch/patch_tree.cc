@@ -16,7 +16,7 @@ PatchTree::~PatchTree() {
     delete tripleStore;
 }
 
-void PatchTree::append_unsafe(Patch patch, int patch_id) {
+void PatchTree::append_unsafe(const Patch& patch, int patch_id) {
     // Reconstruct the full patch and add the new elements.
     // We need this for finding their relative positions.
     Patch existing_patch = reconstruct_patch(patch_id);
@@ -80,7 +80,7 @@ void PatchTree::append_unsafe(Patch patch, int patch_id) {
     }
 }
 
-bool PatchTree::append(Patch patch, int patch_id) {
+bool PatchTree::append(const Patch& patch, int patch_id) {
     for(long i = 0; i < patch.get_size(); i++) {
         // We IGNORE the element type, because it makes no sense to have +/- for the same triple in the same patch!
         if(contains(patch.get(i), patch_id, true)) {
@@ -91,7 +91,7 @@ bool PatchTree::append(Patch patch, int patch_id) {
     return true;
 }
 
-bool PatchTree::contains(PatchElement patch_element, int patch_id, bool ignore_type) {
+bool PatchTree::contains(const PatchElement& patch_element, int patch_id, bool ignore_type) const {
     PatchTreeKey key = patch_element.get_triple();
     size_t key_size, value_size;
     const char* raw_key = key.serialize(&key_size);
@@ -115,7 +115,7 @@ bool PatchTree::contains(PatchElement patch_element, int patch_id, bool ignore_t
     return ret;
 }
 
-Patch PatchTree::reconstruct_patch(int patch_id, bool ignore_local_changes) {
+Patch PatchTree::reconstruct_patch(int patch_id, bool ignore_local_changes) const {
     PatchTreeIterator it = iterator(patch_id, false);
     it.set_filter_local_changes(ignore_local_changes);
     PatchTreeKey key;
@@ -129,7 +129,7 @@ Patch PatchTree::reconstruct_patch(int patch_id, bool ignore_local_changes) {
     return patch;
 }
 
-PatchTreeIterator PatchTree::iterator(PatchTreeKey* key) {
+PatchTreeIterator PatchTree::iterator(PatchTreeKey* key) const {
     DB::Cursor* cursor = tripleStore->getTree()->cursor();
     size_t size;
     const char* data = key->serialize(&size);
@@ -139,7 +139,7 @@ PatchTreeIterator PatchTree::iterator(PatchTreeKey* key) {
     return patchTreeIterator;
 }
 
-PatchTreeIterator PatchTree::iterator(int patch_id, bool exact) {
+PatchTreeIterator PatchTree::iterator(int patch_id, bool exact) const {
     DB::Cursor* cursor = tripleStore->getTree()->cursor();
     cursor->jump();
     PatchTreeIterator patchTreeIterator(cursor);
@@ -147,7 +147,7 @@ PatchTreeIterator PatchTree::iterator(int patch_id, bool exact) {
     return patchTreeIterator;
 }
 
-PatchTreeIterator PatchTree::iterator(PatchTreeKey *key, int patch_id, bool exact) {
+PatchTreeIterator PatchTree::iterator(PatchTreeKey *key, int patch_id, bool exact) const {
     DB::Cursor* cursor = tripleStore->getTree()->cursor();
     size_t size;
     const char* data = key->serialize(&size);
@@ -158,7 +158,7 @@ PatchTreeIterator PatchTree::iterator(PatchTreeKey *key, int patch_id, bool exac
     return patchTreeIterator;
 }
 
-std::pair<PatchPosition, Triple> PatchTree::deletion_count(Triple triple_pattern, int patch_id) {
+std::pair<PatchPosition, Triple> PatchTree::deletion_count(const Triple& triple_pattern, int patch_id) const {
     DB::Cursor* cursor = tripleStore->getTree()->cursor();
     cursor->jump_back();
     PatchTreeIterator patchTreeIterator(cursor);
@@ -175,7 +175,7 @@ std::pair<PatchPosition, Triple> PatchTree::deletion_count(Triple triple_pattern
     return std::make_pair(0, Triple());
 }
 
-PositionedTripleIterator* PatchTree::deletion_iterator_from(Triple offset, int patch_id, Triple triple_pattern) {
+PositionedTripleIterator* PatchTree::deletion_iterator_from(const Triple& offset, int patch_id, const Triple& triple_pattern) const {
     DB::Cursor* cursor = tripleStore->getTree()->cursor();
     size_t size;
     const char* data = offset.serialize(&size);
@@ -189,7 +189,7 @@ PositionedTripleIterator* PatchTree::deletion_iterator_from(Triple offset, int p
     return new PositionedTripleIterator(it, false, patch_id, triple_pattern);
 }
 
-PatchTreeTripleIterator * PatchTree::addition_iterator_from(long offset, int patch_id, Triple triple_pattern) {
+PatchTreeTripleIterator * PatchTree::addition_iterator_from(long offset, int patch_id, const Triple& triple_pattern) const {
     DB::Cursor* cursor = tripleStore->getTree(triple_pattern)->cursor();
     cursor->jump();
     PatchTreeIterator* it = new PatchTreeIterator(cursor);

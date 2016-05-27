@@ -64,7 +64,7 @@ public:
      * @param offset The offset the iterator should start from.
      * @return the iterator.
      */
-    static IteratorTripleString* search_with_offset(HDT* hdt, Triple triple_pattern, long offset);
+    static IteratorTripleString* search_with_offset(HDT* hdt, const Triple& triple_pattern, long offset);
 };
 
 

@@ -18,21 +18,21 @@ public:
      * @param patch_id The id of the patch to find
      * @return If the given patch id is present
      */
-    bool is_patch_id(int patch_id);
+    bool is_patch_id(int patch_id) const;
     /**
      * @return The number of PatchTreeValueElement's stored in this value.
      */
-    long get_size();
+    long get_size() const;
     /**
      * @return The string representation of this value.
      */
-    std::string to_string();
+    std::string to_string() const;
     /**
      * Serialize this value to a byte array
      * @param size This will contain the size of the returned byte array
      * @return The byte array
      */
-    const char* serialize(size_t* size);
+    const char* serialize(size_t* size) const;
     /**
      * Deserialize the given byte array to this object.
      * @param data The data to deserialize from.

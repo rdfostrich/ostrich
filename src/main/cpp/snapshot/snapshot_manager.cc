@@ -95,7 +95,7 @@ std::map<int, HDT*> SnapshotManager::get_snapshots() {
     return this->loaded_snapshots;
 }
 
-IteratorTripleString *SnapshotManager::search_with_offset(HDT *hdt, Triple triple_pattern, long offset) {
+IteratorTripleString *SnapshotManager::search_with_offset(HDT *hdt, const Triple& triple_pattern, long offset) {
     TripleString tripleString(triple_pattern.get_subject(), triple_pattern.get_predicate(), triple_pattern.get_object());
     IteratorTripleIdToString* it = new IteratorTripleIdToString(hdt, tripleString);
     it->goTo(offset);

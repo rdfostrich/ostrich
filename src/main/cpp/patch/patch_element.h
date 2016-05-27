@@ -10,17 +10,17 @@ protected:
     bool addition;
     bool local_change;
 public:
-    PatchElement(Triple triple, bool addition);
+    PatchElement(const Triple& triple, bool addition);
     /**
      * Get the triple
      * @return The triple
      */
-    Triple get_triple();
+    const Triple& get_triple() const;
     /**
      * Check if this element is an addition, otherwise it is a deletion
      * @return If it is an addition
      */
-    bool is_addition();
+    bool is_addition() const;
     /**
      * Set the local change flag
      * @param local_change If this is a local change.
@@ -32,11 +32,11 @@ public:
      * while the others are global changes (with respect to the snapshot).
      * @return If it is a local change.
      */
-    bool is_local_change();
+    bool is_local_change() const;
     /**
      * @return The string representation of this patch.
      */
-    string to_string();
+    const string to_string() const;
     bool operator < (const PatchElement &rhs) const { return triple < rhs.triple || (triple == rhs.triple && !addition && rhs.addition); }
     bool operator == (const PatchElement &rhs) const { return triple == rhs.triple && addition == rhs.addition; }
 };

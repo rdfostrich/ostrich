@@ -8,7 +8,7 @@ Controller::~Controller() {
     delete snapshotManager;
 }
 
-TripleIterator* Controller::get(Triple triple_pattern, int offset, int patch_id) {
+TripleIterator* Controller::get(const Triple& triple_pattern, int offset, int patch_id) const {
     // Find the snapshot
     int snapshot_id = get_snapshot_manager()->get_latest_snapshot(patch_id);
     if(snapshot_id < 0) {
@@ -95,15 +95,15 @@ TripleIterator* Controller::get(Triple triple_pattern, int offset, int patch_id)
     return new SnapshotPatchIteratorTripleString(snapshot_it, deletion_it, addition_it);
 }
 
-bool Controller::append(Patch patch, int patch_id) {
+bool Controller::append(const Patch& patch, int patch_id) {
     // TODO: this will require some changes when we implement automatic snapshot creation.
     return get_patch_tree_manager()->append(patch, patch_id);
 }
 
-PatchTreeManager* Controller::get_patch_tree_manager() {
+PatchTreeManager* Controller::get_patch_tree_manager() const {
     return patchTreeManager;
 }
 
-SnapshotManager* Controller::get_snapshot_manager() {
+SnapshotManager* Controller::get_snapshot_manager() const {
     return snapshotManager;
 }

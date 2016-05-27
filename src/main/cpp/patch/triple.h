@@ -15,29 +15,29 @@ protected:
     string object;
 public:
     Triple();
-    Triple(string subject, string predicate, string object);
+    Triple(const string& subject, const string& predicate, const string& object);
     /**
      * @return The subject
      */
-    string get_subject() const;
+    const string get_subject() const;
     /**
      * @return The predicate
      */
-    string get_predicate() const;
+    const string get_predicate() const;
     /**
      * @return The object
      */
-    string get_object() const;
+    const string get_object() const;
     /**
      * @return The string representation of this patch.
      */
-    string to_string();
+    const string to_string() const;
     /**
      * Serialize this value to a byte array
      * @param size This will contain the size of the returned byte array
      * @return The byte array
      */
-    const char* serialize(size_t* size);
+    const char* serialize(size_t* size) const;
     /**
      * Deserialize the given byte array to this object.
      * @param data The data to deserialize from.
@@ -45,9 +45,9 @@ public:
      */
     void deserialize(const char* data, size_t size);
 
-    bool operator < (const Triple &rhs) const;
-    bool operator > (const Triple &rhs) const;
-    bool operator == (const Triple &rhs) const;
+    bool operator < (const Triple& rhs) const;
+    bool operator > (const Triple& rhs) const;
+    bool operator == (const Triple& rhs) const;
 
     /**
      * Check if the given triple matches with the triple pattern.
@@ -55,13 +55,13 @@ public:
      * @param triple_pattern The triple pattern to match with the triple, empty elements are seen as blank.
      * @return If the triple and pattern match.
      */
-    static bool pattern_match_triple(Triple triple, Triple triple_pattern);
+    static bool pattern_match_triple(const Triple& triple, const Triple& triple_pattern);
     /**
      * Check if the given triple pattern has empty elements for S, P and O.
      * @param triple_pattern The triple pattern to check.
      * @return If the pattern is ? ? ?
      */
-    static bool is_all_matching_pattern(Triple triple_pattern);
+    static bool is_all_matching_pattern(const Triple& triple_pattern);
 };
 
 namespace std {

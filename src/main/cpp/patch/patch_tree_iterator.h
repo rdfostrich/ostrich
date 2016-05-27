@@ -60,7 +60,7 @@ public:
     /**
      * @return If this iterator is iterating over a deletion tree.
      */
-    bool is_deletion_tree();
+    bool is_deletion_tree() const;
     /**
      * Indicate if this iterator should step backwards.
      * @param reverse If it should go reverse.
@@ -69,7 +69,7 @@ public:
     /**
      * @return If this iterator goes in reverse.
      */
-    bool is_reverse();
+    bool is_reverse() const;
     /**
      * Point to the next element
      * Can only be called if iterating over a deletion tree.

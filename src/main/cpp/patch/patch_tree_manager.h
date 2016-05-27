@@ -21,17 +21,17 @@ public:
      * @param patch_id The id of the patch to add.
      * @return If the append succeeded.
      */
-    bool append(Patch patch, int patch_id);
+    bool append(const Patch& patch, int patch_id);
     /**
      * Find all patch trees in the current directory.
      * @return The found patch trees
      */
-    std::map<int, PatchTree*> detect_patch_trees();
+    std::map<int, PatchTree*> detect_patch_trees() const;
     /**
      * Get the internal patch tree mapping.
      * @return The patch trees
      */
-    std::map<int, PatchTree*> get_patch_trees();
+    const std::map<int, PatchTree*>& get_patch_trees() const;
     /**
      * Load the corresponding patch tree in memory.
      * @param patch_id_start The id of the patchtree to load, which is the id of the first patch in this tree.
@@ -56,7 +56,7 @@ public:
      * @param patch_id The id of a patch.
      * @return The id of the patch tree, can be -1 if the patch_id is not present in any tree.
      */
-    int get_patch_tree_id(int patch_id);
+    int get_patch_tree_id(int patch_id) const;
     /**
      * Get the patch with the given id.
      * @param patch_id The id of a patch.

@@ -6,26 +6,26 @@
 // TODO: use dictionary
 Triple::Triple() {}
 
-Triple::Triple(string subject, string predicate, string object) :
+Triple::Triple(const string& subject, const string& predicate, const string& object) :
         subject(subject), predicate(predicate), object(object) {}
 
-string Triple::get_subject() const {
+const string Triple::get_subject() const {
     return subject;
 }
 
-string Triple::get_predicate() const {
+const string Triple::get_predicate() const {
     return predicate;
 }
 
-string Triple::get_object() const {
+const string Triple::get_object() const {
     return object;
 }
 
-string Triple::to_string() {
+const string Triple::to_string() const {
     return subject + " " + predicate + " " + object + ".";
 }
 
-const char* Triple::serialize(size_t* size) {
+const char* Triple::serialize(size_t* size) const {
     *size = subject.length() + predicate.length() + object.length() + 2;
     char* bytes = (char *) malloc(*size);
     memcpy(bytes, subject.c_str(), subject.length() + 1);
@@ -52,25 +52,25 @@ void Triple::deserialize(const char* data, size_t size) {
     }
 }
 
-bool Triple::operator < (const Triple &rhs) const {
+bool Triple::operator < (const Triple& rhs) const {
     return PatchTreeKeyComparator::comparator_spo.compare(*this, rhs) < 0;
 }
 
-bool Triple::operator > (const Triple &rhs) const {
+bool Triple::operator > (const Triple& rhs) const {
     return PatchTreeKeyComparator::comparator_spo.compare(*this, rhs) > 0;
 }
 
-bool Triple::operator == (const Triple &rhs) const {
+bool Triple::operator == (const Triple& rhs) const {
     return PatchTreeKeyComparator::comparator_spo.compare(*this, rhs) == 0;
 }
 
-bool Triple::pattern_match_triple(Triple triple, Triple triple_pattern) {
+bool Triple::pattern_match_triple(const Triple& triple, const Triple& triple_pattern) {
     return (triple_pattern.get_subject() == "" || triple_pattern.get_subject() == triple.get_subject())
            && (triple_pattern.get_predicate() == "" || triple_pattern.get_predicate() == triple.get_predicate())
            && (triple_pattern.get_object() == "" || triple_pattern.get_object() == triple.get_object());
 }
 
-bool Triple::is_all_matching_pattern(Triple triple_pattern) {
+bool Triple::is_all_matching_pattern(const Triple& triple_pattern) {
     return triple_pattern.get_subject() == "" && triple_pattern.get_predicate() == "" && triple_pattern.get_object() == "";
 }
 

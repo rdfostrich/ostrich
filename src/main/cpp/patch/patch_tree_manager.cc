@@ -16,7 +16,7 @@ PatchTreeManager::~PatchTreeManager() {
     }
 }
 
-bool PatchTreeManager::append(Patch patch, int patch_id) {
+bool PatchTreeManager::append(const Patch& patch, int patch_id) {
     int patchtree_id = get_patch_tree_id(patch_id);
     PatchTree* patchtree;
     if(patchtree_id < 0) {
@@ -27,7 +27,7 @@ bool PatchTreeManager::append(Patch patch, int patch_id) {
     return patchtree->append(patch, patch_id);
 }
 
-std::map<int, PatchTree*> PatchTreeManager::detect_patch_trees() {
+std::map<int, PatchTree*> PatchTreeManager::detect_patch_trees() const {
     std::regex r("patchtree_([0-9]*).kct_spo");
     std::smatch base_match;
     std::map<int, PatchTree*> trees = std::map<int, PatchTree*>();
@@ -50,7 +50,7 @@ std::map<int, PatchTree*> PatchTreeManager::detect_patch_trees() {
     return trees;
 }
 
-std::map<int, PatchTree*> PatchTreeManager::get_patch_trees() {
+const std::map<int, PatchTree*>& PatchTreeManager::get_patch_trees() const {
     return this->loaded_patches;
 }
 
@@ -81,9 +81,9 @@ PatchTree* PatchTreeManager::construct_next_patch_tree(int patch_id_start) {
     return load_patch_tree(patch_id_start);
 }
 
-int PatchTreeManager::get_patch_tree_id(int patch_id) {
+int PatchTreeManager::get_patch_tree_id(int patch_id) const {
     // lower_bound does binary search in the map, so this is quite efficient.
-    std::map<int, PatchTree*>::iterator it = loaded_patches.lower_bound(patch_id);
+    std::map<int, PatchTree*>::const_iterator it = loaded_patches.lower_bound(patch_id);
     if(it == loaded_patches.end() || it->first > patch_id) {
         if(it == loaded_patches.begin()) {
             // In this case our patches did not start from id 0, but we still have to catch it.

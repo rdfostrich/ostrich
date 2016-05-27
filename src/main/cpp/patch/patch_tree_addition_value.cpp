@@ -14,16 +14,16 @@ void PatchTreeAdditionValue::add(int patch_id) {
     }
 }
 
-bool PatchTreeAdditionValue::is_patch_id(int patch_id) {
-    std::vector<int>::iterator findIt = std::lower_bound(patches.begin(), patches.end(), patch_id);
+bool PatchTreeAdditionValue::is_patch_id(int patch_id) const {
+    std::vector<int>::const_iterator findIt = std::lower_bound(patches.begin(), patches.end(), patch_id);
     return findIt != patches.end() && *findIt == patch_id;
 }
 
-long PatchTreeAdditionValue::get_size() {
+long PatchTreeAdditionValue::get_size() const {
     return patches.size();
 }
 
-std::string PatchTreeAdditionValue::to_string() {
+std::string PatchTreeAdditionValue::to_string() const {
     std::string ret = "{";
     bool separator = false;
     for(int i = 0; i < patches.size(); i++) {
@@ -35,7 +35,7 @@ std::string PatchTreeAdditionValue::to_string() {
     return ret;
 }
 
-const char *PatchTreeAdditionValue::serialize(size_t *size) {
+const char *PatchTreeAdditionValue::serialize(size_t *size) const {
     *size = patches.size() * sizeof(int);
     char* bytes = (char *) malloc(*size);
     for(int i = 0; i < patches.size(); i++) {

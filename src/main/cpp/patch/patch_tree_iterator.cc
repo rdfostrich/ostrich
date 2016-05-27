@@ -42,7 +42,7 @@ void PatchTreeIterator::set_deletion_tree(bool deletion_tree) {
     this->deletion_tree = deletion_tree;
 }
 
-bool PatchTreeIterator::is_deletion_tree() {
+bool PatchTreeIterator::is_deletion_tree() const {
     return this->deletion_tree;
 }
 
@@ -50,7 +50,7 @@ void PatchTreeIterator::set_reverse(bool reverse) {
     this->reverse = reverse;
 }
 
-bool PatchTreeIterator::is_reverse() {
+bool PatchTreeIterator::is_reverse() const {
     return this->reverse;
 }
 

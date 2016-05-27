@@ -5,15 +5,15 @@
 
 using namespace std;
 
-int PatchTreeValueElement::get_patch_id() {
+int PatchTreeValueElement::get_patch_id() const {
     return patch_id;
 }
 
-PatchPositions PatchTreeValueElement::get_patch_positions() {
+const PatchPositions& PatchTreeValueElement::get_patch_positions() const {
     return patch_positions;
 }
 
-bool PatchTreeValueElement::is_addition() {
+bool PatchTreeValueElement::is_addition() const {
     return addition;
 }
 
@@ -21,14 +21,14 @@ void PatchTreeValueElement::set_local_change() {
     local_change = true;
 }
 
-bool PatchTreeValueElement::is_local_change() {
+bool PatchTreeValueElement::is_local_change() const {
     return local_change;
 }
 
 
 PatchTreeValue::PatchTreeValue() {}
 
-void PatchTreeValue::add(PatchTreeValueElement element) {
+void PatchTreeValue::add(const PatchTreeValueElement& element) {
     std::vector<PatchTreeValueElement>::iterator itToInsert = std::lower_bound(
             elements.begin(), elements.end(), element);
     // Overwrite existing element if patch id already present, otherwise insert new element.
@@ -39,9 +39,9 @@ void PatchTreeValue::add(PatchTreeValueElement element) {
     }
 }
 
-long PatchTreeValue::get_patchvalue_index(int patch_id) {
+long PatchTreeValue::get_patchvalue_index(int patch_id) const {
     PatchTreeValueElement item(patch_id, PatchPositions(), -1);
-    std::vector<PatchTreeValueElement>::iterator findIt = std::lower_bound(elements.begin(), elements.end(), item);
+    std::vector<PatchTreeValueElement>::const_iterator findIt = std::lower_bound(elements.begin(), elements.end(), item);
     if (findIt != elements.end() && findIt->get_patch_id() == patch_id) {
         return std::distance(elements.begin(), findIt);
     } else {
@@ -49,15 +49,15 @@ long PatchTreeValue::get_patchvalue_index(int patch_id) {
     }
 }
 
-long PatchTreeValue::get_size() {
+long PatchTreeValue::get_size() const {
     return elements.size();
 }
 
-PatchTreeValueElement PatchTreeValue::get_patch(long element) {
+const PatchTreeValueElement& PatchTreeValue::get_patch(long element) const {
     return elements[element];
 }
 
-PatchTreeValueElement PatchTreeValue::get(int patch_id) {
+const PatchTreeValueElement& PatchTreeValue::get(int patch_id) const {
     long index = get_patchvalue_index(patch_id);
     if(index < 0 || index >= elements.size()) {
         return get_patch(elements.size() - 1);
@@ -67,9 +67,9 @@ PatchTreeValueElement PatchTreeValue::get(int patch_id) {
     return get_patch(index);
 }
 
-bool PatchTreeValue::is_addition(int patch_id) {
+bool PatchTreeValue::is_addition(int patch_id) const {
     PatchTreeValueElement item(patch_id, PatchPositions(), -1);
-    std::vector<PatchTreeValueElement>::iterator findIt = std::lower_bound(elements.begin(), elements.end(), item);
+    std::vector<PatchTreeValueElement>::const_iterator findIt = std::lower_bound(elements.begin(), elements.end(), item);
     if(findIt < elements.begin()) {
         throw std::runtime_error("Tried to retrieve a patch_id that was too low. (PatchTreeValue::is_addition),"
                                          "tried to find " + std::to_string(patch_id) + " in " + this->to_string());
@@ -78,9 +78,9 @@ bool PatchTreeValue::is_addition(int patch_id) {
     return findIt->is_addition();
 }
 
-bool PatchTreeValue::is_local_change(int patch_id) {
+bool PatchTreeValue::is_local_change(int patch_id) const {
     PatchTreeValueElement item(patch_id, PatchPositions(), -1);
-    std::vector<PatchTreeValueElement>::iterator findIt = std::lower_bound(elements.begin(), elements.end(), item);
+    std::vector<PatchTreeValueElement>::const_iterator findIt = std::lower_bound(elements.begin(), elements.end(), item);
     if(findIt < elements.begin()) {
         throw std::runtime_error("Tried to retrieve a patch_id that was too low. (PatchTreeValue::is_local_change),"
                                          "tried to find " + std::to_string(patch_id) + " in " + this->to_string());
@@ -89,7 +89,7 @@ bool PatchTreeValue::is_local_change(int patch_id) {
     return findIt->is_local_change();
 }
 
-string PatchTreeValue::to_string() {
+string PatchTreeValue::to_string() const {
     string ret = "{";
     bool separator = false;
     for(int i = 0; i < elements.size(); i++) {
@@ -102,7 +102,7 @@ string PatchTreeValue::to_string() {
     return ret;
 }
 
-const char* PatchTreeValue::serialize(size_t* size) {
+const char* PatchTreeValue::serialize(size_t* size) const {
     *size = elements.size() * sizeof(PatchTreeValueElement);
     char* bytes = (char *) malloc(*size);
     for(int i = 0; i < elements.size(); i++) {

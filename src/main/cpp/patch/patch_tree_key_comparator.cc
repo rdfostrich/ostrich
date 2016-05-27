@@ -13,23 +13,23 @@ int32_t PatchTreeKeyComparator::compare(const char* akbuf, size_t aksiz, const c
     PatchTreeKey element2;
     element1.deserialize(akbuf, aksiz);
     element2.deserialize(bkbuf, bksiz);
-    int comp_1 = compare_1(&element1, &element2);
+    int comp_1 = compare_1(element1, element2);
     if(!comp_1) {
-        int comp_2 = compare_2(&element1, &element2);
+        int comp_2 = compare_2(element1, element2);
         if(!comp_2) {
-            return compare_3(&element1, &element2);
+            return compare_3(element1, element2);
         }
         return comp_2;
     }
     return comp_1;
 };
 
-int32_t PatchTreeKeyComparator::compare(PatchTreeKey element1, PatchTreeKey element2) {
-    int comp_1 = compare_1(&element1, &element2);
+int32_t PatchTreeKeyComparator::compare(const PatchTreeKey& element1, const PatchTreeKey& element2) {
+    int comp_1 = compare_1(element1, element2);
     if(!comp_1) {
-        int comp_2 = compare_2(&element1, &element2);
+        int comp_2 = compare_2(element1, element2);
         if(!comp_2) {
-            return compare_3(&element1, &element2);
+            return compare_3(element1, element2);
         }
         return comp_2;
     }
