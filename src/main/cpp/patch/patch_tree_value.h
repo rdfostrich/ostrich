@@ -37,9 +37,9 @@ typedef struct PatchPositions {
         return ret;
     }
     PatchPosition get_by_pattern(const Triple& triple_pattern) const {
-        bool s = triple_pattern.get_subject() != "";
-        bool p = triple_pattern.get_predicate() != "";
-        bool o = triple_pattern.get_object() != "";
+        bool s = triple_pattern.get_subject() > 0;
+        bool p = triple_pattern.get_predicate() > 0;
+        bool o = triple_pattern.get_object() > 0;
         if(s & p & o) return 0;
         if(s & p & !o) return sp_;
         if(s & !p & o) return s_o;

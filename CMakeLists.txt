@@ -23,8 +23,8 @@ set(PROJECT_NAME_STR tpfpatch_store)
 project(${PROJECT_NAME_STR})
 
 set(SOURCE_FILES
-        #src/main/cpp/test.cc
-        src/test/cpp/performance.cc
+        src/main/cpp/test.cc
+        #src/test/cpp/performance.cc
 )
 set(COMMON_FILES
         src/main/cpp/controller/controller.cc src/main/cpp/controller/controller.h

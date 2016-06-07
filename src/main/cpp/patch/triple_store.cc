@@ -51,9 +51,9 @@ void TripleStore::close(TreeDB* db, string name) {
 }
 
 TreeDB* TripleStore::getTree(Triple triple_pattern) {
-    bool s = triple_pattern.get_subject() != "";
-    bool p = triple_pattern.get_predicate() != "";
-    bool o = triple_pattern.get_object() != "";
+    bool s = triple_pattern.get_subject() > 0;
+    bool p = triple_pattern.get_predicate() > 0;
+    bool o = triple_pattern.get_object() > 0;
 
     if( s &  p &  o) return index_spo;
     if( s &  p & !o) return index_spo;
@@ -66,9 +66,9 @@ TreeDB* TripleStore::getTree(Triple triple_pattern) {
 }
 
 bool TripleStore::isDefaultTree(Triple triple_pattern) {
-    bool s = triple_pattern.get_subject() != "";
-    bool p = triple_pattern.get_predicate() != "";
-    bool o = triple_pattern.get_object() != "";
+    bool s = triple_pattern.get_subject() > 0;
+    bool p = triple_pattern.get_predicate() > 0;
+    bool o = triple_pattern.get_object() > 0;
 
     if( s &  p &  o) return true;
     if( s &  p & !o) return true;

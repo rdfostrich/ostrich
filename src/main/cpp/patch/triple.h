@@ -3,6 +3,7 @@
 
 #include <string>
 #include <SingleTriple.hpp>
+#include <Dictionary.hpp>
 
 using namespace std;
 using namespace hdt;
@@ -10,28 +11,36 @@ using namespace hdt;
 // A Triple holds a subject, predicate and object
 class Triple {
 protected:
-    string subject;
-    string predicate;
-    string object;
+  unsigned int subject;
+  unsigned int predicate;
+  unsigned int object;
 public:
     Triple();
-    Triple(const string& subject, const string& predicate, const string& object);
+    Triple(const unsigned int& subject, const unsigned int& predicate, const unsigned int& object);
+    Triple(const string& s, const string& p, const string& o, ModifiableDictionary *dict);
+
     /**
      * @return The subject
      */
-    const string get_subject() const;
+    const unsigned int get_subject() const;
     /**
      * @return The predicate
      */
-    const string get_predicate() const;
+    const unsigned int get_predicate() const;
     /**
      * @return The object
      */
-    const string get_object() const;
+    const unsigned int get_object() const;
+
     /**
-     * @return The string representation of this patch.
+     * @return The string representation of this triple.
      */
     const string to_string() const;
+
+    /**
+     * @return The decoded string representation of this triple.
+     */
+    const string to_string(Dictionary *dict) const;
     /**
      * Serialize this value to a byte array
      * @param size This will contain the size of the returned byte array
