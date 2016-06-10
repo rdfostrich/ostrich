@@ -1,9 +1,7 @@
 #include "iterator_triple_id_to_string.h"
 
-IteratorTripleIdToString::IteratorTripleIdToString(HDT *hdt, TripleString tripleString) {
-    dict = hdt->getDictionary();
-    TripleID tripleId;
-    dict->tripleStringtoTripleID(tripleString, tripleId);
+// @deprecated TODO: remove
+IteratorTripleIdToString::IteratorTripleIdToString(HDT *hdt, TripleID tripleId) {
     it = hdt->getTriples()->search(tripleId);
 }
 
@@ -49,4 +47,8 @@ void IteratorTripleIdToString::goTo(unsigned int pos) {
         } catch (char const* error) {}
     }
     while(pos-- > 0 && it->hasNext()) it->next();
+}
+
+IteratorTripleID *IteratorTripleIdToString::getTripleIdIterator() {
+    return it;
 }

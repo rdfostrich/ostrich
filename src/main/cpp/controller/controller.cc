@@ -22,9 +22,10 @@ TripleIterator* Controller::get(const Triple& triple_pattern, int offset, int pa
     if(snapshot_id == patch_id) {
         return new SnapshotTripleIterator(snapshot_it);
     }
+    Dictionary* dict = get_snapshot_manager()->get_dictionary(snapshot_id);
 
     // Otherwise, we have to prepare an iterator for a certain patch
-    PatchTree* patchTree = get_patch_tree_manager()->get_patch_tree(patch_id);
+    PatchTree* patchTree = get_patch_tree_manager()->get_patch_tree(patch_id, dict);
     if(patchTree == NULL) {
         return new SnapshotTripleIterator(snapshot_it);
     }
@@ -55,7 +56,7 @@ TripleIterator* Controller::get(const Triple& triple_pattern, int offset, int pa
                 if(data.first == 0) {
                     snapshot_offset = 0;
                 } else {
-                    bool is_smaller_than_first = firstTriple < data.second;
+                    bool is_smaller_than_first = patchTree->get_spo_comparator()->compare(firstTriple, data.second) < 0;
                     snapshot_offset = is_smaller_than_first ? 0 : data.first;
                 }
             }
@@ -93,12 +94,14 @@ TripleIterator* Controller::get(const Triple& triple_pattern, int offset, int pa
     long addition_offset = offset - snapshot_count + patchTree->deletion_count(triple_pattern, patch_id).first;
     PatchTreeTripleIterator * addition_it = patchTree->addition_iterator_from(addition_offset, patch_id, triple_pattern);
 
-    return new SnapshotPatchIteratorTripleID(snapshot_it, deletion_it, addition_it);
+    return new SnapshotPatchIteratorTripleID(snapshot_it, deletion_it, addition_it, patchTree->get_spo_comparator());
 }
 
 bool Controller::append(const Patch& patch, int patch_id) {
     // TODO: this will require some changes when we implement automatic snapshot creation.
-    return get_patch_tree_manager()->append(patch, patch_id);
+    int snapshot_id = get_snapshot_manager()->get_latest_snapshot(patch_id);
+    Dictionary* dict = get_snapshot_manager()->get_dictionary(snapshot_id);
+    return get_patch_tree_manager()->append(patch, patch_id, dict);
 }
 
 PatchTreeManager* Controller::get_patch_tree_manager() const {

@@ -1,7 +1,6 @@
 #include <dirent.h>
 #include <iostream>
 #include "patch_tree_manager.h"
-#include "../controller/snapshot_patch_iterator_triple_string.h"
 
 PatchTreeManager::PatchTreeManager() : loaded_patches(detect_patch_trees()) {}
 
@@ -16,13 +15,13 @@ PatchTreeManager::~PatchTreeManager() {
     }
 }
 
-bool PatchTreeManager::append(const Patch& patch, int patch_id) {
+bool PatchTreeManager::append(const Patch& patch, int patch_id, Dictionary* dict) {
     int patchtree_id = get_patch_tree_id(patch_id);
     PatchTree* patchtree;
     if(patchtree_id < 0) {
-        patchtree = construct_next_patch_tree(patch_id);
+        patchtree = construct_next_patch_tree(patch_id, dict);
     } else {
-        patchtree = get_patch_tree(patchtree_id);
+        patchtree = get_patch_tree(patchtree_id, dict);
     }
     return patchtree->append(patch, patch_id);
 }
@@ -54,12 +53,12 @@ const std::map<int, PatchTree*>& PatchTreeManager::get_patch_trees() const {
     return this->loaded_patches;
 }
 
-PatchTree* PatchTreeManager::load_patch_tree(int patch_id_start) {
+PatchTree* PatchTreeManager::load_patch_tree(int patch_id_start, Dictionary* dict) {
     // TODO: We might want to look into unloading patch trees if they aren't used for a while. (using splay-tree/queue?)
-    return loaded_patches[patch_id_start] = new PatchTree(PATCHTREE_FILENAME_BASE(patch_id_start));
+    return loaded_patches[patch_id_start] = new PatchTree(PATCHTREE_FILENAME_BASE(patch_id_start), dict);
 }
 
-PatchTree* PatchTreeManager::get_patch_tree(int patch_id_start) {
+PatchTree* PatchTreeManager::get_patch_tree(int patch_id_start, Dictionary* dict) {
     if(patch_id_start < 0) {
         return NULL;
     }
@@ -72,13 +71,13 @@ PatchTree* PatchTreeManager::get_patch_tree(int patch_id_start) {
     }
     PatchTree* patchtree = it->second;
     if(patchtree == NULL) {
-        return load_patch_tree(patch_id_start);
+        return load_patch_tree(patch_id_start, dict);
     }
     return it->second;
 }
 
-PatchTree* PatchTreeManager::construct_next_patch_tree(int patch_id_start) {
-    return load_patch_tree(patch_id_start);
+PatchTree* PatchTreeManager::construct_next_patch_tree(int patch_id_start, Dictionary* dict) {
+    return load_patch_tree(patch_id_start, dict);
 }
 
 int PatchTreeManager::get_patch_tree_id(int patch_id) const {
@@ -94,10 +93,10 @@ int PatchTreeManager::get_patch_tree_id(int patch_id) const {
     return it->first;
 }
 
-Patch PatchTreeManager::get_patch(int patch_id) {
+Patch PatchTreeManager::get_patch(int patch_id, Dictionary* dict) {
     int patchtree_id = get_patch_tree_id(patch_id);
     if(patchtree_id < 0) {
-        return Patch();
+        return Patch(dict);
     }
-    return get_patch_tree(patchtree_id)->reconstruct_patch(patch_id, true);
+    return get_patch_tree(patchtree_id, dict)->reconstruct_patch(patch_id, true);
 }

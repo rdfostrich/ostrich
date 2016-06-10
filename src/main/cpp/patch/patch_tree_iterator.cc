@@ -7,7 +7,7 @@
 PatchTreeIterator::PatchTreeIterator(DB::Cursor *cursor)
         : cursor(cursor), is_patch_id_filter(false), is_patch_id_filter_exact(false), patch_id_filter(-1),
           is_addition_filter(false), addition_filter(-1),
-          is_triple_pattern_filter(false), triple_pattern_filter(Triple("", "", "")),
+          is_triple_pattern_filter(false), triple_pattern_filter(Triple(0, 0, 0)),
           reverse(false), is_filter_local_changes(false), deletion_tree(true) {}
 
 PatchTreeIterator::~PatchTreeIterator() {

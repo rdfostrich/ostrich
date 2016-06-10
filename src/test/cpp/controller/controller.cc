@@ -2,6 +2,7 @@
 
 #include "../../../main/cpp/controller/controller.h"
 #include "../../../main/cpp/snapshot/vector_triple_iterator.h"
+#include "../../../main/cpp/dictionary/dictionary_manager.h"
 
 #define BASEURI "<http://example.org>"
 
@@ -9,6 +10,7 @@
 class ControllerTest : public ::testing::Test {
 protected:
     Controller controller;
+    DictionaryManager dict;
 
     ControllerTest() : controller() {}
 
@@ -55,36 +57,36 @@ TEST_F(ControllerTest, GetEdge) {
     PatchTreeManager* patchTreeManager = controller.get_patch_tree_manager();
 
     // Request version 1 (after snapshot before a patch id added)
-    TripleIterator* it1 = controller.get(Triple("", "", ""), 0, 1);
+    TripleIterator* it1 = controller.get(Triple("", "", "", dict), 0, 1);
 
     ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("<a> <a> <a>.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("<a> <a> <a>.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("<a> <a> <b>.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("<a> <a> <b>.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("<a> <a> <c>.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("<a> <a> <c>.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(false, it1->next(&t)) << "Iterator should be finished";
 
     // Apply a simple patch
-    Patch patch1;
-    patch1.add(PatchElement(Triple("<a>", "<a>", "<b>"), false));
-    patchTreeManager->append(patch1, 1);
+    Patch patch1(&dict);
+    patch1.add(PatchElement(Triple("<a>", "<a>", "<b>", dict), false));
+    patchTreeManager->append(patch1, 1, &dict);
 
     // Request version -1 (before first snapshot)
-    TripleIterator* it0 = controller.get(Triple("", "", ""), 0, -1);
+    TripleIterator* it0 = controller.get(Triple("", "", "", dict), 0, -1);
     ASSERT_EQ(false, it0->next(&t)) << "Iterator should be empty";
 
     // Request version 2 (after last patch)
-    TripleIterator* it2 = controller.get(Triple("", "", ""), 0, 2);
+    TripleIterator* it2 = controller.get(Triple("", "", "", dict), 0, 2);
 
     ASSERT_EQ(true, it2->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("<a> <a> <a>.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("<a> <a> <a>.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(true, it2->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("<a> <a> <c>.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("<a> <a> <c>.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(false, it2->next(&t)) << "Iterator should be finished";
 }
@@ -100,9 +102,9 @@ TEST_F(ControllerTest, GetSimple) {
     PatchTreeManager* patchTreeManager = controller.get_patch_tree_manager();
 
     // Apply a simple patch
-    Patch patch1;
-    patch1.add(PatchElement(Triple("<a>", "<a>", "<b>"), false));
-    patchTreeManager->append(patch1, 1);
+    Patch patch1(&dict);
+    patch1.add(PatchElement(Triple("<a>", "<a>", "<b>", dict), false));
+    patchTreeManager->append(patch1, 1, &dict);
 
     // Expected version 0:
     // <a> <a> <a>
@@ -116,51 +118,51 @@ TEST_F(ControllerTest, GetSimple) {
     Triple t;
 
     // Request version 0 (snapshot)
-    TripleIterator* it0 = controller.get(Triple("", "", ""), 0, 0);
+    TripleIterator* it0 = controller.get(Triple("", "", "", dict), 0, 0);
 
     ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("<a> <a> <a>.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("<a> <a> <a>.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("<a> <a> <b>.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("<a> <a> <b>.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("<a> <a> <c>.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("<a> <a> <c>.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(false, it0->next(&t)) << "Iterator should be finished";
 
     // Request version 1 (patch)
-    TripleIterator* it1 = controller.get(Triple("", "", ""), 0, 1);
+    TripleIterator* it1 = controller.get(Triple("", "", "", dict), 0, 1);
 
     ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("<a> <a> <a>.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("<a> <a> <a>.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("<a> <a> <c>.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("<a> <a> <c>.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(false, it1->next(&t)) << "Iterator should be finished";
 
     // Request version 1 (patch) at offset 1
-    TripleIterator* it2 = controller.get(Triple("", "", ""), 1, 1);
+    TripleIterator* it2 = controller.get(Triple("", "", "", dict), 1, 1);
 
     ASSERT_EQ(true, it2->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("<a> <a> <c>.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("<a> <a> <c>.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(false, it2->next(&t)) << "Iterator should be finished";
 
     // Request version 0 (snapshot) for ? ? <c>
-    TripleIterator* it3 = controller.get(Triple("", "", "<c>"), 0, 0);
+    TripleIterator* it3 = controller.get(Triple("", "", "<c>", dict), 0, 0);
 
     ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("<a> <a> <c>.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("<a> <a> <c>.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(false, it3->next(&t)) << "Iterator should be finished";
 
     // Request version 1 (patch) for ? ? <c>
-    TripleIterator* it4 = controller.get(Triple("", "", "<c>"), 0, 1);
+    TripleIterator* it4 = controller.get(Triple("", "", "<c>", dict), 0, 1);
 
     ASSERT_EQ(true, it4->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("<a> <a> <c>.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("<a> <a> <c>.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(false, it4->next(&t)) << "Iterator should be finished";
 }
@@ -176,35 +178,35 @@ TEST_F(ControllerTest, GetComplex1) {
     controller.get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     PatchTreeManager* patchTreeManager = controller.get_patch_tree_manager();
 
-    Patch patch1;
-    patch1.add(PatchElement(Triple("g", "p", "o"), false));
-    patch1.add(PatchElement(Triple("a", "p", "o"), true));
-    patchTreeManager->append(patch1, 1);
+    Patch patch1(&dict);
+    patch1.add(PatchElement(Triple("g", "p", "o", dict), false));
+    patch1.add(PatchElement(Triple("a", "p", "o", dict), true));
+    patchTreeManager->append(patch1, 1, &dict);
 
-    Patch patch2;
-    patch2.add(PatchElement(Triple("s", "z", "o"), false));
-    patch2.add(PatchElement(Triple("s", "a", "o"), true));
-    patchTreeManager->append(patch2, 1);
+    Patch patch2(&dict);
+    patch2.add(PatchElement(Triple("s", "z", "o", dict), false));
+    patch2.add(PatchElement(Triple("s", "a", "o", dict), true));
+    patchTreeManager->append(patch2, 1, &dict);
 
-    Patch patch3;
-    patch3.add(PatchElement(Triple("g", "p", "o"), false));
-    patch3.add(PatchElement(Triple("a", "p", "o"), false));
-    patch3.add(PatchElement(Triple("h", "z", "o"), false));
-    patch3.add(PatchElement(Triple("l", "a", "o"), true));
-    patchTreeManager->append(patch3, 2);
+    Patch patch3(&dict);
+    patch3.add(PatchElement(Triple("g", "p", "o", dict), false));
+    patch3.add(PatchElement(Triple("a", "p", "o", dict), false));
+    patch3.add(PatchElement(Triple("h", "z", "o", dict), false));
+    patch3.add(PatchElement(Triple("l", "a", "o", dict), true));
+    patchTreeManager->append(patch3, 2, &dict);
 
-    Patch patch4;
-    patch4.add(PatchElement(Triple("h", "p", "o"), false));
-    patch4.add(PatchElement(Triple("s", "z", "o"), false));
-    patchTreeManager->append(patch4, 4);
+    Patch patch4(&dict);
+    patch4.add(PatchElement(Triple("h", "p", "o", dict), false));
+    patch4.add(PatchElement(Triple("s", "z", "o", dict), false));
+    patchTreeManager->append(patch4, 4, &dict);
 
-    Patch patch5;
-    patch5.add(PatchElement(Triple("h", "p", "o"), true));
-    patchTreeManager->append(patch5, 5);
+    Patch patch5(&dict);
+    patch5.add(PatchElement(Triple("h", "p", "o", dict), true));
+    patchTreeManager->append(patch5, 5, &dict);
 
-    Patch patch6;
-    patch6.add(PatchElement(Triple("a", "p", "o"), true));
-    patchTreeManager->append(patch6, 6);
+    Patch patch6(&dict);
+    patch6.add(PatchElement(Triple("a", "p", "o", dict), true));
+    patchTreeManager->append(patch6, 6, &dict);
 
     // Expected version 0:
     // g p o
@@ -226,112 +228,112 @@ TEST_F(ControllerTest, GetComplex1) {
     Triple t;
 
     // Request version 0 (snapshot)
-    TripleIterator* it0 = controller.get(Triple("", "", ""), 0, 0);
+    TripleIterator* it0 = controller.get(Triple("", "", "", dict), 0, 0);
 
     ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("g p o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("g p o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("h p o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("h p o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("h z o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("h z o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("s z o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("s z o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(false, it0->next(&t)) << "Iterator should be finished";
 
     // Request version 1 (patch)
-    TripleIterator* it1 = controller.get(Triple("", "", ""), 0, 1);
+    TripleIterator* it1 = controller.get(Triple("", "", "", dict), 0, 1);
 
     ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("h p o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("h p o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("h z o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("h z o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("a p o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("a p o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("s a o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("s a o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(false, it1->next(&t)) << "Iterator should be finished";
 
     // Request version 1 (patch), offset 1
-    TripleIterator* it2 = controller.get(Triple("", "", ""), 1, 1);
+    TripleIterator* it2 = controller.get(Triple("", "", "", dict), 1, 1);
 
     ASSERT_EQ(true, it2->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("h z o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("h z o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(true, it2->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("a p o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("a p o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(true, it2->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("s a o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("s a o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(false, it2->next(&t)) << "Iterator should be finished";
 
     // Request version 1 (patch), offset 2
-    TripleIterator* it3 = controller.get(Triple("", "", ""), 2, 1);
+    TripleIterator* it3 = controller.get(Triple("", "", "", dict), 2, 1);
 
     ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("a p o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("a p o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("s a o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("s a o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(false, it3->next(&t)) << "Iterator should be finished";
 
     // Request version 1 (patch), offset 3
-    TripleIterator* it4 = controller.get(Triple("", "", ""), 3, 1);
+    TripleIterator* it4 = controller.get(Triple("", "", "", dict), 3, 1);
 
     ASSERT_EQ(true, it4->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("s a o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("s a o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(false, it4->next(&t)) << "Iterator should be finished";
 
     // Request version 1 (patch), offset 4
-    TripleIterator* it5 = controller.get(Triple("", "", ""), 4, 1);
+    TripleIterator* it5 = controller.get(Triple("", "", "", dict), 4, 1);
 
     ASSERT_EQ(false, it5->next(&t)) << "Iterator should be finished";
 
     // Request version 2 (patch)
-    TripleIterator* it6 = controller.get(Triple("", "", ""), 0, 2);
+    TripleIterator* it6 = controller.get(Triple("", "", "", dict), 0, 2);
 
     ASSERT_EQ(true, it6->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("h p o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("h p o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(true, it6->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("l a o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("l a o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(true, it6->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("s a o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("s a o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(false, it6->next(&t)) << "Iterator should be finished";
 
     // Request version 2 (patch), offset 1
-    TripleIterator* it7 = controller.get(Triple("", "", ""), 1, 2);
+    TripleIterator* it7 = controller.get(Triple("", "", "", dict), 1, 2);
 
     ASSERT_EQ(true, it7->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("l a o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("l a o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(true, it7->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("s a o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("s a o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(false, it7->next(&t)) << "Iterator should be finished";
 
     // Request version 2 (patch), offset 2
-    TripleIterator* it8 = controller.get(Triple("", "", ""), 2, 2);
+    TripleIterator* it8 = controller.get(Triple("", "", "", dict), 2, 2);
 
     ASSERT_EQ(true, it8->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("s a o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("s a o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(false, it8->next(&t)) << "Iterator should be finished";
 
     // Request version 2 (patch), offset 3
-    TripleIterator* it9 = controller.get(Triple("", "", ""), 3, 2);
+    TripleIterator* it9 = controller.get(Triple("", "", "", dict), 3, 2);
 
     ASSERT_EQ(false, it9->next(&t)) << "Iterator should be finished";
 }
@@ -347,35 +349,35 @@ TEST_F(ControllerTest, GetComplex2) {
     controller.get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     PatchTreeManager* patchTreeManager = controller.get_patch_tree_manager();
 
-    Patch patch1;
-    patch1.add(PatchElement(Triple("g", "p", "o"), false));
-    patch1.add(PatchElement(Triple("a", "p", "o"), true));
-    patchTreeManager->append(patch1, 1);
+    Patch patch1(&dict);
+    patch1.add(PatchElement(Triple("g", "p", "o", dict), false));
+    patch1.add(PatchElement(Triple("a", "p", "o", dict), true));
+    patchTreeManager->append(patch1, 1, &dict);
 
-    Patch patch2;
-    patch2.add(PatchElement(Triple("s", "z", "o"), false));
-    patch2.add(PatchElement(Triple("s", "a", "o"), true));
-    patchTreeManager->append(patch2, 1);
+    Patch patch2(&dict);
+    patch2.add(PatchElement(Triple("s", "z", "o", dict), false));
+    patch2.add(PatchElement(Triple("s", "a", "o", dict), true));
+    patchTreeManager->append(patch2, 1, &dict);
 
-    Patch patch3;
-    patch3.add(PatchElement(Triple("g", "p", "o"), false));
-    patch3.add(PatchElement(Triple("a", "p", "o"), false));
-    patch3.add(PatchElement(Triple("h", "z", "o"), false));
-    patch3.add(PatchElement(Triple("l", "a", "o"), true));
-    patchTreeManager->append(patch3, 2);
+    Patch patch3(&dict);
+    patch3.add(PatchElement(Triple("g", "p", "o", dict), false));
+    patch3.add(PatchElement(Triple("a", "p", "o", dict), false));
+    patch3.add(PatchElement(Triple("h", "z", "o", dict), false));
+    patch3.add(PatchElement(Triple("l", "a", "o", dict), true));
+    patchTreeManager->append(patch3, 2, &dict);
 
-    Patch patch4;
-    patch4.add(PatchElement(Triple("h", "p", "o"), false));
-    patch4.add(PatchElement(Triple("s", "z", "o"), false));
-    patchTreeManager->append(patch4, 4);
+    Patch patch4(&dict);
+    patch4.add(PatchElement(Triple("h", "p", "o", dict), false));
+    patch4.add(PatchElement(Triple("s", "z", "o", dict), false));
+    patchTreeManager->append(patch4, 4, &dict);
 
-    Patch patch5;
-    patch5.add(PatchElement(Triple("h", "p", "o"), true));
-    patchTreeManager->append(patch5, 5);
+    Patch patch5(&dict);
+    patch5.add(PatchElement(Triple("h", "p", "o", dict), true));
+    patchTreeManager->append(patch5, 5, &dict);
 
-    Patch patch6;
-    patch6.add(PatchElement(Triple("a", "p", "o"), true));
-    patchTreeManager->append(patch6, 6);
+    Patch patch6(&dict);
+    patch6.add(PatchElement(Triple("a", "p", "o", dict), true));
+    patchTreeManager->append(patch6, 6, &dict);
 
     // Expected version 0:
     // g p o
@@ -397,112 +399,112 @@ TEST_F(ControllerTest, GetComplex2) {
     Triple t;
 
     // Request version 0 (snapshot)
-    TripleIterator* it0 = controller.get(Triple("", "", "o"), 0, 0);
+    TripleIterator* it0 = controller.get(Triple("", "", "o", dict), 0, 0);
 
     ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("g p o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("g p o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("h p o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("h p o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("h z o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("h z o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("s z o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("s z o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(false, it0->next(&t)) << "Iterator should be finished";
 
     // Request version 1 (patch)
-    TripleIterator* it1 = controller.get(Triple("", "", "o"), 0, 1);
+    TripleIterator* it1 = controller.get(Triple("", "", "o", dict), 0, 1);
 
     ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("h p o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("h p o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("h z o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("h z o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("a p o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("a p o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("s a o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("s a o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(false, it1->next(&t)) << "Iterator should be finished";
 
     // Request version 1 (patch), offset 1
-    TripleIterator* it2 = controller.get(Triple("", "", "o"), 1, 1);
+    TripleIterator* it2 = controller.get(Triple("", "", "o", dict), 1, 1);
 
     ASSERT_EQ(true, it2->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("h z o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("h z o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(true, it2->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("a p o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("a p o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(true, it2->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("s a o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("s a o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(false, it2->next(&t)) << "Iterator should be finished";
 
     // Request version 1 (patch), offset 2
-    TripleIterator* it3 = controller.get(Triple("", "", "o"), 2, 1);
+    TripleIterator* it3 = controller.get(Triple("", "", "o", dict), 2, 1);
 
     ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("a p o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("a p o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("s a o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("s a o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(false, it3->next(&t)) << "Iterator should be finished";
 
     // Request version 1 (patch), offset 3
-    TripleIterator* it4 = controller.get(Triple("", "", "o"), 3, 1);
+    TripleIterator* it4 = controller.get(Triple("", "", "o", dict), 3, 1);
 
     ASSERT_EQ(true, it4->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("s a o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("s a o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(false, it4->next(&t)) << "Iterator should be finished";
 
     // Request version 1 (patch), offset 4
-    TripleIterator* it5 = controller.get(Triple("", "", "o"), 4, 1);
+    TripleIterator* it5 = controller.get(Triple("", "", "o", dict), 4, 1);
 
     ASSERT_EQ(false, it5->next(&t)) << "Iterator should be finished";
 
     // Request version 2 (patch)
-    TripleIterator* it6 = controller.get(Triple("", "", "o"), 0, 2);
+    TripleIterator* it6 = controller.get(Triple("", "", "o", dict), 0, 2);
 
     ASSERT_EQ(true, it6->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("h p o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("h p o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(true, it6->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("l a o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("l a o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(true, it6->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("s a o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("s a o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(false, it6->next(&t)) << "Iterator should be finished";
 
     // Request version 2 (patch), offset 1
-    TripleIterator* it7 = controller.get(Triple("", "", "o"), 1, 2);
+    TripleIterator* it7 = controller.get(Triple("", "", "o", dict), 1, 2);
 
     ASSERT_EQ(true, it7->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("l a o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("l a o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(true, it7->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("s a o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("s a o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(false, it7->next(&t)) << "Iterator should be finished";
 
     // Request version 2 (patch), offset 2
-    TripleIterator* it8 = controller.get(Triple("", "", "o"), 2, 2);
+    TripleIterator* it8 = controller.get(Triple("", "", "o", dict), 2, 2);
 
     ASSERT_EQ(true, it8->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("s a o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("s a o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(false, it8->next(&t)) << "Iterator should be finished";
 
     // Request version 2 (patch), offset 3
-    TripleIterator* it9 = controller.get(Triple("", "", "o"), 3, 2);
+    TripleIterator* it9 = controller.get(Triple("", "", "o", dict), 3, 2);
 
     ASSERT_EQ(false, it9->next(&t)) << "Iterator should be finished";
 }
@@ -518,35 +520,35 @@ TEST_F(ControllerTest, GetComplex3) {
     controller.get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     PatchTreeManager* patchTreeManager = controller.get_patch_tree_manager();
 
-    Patch patch1;
-    patch1.add(PatchElement(Triple("g", "p", "o"), false));
-    patch1.add(PatchElement(Triple("a", "p", "o"), true));
-    patchTreeManager->append(patch1, 1);
+    Patch patch1(&dict);
+    patch1.add(PatchElement(Triple("g", "p", "o", dict), false));
+    patch1.add(PatchElement(Triple("a", "p", "o", dict), true));
+    patchTreeManager->append(patch1, 1, &dict);
 
-    Patch patch2;
-    patch2.add(PatchElement(Triple("s", "z", "o"), false));
-    patch2.add(PatchElement(Triple("s", "a", "o"), true));
-    patchTreeManager->append(patch2, 1);
+    Patch patch2(&dict);
+    patch2.add(PatchElement(Triple("s", "z", "o", dict), false));
+    patch2.add(PatchElement(Triple("s", "a", "o", dict), true));
+    patchTreeManager->append(patch2, 1, &dict);
 
-    Patch patch3;
-    patch3.add(PatchElement(Triple("g", "p", "o"), false));
-    patch3.add(PatchElement(Triple("a", "p", "o"), false));
-    patch3.add(PatchElement(Triple("h", "z", "o"), false));
-    patch3.add(PatchElement(Triple("l", "a", "o"), true));
-    patchTreeManager->append(patch3, 2);
+    Patch patch3(&dict);
+    patch3.add(PatchElement(Triple("g", "p", "o", dict), false));
+    patch3.add(PatchElement(Triple("a", "p", "o", dict), false));
+    patch3.add(PatchElement(Triple("h", "z", "o", dict), false));
+    patch3.add(PatchElement(Triple("l", "a", "o", dict), true));
+    patchTreeManager->append(patch3, 2, &dict);
 
-    Patch patch4;
-    patch4.add(PatchElement(Triple("h", "p", "o"), false));
-    patch4.add(PatchElement(Triple("s", "z", "o"), false));
-    patchTreeManager->append(patch4, 4);
+    Patch patch4(&dict);
+    patch4.add(PatchElement(Triple("h", "p", "o", dict), false));
+    patch4.add(PatchElement(Triple("s", "z", "o", dict), false));
+    patchTreeManager->append(patch4, 4, &dict);
 
-    Patch patch5;
-    patch5.add(PatchElement(Triple("h", "p", "o"), true));
-    patchTreeManager->append(patch5, 5);
+    Patch patch5(&dict);
+    patch5.add(PatchElement(Triple("h", "p", "o", dict), true));
+    patchTreeManager->append(patch5, 5, &dict);
 
-    Patch patch6;
-    patch6.add(PatchElement(Triple("a", "p", "o"), true));
-    patchTreeManager->append(patch6, 6);
+    Patch patch6(&dict);
+    patch6.add(PatchElement(Triple("a", "p", "o", dict), true));
+    patchTreeManager->append(patch6, 6, &dict);
 
     // --- filtered by s ? ?
 
@@ -562,36 +564,36 @@ TEST_F(ControllerTest, GetComplex3) {
     Triple t;
 
     // Request version 0 (snapshot)
-    TripleIterator* it0 = controller.get(Triple("s", "", ""), 0, 0);
+    TripleIterator* it0 = controller.get(Triple("s", "", "", dict), 0, 0);
 
     ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("s z o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("s z o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(false, it0->next(&t)) << "Iterator should be finished";
 
     // Request version 1 (patch)
-    TripleIterator* it1 = controller.get(Triple("s", "", ""), 0, 1);
+    TripleIterator* it1 = controller.get(Triple("s", "", "", dict), 0, 1);
 
     ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("s a o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("s a o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(false, it1->next(&t)) << "Iterator should be finished";
 
     // Request version 1 (patch), offset 1
-    TripleIterator* it2 = controller.get(Triple("s", "", ""), 1, 1);
+    TripleIterator* it2 = controller.get(Triple("s", "", "", dict), 1, 1);
 
     ASSERT_EQ(false, it2->next(&t)) << "Iterator should be finished";
 
     // Request version 2 (patch)
-    TripleIterator* it6 = controller.get(Triple("s", "", ""), 0, 2);
+    TripleIterator* it6 = controller.get(Triple("s", "", "", dict), 0, 2);
 
     ASSERT_EQ(true, it6->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("s a o.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("s a o.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(false, it6->next(&t)) << "Iterator should be finished";
 
     // Request version 2 (patch), offset 1
-    TripleIterator* it7 = controller.get(Triple("s", "", ""), 1, 2);
+    TripleIterator* it7 = controller.get(Triple("s", "", "", dict), 1, 2);
 
     ASSERT_EQ(false, it7->next(&t)) << "Iterator should be finished";
 }
@@ -626,35 +628,35 @@ TEST_F(ControllerTest, EdgeCase1) {
     controller.get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     PatchTreeManager* patchTreeManager = controller.get_patch_tree_manager();
 
-    Patch patch1;
-    patch1.add(PatchElement(Triple("0", "0", "0"), false));
-    patch1.add(PatchElement(Triple("1", "1", "1"), false));
-    patch1.add(PatchElement(Triple("2", "2", "2"), false));
+    Patch patch1(&dict);
+    patch1.add(PatchElement(Triple("0", "0", "0", dict), false));
+    patch1.add(PatchElement(Triple("1", "1", "1", dict), false));
+    patch1.add(PatchElement(Triple("2", "2", "2", dict), false));
     // No 3!
-    patch1.add(PatchElement(Triple("4", "4", "4"), false));
-    patch1.add(PatchElement(Triple("5", "5", "5"), false));
-    patchTreeManager->append(patch1, 1);
+    patch1.add(PatchElement(Triple("4", "4", "4", dict), false));
+    patch1.add(PatchElement(Triple("5", "5", "5", dict), false));
+    patchTreeManager->append(patch1, 1, &dict);
 
     Triple t;
 
     // Request version 1, offset 0
-    TripleIterator* it0 = controller.get(Triple("", "", ""), 0, 1);
+    TripleIterator* it0 = controller.get(Triple("", "", "", dict), 0, 1);
 
     ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("3 3 3.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("3 3 3.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("6 6 6.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("6 6 6.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("7 7 7.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("7 7 7.", t.to_string(dict)) << "Element is incorrect";
 
     // Request version 1, offset 3 (The actual edge case!)
-    TripleIterator* it1 = controller.get(Triple("", "", ""), 3, 1);
+    TripleIterator* it1 = controller.get(Triple("", "", "", dict), 3, 1);
 
     ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("8 8 8.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("8 8 8.", t.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("9 9 9.", t.to_string()) << "Element is incorrect";
+    ASSERT_EQ("9 9 9.", t.to_string(dict)) << "Element is incorrect";
 }

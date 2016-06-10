@@ -6,6 +6,7 @@
 #include <HDT.hpp>
 #include "../patch/patch.h"
 #include <Dictionary.hpp>
+#include "iterator_triple_id_to_string.h"
 
 using namespace hdt;
 
@@ -66,8 +67,7 @@ public:
      * @param offset The offset the iterator should start from.
      * @return the iterator.
      */
-     //static IteratorTripleString* search_with_offset(HDT* hdt, const Triple& triple_pattern, long offset);
-     static IteratorTripleID* search_with_offset(HDT* hdt, Triple triple_pattern, long offset);
+    static IteratorTripleID* search_with_offset(HDT* hdt, const Triple& triple_pattern, long offset);
 
     /**
      * Get the DictionaryManager file for the given snapshot id.

@@ -1,3 +1,6 @@
+#ifndef TPFPATCH_STORE_DICTIONARY_MANAGER_H
+#define TPFPATCH_STORE_DICTIONARY_MANAGER_H
+
 #include <Dictionary.hpp>
 #include <HDTVocabulary.hpp>
 #include <Triples.hpp>
@@ -105,3 +108,5 @@ public:
     return first->hasNext() ? first->next() : second->next();
   }
 };
+
+#endif //TPFPATCH_STORE_DICTIONARY_MANAGER_H

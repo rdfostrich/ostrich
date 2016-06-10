@@ -4,7 +4,7 @@
 #include <hdt/BasicHDT.hpp>
 #include "snapshot_manager.h"
 #include "../../../../deps/hdt/hdt-lib/src/hdt/BasicModifiableHDT.hpp"
-//#include "iterator_triple_id_to_string.h"
+#include "../dictionary/dictionary_manager.h"
 
 using namespace hdt;
 
@@ -36,10 +36,9 @@ HDT* SnapshotManager::load_snapshot(int snapshot_id) {
     loaded_snapshots[snapshot_id] = hdt::HDTManager::loadHDT(fileName.c_str());
 
     // load dictionary as well
-    DictionaryManager * dict = new DictionaryManager(loaded_snapshots[snapshot_id]->getDictionary());
+    DictionaryManager* dict = new DictionaryManager(loaded_snapshots[snapshot_id]->getDictionary());
     ifstream dictFile(fileName + ".dic");
-    if (dictFile.is_open())
-    {
+    if (dictFile.is_open()) {
       ControlInformation ci = ControlInformation();
       dict->load(dictFile, ci);
     }
@@ -107,16 +106,10 @@ std::map<int, HDT*> SnapshotManager::get_snapshots() {
     return this->loaded_snapshots;
 }
 
-/*IteratorTripleString *SnapshotManager::search_with_offset(HDT *hdt, Triple triple_pattern, long offset) {
-    TripleString tripleString(triple_pattern.get_subject(), triple_pattern.get_predicate(), triple_pattern.get_object());
-    IteratorTripleIdToString* it = new IteratorTripleIdToString(hdt, tripleString);
-    it->goTo(offset);
-    return it;
-}*/
 
-IteratorTripleID *SnapshotManager::search_with_offset(HDT *hdt, Triple triple_pattern, long offset) {
-    TripleID tripleID(triple_pattern.get_subject(), triple_pattern.get_predicate(), triple_pattern.get_object());
-    IteratorTripleID* it = hdt->getTriples()->search(tripleID);
+IteratorTripleID* SnapshotManager::search_with_offset(HDT *hdt, const Triple& triple_pattern, long offset) {
+    TripleID tripleId(triple_pattern.get_subject(), triple_pattern.get_predicate(), triple_pattern.get_object());
+    IteratorTripleID* it = hdt->getTriples()->search(tripleId);
     if(it->canGoTo()) {
         try {
             it->goTo(offset);
@@ -127,7 +120,7 @@ IteratorTripleID *SnapshotManager::search_with_offset(HDT *hdt, Triple triple_pa
     return it;
 }
 
-DictionaryManager* SnapshotManager::get_dictionary_manager(int snapshot_id) {
+Dictionary* SnapshotManager::get_dictionary(int snapshot_id) {
     if(snapshot_id < 0) {
         return NULL;
     }

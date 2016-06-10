@@ -2,6 +2,7 @@
 #define TPFPATCH_STORE_PATCH_ELEMENT_H
 
 #include "triple.h"
+#include "patch_tree_key_comparator.h"
 
 // A PatchElement is a Triple annotated with addition or deletion
 class PatchElement {
@@ -34,12 +35,13 @@ public:
      */
     bool is_local_change() const;
     /**
+     * @param dict The dictionary to decode from
      * @return The string representation of this patch.
      */
-    const string to_string() const;
-    bool operator < (const PatchElement &rhs) const { return triple < rhs.triple || (triple == rhs.triple && !addition && rhs.addition); }
+    const string to_string(Dictionary& dict) const;
+    // TODO: rm
+    //bool operator < (const PatchElement &rhs) const { return triple < rhs.triple || (triple == rhs.triple && !addition && rhs.addition); }
     bool operator == (const PatchElement &rhs) const { return triple == rhs.triple && addition == rhs.addition; }
 };
-
 
 #endif //TPFPATCH_STORE_PATCH_ELEMENT_H
