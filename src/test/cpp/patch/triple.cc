@@ -10,12 +10,27 @@ TEST(TripleTest, FieldsRaw) {
     ASSERT_EQ(31, triple.get_object()) << "Object is not saved correctly";
 }
 
+TEST(TripleTest, FieldsRawOverlap) {
+    Triple triple(11, 11, 11);
+    ASSERT_EQ(11, triple.get_subject()) << "Subject is not saved correctly";
+    ASSERT_EQ(11, triple.get_predicate()) << "Predicate is not saved correctly";
+    ASSERT_EQ(11, triple.get_object()) << "Object is not saved correctly";
+}
+
 TEST(TripleTest, Fields) {
     DictionaryManager dict;
     Triple triple("s1", "p1", "o1", &dict);
     ASSERT_EQ("s1", triple.get_subject(dict)) << "Subject is not saved correctly";
     ASSERT_EQ("p1", triple.get_predicate(dict)) << "Predicate is not saved correctly";
     ASSERT_EQ("o1", triple.get_object(dict)) << "Object is not saved correctly";
+}
+
+TEST(TripleTest, FieldsOverlap) {
+    DictionaryManager dict;
+    Triple triple("a", "a", "a", &dict);
+    ASSERT_EQ("a", triple.get_subject(dict)) << "Subject is not saved correctly";
+    ASSERT_EQ("a", triple.get_predicate(dict)) << "Predicate is not saved correctly";
+    ASSERT_EQ("a", triple.get_object(dict)) << "Object is not saved correctly";
 }
 
 TEST(TripleTest, ToStringRaw) {
@@ -27,6 +42,12 @@ TEST(TripleTest, ToString) {
     DictionaryManager dict;
     Triple triple("s1", "p1", "o1", &dict);
     ASSERT_EQ("s1 p1 o1.", triple.to_string(dict)) << "to_string is incorrect";
+}
+
+TEST(TripleTest, ToStringOverlap) {
+    DictionaryManager dict;
+    Triple triple("a", "a", "a", &dict);
+    ASSERT_EQ("a a a.", triple.to_string(dict)) << "to_string is incorrect";
 }
 
 TEST(TripleTest, SerializationRaw) {
