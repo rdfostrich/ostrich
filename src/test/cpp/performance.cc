@@ -1,16 +1,30 @@
 #include <iostream>
 #include <kchashdb.h>
 #include <util/StopWatch.hpp>
+#include <rdf/RDFParserNtriples.hpp>
+#include <dirent.h>
+#include <HDT.hpp>
 
 #include "../../main/cpp/patch/patch_tree.h"
 #include "../../main/cpp/snapshot/snapshot_manager.h"
 #include "../../main/cpp/snapshot/vector_triple_iterator.h"
 #include "../../main/cpp/controller/controller.h"
+#include "../../main/cpp/snapshot/combined_triple_iterator.h"
 
 #define BASEURI "<http://example.org>"
 
 using namespace std;
 using namespace kyotocabinet;
+
+const char k_path_separator =
+#ifdef _WIN32
+        '\\';
+#else
+        '/';
+
+class CombinedTripleIterator;
+
+#endif
 
 Controller* setup_snapshot(int snapshot_size) {
     Controller* controller = new Controller();
@@ -62,7 +76,7 @@ void populate_controller(Controller* controller, int additions, int deletions, i
 
 void cleanup_controller(Controller* controller) {
     // Delete patch files
-    std::map<int, PatchTree*> patches = controller->get_patch_trees();
+    std::map<int, PatchTree*> patches = controller->get_patch_tree_manager()->get_patch_trees();
     std::map<int, PatchTree*>::iterator itP = patches.begin();
     while(itP != patches.end()) {
         int id = itP->first;
@@ -121,7 +135,7 @@ std::ifstream::pos_type filesize(string file) {
 std::ifstream::pos_type patchstore_size(Controller* controller) {
     long size = 0;
 
-    std::map<int, PatchTree*> patches = controller->get_patch_trees();
+    std::map<int, PatchTree*> patches = controller->get_patch_tree_manager()->get_patch_trees();
     std::map<int, PatchTree*>::iterator itP = patches.begin();
     while(itP != patches.end()) {
         int id = itP->first;
@@ -145,10 +159,113 @@ std::ifstream::pos_type patchstore_size(Controller* controller) {
     return size;
 }
 
+IteratorTripleString* get_from_file(string file) {
+    return new RDFParserNtriples(file.c_str(), NTRIPLES);
+}
+
+void populate_controller_with_version(Controller* controller, int patch_id, string path) {
+    std::smatch base_match;
+    std::regex regex_additions("([a-z0-9]*).nt.additions.txt");
+    std::regex regex_deletions("([a-z0-9]*).nt.deletions.txt");
+
+    bool first = patch_id == 0;
+    Patch patch;
+    CombinedTripleIterator* it = new CombinedTripleIterator();
+
+    DIR *dir;
+    struct dirent *ent;
+    StopWatch st;
+    if ((dir = opendir(path.c_str())) != NULL) {
+        while ((ent = readdir(dir)) != NULL) {
+            string filename = string(ent->d_name);
+            string full_path = path + k_path_separator + filename;
+            if (filename != "." && filename != "..") {
+                bool additions = std::regex_match(filename, base_match, regex_additions);
+                bool deletions = std::regex_match(filename, base_match, regex_deletions);
+                if (first && additions) {
+                    it->appendIterator(get_from_file(full_path));
+                } else if(!first && (additions || deletions)) {
+                    IteratorTripleString *subIt = get_from_file(full_path);
+                    while (subIt->hasNext()) {
+                        TripleString* tripleString = subIt->next();
+                        patch.add(PatchElement(Triple(tripleString->getSubject(), tripleString->getPredicate(), tripleString->getObject()), additions));
+                    }
+                }
+            }
+        }
+        closedir(dir);
+    }
+    long long duration = st.stopReal() / 1000;
+
+    long added;
+    if (first) {
+        std::cout.setstate(std::ios_base::failbit); // Disable cout info from HDT
+        HDT* hdt = controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
+        std::cout.clear();
+        added = hdt->getTriples()->getNumberOfElements();
+        delete it;
+    } else {
+        added = patch.get_size();
+        controller->append(patch, patch_id);
+    }
+    cout << "  Added: " << added << endl;
+    cout << "  Duration: " << duration << endl;
+    double rate = (double) added / duration;
+    cout << "  Rate: " << rate << " triples / ms" << endl;
+}
+
+Controller* init(string basePath, int& patch_id) {
+    Controller* controller = new Controller();
+
+    DIR *dir;
+    struct dirent *ent;
+    if ((dir = opendir(basePath.c_str())) != NULL) {
+        while ((ent = readdir(dir)) != NULL) {
+            string versionname = string(ent->d_name);
+            if (versionname != "." && versionname != ".." && versionname != ".DS_Store") {
+                cout << versionname << endl; // TODO
+                string path = basePath + k_path_separator + versionname;
+                populate_controller_with_version(controller, patch_id++, path);
+            }
+        }
+        closedir(dir);
+    }
+
+    return controller;
+}
+
+void test_lookups(Controller* controller, int patches, Triple triple_pattern) {
+    cout << ">> pattern: " << triple_pattern.to_string() << endl;
+    cout << "patch,offset,lookup-ms-0-1,lookup-ms-0-50,lookup-ms-0-100" << endl;
+    for(int i = 0; i < patches; i++) {
+        for(int offset = 0; offset < 1000; offset+=100) {
+            long d1 = test_lookup(controller, triple_pattern, offset, i, 1);
+            long d50 = test_lookup(controller, triple_pattern, offset, i, 50);
+            long d100 = test_lookup(controller, triple_pattern, offset, i, 100);
+            cout << "" << i << "," << offset << ","
+            << d1 << "," << d50 << "," << d100 << "," << endl;
+        }
+    }
+}
+
 int main() {
+    // read patch-ified files (additions/deletions)
+    int patches = 0;
+    // TODO: don't hardcode path to patches
+    Controller* controller = init("/Users/rtaelman/nosync/patch-generator/patches", patches);
+
+    // Lookups
+    test_lookups(controller, patches, Triple("", "", ""));
+    test_lookups(controller, patches, Triple("", "http://www.w3.org/2000/01/rdf-schema#label", ""));
+    test_lookups(controller, patches, Triple("http://dbpedia.org/resource/Aldabrensis", "", ""));
+
+    cleanup_controller(controller);
+}
+
+int main_manual() {
     int duplicates = 1;
 
-    test_insert_size(1000, 10, 0, 0); // WARM-UP
+    //test_insert_size(1000, 10, 0, 0); // WARM-UP
 
     // Insert (increasing patch-size)
     /*cout << "triples,additions-ms,deletions-ms,addition-deletions-ms" << endl;
@@ -213,7 +330,7 @@ int main() {
     cleanup_controller(controller);*/
 
     // File size
-    Controller* controller = setup_snapshot(10000);
+    /*Controller* controller = setup_snapshot(10000);
     int patches = 100;
     int i;
     cout << "patches,size" << endl;
@@ -225,6 +342,5 @@ int main() {
 
         populate_controller(controller, 0, 200, 0, i);
         cout << "" << i << "," << patchstore_size(controller) << endl;
-    }
-    cleanup_controller(controller);
+    }*/
 }

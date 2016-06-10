@@ -1,5 +1,5 @@
-#ifndef TPFPATCH_STORE_VECTOR_TRIPLE_ITERATOR_H
-#define TPFPATCH_STORE_VECTOR_TRIPLE_ITERATOR_H
+#ifndef TPFPATCH_STORE_COMBINED_TRIPLE_ITERATOR_H
+#define TPFPATCH_STORE_COMBINED_TRIPLE_ITERATOR_H
 
 #include <vector>
 #include "../patch/triple.h"
@@ -7,19 +7,17 @@
 
 using namespace hdt;
 
-class VectorTripleIterator : public IteratorTripleString {
+class CombinedTripleIterator : public IteratorTripleString {
 private:
     int pos;
-    std::vector<TripleString> triples;
+    std::vector<IteratorTripleString*> iterators;
 public:
-    VectorTripleIterator(std::vector<TripleString> triples);
+    CombinedTripleIterator();
     bool hasNext();
     TripleString *next();
-    bool hasPrevious();
-    TripleString *previous();
+    void appendIterator(IteratorTripleString* it);
     void goToStart();
-
 };
 
 
-#endif //TPFPATCH_STORE_VECTOR_TRIPLE_ITERATOR_H
+#endif //TPFPATCH_STORE_COMBINED_TRIPLE_ITERATOR_H

@@ -1,26 +1,37 @@
 #include <SingleTriple.hpp>
-#include "vector_triple_iterator.h"
+#include "combined_triple_iterator.h"
 
 using namespace hdt;
 
-VectorTripleIterator::VectorTripleIterator(std::vector<TripleString> triples) : triples(triples), pos(-1) {}
+CombinedTripleIterator::CombinedTripleIterator() : iterators() {}
 
-bool VectorTripleIterator::hasNext() {
-    return pos + 1 < triples.size();
+bool CombinedTripleIterator::hasNext() {
+    /*cout << iterators[0]->hasNext() << endl;
+    iterators[pos]->hasPrevious();
+    cout << iterators[0]->hasNext() << endl;*/
+    while (pos < iterators.size() && !iterators[pos]->hasNext()) {
+        pos++;
+    }
+    //cout << "pos: " << pos << endl;
+    //cout << "check: " << (pos < iterators.size() && iterators[pos]->hasNext()) << endl;
+
+    return pos < iterators.size();
 }
 
-TripleString* VectorTripleIterator::next() {
-    return &triples[++pos];
+TripleString* CombinedTripleIterator::next() {
+    return iterators[pos]->next();
 }
 
-bool VectorTripleIterator::hasPrevious() {
-    return pos >= 0;
+void CombinedTripleIterator::appendIterator(IteratorTripleString* it) {
+    iterators.push_back(it);
 }
 
-TripleString* VectorTripleIterator::previous() {
-    return &triples[pos--];
-}
-
-void VectorTripleIterator::goToStart() {
-    pos = -1;
+void CombinedTripleIterator::goToStart() {
+    while (pos >= 0) {
+        if (pos < iterators.size()) {
+            iterators[pos]->goToStart();
+        }
+        pos--;
+    }
+    pos++;
 }
