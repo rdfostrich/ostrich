@@ -22,7 +22,7 @@ TripleIterator* Controller::get(const Triple& triple_pattern, int offset, int pa
     if(snapshot_id == patch_id) {
         return new SnapshotTripleIterator(snapshot_it);
     }
-    DictionaryManager* dict = get_snapshot_manager()->get_dictionary_manager(snapshot_id);
+    DictionaryManager *dict = get_snapshot_manager()->get_dictionary_manager(snapshot_id);
 
     // Otherwise, we have to prepare an iterator for a certain patch
     PatchTree* patchTree = get_patch_tree_manager()->get_patch_tree(patch_id, dict);

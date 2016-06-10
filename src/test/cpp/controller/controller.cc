@@ -10,7 +10,6 @@
 class ControllerTest : public ::testing::Test {
 protected:
     Controller controller;
-    DictionaryManager dict;
 
     ControllerTest() : controller() {}
 
@@ -56,17 +55,19 @@ TEST_F(ControllerTest, GetEdge) {
     controller.get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     PatchTreeManager* patchTreeManager = controller.get_patch_tree_manager();
 
+    DictionaryManager *dict = controller.get_snapshot_manager()->get_dictionary_manager(0);
+
     // Request version 1 (after snapshot before a patch id added)
     TripleIterator* it1 = controller.get(Triple("", "", "", &dict), 0, 1);
 
     ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("<a> <a> <a>.", t.to_string(dict)) << "Element is incorrect";
+    ASSERT_EQ("<a> <a> <a>.", t.to_string(&dict)) << "Element is incorrect";
 
     ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("<a> <a> <b>.", t.to_string(dict)) << "Element is incorrect";
+    ASSERT_EQ("<a> <a> <b>.", t.to_string(&dict)) << "Element is incorrect";
 
     ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("<a> <a> <c>.", t.to_string(dict)) << "Element is incorrect";
+    ASSERT_EQ("<a> <a> <c>.", t.to_string(&dict)) << "Element is incorrect";
 
     ASSERT_EQ(false, it1->next(&t)) << "Iterator should be finished";
 
@@ -100,6 +101,7 @@ TEST_F(ControllerTest, GetSimple) {
     VectorTripleIterator* it = new VectorTripleIterator(triples);
     controller.get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     PatchTreeManager* patchTreeManager = controller.get_patch_tree_manager();
+    DictionaryManager *dict = controller.get_snapshot_manager()->get_dictionary_manager(0);
 
     // Apply a simple patch
     Patch patch1(&dict);
@@ -177,6 +179,7 @@ TEST_F(ControllerTest, GetComplex1) {
     VectorTripleIterator* it = new VectorTripleIterator(triples);
     controller.get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     PatchTreeManager* patchTreeManager = controller.get_patch_tree_manager();
+    DictionaryManager *dict = controller.get_snapshot_manager()->get_dictionary_manager(0);
 
     Patch patch1(&dict);
     patch1.add(PatchElement(Triple("g", "p", "o", &dict), false));
@@ -348,6 +351,7 @@ TEST_F(ControllerTest, GetComplex2) {
     VectorTripleIterator* it = new VectorTripleIterator(triples);
     controller.get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     PatchTreeManager* patchTreeManager = controller.get_patch_tree_manager();
+    DictionaryManager *dict = controller.get_snapshot_manager()->get_dictionary_manager(0);
 
     Patch patch1(&dict);
     patch1.add(PatchElement(Triple("g", "p", "o", &dict), false));
@@ -519,6 +523,7 @@ TEST_F(ControllerTest, GetComplex3) {
     VectorTripleIterator* it = new VectorTripleIterator(triples);
     controller.get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     PatchTreeManager* patchTreeManager = controller.get_patch_tree_manager();
+    DictionaryManager *dict = controller.get_snapshot_manager()->get_dictionary_manager(0);
 
     Patch patch1(&dict);
     patch1.add(PatchElement(Triple("g", "p", "o", &dict), false));
@@ -627,6 +632,7 @@ TEST_F(ControllerTest, EdgeCase1) {
     VectorTripleIterator *it = new VectorTripleIterator(triples);
     controller.get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     PatchTreeManager* patchTreeManager = controller.get_patch_tree_manager();
+    DictionaryManager *dict = controller.get_snapshot_manager()->get_dictionary_manager(0);
 
     Patch patch1(&dict);
     patch1.add(PatchElement(Triple("0", "0", "0", &dict), false));

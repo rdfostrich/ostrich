@@ -42,7 +42,7 @@ HDT* SnapshotManager::load_snapshot(int snapshot_id) {
       ControlInformation ci = ControlInformation();
       dict->load(dictFile, ci);
     }
-    loaded_dictionaries[snapshot_id] = new DictionaryManager(dict);
+    loaded_dictionaries[snapshot_id] = dict;
 
     return loaded_snapshots[snapshot_id];
 }
