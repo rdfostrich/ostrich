@@ -5,7 +5,7 @@
 using namespace std;
 using namespace kyotocabinet;
 
-TripleStore::TripleStore(string base_file_name, Dictionary* dict) {
+TripleStore::TripleStore(string base_file_name, DictionaryManager* dict) : dict(dict) {
     // Construct trees
     index_spo = new TreeDB();
     index_sop = new TreeDB();
@@ -116,4 +116,8 @@ PatchTreeKeyComparator *TripleStore::get_spo_comparator() const {
 
 PatchElementComparator *TripleStore::get_element_comparator() const {
     return element_comparator;
+}
+
+DictionaryManager *TripleStore::get_dict_manager() const {
+    return dict;
 }

@@ -7,13 +7,14 @@
 #include "../patch/patch.h"
 #include <Dictionary.hpp>
 #include "iterator_triple_id_to_string.h"
+#include "../dictionary/dictionary_manager.h"
 
 using namespace hdt;
 
 class SnapshotManager {
 private:
     std::map<int, HDT*> loaded_snapshots;
-    std::map<int, Dictionary*> loaded_dictionaries;
+    std::map<int, DictionaryManager*> loaded_dictionaries;
 public:
     SnapshotManager();
     /**
@@ -70,9 +71,9 @@ public:
     static IteratorTripleID* search_with_offset(HDT* hdt, const Triple& triple_pattern, long offset);
 
     /**
-     * Get the DictionaryManager file for the given snapshot id.
+     * @return The DictionaryManager file for the given snapshot id.
      */
-    Dictionary* get_dictionary(int snapshot_id);
+    DictionaryManager* get_dictionary_manager(int snapshot_id);
 };
 
 

@@ -35,16 +35,16 @@ protected:
 
 TEST_F(PatchTreeTest, AppendUnsafeNew) {
     Patch patch(&dict);
-    patch.add(PatchElement(Triple("s1", "p1", "o1", dict), true));
+    patch.add(PatchElement(Triple("s1", "p1", "o1", &dict), true));
     patchTree->append_unsafe(patch, 0);
 }
 
 TEST_F(PatchTreeTest, AppendUnsafeContains) {
     Patch patch(&dict);
-    patch.add(PatchElement(Triple("s1", "p1", "o1", dict), false));
+    patch.add(PatchElement(Triple("s1", "p1", "o1", &dict), false));
     patchTree->append_unsafe(patch, 0);
 
-    PatchTreeKey iteratorKey = Triple("s1", "p1", "o1", dict);
+    PatchTreeKey iteratorKey = Triple("s1", "p1", "o1", &dict);
     PatchTreeIterator it = patchTree->iterator(&iteratorKey);
     PatchTreeKey key;
     PatchTreeValue value;
@@ -63,37 +63,37 @@ TEST_F(PatchTreeTest, AppendUnsafeContains) {
 
     ASSERT_EQ(false, it.next(&key, &value)) << "Iterator contains another element after a single append";
 
-    ASSERT_EQ(false, patchTree->contains(PatchElement(Triple("s1", "p1", "o1", dict), true ), 0, false)) << "Contains is incorrect";
-    ASSERT_EQ(true , patchTree->contains(PatchElement(Triple("s1", "p1", "o1", dict), false), 0, false)) << "Contains is incorrect";
-    ASSERT_EQ(true , patchTree->contains(PatchElement(Triple("s1", "p1", "o1", dict), true), 0, true)) << "Contains is incorrect";
-    ASSERT_EQ(false, patchTree->contains(PatchElement(Triple("a", "a", "a", dict)   , false), 0, false)) << "Contains is incorrect";
-    ASSERT_EQ(false, patchTree->contains(PatchElement(Triple("a", "a", "a", dict)   , false), 0, true)) << "Contains is incorrect";
+    ASSERT_EQ(false, patchTree->contains(PatchElement(Triple("s1", "p1", "o1", &dict), true ), 0, false)) << "Contains is incorrect";
+    ASSERT_EQ(true , patchTree->contains(PatchElement(Triple("s1", "p1", "o1", &dict), false), 0, false)) << "Contains is incorrect";
+    ASSERT_EQ(true , patchTree->contains(PatchElement(Triple("s1", "p1", "o1", &dict), true), 0, true)) << "Contains is incorrect";
+    ASSERT_EQ(false, patchTree->contains(PatchElement(Triple("a", "a", "a", &dict)   , false), 0, false)) << "Contains is incorrect";
+    ASSERT_EQ(false, patchTree->contains(PatchElement(Triple("a", "a", "a", &dict)   , false), 0, true)) << "Contains is incorrect";
 }
 
 TEST_F(PatchTreeTest, AppendNew) {
     Patch patch(&dict);
-    patch.add(PatchElement(Triple("s1", "p1", "o1", dict), true));
+    patch.add(PatchElement(Triple("s1", "p1", "o1", &dict), true));
     ASSERT_EQ(true, patchTree->append(patch, 0)) << "Appending a patch with one elements failed";
 }
 
 TEST_F(PatchTreeTest, AppendNotNew) {
     Patch patch1(&dict);
-    patch1.add(PatchElement(Triple("s2", "p2", "o2", dict), true));
+    patch1.add(PatchElement(Triple("s2", "p2", "o2", &dict), true));
 
     Patch patch2(&dict);
-    patch2.add(PatchElement(Triple("s1", "p1", "o1", dict), true));
-    patch2.add(PatchElement(Triple("s2", "p2", "o2", dict), true));
-    patch2.add(PatchElement(Triple("s3", "p3", "o3", dict), true));
+    patch2.add(PatchElement(Triple("s1", "p1", "o1", &dict), true));
+    patch2.add(PatchElement(Triple("s2", "p2", "o2", &dict), true));
+    patch2.add(PatchElement(Triple("s3", "p3", "o3", &dict), true));
 
     Patch patch3(&dict);
-    patch3.add(PatchElement(Triple("s2", "p2", "o2", dict), false));
+    patch3.add(PatchElement(Triple("s2", "p2", "o2", &dict), false));
 
     ASSERT_EQ(true, patchTree->append(patch1, 0)) << "Appending a patch with one elements failed";
     ASSERT_EQ(false, patchTree->append(patch2, 0)) << "Appending a patch with 3 elements succeeded where it should have failed";
 
-    ASSERT_EQ(false, patchTree->contains(PatchElement(Triple("s1", "p1", "o1", dict), true), 0, false)) << "Failing to append a patch should not have (some) of its element added.";
-    ASSERT_EQ(true , patchTree->contains(PatchElement(Triple("s2", "p2", "o2", dict), true), 0, false)) << "Failing to append a patch should not have (some) of its element added.";
-    ASSERT_EQ(false, patchTree->contains(PatchElement(Triple("s3", "p3", "o3", dict), true), 0, false)) << "Failing to append a patch should not have (some) of its element added.";
+    ASSERT_EQ(false, patchTree->contains(PatchElement(Triple("s1", "p1", "o1", &dict), true), 0, false)) << "Failing to append a patch should not have (some) of its element added.";
+    ASSERT_EQ(true , patchTree->contains(PatchElement(Triple("s2", "p2", "o2", &dict), true), 0, false)) << "Failing to append a patch should not have (some) of its element added.";
+    ASSERT_EQ(false, patchTree->contains(PatchElement(Triple("s3", "p3", "o3", &dict), true), 0, false)) << "Failing to append a patch should not have (some) of its element added.";
 
     ASSERT_EQ(false, patchTree->append(patch3, 0)) << "Appending a patch with one elements succeeded where it should have failed";
 }
@@ -101,7 +101,7 @@ TEST_F(PatchTreeTest, AppendNotNew) {
 TEST_F(PatchTreeTest, RepeatAppendRemove1) {
     for(int i = 0; i < 10; i++) {
         Patch patch(&dict);
-        patch.add(PatchElement(Triple("a", "a", "a", dict), i % 2));
+        patch.add(PatchElement(Triple("a", "a", "a", &dict), i % 2));
         ASSERT_EQ(true, patchTree->append(patch, i)) << "Appending a patch failed at an iteration";
     }
 
@@ -121,7 +121,7 @@ TEST_F(PatchTreeTest, RepeatAppendRemove1) {
 TEST_F(PatchTreeTest, RepeatAppendRemove2) {
     for(int i = 0; i < 10; i++) {
         Patch patch(&dict);
-        patch.add(PatchElement(Triple("a", "a", "a", dict), !(i % 2)));
+        patch.add(PatchElement(Triple("a", "a", "a", &dict), !(i % 2)));
         ASSERT_EQ(true, patchTree->append(patch, i)) << "Appending a patch failed at an iteration";
     }
 
@@ -140,10 +140,10 @@ TEST_F(PatchTreeTest, RepeatAppendRemove2) {
 
 TEST_F(PatchTreeTest, IteratorOrder) {
     Patch patch(&dict);
-    patch.add(PatchElement(Triple("g", "p", "o", dict), false));
-    patch.add(PatchElement(Triple("a", "p", "o", dict), true));
-    patch.add(PatchElement(Triple("s", "z", "o", dict), false));
-    patch.add(PatchElement(Triple("s", "a", "o", dict), true));
+    patch.add(PatchElement(Triple("g", "p", "o", &dict), false));
+    patch.add(PatchElement(Triple("a", "p", "o", &dict), true));
+    patch.add(PatchElement(Triple("s", "z", "o", &dict), false));
+    patch.add(PatchElement(Triple("s", "a", "o", &dict), true));
     // Expected order:
     // a p o +
     // g p o -
@@ -151,7 +151,7 @@ TEST_F(PatchTreeTest, IteratorOrder) {
     // s z o -
     patchTree->append_unsafe(patch, 0);
 
-    PatchTreeKey iteratorKey = Triple("a", "a", "a", dict);
+    PatchTreeKey iteratorKey = Triple("a", "a", "a", &dict);
     PatchTreeIterator it = patchTree->iterator(&iteratorKey); // Iterate starting from the given triple.
     PatchTreeKey key;
     PatchTreeValue value;
@@ -209,27 +209,27 @@ TEST_F(PatchTreeTest, IteratorOrder) {
 
 TEST_F(PatchTreeTest, PatchIterator) {
     Patch patch1(&dict);
-    patch1.add(PatchElement(Triple("g", "p", "o", dict), false));
-    patch1.add(PatchElement(Triple("a", "p", "o", dict), true));
-    patch1.add(PatchElement(Triple("s", "z", "o", dict), false));
-    patch1.add(PatchElement(Triple("s", "a", "o", dict), true));
+    patch1.add(PatchElement(Triple("g", "p", "o", &dict), false));
+    patch1.add(PatchElement(Triple("a", "p", "o", &dict), true));
+    patch1.add(PatchElement(Triple("s", "z", "o", &dict), false));
+    patch1.add(PatchElement(Triple("s", "a", "o", &dict), true));
     patchTree->append_unsafe(patch1, 1);
 
     Patch patch2(&dict);
-    patch2.add(PatchElement(Triple("q", "p", "o", dict), false));
-    patch2.add(PatchElement(Triple("g", "p", "o", dict), true));
-    patch2.add(PatchElement(Triple("s", "z", "o", dict), false));
-    patch2.add(PatchElement(Triple("s", "a", "o", dict), true));
+    patch2.add(PatchElement(Triple("q", "p", "o", &dict), false));
+    patch2.add(PatchElement(Triple("g", "p", "o", &dict), true));
+    patch2.add(PatchElement(Triple("s", "z", "o", &dict), false));
+    patch2.add(PatchElement(Triple("s", "a", "o", &dict), true));
     patchTree->append_unsafe(patch2, 2);
 
     Patch patch3(&dict);
-    patch3.add(PatchElement(Triple("g", "p", "o", dict), false));
-    patch3.add(PatchElement(Triple("a", "p", "o", dict), false));
-    patch3.add(PatchElement(Triple("h", "z", "o", dict), false));
-    patch3.add(PatchElement(Triple("l", "a", "o", dict), true));
+    patch3.add(PatchElement(Triple("g", "p", "o", &dict), false));
+    patch3.add(PatchElement(Triple("a", "p", "o", &dict), false));
+    patch3.add(PatchElement(Triple("h", "z", "o", &dict), false));
+    patch3.add(PatchElement(Triple("l", "a", "o", &dict), true));
     patchTree->append_unsafe(patch3, 3);
 
-    PatchTreeKey iteratorKey = Triple("s", "a", "o", dict);
+    PatchTreeKey iteratorKey = Triple("s", "a", "o", &dict);
     PatchTreeIterator it = patchTree->iterator(&iteratorKey, 2, false); // Iterate over all elements of patch 2 starting from "s a o."
     PatchTreeKey key;
     PatchTreeValue value;
@@ -247,24 +247,24 @@ TEST_F(PatchTreeTest, PatchIterator) {
 
 TEST_F(PatchTreeTest, OffsetFilteredPatchIterator) {
     Patch patch1(&dict);
-    patch1.add(PatchElement(Triple("g", "p", "o", dict), false));
-    patch1.add(PatchElement(Triple("a", "p", "o", dict), true));
-    patch1.add(PatchElement(Triple("s", "z", "o", dict), false));
-    patch1.add(PatchElement(Triple("s", "a", "o", dict), true));
+    patch1.add(PatchElement(Triple("g", "p", "o", &dict), false));
+    patch1.add(PatchElement(Triple("a", "p", "o", &dict), true));
+    patch1.add(PatchElement(Triple("s", "z", "o", &dict), false));
+    patch1.add(PatchElement(Triple("s", "a", "o", &dict), true));
     patchTree->append(patch1, 1);
 
     Patch patch2(&dict);
-    patch2.add(PatchElement(Triple("q", "p", "o", dict), false));
-    patch2.add(PatchElement(Triple("g", "p", "o", dict), true));
-    patch2.add(PatchElement(Triple("s", "z", "o", dict), false));
-    patch2.add(PatchElement(Triple("s", "a", "o", dict), true));
+    patch2.add(PatchElement(Triple("q", "p", "o", &dict), false));
+    patch2.add(PatchElement(Triple("g", "p", "o", &dict), true));
+    patch2.add(PatchElement(Triple("s", "z", "o", &dict), false));
+    patch2.add(PatchElement(Triple("s", "a", "o", &dict), true));
     patchTree->append(patch2, 2);
 
     Patch patch3(&dict);
-    patch3.add(PatchElement(Triple("g", "p", "o", dict), false));
-    patch3.add(PatchElement(Triple("a", "p", "o", dict), false));
-    patch3.add(PatchElement(Triple("h", "z", "o", dict), false));
-    patch3.add(PatchElement(Triple("l", "a", "o", dict), true));
+    patch3.add(PatchElement(Triple("g", "p", "o", &dict), false));
+    patch3.add(PatchElement(Triple("a", "p", "o", &dict), false));
+    patch3.add(PatchElement(Triple("h", "z", "o", &dict), false));
+    patch3.add(PatchElement(Triple("l", "a", "o", &dict), true));
     patchTree->append(patch3, 3);
 
     PatchTreeIterator it = patchTree->iterator(2, false); // Iterate over all elements of patch only 2
@@ -320,24 +320,24 @@ TEST_F(PatchTreeTest, OffsetFilteredPatchIterator) {
 
 TEST_F(PatchTreeTest, ReconstructPatchSingle) {
     Patch patch1(&dict);
-    patch1.add(PatchElement(Triple("g", "p", "o", dict), false));
-    patch1.add(PatchElement(Triple("a", "p", "o", dict), true));
-    patch1.add(PatchElement(Triple("s", "z", "o", dict), false));
-    patch1.add(PatchElement(Triple("s", "a", "o", dict), true));
+    patch1.add(PatchElement(Triple("g", "p", "o", &dict), false));
+    patch1.add(PatchElement(Triple("a", "p", "o", &dict), true));
+    patch1.add(PatchElement(Triple("s", "z", "o", &dict), false));
+    patch1.add(PatchElement(Triple("s", "a", "o", &dict), true));
     patchTree->append_unsafe(patch1, 1);
 
     Patch patch2(&dict);
-    patch2.add(PatchElement(Triple("q", "p", "o", dict), false));
-    patch2.add(PatchElement(Triple("g", "p", "o", dict), true));
-    patch2.add(PatchElement(Triple("s", "z", "o", dict), false));
-    patch2.add(PatchElement(Triple("s", "a", "o", dict), true));
+    patch2.add(PatchElement(Triple("q", "p", "o", &dict), false));
+    patch2.add(PatchElement(Triple("g", "p", "o", &dict), true));
+    patch2.add(PatchElement(Triple("s", "z", "o", &dict), false));
+    patch2.add(PatchElement(Triple("s", "a", "o", &dict), true));
     patchTree->append_unsafe(patch2, 2);
 
     Patch patch3(&dict);
-    patch3.add(PatchElement(Triple("g", "p", "o", dict), false));
-    patch3.add(PatchElement(Triple("a", "p", "o", dict), false));
-    patch3.add(PatchElement(Triple("h", "z", "o", dict), false));
-    patch3.add(PatchElement(Triple("l", "a", "o", dict), true));
+    patch3.add(PatchElement(Triple("g", "p", "o", &dict), false));
+    patch3.add(PatchElement(Triple("a", "p", "o", &dict), false));
+    patch3.add(PatchElement(Triple("h", "z", "o", &dict), false));
+    patch3.add(PatchElement(Triple("l", "a", "o", &dict), true));
     patchTree->append_unsafe(patch3, 3);
 
     Patch patch2_copy = patchTree->reconstruct_patch(2);
@@ -346,20 +346,20 @@ TEST_F(PatchTreeTest, ReconstructPatchSingle) {
 
 TEST_F(PatchTreeTest, ReconstructPatchComposite) {
     Patch patch1(&dict);
-    patch1.add(PatchElement(Triple("g", "p", "o", dict), false));
-    patch1.add(PatchElement(Triple("a", "p", "o", dict), true));
+    patch1.add(PatchElement(Triple("g", "p", "o", &dict), false));
+    patch1.add(PatchElement(Triple("a", "p", "o", &dict), true));
     patchTree->append_unsafe(patch1, 1);
 
     Patch patch2(&dict);
-    patch2.add(PatchElement(Triple("s", "z", "o", dict), false));
-    patch2.add(PatchElement(Triple("s", "a", "o", dict), true));
+    patch2.add(PatchElement(Triple("s", "z", "o", &dict), false));
+    patch2.add(PatchElement(Triple("s", "a", "o", &dict), true));
     patchTree->append_unsafe(patch2, 1);
 
     Patch patch3(&dict);
-    patch3.add(PatchElement(Triple("g", "p", "o", dict), false));
-    patch3.add(PatchElement(Triple("a", "p", "o", dict), false));
-    patch3.add(PatchElement(Triple("h", "z", "o", dict), false));
-    patch3.add(PatchElement(Triple("l", "a", "o", dict), true));
+    patch3.add(PatchElement(Triple("g", "p", "o", &dict), false));
+    patch3.add(PatchElement(Triple("a", "p", "o", &dict), false));
+    patch3.add(PatchElement(Triple("h", "z", "o", &dict), false));
+    patch3.add(PatchElement(Triple("l", "a", "o", &dict), true));
     patchTree->append_unsafe(patch3, 2);
 
     Patch patch2_copy = patchTree->reconstruct_patch(1);
@@ -371,29 +371,29 @@ TEST_F(PatchTreeTest, ReconstructPatchComposite) {
 
 TEST_F(PatchTreeTest, ReconstructPatchComposite2) {
     Patch patch1(&dict);
-    patch1.add(PatchElement(Triple("g", "p", "o", dict), false));
-    patch1.add(PatchElement(Triple("a", "p", "o", dict), true));
+    patch1.add(PatchElement(Triple("g", "p", "o", &dict), false));
+    patch1.add(PatchElement(Triple("a", "p", "o", &dict), true));
     patchTree->append(patch1, 1);
 
     Patch patch2(&dict);
-    patch2.add(PatchElement(Triple("s", "z", "o", dict), false));
-    patch2.add(PatchElement(Triple("s", "a", "o", dict), true));
+    patch2.add(PatchElement(Triple("s", "z", "o", &dict), false));
+    patch2.add(PatchElement(Triple("s", "a", "o", &dict), true));
     patchTree->append(patch2, 1);
 
     Patch patch3(&dict);
-    patch3.add(PatchElement(Triple("g", "p", "o", dict), false));
-    patch3.add(PatchElement(Triple("a", "p", "o", dict), false));
-    patch3.add(PatchElement(Triple("h", "z", "o", dict), false));
-    patch3.add(PatchElement(Triple("l", "a", "o", dict), true));
+    patch3.add(PatchElement(Triple("g", "p", "o", &dict), false));
+    patch3.add(PatchElement(Triple("a", "p", "o", &dict), false));
+    patch3.add(PatchElement(Triple("h", "z", "o", &dict), false));
+    patch3.add(PatchElement(Triple("l", "a", "o", &dict), true));
     patchTree->append(patch3, 2);
 
     Patch patch4(&dict);
-    patch4.add(PatchElement(Triple("h", "p", "o", dict), false));
-    patch4.add(PatchElement(Triple("s", "z", "o", dict), false));
+    patch4.add(PatchElement(Triple("h", "p", "o", &dict), false));
+    patch4.add(PatchElement(Triple("s", "z", "o", &dict), false));
     patchTree->append(patch4, 4);
 
     Patch patch5(&dict);
-    patch5.add(PatchElement(Triple("h", "p", "o", dict), true));
+    patch5.add(PatchElement(Triple("h", "p", "o", &dict), true));
     patchTree->append(patch5, 5);
 
     Patch patch1_copy = patchTree->reconstruct_patch(1);
@@ -431,26 +431,26 @@ TEST_F(PatchTreeTest, ReconstructPatchComposite2) {
 
 TEST_F(PatchTreeTest, RelativePatchPositions) {
     Patch patch1(&dict);
-    patch1.add(PatchElement(Triple("g", "p", "o", dict), false));
-    patch1.add(PatchElement(Triple("a", "p", "o", dict), false));
+    patch1.add(PatchElement(Triple("g", "p", "o", &dict), false));
+    patch1.add(PatchElement(Triple("a", "p", "o", &dict), false));
     patchTree->append_unsafe(patch1, 1);
 
     Patch patch2(&dict);
-    patch2.add(PatchElement(Triple("s", "z", "o", dict), false));
-    patch2.add(PatchElement(Triple("a", "b", "c", dict), true));
-    patch2.add(PatchElement(Triple("s", "a", "o", dict), false));
+    patch2.add(PatchElement(Triple("s", "z", "o", &dict), false));
+    patch2.add(PatchElement(Triple("a", "b", "c", &dict), true));
+    patch2.add(PatchElement(Triple("s", "a", "o", &dict), false));
     patchTree->append_unsafe(patch2, 1);
 
     Patch patch3(&dict);
-    patch3.add(PatchElement(Triple("g", "p", "o", dict), false));
-    patch3.add(PatchElement(Triple("a", "p", "o", dict), false));
-    patch3.add(PatchElement(Triple("h", "z", "o", dict), false));
-    patch3.add(PatchElement(Triple("l", "a", "o", dict), true));
+    patch3.add(PatchElement(Triple("g", "p", "o", &dict), false));
+    patch3.add(PatchElement(Triple("a", "p", "o", &dict), false));
+    patch3.add(PatchElement(Triple("h", "z", "o", &dict), false));
+    patch3.add(PatchElement(Triple("l", "a", "o", &dict), true));
     patchTree->append_unsafe(patch3, 2);
 
     Patch patch4(&dict);
-    patch4.add(PatchElement(Triple("h", "p", "o", dict), false));
-    patch4.add(PatchElement(Triple("s", "z", "o", dict), false));
+    patch4.add(PatchElement(Triple("h", "p", "o", &dict), false));
+    patch4.add(PatchElement(Triple("s", "z", "o", &dict), false));
     patchTree->append_unsafe(patch4, 4);
 
     PatchTreeIterator it = patchTree->iterator(1, false); // Iterate over all elements of patch 1
@@ -517,8 +517,8 @@ TEST_F(PatchTreeTest, RelativePatchPositions) {
     ASSERT_EQ(false, it.next(&key, &value)) << "Iterator should be finished";
 
     Patch patch5(&dict);
-    patch5.add(PatchElement(Triple("a", "a", "a", dict), false));
-    patch5.add(PatchElement(Triple("z", "z", "z", dict), false));
+    patch5.add(PatchElement(Triple("a", "a", "a", &dict), false));
+    patch5.add(PatchElement(Triple("z", "z", "z", &dict), false));
     patchTree->append_unsafe(patch5, 1);
 
     PatchTreeIterator it2 = patchTree->iterator(1, false); // Iterate over all elements of patch 1 again
@@ -607,13 +607,13 @@ TEST_F(PatchTreeTest, RelativePatchPositions) {
 
 TEST_F(PatchTreeTest, RelativePatchPositions2) {
     Patch patch1(&dict);
-    patch1.add(PatchElement(Triple("a", "b", "c", dict), true));
-    patch1.add(PatchElement(Triple("a", "a", "a", dict), false));
-    patch1.add(PatchElement(Triple("z", "z", "z", dict), false));
+    patch1.add(PatchElement(Triple("a", "b", "c", &dict), true));
+    patch1.add(PatchElement(Triple("a", "a", "a", &dict), false));
+    patch1.add(PatchElement(Triple("z", "z", "z", &dict), false));
     patchTree->append_unsafe(patch1, 1);
 
     Patch patch2(&dict);
-    patch2.add(PatchElement(Triple("a", "b", "c", dict), false));
+    patch2.add(PatchElement(Triple("a", "b", "c", &dict), false));
     patchTree->append_unsafe(patch2, 2);
 
     PatchTreeIterator it1 = patchTree->iterator(1, false); // Iterate over all elements of patch 1
@@ -700,25 +700,25 @@ TEST_F(PatchTreeTest, RelativePatchPositions2) {
 
 TEST_F(PatchTreeTest, DeletionCount) {
     Patch patch1(&dict);
-    patch1.add(PatchElement(Triple("g", "p", "o", dict), false));
-    patch1.add(PatchElement(Triple("a", "p", "o", dict), true));
+    patch1.add(PatchElement(Triple("g", "p", "o", &dict), false));
+    patch1.add(PatchElement(Triple("a", "p", "o", &dict), true));
     patchTree->append(patch1, 1);
 
     Patch patch2(&dict);
-    patch2.add(PatchElement(Triple("s", "z", "o", dict), false));
-    patch2.add(PatchElement(Triple("s", "a", "o", dict), true));
+    patch2.add(PatchElement(Triple("s", "z", "o", &dict), false));
+    patch2.add(PatchElement(Triple("s", "a", "o", &dict), true));
     patchTree->append(patch2, 1);
 
     Patch patch3(&dict);
-    patch3.add(PatchElement(Triple("g", "p", "o", dict), false));
-    patch3.add(PatchElement(Triple("a", "p", "o", dict), false));
-    patch3.add(PatchElement(Triple("h", "z", "o", dict), false));
-    patch3.add(PatchElement(Triple("l", "a", "o", dict), true));
+    patch3.add(PatchElement(Triple("g", "p", "o", &dict), false));
+    patch3.add(PatchElement(Triple("a", "p", "o", &dict), false));
+    patch3.add(PatchElement(Triple("h", "z", "o", &dict), false));
+    patch3.add(PatchElement(Triple("l", "a", "o", &dict), true));
     patchTree->append(patch3, 2);
 
     Patch patch4(&dict);
-    patch4.add(PatchElement(Triple("h", "p", "o", dict), false));
-    patch4.add(PatchElement(Triple("s", "z", "o", dict), false));
+    patch4.add(PatchElement(Triple("h", "p", "o", &dict), false));
+    patch4.add(PatchElement(Triple("s", "z", "o", &dict), false));
     patchTree->append(patch4, 4);
 
     // Patch 1
@@ -727,13 +727,13 @@ TEST_F(PatchTreeTest, DeletionCount) {
     // s a o +
     // s z o -
 
-    ASSERT_EQ(2, patchTree->deletion_count(Triple("", "", "", dict), 1).first) << "Deletion count is incorrect";
-    ASSERT_EQ(1, patchTree->deletion_count(Triple("s", "", "", dict), 1).first) << "Deletion count is incorrect";
-    ASSERT_EQ(0, patchTree->deletion_count(Triple("s", "a", "", dict), 1).first) << "Deletion count is incorrect";
-    ASSERT_EQ(2, patchTree->deletion_count(Triple("", "", "o", dict), 1).first) << "Deletion count is incorrect";
-    ASSERT_EQ(1, patchTree->deletion_count(Triple("", "p", "o", dict), 1).first) << "Deletion count is incorrect";
-    ASSERT_EQ(1, patchTree->deletion_count(Triple("", "p", "", dict), 1).first) << "Deletion count is incorrect";
-    ASSERT_EQ(1, patchTree->deletion_count(Triple("g", "p", "", dict), 1).first) << "Deletion count is incorrect";
+    ASSERT_EQ(2, patchTree->deletion_count(Triple("", "", "", &dict), 1).first) << "Deletion count is incorrect";
+    ASSERT_EQ(1, patchTree->deletion_count(Triple("s", "", "", &dict), 1).first) << "Deletion count is incorrect";
+    ASSERT_EQ(0, patchTree->deletion_count(Triple("s", "a", "", &dict), 1).first) << "Deletion count is incorrect";
+    ASSERT_EQ(2, patchTree->deletion_count(Triple("", "", "o", &dict), 1).first) << "Deletion count is incorrect";
+    ASSERT_EQ(1, patchTree->deletion_count(Triple("", "p", "o", &dict), 1).first) << "Deletion count is incorrect";
+    ASSERT_EQ(1, patchTree->deletion_count(Triple("", "p", "", &dict), 1).first) << "Deletion count is incorrect";
+    ASSERT_EQ(1, patchTree->deletion_count(Triple("g", "p", "", &dict), 1).first) << "Deletion count is incorrect";
 
     // Patch 2
     // a p o +/-
@@ -743,7 +743,7 @@ TEST_F(PatchTreeTest, DeletionCount) {
     // s a o +
     // s z o -
 
-    ASSERT_EQ(3, patchTree->deletion_count(Triple("", "", "", dict), 2).first) << "Deletion count is incorrect";
+    ASSERT_EQ(3, patchTree->deletion_count(Triple("", "", "", &dict), 2).first) << "Deletion count is incorrect";
 
     // Patch 4
     // a p o +/-
@@ -754,30 +754,30 @@ TEST_F(PatchTreeTest, DeletionCount) {
     // s a o +
     // s z o -/-
 
-    ASSERT_EQ(4, patchTree->deletion_count(Triple("", "", "", dict), 4).first) << "Deletion count is incorrect";
+    ASSERT_EQ(4, patchTree->deletion_count(Triple("", "", "", &dict), 4).first) << "Deletion count is incorrect";
 }
 
 TEST_F(PatchTreeTest, DeletionIterator) {
     Patch patch1(&dict);
-    patch1.add(PatchElement(Triple("g", "p", "o", dict), false));
-    patch1.add(PatchElement(Triple("a", "p", "o", dict), true));
+    patch1.add(PatchElement(Triple("g", "p", "o", &dict), false));
+    patch1.add(PatchElement(Triple("a", "p", "o", &dict), true));
     patchTree->append(patch1, 1);
 
     Patch patch2(&dict);
-    patch2.add(PatchElement(Triple("s", "z", "o", dict), false));
-    patch2.add(PatchElement(Triple("s", "a", "o", dict), true));
+    patch2.add(PatchElement(Triple("s", "z", "o", &dict), false));
+    patch2.add(PatchElement(Triple("s", "a", "o", &dict), true));
     patchTree->append(patch2, 1);
 
     Patch patch3(&dict);
-    patch3.add(PatchElement(Triple("g", "p", "o", dict), false));
-    patch3.add(PatchElement(Triple("a", "p", "o", dict), false));
-    patch3.add(PatchElement(Triple("h", "z", "o", dict), false));
-    patch3.add(PatchElement(Triple("l", "a", "o", dict), true));
+    patch3.add(PatchElement(Triple("g", "p", "o", &dict), false));
+    patch3.add(PatchElement(Triple("a", "p", "o", &dict), false));
+    patch3.add(PatchElement(Triple("h", "z", "o", &dict), false));
+    patch3.add(PatchElement(Triple("l", "a", "o", &dict), true));
     patchTree->append(patch3, 2);
 
     Patch patch4(&dict);
-    patch4.add(PatchElement(Triple("h", "p", "o", dict), false));
-    patch4.add(PatchElement(Triple("s", "z", "o", dict), false));
+    patch4.add(PatchElement(Triple("h", "p", "o", &dict), false));
+    patch4.add(PatchElement(Triple("s", "z", "o", &dict), false));
     patchTree->append(patch4, 4);
 
     // Expected patch 1:
@@ -808,7 +808,7 @@ TEST_F(PatchTreeTest, DeletionIterator) {
     /*
      * Looping over all deletions in patch 1 starting from beginning
      */
-    PositionedTripleIterator it1 = *patchTree->deletion_iterator_from(Triple("", "", "", dict), 1, Triple("", "", "", dict));
+    PositionedTripleIterator it1 = *patchTree->deletion_iterator_from(Triple("", "", "", &dict), 1, Triple("", "", "", &dict));
 
     ASSERT_EQ(true, it1.next(&pt)) << "Iterator has a no next value";
     ASSERT_EQ("g p o.", pt.triple.to_string(dict)) << "Element is incorrect";
@@ -823,7 +823,7 @@ TEST_F(PatchTreeTest, DeletionIterator) {
     /*
      * Looping over all deletions in patch 1 starting from s z o
      */
-    PositionedTripleIterator it2 = *patchTree->deletion_iterator_from(Triple("s", "z", "o", dict), 1, Triple("", "", "", dict));
+    PositionedTripleIterator it2 = *patchTree->deletion_iterator_from(Triple("s", "z", "o", &dict), 1, Triple("", "", "", &dict));
 
     ASSERT_EQ(true, it2.next(&pt)) << "Iterator has a no next value";
     ASSERT_EQ("s z o.", pt.triple.to_string(dict)) << "Element is incorrect";
@@ -832,7 +832,7 @@ TEST_F(PatchTreeTest, DeletionIterator) {
     /*
      * Looping over ? z ? deletions in patch 1 starting from s z o
      */
-    PositionedTripleIterator it3 = *patchTree->deletion_iterator_from(Triple("s", "z", "o", dict), 1, Triple("", "z", "", dict));
+    PositionedTripleIterator it3 = *patchTree->deletion_iterator_from(Triple("s", "z", "o", &dict), 1, Triple("", "z", "", &dict));
 
     ASSERT_EQ(true, it3.next(&pt)) << "Iterator has a no next value";
     ASSERT_EQ("s z o.", pt.triple.to_string(dict)) << "Element is incorrect";
@@ -843,7 +843,7 @@ TEST_F(PatchTreeTest, DeletionIterator) {
     /*
      * Looping over ? ? o deletions in patch 1 starting from a non-existing start element that lies before all other elements
      */
-    PositionedTripleIterator it4 = *patchTree->deletion_iterator_from(Triple("b", "b", "b", dict), 1, Triple("", "", "o", dict));
+    PositionedTripleIterator it4 = *patchTree->deletion_iterator_from(Triple("b", "b", "b", &dict), 1, Triple("", "", "o", &dict));
 
     ASSERT_EQ(true, it4.next(&pt)) << "Iterator has a no next value";
     ASSERT_EQ("g p o.", pt.triple.to_string(dict)) << "Element is incorrect";
@@ -858,7 +858,7 @@ TEST_F(PatchTreeTest, DeletionIterator) {
     /*
      * Looping over ? ? o deletions in patch 1 starting from a non-existing start element that lies between the two elements
      */
-    PositionedTripleIterator it5 = *patchTree->deletion_iterator_from(Triple("h", "h", "h", dict), 1, Triple("", "", "o", dict));
+    PositionedTripleIterator it5 = *patchTree->deletion_iterator_from(Triple("h", "h", "h", &dict), 1, Triple("", "", "o", &dict));
 
     ASSERT_EQ(true, it5.next(&pt)) << "Iterator has a no next value";
     ASSERT_EQ("s z o.", pt.triple.to_string(dict)) << "Element is incorrect";
@@ -869,13 +869,13 @@ TEST_F(PatchTreeTest, DeletionIterator) {
     /*
      * Looping over ? ? o deletions in patch 1 starting from a non-existing start element that lies after the two elements
      */
-    PositionedTripleIterator it6 = *patchTree->deletion_iterator_from(Triple("t", "t", "t", dict), 1, Triple("", "", "o", dict));
+    PositionedTripleIterator it6 = *patchTree->deletion_iterator_from(Triple("t", "t", "t", &dict), 1, Triple("", "", "o", &dict));
     ASSERT_EQ(false, it6.next(&pt)) << "Iterator should be finished";
 
     /*
      * Looping over all deletions in patch 4 starting from beginning
      */
-    PositionedTripleIterator it7 = *patchTree->deletion_iterator_from(Triple("", "", "", dict), 4, Triple("", "", "", dict));
+    PositionedTripleIterator it7 = *patchTree->deletion_iterator_from(Triple("", "", "", &dict), 4, Triple("", "", "", &dict));
 
     ASSERT_EQ(true, it7.next(&pt)) << "Iterator has a no next value";
     ASSERT_EQ("g p o.", pt.triple.to_string(dict)) << "Element is incorrect";
@@ -898,7 +898,7 @@ TEST_F(PatchTreeTest, DeletionIterator) {
     /*
      * Looping over h ? o deletions in patch 4 starting from g p o
      */
-    PositionedTripleIterator it8 = *patchTree->deletion_iterator_from(Triple("g", "p", "o", dict), 4, Triple("h", "", "o", dict));
+    PositionedTripleIterator it8 = *patchTree->deletion_iterator_from(Triple("g", "p", "o", &dict), 4, Triple("h", "", "o", &dict));
 
     ASSERT_EQ(true, it8.next(&pt)) << "Iterator has a no next value";
     ASSERT_EQ("h p o.", pt.triple.to_string(dict)) << "Element is incorrect";
@@ -913,7 +913,7 @@ TEST_F(PatchTreeTest, DeletionIterator) {
     /*
      * Looping over h ? o deletions in patch 4 starting from h q o
      */
-    PositionedTripleIterator it9 = *patchTree->deletion_iterator_from(Triple("h", "q", "o", dict), 4, Triple("h", "", "o", dict));
+    PositionedTripleIterator it9 = *patchTree->deletion_iterator_from(Triple("h", "q", "o", &dict), 4, Triple("h", "", "o", &dict));
 
     ASSERT_EQ(true, it9.next(&pt)) << "Iterator has a no next value";
     ASSERT_EQ("h z o.", pt.triple.to_string(dict)) << "Element is incorrect";
@@ -924,29 +924,29 @@ TEST_F(PatchTreeTest, DeletionIterator) {
 
 TEST_F(PatchTreeTest, AdditionIterator) {
     Patch patch1(&dict);
-    patch1.add(PatchElement(Triple("g", "p", "o", dict), false));
-    patch1.add(PatchElement(Triple("a", "p", "o", dict), true));
+    patch1.add(PatchElement(Triple("g", "p", "o", &dict), false));
+    patch1.add(PatchElement(Triple("a", "p", "o", &dict), true));
     patchTree->append(patch1, 1);
 
     Patch patch2(&dict);
-    patch2.add(PatchElement(Triple("s", "z", "o", dict), false));
-    patch2.add(PatchElement(Triple("s", "a", "o", dict), true));
+    patch2.add(PatchElement(Triple("s", "z", "o", &dict), false));
+    patch2.add(PatchElement(Triple("s", "a", "o", &dict), true));
     patchTree->append(patch2, 1);
 
     Patch patch3(&dict);
-    patch3.add(PatchElement(Triple("g", "p", "o", dict), false));
-    patch3.add(PatchElement(Triple("a", "p", "o", dict), false));
-    patch3.add(PatchElement(Triple("h", "z", "o", dict), false));
-    patch3.add(PatchElement(Triple("l", "a", "o", dict), true));
+    patch3.add(PatchElement(Triple("g", "p", "o", &dict), false));
+    patch3.add(PatchElement(Triple("a", "p", "o", &dict), false));
+    patch3.add(PatchElement(Triple("h", "z", "o", &dict), false));
+    patch3.add(PatchElement(Triple("l", "a", "o", &dict), true));
     patchTree->append(patch3, 2);
 
     Patch patch4(&dict);
-    patch4.add(PatchElement(Triple("h", "p", "o", dict), false));
-    patch4.add(PatchElement(Triple("s", "z", "o", dict), false));
+    patch4.add(PatchElement(Triple("h", "p", "o", &dict), false));
+    patch4.add(PatchElement(Triple("s", "z", "o", &dict), false));
     patchTree->append(patch4, 4);
 
     Patch patch5(&dict);
-    patch5.add(PatchElement(Triple("h", "p", "o", dict), true));
+    patch5.add(PatchElement(Triple("h", "p", "o", &dict), true));
     patchTree->append(patch5, 5);
 
     // Expected patch 1:
@@ -986,7 +986,7 @@ TEST_F(PatchTreeTest, AdditionIterator) {
     /*
      * Looping over all additions in patch 1 starting from beginning
      */
-    PatchTreeTripleIterator it1 = *patchTree->addition_iterator_from(0, 1, Triple("", "", "", dict));
+    PatchTreeTripleIterator it1 = *patchTree->addition_iterator_from(0, 1, Triple("", "", "", &dict));
 
     ASSERT_EQ(true, it1.next(&pt)) << "Iterator has a no next value";
     ASSERT_EQ("a p o.", pt.to_string(dict)) << "Element is incorrect";
@@ -999,7 +999,7 @@ TEST_F(PatchTreeTest, AdditionIterator) {
     /*
      * Looping over s a o additions in patch 1 starting from beginning
      */
-    PatchTreeTripleIterator it2 = *patchTree->addition_iterator_from(0, 1, Triple("s", "a", "o", dict));
+    PatchTreeTripleIterator it2 = *patchTree->addition_iterator_from(0, 1, Triple("s", "a", "o", &dict));
 
     ASSERT_EQ(true, it2.next(&pt)) << "Iterator has a no next value";
     ASSERT_EQ("s a o.", pt.to_string(dict)) << "Element is incorrect";
@@ -1009,7 +1009,7 @@ TEST_F(PatchTreeTest, AdditionIterator) {
     /*
      * Looping over all additions in patch 1 starting from 1
      */
-    PatchTreeTripleIterator it3 = *patchTree->addition_iterator_from(1, 1, Triple("", "", "", dict));
+    PatchTreeTripleIterator it3 = *patchTree->addition_iterator_from(1, 1, Triple("", "", "", &dict));
 
     ASSERT_EQ(true, it3.next(&pt)) << "Iterator has a no next value";
     ASSERT_EQ("s a o.", pt.to_string(dict)) << "Element is incorrect";
@@ -1019,7 +1019,7 @@ TEST_F(PatchTreeTest, AdditionIterator) {
     /*
      * Looping over all additions in patch 2 starting from beginning
      */
-    PatchTreeTripleIterator it4 = *patchTree->addition_iterator_from(0, 2, Triple("", "", "", dict));
+    PatchTreeTripleIterator it4 = *patchTree->addition_iterator_from(0, 2, Triple("", "", "", &dict));
 
     ASSERT_EQ(true, it4.next(&pt)) << "Iterator has a no next value";
     ASSERT_EQ("l a o.", pt.to_string(dict)) << "Element is incorrect";
@@ -1032,7 +1032,7 @@ TEST_F(PatchTreeTest, AdditionIterator) {
     /*
      * Looping over all additions in patch 5 starting from beginning
      */
-    PatchTreeTripleIterator it5 = *patchTree->addition_iterator_from(0, 5, Triple("", "", "", dict));
+    PatchTreeTripleIterator it5 = *patchTree->addition_iterator_from(0, 5, Triple("", "", "", &dict));
 
     ASSERT_EQ(true, it5.next(&pt)) << "Iterator has a no next value";
     ASSERT_EQ("l a o.", pt.to_string(dict)) << "Element is incorrect";
@@ -1045,33 +1045,33 @@ TEST_F(PatchTreeTest, AdditionIterator) {
 
 TEST_F(PatchTreeTest, AdditionIteratorOtherIndexes) {
     Patch patch1(&dict);
-    patch1.add(PatchElement(Triple("g", "p", "o", dict), false));
-    patch1.add(PatchElement(Triple("a", "p", "o", dict), true));
+    patch1.add(PatchElement(Triple("g", "p", "o", &dict), false));
+    patch1.add(PatchElement(Triple("a", "p", "o", &dict), true));
     patchTree->append(patch1, 1);
 
     Patch patch2(&dict);
-    patch2.add(PatchElement(Triple("s", "z", "o", dict), false));
-    patch2.add(PatchElement(Triple("s", "a", "o", dict), true));
+    patch2.add(PatchElement(Triple("s", "z", "o", &dict), false));
+    patch2.add(PatchElement(Triple("s", "a", "o", &dict), true));
     patchTree->append(patch2, 1);
 
     Patch patch3(&dict);
-    patch3.add(PatchElement(Triple("g", "p", "o", dict), false));
-    patch3.add(PatchElement(Triple("a", "p", "o", dict), false));
-    patch3.add(PatchElement(Triple("h", "z", "o", dict), false));
-    patch3.add(PatchElement(Triple("l", "a", "o", dict), true));
+    patch3.add(PatchElement(Triple("g", "p", "o", &dict), false));
+    patch3.add(PatchElement(Triple("a", "p", "o", &dict), false));
+    patch3.add(PatchElement(Triple("h", "z", "o", &dict), false));
+    patch3.add(PatchElement(Triple("l", "a", "o", &dict), true));
     patchTree->append(patch3, 2);
 
     Patch patch4(&dict);
-    patch4.add(PatchElement(Triple("h", "p", "o", dict), false));
-    patch4.add(PatchElement(Triple("s", "z", "o", dict), false));
+    patch4.add(PatchElement(Triple("h", "p", "o", &dict), false));
+    patch4.add(PatchElement(Triple("s", "z", "o", &dict), false));
     patchTree->append(patch4, 4);
 
     Patch patch5(&dict);
-    patch5.add(PatchElement(Triple("h", "p", "o", dict), true));
+    patch5.add(PatchElement(Triple("h", "p", "o", &dict), true));
     patchTree->append(patch5, 5);
 
     Patch patch6(&dict);
-    patch6.add(PatchElement(Triple("a", "p", "o", dict), true));
+    patch6.add(PatchElement(Triple("a", "p", "o", &dict), true));
     patchTree->append(patch6, 6);
 
     // Expected patch 1:
@@ -1120,7 +1120,7 @@ TEST_F(PatchTreeTest, AdditionIteratorOtherIndexes) {
     /*
      * Looping over ? ? ? additions in patch 5
      */
-    PatchTreeTripleIterator it1 = *patchTree->addition_iterator_from(0, 5, Triple("", "", "", dict));
+    PatchTreeTripleIterator it1 = *patchTree->addition_iterator_from(0, 5, Triple("", "", "", &dict));
 
     ASSERT_EQ(true, it1.next(&pt)) << "Iterator has a no next value";
     ASSERT_EQ("l a o.", pt.to_string(dict)) << "Element is incorrect";
@@ -1133,7 +1133,7 @@ TEST_F(PatchTreeTest, AdditionIteratorOtherIndexes) {
     /*
      * Looping over ? ? o additions in patch 5
      */
-    PatchTreeTripleIterator it2 = *patchTree->addition_iterator_from(0, 5, Triple("", "", "o", dict));
+    PatchTreeTripleIterator it2 = *patchTree->addition_iterator_from(0, 5, Triple("", "", "o", &dict));
 
     ASSERT_EQ(true, it2.next(&pt)) << "Iterator has a no next value";
     ASSERT_EQ("l a o.", pt.to_string(dict)) << "Element is incorrect";
@@ -1146,7 +1146,7 @@ TEST_F(PatchTreeTest, AdditionIteratorOtherIndexes) {
     /*
      * Looping over ? a ? additions in patch 5
      */
-    PatchTreeTripleIterator it3 = *patchTree->addition_iterator_from(0, 5, Triple("", "a", "", dict));
+    PatchTreeTripleIterator it3 = *patchTree->addition_iterator_from(0, 5, Triple("", "a", "", &dict));
 
     ASSERT_EQ(true, it3.next(&pt)) << "Iterator has a no next value";
     ASSERT_EQ("l a o.", pt.to_string(dict)) << "Element is incorrect";
@@ -1159,7 +1159,7 @@ TEST_F(PatchTreeTest, AdditionIteratorOtherIndexes) {
     /*
      * Looping over ? a o additions in patch 5
      */
-    PatchTreeTripleIterator it4 = *patchTree->addition_iterator_from(0, 5, Triple("", "a", "o", dict));
+    PatchTreeTripleIterator it4 = *patchTree->addition_iterator_from(0, 5, Triple("", "a", "o", &dict));
 
     ASSERT_EQ(true, it4.next(&pt)) << "Iterator has a no next value";
     ASSERT_EQ("l a o.", pt.to_string(dict)) << "Element is incorrect";
@@ -1172,7 +1172,7 @@ TEST_F(PatchTreeTest, AdditionIteratorOtherIndexes) {
     /*
      * Looping over s ? o additions in patch 5
      */
-    PatchTreeTripleIterator it5 = *patchTree->addition_iterator_from(0, 5, Triple("s", "", "o", dict));
+    PatchTreeTripleIterator it5 = *patchTree->addition_iterator_from(0, 5, Triple("s", "", "o", &dict));
 
     ASSERT_EQ(true, it5.next(&pt)) << "Iterator has a no next value";
     ASSERT_EQ("s a o.", pt.to_string(dict)) << "Element is incorrect";
@@ -1182,7 +1182,7 @@ TEST_F(PatchTreeTest, AdditionIteratorOtherIndexes) {
     /*
      * Looping over s a ? additions in patch 5
      */
-    PatchTreeTripleIterator it6 = *patchTree->addition_iterator_from(0, 5, Triple("s", "a", "", dict));
+    PatchTreeTripleIterator it6 = *patchTree->addition_iterator_from(0, 5, Triple("s", "a", "", &dict));
 
     ASSERT_EQ(true, it6.next(&pt)) << "Iterator has a no next value";
     ASSERT_EQ("s a o.", pt.to_string(dict)) << "Element is incorrect";
@@ -1192,7 +1192,7 @@ TEST_F(PatchTreeTest, AdditionIteratorOtherIndexes) {
     /*
      * Looping over s a o additions in patch 5
      */
-    PatchTreeTripleIterator it7 = *patchTree->addition_iterator_from(0, 5, Triple("s", "a", "o", dict));
+    PatchTreeTripleIterator it7 = *patchTree->addition_iterator_from(0, 5, Triple("s", "a", "o", &dict));
 
     ASSERT_EQ(true, it7.next(&pt)) << "Iterator has a no next value";
     ASSERT_EQ("s a o.", pt.to_string(dict)) << "Element is incorrect";
@@ -1202,7 +1202,7 @@ TEST_F(PatchTreeTest, AdditionIteratorOtherIndexes) {
     /*
      * Looping over s ? o additions in patch 5
      */
-    PatchTreeTripleIterator it7_2 = *patchTree->addition_iterator_from(0, 5, Triple("s", "", "", dict));
+    PatchTreeTripleIterator it7_2 = *patchTree->addition_iterator_from(0, 5, Triple("s", "", "", &dict));
 
     ASSERT_EQ(true, it7_2.next(&pt)) << "Iterator has a no next value";
     ASSERT_EQ("s a o.", pt.to_string(dict)) << "Element is incorrect";
@@ -1212,7 +1212,7 @@ TEST_F(PatchTreeTest, AdditionIteratorOtherIndexes) {
     /*
      * Looping over ? ? ? additions in patch 6
      */
-    PatchTreeTripleIterator it8 = *patchTree->addition_iterator_from(0, 6, Triple("", "", "", dict));
+    PatchTreeTripleIterator it8 = *patchTree->addition_iterator_from(0, 6, Triple("", "", "", &dict));
 
     ASSERT_EQ(true, it8.next(&pt)) << "Iterator has a no next value";
     ASSERT_EQ("a p o.", pt.to_string(dict)) << "Element is incorrect";
@@ -1228,7 +1228,7 @@ TEST_F(PatchTreeTest, AdditionIteratorOtherIndexes) {
     /*
      * Looping over ? ? o additions in patch 6
      */
-    PatchTreeTripleIterator it9 = *patchTree->addition_iterator_from(0, 6, Triple("", "", "o", dict));
+    PatchTreeTripleIterator it9 = *patchTree->addition_iterator_from(0, 6, Triple("", "", "o", &dict));
 
     ASSERT_EQ(true, it9.next(&pt)) << "Iterator has a no next value";
     ASSERT_EQ("a p o.", pt.to_string(dict)) << "Element is incorrect";
@@ -1244,7 +1244,7 @@ TEST_F(PatchTreeTest, AdditionIteratorOtherIndexes) {
     /*
      * Looping over ? p ? additions in patch 6
      */
-    PatchTreeTripleIterator it10 = *patchTree->addition_iterator_from(0, 6, Triple("", "p", "", dict));
+    PatchTreeTripleIterator it10 = *patchTree->addition_iterator_from(0, 6, Triple("", "p", "", &dict));
 
     ASSERT_EQ(true, it10.next(&pt)) << "Iterator has a no next value";
     ASSERT_EQ("a p o.", pt.to_string(dict)) << "Element is incorrect";

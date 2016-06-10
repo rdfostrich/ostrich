@@ -22,7 +22,7 @@ TripleIterator* Controller::get(const Triple& triple_pattern, int offset, int pa
     if(snapshot_id == patch_id) {
         return new SnapshotTripleIterator(snapshot_it);
     }
-    Dictionary* dict = get_snapshot_manager()->get_dictionary(snapshot_id);
+    DictionaryManager* dict = get_snapshot_manager()->get_dictionary_manager(snapshot_id);
 
     // Otherwise, we have to prepare an iterator for a certain patch
     PatchTree* patchTree = get_patch_tree_manager()->get_patch_tree(patch_id, dict);
@@ -97,10 +97,8 @@ TripleIterator* Controller::get(const Triple& triple_pattern, int offset, int pa
     return new SnapshotPatchIteratorTripleID(snapshot_it, deletion_it, addition_it, patchTree->get_spo_comparator());
 }
 
-bool Controller::append(const Patch& patch, int patch_id) {
+bool Controller::append(const Patch& patch, int patch_id, DictionaryManager* dict) {
     // TODO: this will require some changes when we implement automatic snapshot creation.
-    int snapshot_id = get_snapshot_manager()->get_latest_snapshot(patch_id);
-    Dictionary* dict = get_snapshot_manager()->get_dictionary(snapshot_id);
     return get_patch_tree_manager()->append(patch, patch_id, dict);
 }
 
@@ -110,4 +108,12 @@ PatchTreeManager* Controller::get_patch_tree_manager() const {
 
 SnapshotManager* Controller::get_snapshot_manager() const {
     return snapshotManager;
+}
+
+DictionaryManager *Controller::get_dictionary_manager(int patch_id) const {
+    int snapshot_id = get_snapshot_manager()->get_latest_snapshot(patch_id);
+    if(snapshot_id < 0) {
+        throw std::invalid_argument("No snapshot has been created yet.");
+    }
+    return get_snapshot_manager()->get_dictionary_manager(snapshot_id);
 }

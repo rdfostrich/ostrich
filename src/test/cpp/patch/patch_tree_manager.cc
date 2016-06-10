@@ -88,16 +88,16 @@ TEST_F(PatchTreeManagerTest, GetPatchTreeId) {
 
 TEST_F(PatchTreeManagerTest, AppendPatch) {
     Patch patch1(&dict);
-    patch1.add(PatchElement(Triple("s1", "p1", "o1", dict), true));
-    patch1.add(PatchElement(Triple("s2", "p2", "o2", dict), false));
-    patch1.add(PatchElement(Triple("s3", "p3", "o3", dict), false));
-    patch1.add(PatchElement(Triple("s4", "p4", "o4", dict), true));
+    patch1.add(PatchElement(Triple("s1", "p1", "o1", &dict), true));
+    patch1.add(PatchElement(Triple("s2", "p2", "o2", &dict), false));
+    patch1.add(PatchElement(Triple("s3", "p3", "o3", &dict), false));
+    patch1.add(PatchElement(Triple("s4", "p4", "o4", &dict), true));
     
     Patch patch2(&dict);
-    patch2.add(PatchElement(Triple("s1", "p1", "o1", dict), true));
+    patch2.add(PatchElement(Triple("s1", "p1", "o1", &dict), true));
     
     Patch patch3(&dict);
-    patch3.add(PatchElement(Triple("a", "b", "c", dict), true));
+    patch3.add(PatchElement(Triple("a", "b", "c", &dict), true));
     
     ASSERT_EQ(true, patchTreeManager.append(patch1, 0, &dict));
     ASSERT_EQ(false, patchTreeManager.append(patch1, 0, &dict)) << "Append shouldn't allow for double appends";
@@ -107,16 +107,16 @@ TEST_F(PatchTreeManagerTest, AppendPatch) {
 
 TEST_F(PatchTreeManagerTest, GetPatch) {
     Patch patch1(&dict);
-    patch1.add(PatchElement(Triple("s1", "p1", "o1", dict), true));
-    patch1.add(PatchElement(Triple("s2", "p2", "o2", dict), false));
-    patch1.add(PatchElement(Triple("s3", "p3", "o3", dict), false));
-    patch1.add(PatchElement(Triple("s4", "p4", "o4", dict), true));
+    patch1.add(PatchElement(Triple("s1", "p1", "o1", &dict), true));
+    patch1.add(PatchElement(Triple("s2", "p2", "o2", &dict), false));
+    patch1.add(PatchElement(Triple("s3", "p3", "o3", &dict), false));
+    patch1.add(PatchElement(Triple("s4", "p4", "o4", &dict), true));
     
     Patch patch2(&dict);
-    patch2.add(PatchElement(Triple("a", "b", "c", dict), true));
+    patch2.add(PatchElement(Triple("a", "b", "c", &dict), true));
     
     Patch patch3(&dict);
-    patch3.add(PatchElement(Triple("s4", "p4", "o4", dict), false));
+    patch3.add(PatchElement(Triple("s4", "p4", "o4", &dict), false));
     
     patchTreeManager.append(patch1, 0, &dict);
     patchTreeManager.append(patch2, 1, &dict);

@@ -22,19 +22,21 @@ int main() {
   }
   VectorTripleIterator* it = new VectorTripleIterator(triples);
   controller.get_snapshot_manager()->create_snapshot(0, it, BASEURI);
+  DictionaryManager* dict = controller.get_dictionary_manager(0);
+  ModifiableDictionary* patchDict = dict->getPatchDict();
 
-  Patch patch1;
-  patch1.add(PatchElement(Triple("0", "0", "0"), false));
-  patch1.add(PatchElement(Triple("1", "1", "1"), false));
-  patch1.add(PatchElement(Triple("2", "2", "2"), false));
-  patch1.add(PatchElement(Triple("4", "4", "4"), false));
-  patch1.add(PatchElement(Triple("5", "5", "5"), false));
-  patch1.add(PatchElement(Triple("0", "6", "5"), false));
-  patch1.add(PatchElement(Triple("0", "6", "6"), false));
-  controller.append(patch1, 1);
+  Patch patch1(dict);
+  patch1.add(PatchElement(Triple("0", "0", "0", patchDict), false));
+  patch1.add(PatchElement(Triple("1", "1", "1", patchDict), false));
+  patch1.add(PatchElement(Triple("2", "2", "2", patchDict), false));
+  patch1.add(PatchElement(Triple("4", "4", "4", patchDict), false));
+  patch1.add(PatchElement(Triple("5", "5", "5", patchDict), false));
+  patch1.add(PatchElement(Triple("0", "6", "5", patchDict), false));
+  patch1.add(PatchElement(Triple("0", "6", "6", patchDict), false));
+  controller.append(patch1, 1, dict);
 
   // ----- TEST -----
-  TripleIterator* ti = controller.get(Triple("", "", ""), 0, 1);
+  TripleIterator* ti = controller.get(Triple("", "", "", patchDict), 0, 1);
   Triple t;
 
   ti->next(&t);

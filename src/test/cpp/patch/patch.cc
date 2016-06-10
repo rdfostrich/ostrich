@@ -18,24 +18,24 @@ protected:
 };
 
 TEST_F(PatchElementsTest, AddSingle) {
-    patchElements.add(PatchElement(Triple("s1", "p1", "o1", dict), true));
+    patchElements.add(PatchElement(Triple("s1", "p1", "o1", &dict), true));
 }
 
 TEST_F(PatchElementsTest, AddMultiple) {
-    patchElements.add(PatchElement(Triple("s1", "p1", "o1", dict), true));
-    patchElements.add(PatchElement(Triple("s2", "p2", "o2", dict), false));
-    patchElements.add(PatchElement(Triple("s3", "p3", "o3", dict), false));
-    patchElements.add(PatchElement(Triple("s4", "p4", "o4", dict), true));
+    patchElements.add(PatchElement(Triple("s1", "p1", "o1", &dict), true));
+    patchElements.add(PatchElement(Triple("s2", "p2", "o2", &dict), false));
+    patchElements.add(PatchElement(Triple("s3", "p3", "o3", &dict), false));
+    patchElements.add(PatchElement(Triple("s4", "p4", "o4", &dict), true));
 }
 
 TEST_F(PatchElementsTest, AddAll) {
     Patch patch2(&dict);
 
-    patchElements.add(PatchElement(Triple("s1", "p1", "o1", dict), true));
-    patchElements.add(PatchElement(Triple("s3", "p3", "o3", dict), false));
+    patchElements.add(PatchElement(Triple("s1", "p1", "o1", &dict), true));
+    patchElements.add(PatchElement(Triple("s3", "p3", "o3", &dict), false));
 
-    patch2.add(PatchElement(Triple("s2", "p2", "o2", dict), false));
-    patch2.add(PatchElement(Triple("s4", "p4", "o4", dict), true));
+    patch2.add(PatchElement(Triple("s2", "p2", "o2", &dict), false));
+    patch2.add(PatchElement(Triple("s4", "p4", "o4", &dict), true));
     patchElements.addAll(patch2);
 
     ASSERT_EQ("s1 p1 o1. (+)", patchElements.get(0).to_string(dict)) << "First element is incorrect";
@@ -47,11 +47,11 @@ TEST_F(PatchElementsTest, AddAll) {
 TEST_F(PatchElementsTest, AddAllOverlap) {
     Patch patch2(&dict);
 
-    patchElements.add(PatchElement(Triple("s1", "p1", "o1", dict), true));
-    patchElements.add(PatchElement(Triple("s3", "p3", "o3", dict), false));
+    patchElements.add(PatchElement(Triple("s1", "p1", "o1", &dict), true));
+    patchElements.add(PatchElement(Triple("s3", "p3", "o3", &dict), false));
 
-    patch2.add(PatchElement(Triple("s2", "p2", "o2", dict), false));
-    patch2.add(PatchElement(Triple("s1", "p1", "o1", dict), false));
+    patch2.add(PatchElement(Triple("s2", "p2", "o2", &dict), false));
+    patch2.add(PatchElement(Triple("s1", "p1", "o1", &dict), false));
     patchElements.addAll(patch2);
 
     ASSERT_EQ("s1 p1 o1. (-)", patchElements.get(0).to_string(dict)) << "First element is incorrect";
@@ -61,10 +61,10 @@ TEST_F(PatchElementsTest, AddAllOverlap) {
 }
 
 TEST_F(PatchElementsTest, ToString) {
-    patchElements.add(PatchElement(Triple("s1", "p1", "o1", dict), true));
-    patchElements.add(PatchElement(Triple("s2", "p2", "o2", dict), false));
-    patchElements.add(PatchElement(Triple("s3", "p3", "o3", dict), false));
-    patchElements.add(PatchElement(Triple("s4", "p4", "o4", dict), true));
+    patchElements.add(PatchElement(Triple("s1", "p1", "o1", &dict), true));
+    patchElements.add(PatchElement(Triple("s2", "p2", "o2", &dict), false));
+    patchElements.add(PatchElement(Triple("s3", "p3", "o3", &dict), false));
+    patchElements.add(PatchElement(Triple("s4", "p4", "o4", &dict), true));
 
     ASSERT_EQ("s1 p1 o1. (+)\n"
               "s2 p2 o2. (-)\n"
@@ -75,12 +75,12 @@ TEST_F(PatchElementsTest, ToString) {
 TEST_F(PatchElementsTest, GetSize) {
     ASSERT_EQ(0, patchElements.get_size()) << "Size of empty patch must be 0";
 
-    patchElements.add(PatchElement(Triple("s1", "p1", "o1", dict), true));
+    patchElements.add(PatchElement(Triple("s1", "p1", "o1", &dict), true));
     ASSERT_EQ(1, patchElements.get_size()) << "Size of patch with one element must be 1";
 
-    patchElements.add(PatchElement(Triple("s2", "p2", "o2", dict), false));
-    patchElements.add(PatchElement(Triple("s3", "p3", "o3", dict), false));
-    patchElements.add(PatchElement(Triple("s4", "p4", "o4", dict), true));
+    patchElements.add(PatchElement(Triple("s2", "p2", "o2", &dict), false));
+    patchElements.add(PatchElement(Triple("s3", "p3", "o3", &dict), false));
+    patchElements.add(PatchElement(Triple("s4", "p4", "o4", &dict), true));
     ASSERT_EQ(4, patchElements.get_size()) << "Size of patch with four elements must be 4";
 }
 
@@ -106,7 +106,7 @@ TEST_F(PatchElementsTest, GetInvalidEmpty) {
 }
 
 TEST_F(PatchElementsTest, GetInvalidNonEmpty) {
-    patchElements.add(PatchElement(Triple("s1", "p1", "o1", dict), true));
+    patchElements.add(PatchElement(Triple("s1", "p1", "o1", &dict), true));
     patchElements.get(0);
     try {
         patchElements.get(1);
@@ -123,7 +123,7 @@ TEST_F(PatchElementsTest, GetInvalidNonEmpty) {
 }
 
 TEST_F(PatchElementsTest, GetSingle) {
-    PatchElement patchElement1(Triple("s1", "p1", "o1", dict), true);
+    PatchElement patchElement1(Triple("s1", "p1", "o1", &dict), true);
     patchElements.add(patchElement1);
     PatchElement patchElement1Got = patchElements.get(0);
 
@@ -134,10 +134,10 @@ TEST_F(PatchElementsTest, GetSingle) {
 }
 
 TEST_F(PatchElementsTest, GetMultiple) {
-    PatchElement patchElement1(Triple("s1", "p1", "o1", dict), true);
-    PatchElement patchElement2(Triple("s2", "p2", "o2", dict), false);
-    PatchElement patchElement3(Triple("s3", "p3", "o3", dict), false);
-    PatchElement patchElement4(Triple("s4", "p4", "o4", dict), true);
+    PatchElement patchElement1(Triple("s1", "p1", "o1", &dict), true);
+    PatchElement patchElement2(Triple("s2", "p2", "o2", &dict), false);
+    PatchElement patchElement3(Triple("s3", "p3", "o3", &dict), false);
+    PatchElement patchElement4(Triple("s4", "p4", "o4", &dict), true);
     patchElements.add(patchElement1);
     patchElements.add(patchElement2);
     patchElements.add(patchElement3);
@@ -169,10 +169,10 @@ TEST_F(PatchElementsTest, GetMultiple) {
 }
 
 TEST_F(PatchElementsTest, Order1) {
-    patchElements.add(PatchElement(Triple("s3", "p3", "o3", dict), false));
-    patchElements.add(PatchElement(Triple("s1", "p1", "o1", dict), false));
-    patchElements.add(PatchElement(Triple("s4", "p4", "o4", dict), true));
-    patchElements.add(PatchElement(Triple("s2", "p2", "o2", dict), true));
+    patchElements.add(PatchElement(Triple("s3", "p3", "o3", &dict), false));
+    patchElements.add(PatchElement(Triple("s1", "p1", "o1", &dict), false));
+    patchElements.add(PatchElement(Triple("s4", "p4", "o4", &dict), true));
+    patchElements.add(PatchElement(Triple("s2", "p2", "o2", &dict), true));
 
     ASSERT_EQ("s1 p1 o1. (-)", patchElements.get(0).to_string(dict)) << "First element is incorrect";
     ASSERT_EQ("s2 p2 o2. (+)", patchElements.get(1).to_string(dict)) << "Second element is incorrect";
@@ -181,10 +181,10 @@ TEST_F(PatchElementsTest, Order1) {
 }
 
 TEST_F(PatchElementsTest, Order2) {
-    patchElements.add(PatchElement(Triple("s4", "p4", "o4", dict), true));
-    patchElements.add(PatchElement(Triple("s3", "p3", "o3", dict), false));
-    patchElements.add(PatchElement(Triple("s2", "p2", "o2", dict), true));
-    patchElements.add(PatchElement(Triple("s1", "p1", "o1", dict), false));
+    patchElements.add(PatchElement(Triple("s4", "p4", "o4", &dict), true));
+    patchElements.add(PatchElement(Triple("s3", "p3", "o3", &dict), false));
+    patchElements.add(PatchElement(Triple("s2", "p2", "o2", &dict), true));
+    patchElements.add(PatchElement(Triple("s1", "p1", "o1", &dict), false));
 
     ASSERT_EQ("s1 p1 o1. (-)", patchElements.get(0).to_string(dict)) << "First element is incorrect";
     ASSERT_EQ("s2 p2 o2. (+)", patchElements.get(1).to_string(dict)) << "Second element is incorrect";
@@ -193,10 +193,10 @@ TEST_F(PatchElementsTest, Order2) {
 }
 
 TEST_F(PatchElementsTest, Order3) {
-    patchElements.add(PatchElement(Triple("q", "p", "o", dict), false));
-    patchElements.add(PatchElement(Triple("g", "p", "o", dict), true));
-    patchElements.add(PatchElement(Triple("s", "z", "o", dict), false));
-    patchElements.add(PatchElement(Triple("s", "a", "o", dict), true));
+    patchElements.add(PatchElement(Triple("q", "p", "o", &dict), false));
+    patchElements.add(PatchElement(Triple("g", "p", "o", &dict), true));
+    patchElements.add(PatchElement(Triple("s", "z", "o", &dict), false));
+    patchElements.add(PatchElement(Triple("s", "a", "o", &dict), true));
 
     ASSERT_EQ("g p o. (+)", patchElements.get(0).to_string(dict)) << "First element is incorrect";
     ASSERT_EQ("q p o. (-)", patchElements.get(1).to_string(dict)) << "Second element is incorrect";
@@ -205,10 +205,10 @@ TEST_F(PatchElementsTest, Order3) {
 }
 
 TEST_F(PatchElementsTest, Order4) {
-    patchElements.add(PatchElement(Triple("s", "z", "o", dict), false));
-    patchElements.add(PatchElement(Triple("g", "p", "o", dict), true));
-    patchElements.add(PatchElement(Triple("q", "p", "o", dict), false));
-    patchElements.add(PatchElement(Triple("s", "a", "o", dict), true));
+    patchElements.add(PatchElement(Triple("s", "z", "o", &dict), false));
+    patchElements.add(PatchElement(Triple("g", "p", "o", &dict), true));
+    patchElements.add(PatchElement(Triple("q", "p", "o", &dict), false));
+    patchElements.add(PatchElement(Triple("s", "a", "o", &dict), true));
 
     ASSERT_EQ("g p o. (+)", patchElements.get(0).to_string(dict)) << "First element is incorrect";
     ASSERT_EQ("q p o. (-)", patchElements.get(1).to_string(dict)) << "Second element is incorrect";
@@ -217,22 +217,22 @@ TEST_F(PatchElementsTest, Order4) {
 }
 
 TEST_F(PatchElementsTest, PositionPresent) {
-    patchElements.add(PatchElement(Triple("s", "z", "o", dict), false));
-    patchElements.add(PatchElement(Triple("g", "p", "o", dict), true));
-    patchElements.add(PatchElement(Triple("q", "p", "o", dict), false));
-    patchElements.add(PatchElement(Triple("s", "a", "o", dict), true));
+    patchElements.add(PatchElement(Triple("s", "z", "o", &dict), false));
+    patchElements.add(PatchElement(Triple("g", "p", "o", &dict), true));
+    patchElements.add(PatchElement(Triple("q", "p", "o", &dict), false));
+    patchElements.add(PatchElement(Triple("s", "a", "o", &dict), true));
 
-    ASSERT_EQ(0, patchElements.position_of(PatchElement(Triple("g", "p", "o", dict), true ))) << "Found position is wrong";
-    ASSERT_EQ(1, patchElements.position_of(PatchElement(Triple("q", "p", "o", dict), false))) << "Found position is wrong";
-    ASSERT_EQ(2, patchElements.position_of(PatchElement(Triple("s", "a", "o", dict), true ))) << "Found position is wrong";
-    ASSERT_EQ(3, patchElements.position_of(PatchElement(Triple("s", "z", "o", dict), false))) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of(PatchElement(Triple("g", "p", "o", &dict), true ))) << "Found position is wrong";
+    ASSERT_EQ(1, patchElements.position_of(PatchElement(Triple("q", "p", "o", &dict), false))) << "Found position is wrong";
+    ASSERT_EQ(2, patchElements.position_of(PatchElement(Triple("s", "a", "o", &dict), true ))) << "Found position is wrong";
+    ASSERT_EQ(3, patchElements.position_of(PatchElement(Triple("s", "z", "o", &dict), false))) << "Found position is wrong";
 }
 
 TEST_F(PatchElementsTest, Positions) {
-    PatchElement e_0 = PatchElement(Triple("s", "z", "o", dict), false);
-    PatchElement e_1 = PatchElement(Triple("g", "p", "o", dict), true);
-    PatchElement e_2 = PatchElement(Triple("q", "p", "o", dict), false);
-    PatchElement e_3 = PatchElement(Triple("s", "a", "o", dict), true);
+    PatchElement e_0 = PatchElement(Triple("s", "z", "o", &dict), false);
+    PatchElement e_1 = PatchElement(Triple("g", "p", "o", &dict), true);
+    PatchElement e_2 = PatchElement(Triple("q", "p", "o", &dict), false);
+    PatchElement e_3 = PatchElement(Triple("s", "a", "o", &dict), true);
 
     patchElements.add(e_0);
     patchElements.add(e_1);
@@ -296,150 +296,150 @@ TEST_F(PatchElementsTest, Positions) {
 }
 
 TEST_F(PatchElementsTest, PositionPattern) {
-    patchElements.add(PatchElement(Triple("s", "z", "o", dict), false));
-    patchElements.add(PatchElement(Triple("g", "p", "o", dict), true));
-    patchElements.add(PatchElement(Triple("q", "p", "o", dict), false));
-    patchElements.add(PatchElement(Triple("s", "a", "o", dict), true));
+    patchElements.add(PatchElement(Triple("s", "z", "o", &dict), false));
+    patchElements.add(PatchElement(Triple("g", "p", "o", &dict), true));
+    patchElements.add(PatchElement(Triple("q", "p", "o", &dict), false));
+    patchElements.add(PatchElement(Triple("s", "a", "o", &dict), true));
     // Expected order:
     // g p o +
     // q p o -
     // s a o +
     // s z o -
 
-    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", dict), true ), false, false, false, false)) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", dict), true ), false, false, false, true)) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", dict), true ), false, false, true, false)) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", dict), true ), false, false, true, true)) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", dict), true ), false, true, false, false)) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", dict), true ), false, true, false, true)) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", dict), true ), false, true, true, false)) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", dict), true ), false, true, true, true)) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", dict), true ), true, false, false, false)) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", dict), true ), true, false, false, true)) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", dict), true ), true, false, true, false)) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", dict), true ), true, false, true, true)) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", dict), true ), true, true, false, false)) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", dict), true ), true, true, false, true)) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", dict), true ), true, true, true, false)) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", dict), true ), true, true, true, true)) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", &dict), true ), false, false, false, false)) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", &dict), true ), false, false, false, true)) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", &dict), true ), false, false, true, false)) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", &dict), true ), false, false, true, true)) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", &dict), true ), false, true, false, false)) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", &dict), true ), false, true, false, true)) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", &dict), true ), false, true, true, false)) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", &dict), true ), false, true, true, true)) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", &dict), true ), true, false, false, false)) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", &dict), true ), true, false, false, true)) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", &dict), true ), true, false, true, false)) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", &dict), true ), true, false, true, true)) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", &dict), true ), true, true, false, false)) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", &dict), true ), true, true, false, true)) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", &dict), true ), true, true, true, false)) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", &dict), true ), true, true, true, true)) << "Found position is wrong";
 
-    ASSERT_EQ(2, patchElements.position_of_pattern(PatchElement(Triple("s", "a", "o", dict), true ), false, false, false, false)) << "Found position is wrong";
-    ASSERT_EQ(1, patchElements.position_of_pattern(PatchElement(Triple("s", "a", "o", dict), true ), false, false, false, true)) << "Found position is wrong";
-    ASSERT_EQ(2, patchElements.position_of_pattern(PatchElement(Triple("s", "a", "o", dict), true ), false, false, true, false)) << "Found position is wrong";
-    ASSERT_EQ(1, patchElements.position_of_pattern(PatchElement(Triple("s", "a", "o", dict), true ), false, false, true, true)) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "a", "o", dict), true ), false, true, false, false)) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "a", "o", dict), true ), false, true, false, true)) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "a", "o", dict), true ), false, true, true, false)) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "a", "o", dict), true ), false, true, true, true)) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "a", "o", dict), true ), true, false, false, false)) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "a", "o", dict), true ), true, false, false, true)) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "a", "o", dict), true ), true, false, true, false)) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "a", "o", dict), true ), true, false, true, true)) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "a", "o", dict), true ), true, true, false, false)) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "a", "o", dict), true ), true, true, false, true)) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "a", "o", dict), true ), true, true, true, false)) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "a", "o", dict), true ), true, true, true, true)) << "Found position is wrong";
+    ASSERT_EQ(2, patchElements.position_of_pattern(PatchElement(Triple("s", "a", "o", &dict), true ), false, false, false, false)) << "Found position is wrong";
+    ASSERT_EQ(1, patchElements.position_of_pattern(PatchElement(Triple("s", "a", "o", &dict), true ), false, false, false, true)) << "Found position is wrong";
+    ASSERT_EQ(2, patchElements.position_of_pattern(PatchElement(Triple("s", "a", "o", &dict), true ), false, false, true, false)) << "Found position is wrong";
+    ASSERT_EQ(1, patchElements.position_of_pattern(PatchElement(Triple("s", "a", "o", &dict), true ), false, false, true, true)) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "a", "o", &dict), true ), false, true, false, false)) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "a", "o", &dict), true ), false, true, false, true)) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "a", "o", &dict), true ), false, true, true, false)) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "a", "o", &dict), true ), false, true, true, true)) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "a", "o", &dict), true ), true, false, false, false)) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "a", "o", &dict), true ), true, false, false, true)) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "a", "o", &dict), true ), true, false, true, false)) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "a", "o", &dict), true ), true, false, true, true)) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "a", "o", &dict), true ), true, true, false, false)) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "a", "o", &dict), true ), true, true, false, true)) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "a", "o", &dict), true ), true, true, true, false)) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "a", "o", &dict), true ), true, true, true, true)) << "Found position is wrong";
 
-    ASSERT_EQ(3, patchElements.position_of_pattern(PatchElement(Triple("s", "z", "o", dict), false), false, false, false, false)) << "Found position is wrong";
-    ASSERT_EQ(1, patchElements.position_of_pattern(PatchElement(Triple("s", "z", "o", dict), false), false, false, false, true)) << "Found position is wrong";
-    ASSERT_EQ(3, patchElements.position_of_pattern(PatchElement(Triple("s", "z", "o", dict), false), false, false, true, false)) << "Found position is wrong";
-    ASSERT_EQ(1, patchElements.position_of_pattern(PatchElement(Triple("s", "z", "o", dict), false), false, false, true, true)) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "z", "o", dict), false), false, true, false, false)) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "z", "o", dict), false), false, true, false, true)) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "z", "o", dict), false), false, true, true, false)) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "z", "o", dict), false), false, true, true, true)) << "Found position is wrong";
-    ASSERT_EQ(1, patchElements.position_of_pattern(PatchElement(Triple("s", "z", "o", dict), false), true, false, false, false)) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "z", "o", dict), false), true, false, false, true)) << "Found position is wrong";
-    ASSERT_EQ(1, patchElements.position_of_pattern(PatchElement(Triple("s", "z", "o", dict), false), true, false, true, false)) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "z", "o", dict), false), true, false, true, true)) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "z", "o", dict), false), true, true, false, false)) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "z", "o", dict), false), true, true, false, true)) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "z", "o", dict), false), true, true, true, false)) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "z", "o", dict), false), true, true, true, true)) << "Found position is wrong";
+    ASSERT_EQ(3, patchElements.position_of_pattern(PatchElement(Triple("s", "z", "o", &dict), false), false, false, false, false)) << "Found position is wrong";
+    ASSERT_EQ(1, patchElements.position_of_pattern(PatchElement(Triple("s", "z", "o", &dict), false), false, false, false, true)) << "Found position is wrong";
+    ASSERT_EQ(3, patchElements.position_of_pattern(PatchElement(Triple("s", "z", "o", &dict), false), false, false, true, false)) << "Found position is wrong";
+    ASSERT_EQ(1, patchElements.position_of_pattern(PatchElement(Triple("s", "z", "o", &dict), false), false, false, true, true)) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "z", "o", &dict), false), false, true, false, false)) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "z", "o", &dict), false), false, true, false, true)) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "z", "o", &dict), false), false, true, true, false)) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "z", "o", &dict), false), false, true, true, true)) << "Found position is wrong";
+    ASSERT_EQ(1, patchElements.position_of_pattern(PatchElement(Triple("s", "z", "o", &dict), false), true, false, false, false)) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "z", "o", &dict), false), true, false, false, true)) << "Found position is wrong";
+    ASSERT_EQ(1, patchElements.position_of_pattern(PatchElement(Triple("s", "z", "o", &dict), false), true, false, true, false)) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "z", "o", &dict), false), true, false, true, true)) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "z", "o", &dict), false), true, true, false, false)) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "z", "o", &dict), false), true, true, false, true)) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "z", "o", &dict), false), true, true, true, false)) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of_pattern(PatchElement(Triple("s", "z", "o", &dict), false), true, true, true, true)) << "Found position is wrong";
 
-    ASSERT_EQ(0,  patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", dict), false), false, false, false, false)) << "Found position is wrong";
-    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", dict), false), false, false, false, true)) << "Found position is wrong";
-    ASSERT_EQ(0,  patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", dict), false), false, false, true, false)) << "Found position is wrong";
-    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", dict), false), false, false, true, true)) << "Found position is wrong";
-    ASSERT_EQ(0,  patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", dict), false), false, true, false, false)) << "Found position is wrong";
-    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", dict), false), false, true, false, true)) << "Found position is wrong";
-    ASSERT_EQ(0,  patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", dict), false), false, true, true, false)) << "Found position is wrong";
-    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", dict), false), false, true, true, true)) << "Found position is wrong";
-    ASSERT_EQ(0,  patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", dict), false), true, false, false, false)) << "Found position is wrong";
-    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", dict), false), true, false, false, true)) << "Found position is wrong";
-    ASSERT_EQ(0,  patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", dict), false), true, false, true, false)) << "Found position is wrong";
-    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", dict), false), true, false, true, true)) << "Found position is wrong";
-    ASSERT_EQ(0,  patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", dict), false), true, true, false, false)) << "Found position is wrong";
-    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", dict), false), true, true, false, true)) << "Found position is wrong";
-    ASSERT_EQ(0,  patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", dict), false), true, true, true, false)) << "Found position is wrong";
-    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", dict), false), true, true, true, true)) << "Found position is wrong";
+    ASSERT_EQ(0,  patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", &dict), false), false, false, false, false)) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", &dict), false), false, false, false, true)) << "Found position is wrong";
+    ASSERT_EQ(0,  patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", &dict), false), false, false, true, false)) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", &dict), false), false, false, true, true)) << "Found position is wrong";
+    ASSERT_EQ(0,  patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", &dict), false), false, true, false, false)) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", &dict), false), false, true, false, true)) << "Found position is wrong";
+    ASSERT_EQ(0,  patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", &dict), false), false, true, true, false)) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", &dict), false), false, true, true, true)) << "Found position is wrong";
+    ASSERT_EQ(0,  patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", &dict), false), true, false, false, false)) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", &dict), false), true, false, false, true)) << "Found position is wrong";
+    ASSERT_EQ(0,  patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", &dict), false), true, false, true, false)) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", &dict), false), true, false, true, true)) << "Found position is wrong";
+    ASSERT_EQ(0,  patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", &dict), false), true, true, false, false)) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", &dict), false), true, true, false, true)) << "Found position is wrong";
+    ASSERT_EQ(0,  patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", &dict), false), true, true, true, false)) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("g", "p", "o", &dict), false), true, true, true, true)) << "Found position is wrong";
 
-    ASSERT_EQ(0,  patchElements.position_of_pattern(PatchElement(Triple("a", "a", "a", dict), false), false, false, false, false)) << "Found position is wrong";
-    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("a", "a", "a", dict), false), false, false, false, true)) << "Found position is wrong";
-    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("a", "a", "a", dict), false), false, false, true, false)) << "Found position is wrong";
-    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("a", "a", "a", dict), false), false, false, true, true)) << "Found position is wrong";
-    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("a", "a", "a", dict), false), false, true, false, false)) << "Found position is wrong";
-    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("a", "a", "a", dict), false), false, true, false, true)) << "Found position is wrong";
-    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("a", "a", "a", dict), false), false, true, true, false)) << "Found position is wrong";
-    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("a", "a", "a", dict), false), false, true, true, true)) << "Found position is wrong";
-    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("a", "a", "a", dict), false), true, false, false, false)) << "Found position is wrong";
-    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("a", "a", "a", dict), false), true, false, false, true)) << "Found position is wrong";
-    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("a", "a", "a", dict), false), true, false, true, false)) << "Found position is wrong";
-    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("a", "a", "a", dict), false), true, false, true, true)) << "Found position is wrong";
-    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("a", "a", "a", dict), false), true, true, false, false)) << "Found position is wrong";
-    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("a", "a", "a", dict), false), true, true, false, true)) << "Found position is wrong";
-    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("a", "a", "a", dict), false), true, true, true, false)) << "Found position is wrong";
-    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("a", "a", "a", dict), false), true, true, true, true)) << "Found position is wrong";
+    ASSERT_EQ(0,  patchElements.position_of_pattern(PatchElement(Triple("a", "a", "a", &dict), false), false, false, false, false)) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("a", "a", "a", &dict), false), false, false, false, true)) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("a", "a", "a", &dict), false), false, false, true, false)) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("a", "a", "a", &dict), false), false, false, true, true)) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("a", "a", "a", &dict), false), false, true, false, false)) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("a", "a", "a", &dict), false), false, true, false, true)) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("a", "a", "a", &dict), false), false, true, true, false)) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("a", "a", "a", &dict), false), false, true, true, true)) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("a", "a", "a", &dict), false), true, false, false, false)) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("a", "a", "a", &dict), false), true, false, false, true)) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("a", "a", "a", &dict), false), true, false, true, false)) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("a", "a", "a", &dict), false), true, false, true, true)) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("a", "a", "a", &dict), false), true, true, false, false)) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("a", "a", "a", &dict), false), true, true, false, true)) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("a", "a", "a", &dict), false), true, true, true, false)) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.position_of_pattern(PatchElement(Triple("a", "a", "a", &dict), false), true, true, true, true)) << "Found position is wrong";
 }
 
 TEST_F(PatchElementsTest, PositionNotPresent) {
-    patchElements.add(PatchElement(Triple("s", "z", "o", dict), false));
-    patchElements.add(PatchElement(Triple("g", "p", "o", dict), true));
-    patchElements.add(PatchElement(Triple("q", "p", "o", dict), false));
-    patchElements.add(PatchElement(Triple("s", "a", "o", dict), true));
+    patchElements.add(PatchElement(Triple("s", "z", "o", &dict), false));
+    patchElements.add(PatchElement(Triple("g", "p", "o", &dict), true));
+    patchElements.add(PatchElement(Triple("q", "p", "o", &dict), false));
+    patchElements.add(PatchElement(Triple("s", "a", "o", &dict), true));
 
-    ASSERT_EQ(0, patchElements.position_of(PatchElement(Triple("g", "p", "o", dict), false))) << "Found position is wrong";
-    ASSERT_EQ(2, patchElements.position_of(PatchElement(Triple("q", "p", "o", dict), true ))) << "Found position is wrong";
-    ASSERT_EQ(0, patchElements.position_of(PatchElement(Triple("a", "a", "a", dict), true ))) << "Found position is wrong";
-    ASSERT_EQ(4, patchElements.position_of(PatchElement(Triple("s", "z", "z", dict), false))) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of(PatchElement(Triple("g", "p", "o", &dict), false))) << "Found position is wrong";
+    ASSERT_EQ(2, patchElements.position_of(PatchElement(Triple("q", "p", "o", &dict), true ))) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of(PatchElement(Triple("a", "a", "a", &dict), true ))) << "Found position is wrong";
+    ASSERT_EQ(4, patchElements.position_of(PatchElement(Triple("s", "z", "z", &dict), false))) << "Found position is wrong";
 }
 
 TEST_F(PatchElementsTest, PositionStrict) {
-    patchElements.add(PatchElement(Triple("s", "z", "o", dict), false));
-    patchElements.add(PatchElement(Triple("g", "p", "o", dict), true));
-    patchElements.add(PatchElement(Triple("q", "p", "o", dict), false));
-    patchElements.add(PatchElement(Triple("s", "a", "o", dict), true));
+    patchElements.add(PatchElement(Triple("s", "z", "o", &dict), false));
+    patchElements.add(PatchElement(Triple("g", "p", "o", &dict), true));
+    patchElements.add(PatchElement(Triple("q", "p", "o", &dict), false));
+    patchElements.add(PatchElement(Triple("s", "a", "o", &dict), true));
 
-    ASSERT_EQ(0, patchElements.position_of_strict(PatchElement(Triple("g", "p", "o", dict), true ))) << "Found position is wrong";
-    ASSERT_EQ(1, patchElements.position_of_strict(PatchElement(Triple("q", "p", "o", dict), false))) << "Found position is wrong";
-    ASSERT_EQ(2, patchElements.position_of_strict(PatchElement(Triple("s", "a", "o", dict), true ))) << "Found position is wrong";
-    ASSERT_EQ(3, patchElements.position_of_strict(PatchElement(Triple("s", "z", "o", dict), false))) << "Found position is wrong";
+    ASSERT_EQ(0, patchElements.position_of_strict(PatchElement(Triple("g", "p", "o", &dict), true ))) << "Found position is wrong";
+    ASSERT_EQ(1, patchElements.position_of_strict(PatchElement(Triple("q", "p", "o", &dict), false))) << "Found position is wrong";
+    ASSERT_EQ(2, patchElements.position_of_strict(PatchElement(Triple("s", "a", "o", &dict), true ))) << "Found position is wrong";
+    ASSERT_EQ(3, patchElements.position_of_strict(PatchElement(Triple("s", "z", "o", &dict), false))) << "Found position is wrong";
 
-    ASSERT_EQ(-1, patchElements.position_of_strict(PatchElement(Triple("g", "p", "o", dict), false))) << "Found position is wrong";
-    ASSERT_EQ(-1, patchElements.position_of_strict(PatchElement(Triple("a", "a", "a", dict), false))) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.position_of_strict(PatchElement(Triple("g", "p", "o", &dict), false))) << "Found position is wrong";
+    ASSERT_EQ(-1, patchElements.position_of_strict(PatchElement(Triple("a", "a", "a", &dict), false))) << "Found position is wrong";
 }
 
 TEST_F(PatchElementsTest, ApplyLocalChanges) {
     Patch p1(&dict);
-    p1.add(PatchElement(Triple("a", "a", "a", dict), false));
+    p1.add(PatchElement(Triple("a", "a", "a", &dict), false));
     ASSERT_EQ("a a a. (-)\n", p1.apply_local_changes().to_string(dict));
 
     Patch p2(&dict);
-    p2.add(PatchElement(Triple("a", "a", "a", dict), false));
-    p2.add(PatchElement(Triple("a", "a", "a", dict), true));
+    p2.add(PatchElement(Triple("a", "a", "a", &dict), false));
+    p2.add(PatchElement(Triple("a", "a", "a", &dict), true));
     ASSERT_EQ("a a a. (+) L\n", p2.apply_local_changes().to_string(dict));
 
     Patch p3(&dict);
-    PatchElement p3e = PatchElement(Triple("a", "a", "a", dict), false);
+    PatchElement p3e = PatchElement(Triple("a", "a", "a", &dict), false);
     p3e.set_local_change(true);
     p3.add(p3e);
-    p3.add(PatchElement(Triple("a", "a", "a", dict), true));
+    p3.add(PatchElement(Triple("a", "a", "a", &dict), true));
     ASSERT_EQ("a a a. (+)\n", p3.apply_local_changes().to_string(dict));
 
     Patch p4(&dict);
-    PatchElement p4e = PatchElement(Triple("a", "a", "a", dict), true);
+    PatchElement p4e = PatchElement(Triple("a", "a", "a", &dict), true);
     p4e.set_local_change(true);
     p4.add(p4e);
-    p4.add(PatchElement(Triple("a", "a", "a", dict), false));
+    p4.add(PatchElement(Triple("a", "a", "a", &dict), false));
     ASSERT_EQ("a a a. (-)\n", p4.apply_local_changes().to_string(dict));
 }

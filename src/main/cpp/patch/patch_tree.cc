@@ -8,7 +8,7 @@
 using namespace std;
 using namespace kyotocabinet;
 
-PatchTree::PatchTree(string file_name, Dictionary* dict) {
+PatchTree::PatchTree(string file_name, DictionaryManager* dict) {
     tripleStore = new TripleStore(file_name, dict);
 };
 

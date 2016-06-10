@@ -26,7 +26,7 @@ protected:
     void open(TreeDB* db, string name);
     void close(TreeDB* db, string name);
 public:
-    TripleStore(string base_file_name, Dictionary* dict);
+    TripleStore(string base_file_name, DictionaryManager* dict);
     ~TripleStore();
     TreeDB* getTree(Triple triple_pattern);
     bool isDefaultTree(Triple triple_pattern);
@@ -40,6 +40,10 @@ public:
      * @return The comparator for this patch tree in SPO order.
      */
     PatchElementComparator* get_element_comparator() const;
+    /**
+     * @return The dictionary manager.
+     */
+    DictionaryManager* get_dict_manager() const;
 };
 
 

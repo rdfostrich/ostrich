@@ -15,7 +15,7 @@ PatchTreeManager::~PatchTreeManager() {
     }
 }
 
-bool PatchTreeManager::append(const Patch& patch, int patch_id, Dictionary* dict) {
+bool PatchTreeManager::append(const Patch& patch, int patch_id, DictionaryManager* dict) {
     int patchtree_id = get_patch_tree_id(patch_id);
     PatchTree* patchtree;
     if(patchtree_id < 0) {
@@ -53,12 +53,12 @@ const std::map<int, PatchTree*>& PatchTreeManager::get_patch_trees() const {
     return this->loaded_patches;
 }
 
-PatchTree* PatchTreeManager::load_patch_tree(int patch_id_start, Dictionary* dict) {
+PatchTree* PatchTreeManager::load_patch_tree(int patch_id_start, DictionaryManager* dict) {
     // TODO: We might want to look into unloading patch trees if they aren't used for a while. (using splay-tree/queue?)
     return loaded_patches[patch_id_start] = new PatchTree(PATCHTREE_FILENAME_BASE(patch_id_start), dict);
 }
 
-PatchTree* PatchTreeManager::get_patch_tree(int patch_id_start, Dictionary* dict) {
+PatchTree* PatchTreeManager::get_patch_tree(int patch_id_start, DictionaryManager* dict) {
     if(patch_id_start < 0) {
         return NULL;
     }
@@ -76,7 +76,7 @@ PatchTree* PatchTreeManager::get_patch_tree(int patch_id_start, Dictionary* dict
     return it->second;
 }
 
-PatchTree* PatchTreeManager::construct_next_patch_tree(int patch_id_start, Dictionary* dict) {
+PatchTree* PatchTreeManager::construct_next_patch_tree(int patch_id_start, DictionaryManager* dict) {
     return load_patch_tree(patch_id_start, dict);
 }
 
@@ -93,7 +93,7 @@ int PatchTreeManager::get_patch_tree_id(int patch_id) const {
     return it->first;
 }
 
-Patch PatchTreeManager::get_patch(int patch_id, Dictionary* dict) {
+Patch PatchTreeManager::get_patch(int patch_id, DictionaryManager* dict) {
     int patchtree_id = get_patch_tree_id(patch_id);
     if(patchtree_id < 0) {
         return Patch(dict);

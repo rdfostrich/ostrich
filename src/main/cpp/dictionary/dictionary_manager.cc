@@ -87,6 +87,14 @@ unsigned int DictionaryManager::insert(std::string &str,
   return id;
 }
 
+Dictionary* DictionaryManager::getHdtDict() const {
+  return hdtDict;
+}
+
+ModifiableDictionary* DictionaryManager::getPatchDict() const {
+  return patchDict;
+}
+
 size_t DictionaryManager::getNumberOfElements() {
   return hdtDict->getNumberOfElements() + patchDict->getNumberOfElements();
 }

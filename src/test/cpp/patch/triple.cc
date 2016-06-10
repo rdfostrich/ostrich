@@ -12,7 +12,7 @@ TEST(TripleTest, FieldsRaw) {
 
 TEST(TripleTest, Fields) {
     DictionaryManager dict;
-    Triple triple("s1", "p1", "o1", dict);
+    Triple triple("s1", "p1", "o1", &dict);
     ASSERT_EQ("s1", triple.get_subject(dict)) << "Subject is not saved correctly";
     ASSERT_EQ("p1", triple.get_predicate(dict)) << "Predicate is not saved correctly";
     ASSERT_EQ("o1", triple.get_object(dict)) << "Object is not saved correctly";
@@ -25,7 +25,7 @@ TEST(TripleTest, ToStringRaw) {
 
 TEST(TripleTest, ToString) {
     DictionaryManager dict;
-    Triple triple("s1", "p1", "o1", dict);
+    Triple triple("s1", "p1", "o1", &dict);
     ASSERT_EQ("s1 p1 o1.", triple.to_string(dict)) << "to_string is incorrect";
 }
 
@@ -46,7 +46,7 @@ TEST(TripleTest, SerializationRaw) {
 
 TEST(TripleTest, Serialization) {
     DictionaryManager dict;
-    Triple tripleIn("s1", "p1", "o1", dict);
+    Triple tripleIn("s1", "p1", "o1", &dict);
 
     // Serialize
     size_t size;
@@ -62,7 +62,7 @@ TEST(TripleTest, Serialization) {
 
 TEST(TripleTest, SerializationLong) {
     DictionaryManager dict;
-    Triple tripleIn("abc:yioknbvfty", "def:qspdojhbgy", "ghi:pjhgfdrtyuiolk,nbvfyukl:;,n,;lkijhg", dict);
+    Triple tripleIn("abc:yioknbvfty", "def:qspdojhbgy", "ghi:pjhgfdrtyuiolk,nbvfyukl:;,n,;lkijhg", &dict);
 
     // Serialize
     size_t size;
@@ -78,7 +78,7 @@ TEST(TripleTest, SerializationLong) {
 
 TEST(TripleTest, SerializationSize) {
     DictionaryManager dict;
-    Triple tripleIn("s1", "p1", "o1", dict);
+    Triple tripleIn("s1", "p1", "o1", &dict);
 
     // Serialize
     size_t size;

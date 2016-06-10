@@ -11,10 +11,10 @@ Triple::Triple(const TripleID& tripleId) :
 Triple::Triple(unsigned int subject, unsigned int predicate, unsigned int object) :
         subject(subject), predicate(predicate), object(object) {}
 
-Triple::Triple(const string& s, const string& p, const string& o, ModifiableDictionary& dict) {
-  subject = !s.empty() ? dict.insert(const_cast<string&>(s), SUBJECT) : 0;
-  predicate = !p.empty() ? dict.insert(const_cast<string&>(p), PREDICATE) : 0;
-  object = !o.empty() ? dict.insert(const_cast<string&>(o), OBJECT) : 0;
+Triple::Triple(const string& s, const string& p, const string& o, ModifiableDictionary* dict) {
+  subject = !s.empty() ? dict->insert(const_cast<string&>(s), SUBJECT) : 0;
+  predicate = !p.empty() ? dict->insert(const_cast<string&>(p), PREDICATE) : 0;
+  object = !o.empty() ? dict->insert(const_cast<string&>(o), OBJECT) : 0;
 }
 
 const unsigned int Triple::get_subject() const {

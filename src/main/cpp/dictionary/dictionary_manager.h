@@ -50,6 +50,9 @@ public:
   **/
   unsigned int insert(std::string &str, TripleComponentRole position);
 
+  Dictionary* getHdtDict() const;
+  ModifiableDictionary* getPatchDict() const;
+
   /**
   * Proxied methods
   *

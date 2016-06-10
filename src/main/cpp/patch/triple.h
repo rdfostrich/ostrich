@@ -18,7 +18,7 @@ public:
     Triple();
     Triple(const TripleID& triple);
     Triple(unsigned int subject, unsigned int predicate, unsigned int object);
-    Triple(const string& s, const string& p, const string& o, ModifiableDictionary& dict);
+    Triple(const string& s, const string& p, const string& o, ModifiableDictionary* dict);
 
     /**
      * @return The subject
