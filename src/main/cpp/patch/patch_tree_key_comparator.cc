@@ -2,10 +2,10 @@
 
 #include "patch_tree_key_comparator.h"
 
-PatchTreeKeyComparator PatchTreeKeyComparator::comparator_spo(comp_s, comp_p, comp_o);
+PatchTreeKeyComparator PatchTreeKeyComparator::comparator_spo(comp_s, comp_p, comp_o, dict);
 
-PatchTreeKeyComparator::PatchTreeKeyComparator(comp compare_1, comp compare_2, comp compare_3)
-        : compare_1(compare_1), compare_2(compare_2), compare_3(compare_3) {}
+PatchTreeKeyComparator::PatchTreeKeyComparator(comp compare_1, comp compare_2, comp compare_3, Dictionary* dict)
+        : compare_1(compare_1), compare_2(compare_2), compare_3(compare_3), dict(dict) {}
 
 // TODO: use dictionary
 int32_t PatchTreeKeyComparator::compare(const char* akbuf, size_t aksiz, const char* bkbuf, size_t bksiz) {

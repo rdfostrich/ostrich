@@ -4,7 +4,7 @@
 #include <hdt/BasicHDT.hpp>
 #include "snapshot_manager.h"
 #include "../../../../deps/hdt/hdt-lib/src/hdt/BasicModifiableHDT.hpp"
-#include "iterator_triple_id_to_string.h"
+//#include "iterator_triple_id_to_string.h"
 
 using namespace hdt;
 
@@ -33,7 +33,19 @@ int SnapshotManager::get_latest_snapshot(int patch_id) {
 HDT* SnapshotManager::load_snapshot(int snapshot_id) {
     // TODO: We might want to look into unloading snapshots if they aren't used for a while. (using splay-tree/queue?)
     string fileName = SNAPSHOT_FILENAME_BASE(snapshot_id);
-    return loaded_snapshots[snapshot_id] = hdt::HDTManager::loadHDT(fileName.c_str());
+    loaded_snapshots[snapshot_id] = hdt::HDTManager::loadHDT(fileName.c_str());
+
+    // load dictionary as well
+    DictionaryManager * dict = new DictionaryManager(loaded_snapshots[snapshot_id]->getDictionary());
+    ifstream dictFile(fileName + ".dic");
+    if (dictFile.is_open())
+    {
+      ControlInformation ci = ControlInformation();
+      dict->load(dictFile, ci);
+    }
+    loaded_dictionaries[snapshot_id] = dict;
+
+    return loaded_snapshots[snapshot_id];
 }
 
 HDT* SnapshotManager::get_snapshot(int snapshot_id) {
@@ -95,9 +107,36 @@ std::map<int, HDT*> SnapshotManager::get_snapshots() {
     return this->loaded_snapshots;
 }
 
-IteratorTripleString *SnapshotManager::search_with_offset(HDT *hdt, const Triple& triple_pattern, long offset) {
+/*IteratorTripleString *SnapshotManager::search_with_offset(HDT *hdt, Triple triple_pattern, long offset) {
     TripleString tripleString(triple_pattern.get_subject(), triple_pattern.get_predicate(), triple_pattern.get_object());
     IteratorTripleIdToString* it = new IteratorTripleIdToString(hdt, tripleString);
     it->goTo(offset);
     return it;
+}*/
+
+IteratorTripleID *SnapshotManager::search_with_offset(HDT *hdt, Triple triple_pattern, long offset) {
+    TripleID tripleID(triple_pattern.get_subject(), triple_pattern.get_predicate(), triple_pattern.get_object());
+    IteratorTripleID* it = hdt->getTriples()->search(tripleID);
+    if(it->canGoTo()) {
+        try {
+            it->goTo(offset);
+            offset = 0;
+        } catch (char const* error) {}
+    }
+    while(offset-- > 0 && it->hasNext()) it->next();
+    return it;
+}
+
+DictionaryManager* SnapshotManager::get_dictionary_manager(int snapshot_id) {
+    if(snapshot_id < 0) {
+        return NULL;
+    }
+    std::map<int, DictionaryManager*>::iterator it = loaded_dictionaries.find(snapshot_id);
+    if(it == loaded_dictionaries.end()) {
+        if(it == loaded_dictionaries.begin()) {
+            return NULL; // We have an empty map
+        }
+        it--;
+    }
+    return it->second;
 }

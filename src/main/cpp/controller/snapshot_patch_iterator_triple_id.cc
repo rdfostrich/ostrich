@@ -1,16 +1,16 @@
 #include <Triples.hpp>
-#include "snapshot_patch_iterator_triple_string.h"
+#include "snapshot_patch_iterator_triple_id.h"
 
-SnapshotPatchIteratorTripleString::SnapshotPatchIteratorTripleString(
-        IteratorTripleString* snapshot_it, PositionedTripleIterator* deletion_it, PatchTreeTripleIterator* addition_it)
+SnapshotPatchIteratorTripleID::SnapshotPatchIteratorTripleID(
+        IteratorTripleID* snapshot_it, PositionedTripleIterator* deletion_it, PatchTreeTripleIterator* addition_it)
         : snapshot_it(snapshot_it), deletion_it(deletion_it), addition_it(addition_it) {}
 
-bool SnapshotPatchIteratorTripleString::next(Triple* triple) {
+bool SnapshotPatchIteratorTripleID::next(Triple* triple) {
     while(snapshot_it != NULL || addition_it != NULL) {
         if (snapshot_it != NULL && snapshot_it->hasNext()) { // Emit triples from snapshot - deletions
             // Find snapshot triple
-            TripleString* snapshot_triple = snapshot_it->next();
-            *triple = Triple(snapshot_triple->getSubject(), snapshot_triple->getPredicate(), snapshot_triple->getObject());
+            TripleID* snapshot_triple = snapshot_it->next();
+            *triple = Triple(snapshot_triple);
 
             // Start iterating over deletions.
             // If we find a match, we know that we DON'T have to emit this snapshot triple.

@@ -18,7 +18,7 @@ TripleIterator* Controller::get(const Triple& triple_pattern, int offset, int pa
     HDT* snapshot = get_snapshot_manager()->get_snapshot(snapshot_id);
 
     // Simple case: We are requesting a snapshot, delegate lookup to that snapshot.
-    IteratorTripleString* snapshot_it = SnapshotManager::search_with_offset(snapshot, triple_pattern, offset);
+    IteratorTripleID* snapshot_it = SnapshotManager::search_with_offset(snapshot, triple_pattern, offset);
     if(snapshot_id == patch_id) {
         return new SnapshotTripleIterator(snapshot_it);
     }
@@ -39,9 +39,10 @@ TripleIterator* Controller::get(const Triple& triple_pattern, int offset, int pa
     while(check_offseted_deletions) {
         if (snapshot_it->hasNext()) { // We have elements left in the snapshot we should apply deletions to
             // Determine the first triple in the original snapshot and use it as offset for the deletion iterator
-            TripleString *tripleString = snapshot_it->next();
-            Triple firstTriple(tripleString->getSubject(), tripleString->getPredicate(), tripleString->getObject());
-            delete tripleString;
+            TripleID *tripleId = snapshot_it->next();
+            Triple firstTriple(tripleId->getSubject(), tripleId->getPredicate(), tripleId->getObject());
+            // TODO: statement below causes memory issue, can't delete a TripleID
+            //delete tripleId;
             deletion_it = patchTree->deletion_iterator_from(firstTriple, patch_id, triple_pattern);
 
             // Calculate a new offset, taking into account deletions.
@@ -82,7 +83,7 @@ TripleIterator* Controller::get(const Triple& triple_pattern, int offset, int pa
     // Calculate the offset for our addition iterator.
     // TODO: store this somewhere, we can't 'count' on the count provided by HDT, as this may not be exact.
     long snapshot_count = 0;
-    IteratorTripleString* tmp_it = SnapshotManager::search_with_offset(snapshot, triple_pattern, 0);
+    IteratorTripleID* tmp_it = SnapshotManager::search_with_offset(snapshot, triple_pattern, 0);
     while (tmp_it->hasNext()) {
         tmp_it->next();
         snapshot_count++;
@@ -92,7 +93,7 @@ TripleIterator* Controller::get(const Triple& triple_pattern, int offset, int pa
     long addition_offset = offset - snapshot_count + patchTree->deletion_count(triple_pattern, patch_id).first;
     PatchTreeTripleIterator * addition_it = patchTree->addition_iterator_from(addition_offset, patch_id, triple_pattern);
 
-    return new SnapshotPatchIteratorTripleString(snapshot_it, deletion_it, addition_it);
+    return new SnapshotPatchIteratorTripleID(snapshot_it, deletion_it, addition_it);
 }
 
 bool Controller::append(const Patch& patch, int patch_id) {

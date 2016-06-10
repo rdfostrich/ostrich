@@ -6,6 +6,12 @@
 // TODO: use dictionary
 Triple::Triple() {}
 
+Triple::Triple(const TripleID* tripleId) {
+  subject = tripleId->getSubject();
+  predicate = tripleId->getPredicate();
+  object = tripleId->getObject();
+}
+
 Triple::Triple(const unsigned int& subject, const unsigned int& predicate, const unsigned int& object) :
         subject(subject), predicate(predicate), object(object) {}
 
@@ -19,12 +25,24 @@ const unsigned int Triple::get_subject() const {
     return subject;
 }
 
+const string Triple::get_subject(Dictionary *dict) const {
+    return dict->idToString(subject, SUBJECT);
+}
+
 const unsigned int Triple::get_predicate() const {
     return predicate;
 }
 
+const string Triple::get_predicate(Dictionary *dict) const {
+    return dict->idToString(predicate, PREDICATE);
+}
+
 const unsigned int Triple::get_object() const {
     return object;
+}
+
+const string Triple::get_object(Dictionary *dict) const {
+    return dict->idToString(object, OBJECT);
 }
 
 const string Triple::to_string() const {
@@ -32,7 +50,7 @@ const string Triple::to_string() const {
 }
 
 const string Triple::to_string(Dictionary *dict) const {
-    return dict->idToString(subject, SUBJECT) + " " + dict->idToString(predicate, PREDICATE) + " " + dict->idToString(object, OBJECT) + ".";
+    return get_subject(dict) + " " + get_predicate(dict) + " " + get_object(dict) + ".";
 }
 
 const char* Triple::serialize(size_t* size) const {

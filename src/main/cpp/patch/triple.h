@@ -16,6 +16,7 @@ protected:
   unsigned int object;
 public:
     Triple();
+    Triple(const TripleID* triple);
     Triple(const unsigned int& subject, const unsigned int& predicate, const unsigned int& object);
     Triple(const string& s, const string& p, const string& o, ModifiableDictionary *dict);
 
@@ -23,14 +24,17 @@ public:
      * @return The subject
      */
     const unsigned int get_subject() const;
+    const string get_subject(Dictionary *dict) const;
     /**
      * @return The predicate
      */
     const unsigned int get_predicate() const;
+    const string get_predicate(Dictionary *dict) const;
     /**
      * @return The object
      */
     const unsigned int get_object() const;
+    const string get_object(Dictionary *dict) const;
 
     /**
      * @return The string representation of this triple.
