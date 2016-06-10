@@ -24,17 +24,17 @@ public:
      * @return The subject
      */
     const unsigned int get_subject() const;
-    const string get_subject(Dictionary *dict) const;
+    const string get_subject(const Dictionary *dict) const;
     /**
      * @return The predicate
      */
     const unsigned int get_predicate() const;
-    const string get_predicate(Dictionary *dict) const;
+    const string get_predicate(const Dictionary *dict) const;
     /**
      * @return The object
      */
     const unsigned int get_object() const;
-    const string get_object(Dictionary *dict) const;
+    const string get_object(const Dictionary *dict) const;
 
     /**
      * @return The string representation of this triple.

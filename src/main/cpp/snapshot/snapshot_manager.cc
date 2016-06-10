@@ -131,7 +131,7 @@ DictionaryManager* SnapshotManager::get_dictionary_manager(int snapshot_id) {
     if(snapshot_id < 0) {
         return NULL;
     }
-    std::map<int, DictionaryManager*>::iterator it = loaded_dictionaries.find(snapshot_id);
+    std::map<int, Dictionary*>::iterator it = loaded_dictionaries.find(snapshot_id);
     if(it == loaded_dictionaries.end()) {
         if(it == loaded_dictionaries.begin()) {
             return NULL; // We have an empty map

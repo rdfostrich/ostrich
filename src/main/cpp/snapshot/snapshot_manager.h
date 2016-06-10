@@ -5,13 +5,14 @@
 
 #include <HDT.hpp>
 #include "../patch/patch.h"
+#include <Dictionary.hpp>
 
 using namespace hdt;
 
 class SnapshotManager {
 private:
     std::map<int, HDT*> loaded_snapshots;
-    std::map<int, DictionaryManager*> loaded_dictionaries;
+    std::map<int, Dictionary*> loaded_dictionaries;
 public:
     SnapshotManager();
     /**
@@ -71,7 +72,7 @@ public:
     /**
      * Get the DictionaryManager file for the given snapshot id.
      */
-    DictionaryManager* get_dictionary_manager(int snapshot_id);
+    Dictionary* get_dictionary(int snapshot_id);
 };
 
 

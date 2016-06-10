@@ -1,5 +1,5 @@
 #include "controller.h"
-#include "snapshot_patch_iterator_triple_string.h"
+#include "snapshot_patch_iterator_triple_id.h"
 
 Controller::Controller() : patchTreeManager(new PatchTreeManager()), snapshotManager(new SnapshotManager()) {}
 
