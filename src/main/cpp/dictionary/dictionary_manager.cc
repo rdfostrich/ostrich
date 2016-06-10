@@ -74,14 +74,14 @@ unsigned int DictionaryManager::insert(std::string &str,
   unsigned int id;
   try {
     id = hdtDict->stringToId(str, position);
-    cout << "In HDT, " << str << " has id " << id << endl;
+    //cout << "In HDT, " << str << " has id " << id << endl;
     if (id > 0)
       return id;
   } catch (exception e) {
   } // ID is not in there
 
   id = bitmask | patchDict->insert(str, position);
-  cout << "Patch dictionary gives id  " << id << endl;
+  //cout << "Patch dictionary gives id  " << id << endl;
   // cout << "Snapshot dictionary does not have " << str << endl;
 
   return id;

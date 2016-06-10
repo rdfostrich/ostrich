@@ -84,6 +84,6 @@ TEST(TripleTest, SerializationSize) {
     size_t size;
     const char* data = tripleIn.serialize(&size);
 
-    ASSERT_EQ(8, size) << "Serialization length is too high";
+    ASSERT_EQ(12, size) << "Serialization length is too high";
     free((char*) data);
 }
