@@ -311,6 +311,7 @@ int main_manual() {
     // Lookup
     // Increasing patch id
     /*Controller* controller = setup_snapshot(10000);
+    DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
     int patches = 100;
     int i;
     while(i < patches) {
@@ -319,13 +320,13 @@ int main_manual() {
     }
     cout << "patch,lookup-ms-0-1,lookup-ms-0-50,lookup-ms-0-100,lookup-ms-100-1,lookup-ms-100-50,lookup-ms-100-100" << endl;
     for(int i = 0; i < patches; i ++) {
-        long d0_1 = test_lookup(controller, Triple("", "", ""), 0, i, 1);
-        long d0_50 = test_lookup(controller, Triple("", "", ""), 0, i, 50);
-        long d0_100 = test_lookup(controller, Triple("", "", ""), 0, i, 100);
+        long d0_1 = test_lookup(controller, Triple("", "", "", dict), 0, i, 1);
+        long d0_50 = test_lookup(controller, Triple("", "", "", dict), 0, i, 50);
+        long d0_100 = test_lookup(controller, Triple("", "", "", dict), 0, i, 100);
 
-        long d100_1 = test_lookup(controller, Triple("", "", ""), 100, i, 1);
-        long d100_50 = test_lookup(controller, Triple("", "", ""), 100, i, 50);
-        long d100_100 = test_lookup(controller, Triple("", "", ""), 100, i, 100);
+        long d100_1 = test_lookup(controller, Triple("", "", "", dict), 100, i, 1);
+        long d100_50 = test_lookup(controller, Triple("", "", "", dict), 100, i, 50);
+        long d100_100 = test_lookup(controller, Triple("", "", "", dict), 100, i, 100);
         cout << "" << i << ","
              << d0_1 << "," << d0_50 << "," << d0_100 << ","
              << d100_1 << "," << d100_50 << "," << d100_100
