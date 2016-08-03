@@ -9,6 +9,7 @@
 class PatchTreeManagerTest : public ::testing::Test {
 protected:
     PatchTreeManager patchTreeManager;
+    DictionaryManager dict;
 
     PatchTreeManagerTest() : patchTreeManager() {}
 
@@ -32,23 +33,23 @@ protected:
 };
 
 TEST_F(PatchTreeManagerTest, ConstructPatch) {
-    ASSERT_EQ((PatchTree*) NULL, patchTreeManager.get_patch_tree(0)) << "Patch tree with id 0 should not be present.";
+    ASSERT_EQ((PatchTree*) NULL, patchTreeManager.get_patch_tree(0, &dict)) << "Patch tree with id 0 should not be present.";
     
-    patchTreeManager.construct_next_patch_tree(0);
+    patchTreeManager.construct_next_patch_tree(0, &dict);
     
-    ASSERT_NE((PatchTree*) NULL, patchTreeManager.get_patch_tree(0)) << "Patch tree with id 0 should not be null.";
+    ASSERT_NE((PatchTree*) NULL, patchTreeManager.get_patch_tree(0, &dict)) << "Patch tree with id 0 should not be null.";
 }
 
 TEST_F(PatchTreeManagerTest, DetectPatchTrees) {
     std::map<int, PatchTree*> found_patches1 = patchTreeManager.detect_patch_trees();
     ASSERT_EQ(true, found_patches1.empty()) << "No patch trees should be detected";
     
-    patchTreeManager.construct_next_patch_tree(0);
+    patchTreeManager.construct_next_patch_tree(0, &dict);
     std::map<int, PatchTree*> found_patches2 = patchTreeManager.detect_patch_trees();
     ASSERT_EQ(false, found_patches2.empty()) << "One patch tree should be detected";
     ASSERT_EQ(1, found_patches2.size()) << "One patch tree should be detected";
     
-    patchTreeManager.construct_next_patch_tree(1);
+    patchTreeManager.construct_next_patch_tree(1, &dict);
     std::map<int, PatchTree*> found_patches3 = patchTreeManager.detect_patch_trees();
     ASSERT_EQ(false, found_patches3.empty()) << "Two patch trees should be detected";
     ASSERT_EQ(2, found_patches3.size()) << "Two patch trees should be detected";
@@ -59,12 +60,12 @@ TEST_F(PatchTreeManagerTest, GetPatchTreeId) {
     ASSERT_EQ(-1, patchTreeManager.get_patch_tree_id(0));
     ASSERT_EQ(-1, patchTreeManager.get_patch_tree_id(1));
     
-    patchTreeManager.construct_next_patch_tree(0);
+    patchTreeManager.construct_next_patch_tree(0, &dict);
     ASSERT_EQ(-1, patchTreeManager.get_patch_tree_id(-1));
     ASSERT_EQ(0, patchTreeManager.get_patch_tree_id(0));
     ASSERT_EQ(0, patchTreeManager.get_patch_tree_id(1));
     
-    patchTreeManager.construct_next_patch_tree(10);
+    patchTreeManager.construct_next_patch_tree(10, &dict);
     ASSERT_EQ(-1, patchTreeManager.get_patch_tree_id(-1));
     ASSERT_EQ(0, patchTreeManager.get_patch_tree_id(0));
     ASSERT_EQ(0, patchTreeManager.get_patch_tree_id(1));
@@ -73,7 +74,7 @@ TEST_F(PatchTreeManagerTest, GetPatchTreeId) {
     ASSERT_EQ(10, patchTreeManager.get_patch_tree_id(11));
     ASSERT_EQ(10, patchTreeManager.get_patch_tree_id(100));
     
-    patchTreeManager.construct_next_patch_tree(100);
+    patchTreeManager.construct_next_patch_tree(100, &dict);
     ASSERT_EQ(-1, patchTreeManager.get_patch_tree_id(-1));
     ASSERT_EQ(0, patchTreeManager.get_patch_tree_id(0));
     ASSERT_EQ(0, patchTreeManager.get_patch_tree_id(1));
@@ -86,42 +87,42 @@ TEST_F(PatchTreeManagerTest, GetPatchTreeId) {
 }
 
 TEST_F(PatchTreeManagerTest, AppendPatch) {
-    Patch patch1;
-    patch1.add(PatchElement(Triple("s1", "p1", "o1"), true));
-    patch1.add(PatchElement(Triple("s2", "p2", "o2"), false));
-    patch1.add(PatchElement(Triple("s3", "p3", "o3"), false));
-    patch1.add(PatchElement(Triple("s4", "p4", "o4"), true));
+    Patch patch1(&dict);
+    patch1.add(PatchElement(Triple("s1", "p1", "o1", &dict), true));
+    patch1.add(PatchElement(Triple("s2", "p2", "o2", &dict), false));
+    patch1.add(PatchElement(Triple("s3", "p3", "o3", &dict), false));
+    patch1.add(PatchElement(Triple("s4", "p4", "o4", &dict), true));
     
-    Patch patch2;
-    patch2.add(PatchElement(Triple("s1", "p1", "o1"), true));
+    Patch patch2(&dict);
+    patch2.add(PatchElement(Triple("s1", "p1", "o1", &dict), true));
     
-    Patch patch3;
-    patch3.add(PatchElement(Triple("a", "b", "c"), true));
+    Patch patch3(&dict);
+    patch3.add(PatchElement(Triple("a", "b", "c", &dict), true));
     
-    ASSERT_EQ(true, patchTreeManager.append(patch1, 0));
-    ASSERT_EQ(false, patchTreeManager.append(patch1, 0)) << "Append shouldn't allow for double appends";
-    ASSERT_EQ(false, patchTreeManager.append(patch2, 0)) << "Append shouldn't allow for double appends, not even partial";
-    ASSERT_EQ(true, patchTreeManager.append(patch3, 1));
+    ASSERT_EQ(true, patchTreeManager.append(patch1, 0, &dict));
+    ASSERT_EQ(false, patchTreeManager.append(patch1, 0, &dict)) << "Append shouldn't allow for double appends";
+    ASSERT_EQ(false, patchTreeManager.append(patch2, 0, &dict)) << "Append shouldn't allow for double appends, not even partial";
+    ASSERT_EQ(true, patchTreeManager.append(patch3, 1, &dict));
 }
 
 TEST_F(PatchTreeManagerTest, GetPatch) {
-    Patch patch1;
-    patch1.add(PatchElement(Triple("s1", "p1", "o1"), true));
-    patch1.add(PatchElement(Triple("s2", "p2", "o2"), false));
-    patch1.add(PatchElement(Triple("s3", "p3", "o3"), false));
-    patch1.add(PatchElement(Triple("s4", "p4", "o4"), true));
+    Patch patch1(&dict);
+    patch1.add(PatchElement(Triple("s1", "p1", "o1", &dict), true));
+    patch1.add(PatchElement(Triple("s2", "p2", "o2", &dict), false));
+    patch1.add(PatchElement(Triple("s3", "p3", "o3", &dict), false));
+    patch1.add(PatchElement(Triple("s4", "p4", "o4", &dict), true));
     
-    Patch patch2;
-    patch2.add(PatchElement(Triple("a", "b", "c"), true));
+    Patch patch2(&dict);
+    patch2.add(PatchElement(Triple("a", "b", "c", &dict), true));
     
-    Patch patch3;
-    patch3.add(PatchElement(Triple("s4", "p4", "o4"), false));
+    Patch patch3(&dict);
+    patch3.add(PatchElement(Triple("s4", "p4", "o4", &dict), false));
     
-    patchTreeManager.append(patch1, 0);
-    patchTreeManager.append(patch2, 1);
-    patchTreeManager.append(patch3, 2);
+    patchTreeManager.append(patch1, 0, &dict);
+    patchTreeManager.append(patch2, 1, &dict);
+    patchTreeManager.append(patch3, 2, &dict);
     
-    ASSERT_EQ("s1 p1 o1. (+)\ns2 p2 o2. (-)\ns3 p3 o3. (-)\ns4 p4 o4. (+)\n", patchTreeManager.get_patch(0).to_string());
-    ASSERT_EQ("a b c. (+)\ns1 p1 o1. (+)\ns2 p2 o2. (-)\ns3 p3 o3. (-)\ns4 p4 o4. (+)\n", patchTreeManager.get_patch(1).to_string());
-    ASSERT_EQ("a b c. (+)\ns1 p1 o1. (+)\ns2 p2 o2. (-)\ns3 p3 o3. (-)\n", patchTreeManager.get_patch(2).to_string());
+    ASSERT_EQ("s1 p1 o1. (+)\ns2 p2 o2. (-)\ns3 p3 o3. (-)\ns4 p4 o4. (+)\n", patchTreeManager.get_patch(0, &dict).to_string(dict));
+    ASSERT_EQ("a b c. (+)\ns1 p1 o1. (+)\ns2 p2 o2. (-)\ns3 p3 o3. (-)\ns4 p4 o4. (+)\n", patchTreeManager.get_patch(1, &dict).to_string(dict));
+    ASSERT_EQ("a b c. (+)\ns1 p1 o1. (+)\ns2 p2 o2. (-)\ns3 p3 o3. (-)\n", patchTreeManager.get_patch(2, &dict).to_string(dict));
 }

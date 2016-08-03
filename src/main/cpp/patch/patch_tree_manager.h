@@ -19,9 +19,10 @@ public:
      * Add the given patch to a patch tree.
      * @param patch The patch to add.
      * @param patch_id The id of the patch to add.
+     * @param dict The dictionary that must be used in the patch tree if a new one will be created.
      * @return If the append succeeded.
      */
-    bool append(const Patch& patch, int patch_id);
+    bool append(const Patch& patch, int patch_id, DictionaryManager* dict);
     /**
      * Find all patch trees in the current directory.
      * @return The found patch trees
@@ -35,22 +36,25 @@ public:
     /**
      * Load the corresponding patch tree in memory.
      * @param patch_id_start The id of the patchtree to load, which is the id of the first patch in this tree.
+     * @param dict The dictionary that must be used in the patch tree.
      */
-    PatchTree* load_patch_tree(int patch_id_start);
+    PatchTree* load_patch_tree(int patch_id_start, DictionaryManager* dict);
     /**
      * Get a patchtree by id.
      * Calling this will automatically load it (or create it) in memory if it is not present.
      * @param patch_id_start The id of the patchtree to load, which is the id of the first patch in this tree.
-     * @param The requested patch tree.
+     * @param patch_id_start The requested patch tree.
+     * @param dict The dictionary that must be used in the patch tree if a new one will be created.
      * @return The found patch tree
      */
-    PatchTree* get_patch_tree(int patch_id_start);
+    PatchTree* get_patch_tree(int patch_id_start, DictionaryManager* dict);
     /**
      * Creates a new patch tree.
      * @param patch_id_start The id of the patchtree to load, which is the id of the first patch in this tree.
+     * @param dict The dictionary that must be used in the patch tree.
      * @return The newly created patch tree
      */
-    PatchTree* construct_next_patch_tree(int patch_id_start);
+    PatchTree* construct_next_patch_tree(int patch_id_start, DictionaryManager* dict);
     /**
      * Get the patchtree id that contains the given patch id.
      * @param patch_id The id of a patch.
@@ -60,9 +64,10 @@ public:
     /**
      * Get the patch with the given id.
      * @param patch_id The id of a patch.
+     * @param dict The dictionary that must be used in the patch tree if a new one will be created.
      * @return The id of a patch.
      */
-    Patch get_patch(int patch_id);
+    Patch get_patch(int patch_id, DictionaryManager* dict);
 };
 
 

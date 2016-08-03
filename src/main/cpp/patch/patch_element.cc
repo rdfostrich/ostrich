@@ -18,6 +18,6 @@ bool PatchElement::is_local_change() const {
     return local_change;
 }
 
-const string PatchElement::to_string() const {
-    return get_triple().to_string() + " (" + (is_addition() ? "+" : "-") + ")";
+const string PatchElement::to_string(Dictionary& dict) const {
+    return get_triple().to_string(dict) + " (" + (is_addition() ? "+" : "-") + ")";
 }

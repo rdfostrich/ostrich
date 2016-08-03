@@ -5,7 +5,7 @@
 using namespace std;
 using namespace kyotocabinet;
 
-TripleStore::TripleStore(string base_file_name) {
+TripleStore::TripleStore(string base_file_name, DictionaryManager* dict) : dict(dict) {
     // Construct trees
     index_spo = new TreeDB();
     index_sop = new TreeDB();
@@ -14,11 +14,12 @@ TripleStore::TripleStore(string base_file_name) {
     index_osp = new TreeDB();
 
     // Set the triple comparators
-    index_spo->tune_comparator(&PatchTreeKeyComparator::comparator_spo);
-    index_sop->tune_comparator(new PatchTreeKeyComparator(comp_s, comp_o, comp_p));
-    index_pso->tune_comparator(new PatchTreeKeyComparator(comp_p, comp_s, comp_o));
-    index_pos->tune_comparator(new PatchTreeKeyComparator(comp_p, comp_o, comp_s));
-    index_osp->tune_comparator(new PatchTreeKeyComparator(comp_o, comp_s, comp_p));
+    index_spo->tune_comparator(spo_comparator = new PatchTreeKeyComparator(comp_s, comp_p, comp_o, dict));
+    index_sop->tune_comparator(new PatchTreeKeyComparator(comp_s, comp_o, comp_p, dict));
+    index_pso->tune_comparator(new PatchTreeKeyComparator(comp_p, comp_s, comp_o, dict));
+    index_pos->tune_comparator(new PatchTreeKeyComparator(comp_p, comp_o, comp_s, dict));
+    index_osp->tune_comparator(new PatchTreeKeyComparator(comp_o, comp_s, comp_p, dict));
+    element_comparator = new PatchElementComparator(spo_comparator);
 
     // Open the databases
     open(index_spo, base_file_name + "_spo");
@@ -51,9 +52,9 @@ void TripleStore::close(TreeDB* db, string name) {
 }
 
 TreeDB* TripleStore::getTree(Triple triple_pattern) {
-    bool s = triple_pattern.get_subject() != "";
-    bool p = triple_pattern.get_predicate() != "";
-    bool o = triple_pattern.get_object() != "";
+    bool s = triple_pattern.get_subject() > 0;
+    bool p = triple_pattern.get_predicate() > 0;
+    bool o = triple_pattern.get_object() > 0;
 
     if( s &  p &  o) return index_spo;
     if( s &  p & !o) return index_spo;
@@ -66,9 +67,9 @@ TreeDB* TripleStore::getTree(Triple triple_pattern) {
 }
 
 bool TripleStore::isDefaultTree(Triple triple_pattern) {
-    bool s = triple_pattern.get_subject() != "";
-    bool p = triple_pattern.get_predicate() != "";
-    bool o = triple_pattern.get_object() != "";
+    bool s = triple_pattern.get_subject() > 0;
+    bool p = triple_pattern.get_predicate() > 0;
+    bool o = triple_pattern.get_object() > 0;
 
     if( s &  p &  o) return true;
     if( s &  p & !o) return true;
@@ -107,4 +108,16 @@ void TripleStore::insertAddition(Patch* patch, int patch_id) {
             index_osp->set(raw_key, key_size, new_raw_value, new_value_size);
         }
     }
+}
+
+PatchTreeKeyComparator *TripleStore::get_spo_comparator() const {
+    return spo_comparator;
+}
+
+PatchElementComparator *TripleStore::get_element_comparator() const {
+    return element_comparator;
+}
+
+DictionaryManager *TripleStore::get_dict_manager() const {
+    return dict;
 }

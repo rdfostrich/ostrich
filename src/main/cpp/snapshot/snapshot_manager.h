@@ -5,12 +5,16 @@
 
 #include <HDT.hpp>
 #include "../patch/patch.h"
+#include <Dictionary.hpp>
+#include "iterator_triple_id_to_string.h"
+#include "../dictionary/dictionary_manager.h"
 
 using namespace hdt;
 
 class SnapshotManager {
 private:
     std::map<int, HDT*> loaded_snapshots;
+    std::map<int, DictionaryManager*> loaded_dictionaries;
 public:
     SnapshotManager();
     /**
@@ -64,7 +68,12 @@ public:
      * @param offset The offset the iterator should start from.
      * @return the iterator.
      */
-    static IteratorTripleString* search_with_offset(HDT* hdt, const Triple& triple_pattern, long offset);
+    static IteratorTripleID* search_with_offset(HDT* hdt, const Triple& triple_pattern, long offset);
+
+    /**
+     * @return The DictionaryManager file for the given snapshot id.
+     */
+    DictionaryManager* get_dictionary_manager(int snapshot_id);
 };
 
 

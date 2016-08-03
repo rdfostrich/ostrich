@@ -1,21 +1,22 @@
 #ifndef TPFPATCH_STORE_PATCH_H
 #define TPFPATCH_STORE_PATCH_H
 
+#include "triple.h"
 #include <vector>
 #include <map>
 #include <unordered_map>
 #include "patch_element.h"
 #include "patch_tree_value.h"
-
-// A key in the PatchTree is a triple
-typedef Triple PatchTreeKey;
+#include "patch_element_comparator.h"
 
 // A Patch contains an ordered list of PatchElements
 class Patch {
 protected:
     std::vector<PatchElement> elements;
+    PatchElementComparator* element_comparator;
 public:
-    Patch();
+    Patch(PatchElementComparator* element_comparator);
+    Patch(Dictionary* dict);
     /**
      * Add an element to the patch
      * @param element The element to add
@@ -50,12 +51,12 @@ public:
      * @return The relative positions for all derived triple patterns.
      */
     PatchPositions positions(const PatchElement& element,
-                              unordered_map<string, PatchPosition>& sp_,
-                              unordered_map<string, PatchPosition>& s_o,
-                              unordered_map<string, PatchPosition>& s__,
-                              unordered_map<string, PatchPosition>& _po,
-                              unordered_map<string, PatchPosition>& _p_,
-                              unordered_map<string, PatchPosition>& __o,
+                              unordered_map<long, PatchPosition>& sp_,
+                              unordered_map<long, PatchPosition>& s_o,
+                              unordered_map<long, PatchPosition>& s__,
+                              unordered_map<long, PatchPosition>& _po,
+                              unordered_map<long, PatchPosition>& _p_,
+                              unordered_map<long, PatchPosition>& __o,
                               PatchPosition& ___) const;
     /**
      * Find the position of the given element in this patch.
@@ -86,9 +87,10 @@ public:
      */
     PatchPosition position_of_strict(const PatchElement& element) const;
     /**
+     * @param dict The dictionary to decode from
      * @return The string representation of this patch.
      */
-    string to_string() const;
+    string to_string(Dictionary& dict) const;
     /**
      * @param triple The triple to check
      * @return The index of the found triple or -1.

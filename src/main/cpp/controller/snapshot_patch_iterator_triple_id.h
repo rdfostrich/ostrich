@@ -6,13 +6,15 @@
 #include "../patch/positioned_triple_iterator.h"
 #include "../patch/patch_tree.h"
 
-class SnapshotPatchIteratorTripleString : public TripleIterator {
+class SnapshotPatchIteratorTripleID : public TripleIterator {
 private:
-    IteratorTripleString* snapshot_it;
+    IteratorTripleID* snapshot_it;
     PositionedTripleIterator* deletion_it;
     PatchTreeTripleIterator* addition_it;
+    PatchTreeKeyComparator* spo_comparator;
 public:
-    SnapshotPatchIteratorTripleString(IteratorTripleString* snapshot_it, PositionedTripleIterator* deletion_it, PatchTreeTripleIterator * addition_it);
+    SnapshotPatchIteratorTripleID(IteratorTripleID* snapshot_it, PositionedTripleIterator* deletion_it,
+                                  PatchTreeTripleIterator * addition_it, PatchTreeKeyComparator* spo_comparator);
     bool next(Triple* triple);
 };
 

@@ -8,8 +8,8 @@
 using namespace std;
 using namespace kyotocabinet;
 
-PatchTree::PatchTree(string file_name) {
-    tripleStore = new TripleStore(file_name);
+PatchTree::PatchTree(string file_name, DictionaryManager* dict) {
+    tripleStore = new TripleStore(file_name, dict);
 };
 
 PatchTree::~PatchTree() {
@@ -39,12 +39,12 @@ void PatchTree::append_unsafe(const Patch& patch, int patch_id) {
     // We don't only loop over the new elements, but all of them because
     // the already available elements might have a different relative patch position,
     // so these need to be updated.
-    unordered_map<string, PatchPosition> sp_;
-    unordered_map<string, PatchPosition> s_o;
-    unordered_map<string, PatchPosition> s__;
-    unordered_map<string, PatchPosition> _po;
-    unordered_map<string, PatchPosition> _p_;
-    unordered_map<string, PatchPosition> __o;
+    unordered_map<long, PatchPosition> sp_;
+    unordered_map<long, PatchPosition> s_o;
+    unordered_map<long, PatchPosition> s__;
+    unordered_map<long, PatchPosition> _po;
+    unordered_map<long, PatchPosition> _p_;
+    unordered_map<long, PatchPosition> __o;
     PatchPosition ___ = 0;
     for(int i = 0; i < existing_patch.get_size(); i++) {
         PatchElement patchElement = existing_patch.get(i);
@@ -120,7 +120,7 @@ Patch PatchTree::reconstruct_patch(int patch_id, bool ignore_local_changes) cons
     it.set_filter_local_changes(ignore_local_changes);
     PatchTreeKey key;
     PatchTreeValue value;
-    Patch patch;
+    Patch patch(get_element_comparator());
     while(it.next(&key, &value)) {
         PatchElement patchElement(key, value.is_addition(patch_id));
         patchElement.set_local_change(value.is_local_change(patch_id));
@@ -203,4 +203,12 @@ PatchTreeTripleIterator * PatchTree::addition_iterator_from(long offset, int pat
     PatchTreeAdditionValue value;
     while(offset-- > 0 && it->next_addition(&key, &value));
     return new PatchTreeTripleIterator(it, patch_id, triple_pattern);
+}
+
+PatchTreeKeyComparator* PatchTree::get_spo_comparator() const {
+    return tripleStore->get_spo_comparator();
+}
+
+PatchElementComparator *PatchTree::get_element_comparator() const {
+    return tripleStore->get_element_comparator();
 }

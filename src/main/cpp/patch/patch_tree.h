@@ -19,8 +19,9 @@ class PatchTree {
 private:
     TripleStore* tripleStore;
     PatchTreeKeyComparator* keyComparator;
+    PatchElementComparator* elementComparator;
 public:
-    PatchTree(string file_name);
+    PatchTree(string file_name, DictionaryManager* dict);
     ~PatchTree();
     /**
      * Append the given patch elements to the tree with given patch id.
@@ -104,6 +105,15 @@ public:
      * @return The iterator that will loop over the tree for the given patch.
      */
     PatchTreeTripleIterator * addition_iterator_from(long offset, int patch_id, const Triple& triple_pattern) const;
+
+    /**
+     * @return The comparator for this patch tree in SPO order.
+     */
+    PatchTreeKeyComparator* get_spo_comparator() const;
+    /**
+     * @return The comparator for this patch tree in SPO order.
+     */
+    PatchElementComparator* get_element_comparator() const;
 };
 
 #endif //TPFPATCH_STORE_PATCH_TREE_H

@@ -6,6 +6,7 @@
 using namespace hdt;
 
 // A wrapper that contains an IteratorTripleID and exposes it as an IteratorTripleString
+// @deprecated TODO: remove
 class IteratorTripleIdToString : public IteratorTripleString {
 private:
     Dictionary* dict;
@@ -13,7 +14,7 @@ private:
 protected:
     TripleString* toTripleString(TripleID* tripleId);
 public:
-    IteratorTripleIdToString(HDT *hdt, TripleString tripleString);
+    IteratorTripleIdToString(HDT *hdt, TripleID tripleString);
     ~IteratorTripleIdToString();
     bool hasNext();
     TripleString* next();
@@ -22,6 +23,7 @@ public:
     bool canGoTo();
     void goToStart();
     void goTo(unsigned int pos);
+    IteratorTripleID* getTripleIdIterator();
 };
 
 

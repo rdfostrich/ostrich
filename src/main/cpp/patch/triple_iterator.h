@@ -3,6 +3,7 @@
 
 #include <Iterator.hpp>
 #include "patch_tree_iterator.h"
+#include "triple.h"
 
 class TripleIterator {
 public:
@@ -28,9 +29,9 @@ public:
 
 class SnapshotTripleIterator : public TripleIterator {
 protected:
-    IteratorTripleString* snapshot_it;
+    IteratorTripleID* snapshot_it;
 public:
-    SnapshotTripleIterator(IteratorTripleString* snapshot_it);
+    SnapshotTripleIterator(IteratorTripleID* snapshot_it);
     ~SnapshotTripleIterator();
     bool next(Triple* triple);
 };

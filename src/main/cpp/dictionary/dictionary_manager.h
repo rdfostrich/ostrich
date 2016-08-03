@@ -1,3 +1,6 @@
+#ifndef TPFPATCH_STORE_DICTIONARY_MANAGER_H
+#define TPFPATCH_STORE_DICTIONARY_MANAGER_H
+
 #include <Dictionary.hpp>
 #include <HDTVocabulary.hpp>
 #include <Triples.hpp>
@@ -5,7 +8,7 @@
 using namespace std;
 using namespace hdt;
 
-class DictionaryManager {
+class DictionaryManager : public ModifiableDictionary {
 
   Dictionary *hdtDict;             // Dictionary from HDT file
   ModifiableDictionary *patchDict; // Additional dictionary
@@ -13,6 +16,7 @@ class DictionaryManager {
   const unsigned int bitmask;
 
 public:
+  DictionaryManager(Dictionary *hdtDict, ModifiableDictionary *patchDict);
   DictionaryManager(Dictionary *hdtDict);
   DictionaryManager();
   ~DictionaryManager();
@@ -45,4 +49,67 @@ public:
   *
   **/
   unsigned int insert(std::string &str, TripleComponentRole position);
+
+  Dictionary* getHdtDict() const;
+  ModifiableDictionary* getPatchDict() const;
+
+  /**
+  * Proxied methods
+  *
+  **/
+
+  size_t getNumberOfElements();
+  uint64_t size();
+
+  unsigned int getNsubjects();
+  unsigned int getNpredicates();
+  unsigned int getNobjects();
+  unsigned int getNshared();
+
+  unsigned int getMaxID();
+  unsigned int getMaxSubjectID();
+  unsigned int getMaxPredicateID();
+  unsigned int getMaxObjectID();
+
+  void populateHeader(Header &header, string rootNode);
+  void save(std::ostream &output, ControlInformation &ci, ProgressListener *listener = NULL);
+  void load(std::istream &input, ControlInformation &ci, ProgressListener *listener = NULL);
+
+  size_t load(unsigned char *ptr, unsigned char *ptrMax, ProgressListener *listener=NULL);
+
+  void import(Dictionary *other, ProgressListener *listener=NULL);
+
+  IteratorUCharString *getSubjects();
+  IteratorUCharString *getPredicates();
+  IteratorUCharString *getObjects();
+  IteratorUCharString *getShared();
+
+  void startProcessing(ProgressListener *listener = NULL);
+  void stopProcessing(ProgressListener *listener = NULL);
+
+  string getType();
+  unsigned int getMapping();
+
+  void getSuggestions(const char *base, TripleComponentRole role, std::vector<string> &out, int maxResults);
 };
+
+class DictManagerIterator : public IteratorUCharString {
+private:
+  IteratorUCharString * first;
+  IteratorUCharString * second;
+public:
+  DictManagerIterator(IteratorUCharString *first, IteratorUCharString *second) : first(first), second(second){
+
+  }
+  virtual ~DictManagerIterator() { }
+
+  virtual bool hasNext() {
+    return first->hasNext() || first->hasNext();
+  }
+
+  virtual unsigned char *next() {
+    return first->hasNext() ? first->next() : second->next();
+  }
+};
+
+#endif //TPFPATCH_STORE_DICTIONARY_MANAGER_H

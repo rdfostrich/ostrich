@@ -19,7 +19,7 @@ public:
      * @param patch_id The id of the patch to add.
      * @return If the append succeeded.
      */
-    bool append(const Patch& patch, int patch_id);
+    bool append(const Patch& patch, int patch_id, DictionaryManager* dict);
     /**
      * @return The internal patchtree manager.
      */
@@ -28,6 +28,10 @@ public:
      * @return The internal snapshot manager.
      */
     SnapshotManager* get_snapshot_manager() const;
+    /**
+     * @return The DictionaryManager file for a certain patch id, this patch id does not have to be created yet.
+     */
+    DictionaryManager* get_dictionary_manager(int patch_id) const;
 };
 
 
