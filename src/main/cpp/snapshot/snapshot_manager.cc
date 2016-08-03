@@ -109,6 +109,13 @@ std::map<int, HDT*> SnapshotManager::get_snapshots() {
 
 IteratorTripleID* SnapshotManager::search_with_offset(HDT *hdt, const Triple& triple_pattern, long offset) {
     TripleID tripleId(triple_pattern.get_subject(), triple_pattern.get_predicate(), triple_pattern.get_object());
+
+    // The following step is needed to make sure that we are not using any triple component id's that are not available
+    // in the HDT dict. Otherwise, HDT simply crashes.
+    TripleString tripleString;
+    hdt->getDictionary()->tripleIDtoTripleString(tripleId, tripleString);
+    hdt->getDictionary()->tripleStringtoTripleID(tripleString, tripleId);
+
     IteratorTripleID* it = hdt->getTriples()->search(tripleId);
     if(it->canGoTo()) {
         try {
