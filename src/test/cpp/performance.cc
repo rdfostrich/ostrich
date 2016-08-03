@@ -44,33 +44,34 @@ Controller* setup_snapshot(int snapshot_size) {
 }
 
 void populate_controller(Controller* controller, int additions, int deletions, int addition_deletions, int& patch_id) {
+    DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
     if(additions > 0) {
-        Patch patch1;
+        Patch patch1(dict);
         for (int i = 0; i < additions; i++) {
             string e = std::to_string(i * (patch_id + 1));
             //patch.add(PatchElement(Triple("a" + e, "a" + e, "a" + e), true));
-            patch1.add(PatchElement(Triple("b" + e, "b" + e, "b" + e), true));
+            patch1.add(PatchElement(Triple("b" + e, "b" + e, "b" + e, dict), true));
             //patch.add(PatchElement(Triple("c" + e, "c" + e, "c" + e), true));
         }
-        controller->append(patch1, patch_id++);
+        controller->append(patch1, patch_id++, dict);
     }
 
     if(deletions > 0) {
-        Patch patch2;
+        Patch patch2(dict);
         for (int i = 0; i < deletions; i++) {
             string e = std::to_string(i * 10 * (patch_id + 1));
-            patch2.add(PatchElement(Triple(e, e, e), false));
+            patch2.add(PatchElement(Triple(e, e, e, dict), false));
         }
-        controller->append(patch2, patch_id++);
+        controller->append(patch2, patch_id++, dict);
     }
 
     if(addition_deletions > 0) {
-        Patch patch3;
+        Patch patch3(dict);
         for (int i = 0; i < addition_deletions; i++) {
             string e = std::to_string(i * (patch_id + 1));
-            patch3.add(PatchElement(Triple("b" + e, "b" + e, "b" + e), false));
+            patch3.add(PatchElement(Triple("b" + e, "b" + e, "b" + e, dict), false));
         }
-        controller->append(patch3, patch_id++);
+        controller->append(patch3, patch_id++, dict);
     }
 }
 
@@ -168,8 +169,9 @@ void populate_controller_with_version(Controller* controller, int patch_id, stri
     std::regex regex_additions("([a-z0-9]*).nt.additions.txt");
     std::regex regex_deletions("([a-z0-9]*).nt.deletions.txt");
 
+    DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
     bool first = patch_id == 0;
-    Patch patch;
+    Patch patch(dict);
     CombinedTripleIterator* it = new CombinedTripleIterator();
 
     DIR *dir;
@@ -188,7 +190,7 @@ void populate_controller_with_version(Controller* controller, int patch_id, stri
                     IteratorTripleString *subIt = get_from_file(full_path);
                     while (subIt->hasNext()) {
                         TripleString* tripleString = subIt->next();
-                        patch.add(PatchElement(Triple(tripleString->getSubject(), tripleString->getPredicate(), tripleString->getObject()), additions));
+                        patch.add(PatchElement(Triple(tripleString->getSubject(), tripleString->getPredicate(), tripleString->getObject(), dict), additions));
                     }
                 }
             }
@@ -206,7 +208,7 @@ void populate_controller_with_version(Controller* controller, int patch_id, stri
         delete it;
     } else {
         added = patch.get_size();
-        controller->append(patch, patch_id);
+        controller->append(patch, patch_id, dict);
     }
     cout << "  Added: " << added << endl;
     cout << "  Duration: " << duration << endl;
@@ -235,7 +237,8 @@ Controller* init(string basePath, int& patch_id) {
 }
 
 void test_lookups(Controller* controller, int patches, Triple triple_pattern) {
-    cout << ">> pattern: " << triple_pattern.to_string() << endl;
+    DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
+    cout << ">> pattern: " << triple_pattern.to_string(*dict) << endl;
     cout << "patch,offset,lookup-ms-0-1,lookup-ms-0-50,lookup-ms-0-100" << endl;
     for(int i = 0; i < patches; i++) {
         for(int offset = 0; offset < 1000; offset+=100) {
@@ -253,11 +256,12 @@ int main() {
     int patches = 0;
     // TODO: don't hardcode path to patches
     Controller* controller = init("/Users/rtaelman/nosync/patch-generator/patches", patches);
+    DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
 
     // Lookups
-    test_lookups(controller, patches, Triple("", "", ""));
-    test_lookups(controller, patches, Triple("", "http://www.w3.org/2000/01/rdf-schema#label", ""));
-    test_lookups(controller, patches, Triple("http://dbpedia.org/resource/Aldabrensis", "", ""));
+    test_lookups(controller, patches, Triple("", "", "", dict));
+    test_lookups(controller, patches, Triple("", "http://www.w3.org/2000/01/rdf-schema#label", "", dict));
+    test_lookups(controller, patches, Triple("http://dbpedia.org/resource/Aldabrensis", "", "", dict));
 
     cleanup_controller(controller);
 }
