@@ -28,7 +28,8 @@ protected:
     DictionaryManagerTest() {}
 
     virtual void SetUp() {
-      dict = new DictionaryManager();
+      std::remove(PATCHDICT_FILENAME_BASE(0).c_str());
+      dict = new DictionaryManager(0);
 
       a = "http://example.org/a";
       b = "http://example.org/b";
@@ -53,6 +54,10 @@ protected:
       hdt_id_c = 3;
 
       role = SUBJECT;
+    }
+
+    virtual void TearDown() {
+      std::remove(PATCHDICT_FILENAME_BASE(0).c_str());
     }
 };
 
@@ -104,7 +109,7 @@ TEST_F(DictionaryManagerTest, SnapshotDictionary) {
   hdtDict->insert(c, role);
 
   delete dict;
-  dict = new DictionaryManager(hdtDict);
+  dict = new DictionaryManager(0, hdtDict);
 
   unsigned int idA = dict->stringToId(a, role);
   unsigned int idB = dict->stringToId(b, role);
@@ -155,7 +160,7 @@ TEST_F(DictionaryManagerTest, HdtDictionary) {
   HDT* snapshot = hdt::HDTManager::loadHDT(fileName.c_str());
 
   delete dict;
-  dict = new DictionaryManager(snapshot->getDictionary());
+  dict = new DictionaryManager(0, snapshot->getDictionary());
 
   // Order of insertion: a e f g h i literal i b c literal2
   // Presumed order: s (a c e) o(literal2 literal literal3 ; b g h i)
@@ -238,48 +243,29 @@ TEST_F(DictionaryManagerTest, HdtDictionary) {
   remove((fileName + ".index").c_str());
 }
 
-/*TEST_F(DictionaryManagerTest, SaveAndLoad) {
+TEST_F(DictionaryManagerTest, SaveAndLoad) {
+  delete dict;
+  dict = new DictionaryManager(0);
+  dict->insert(a, SUBJECT);
+  dict->insert(b, PREDICATE);
+  dict->insert(c, OBJECT);
+  dict->insert(d, SUBJECT);
+  dict->insert(e, PREDICATE);
+  dict->insert(f, OBJECT);
+  dict->insert(g, SUBJECT);
+  dict->insert(h, PREDICATE);
+  dict->insert(i, OBJECT);
 
-  //delete dict;
-  //dict = new DictionaryManager();
-  PlainDictionary * dict_plain = new PlainDictionary();
-  dict_plain->insert(a, SUBJECT);
-  dict_plain->insert(b, PREDICATE);
-  dict_plain->insert(c, OBJECT);
-  dict_plain->insert(d, SUBJECT);
-  dict_plain->insert(e, PREDICATE);
-  dict_plain->insert(f, OBJECT);
-  dict_plain->insert(g, SUBJECT);
-  dict_plain->insert(h, PREDICATE);
-  dict_plain->insert(i, OBJECT);
+  delete dict;
+  dict = new DictionaryManager(0);
 
-  //stringstream stream;
-  ofstream myfile;
-  myfile.open ("test.dic");
-  ControlInformation ci = ControlInformation();
-  StdoutProgressListener listener;
-
-  dict_plain->save(myfile, ci, &listener);
-
-  myfile.close();
-
-  //delete dict;
-  //dict = new DictionaryManager();
-  PlainDictionary * dict_loaded = new PlainDictionary();
-
-  ifstream loadFile ("test.dic");
-  dict_loaded->load(loadFile, ci, &listener);
-  loadFile.close();
-
-  EXPECT_EQ(2147483649, dict_loaded->stringToId(a, SUBJECT));
-  EXPECT_EQ(2147483649, dict_loaded->stringToId(b, PREDICATE));
-  EXPECT_EQ(2147483649, dict_loaded->stringToId(c, OBJECT));
-  EXPECT_EQ(2147483650, dict_loaded->stringToId(d, SUBJECT));
-  EXPECT_EQ(2147483650, dict_loaded->stringToId(e, PREDICATE));
-  EXPECT_EQ(2147483650, dict_loaded->stringToId(f, OBJECT));
-  EXPECT_EQ(2147483651, dict_loaded->stringToId(g, SUBJECT));
-  EXPECT_EQ(2147483651, dict_loaded->stringToId(h, PREDICATE));
-  EXPECT_EQ(2147483651, dict_loaded->stringToId(i, OBJECT));
-
-
-}*/
+  EXPECT_EQ(2147483649, dict->stringToId(a, SUBJECT));
+  EXPECT_EQ(2147483649, dict->stringToId(b, PREDICATE));
+  EXPECT_EQ(2147483649, dict->stringToId(c, OBJECT));
+  EXPECT_EQ(2147483650, dict->stringToId(d, SUBJECT));
+  EXPECT_EQ(2147483650, dict->stringToId(e, PREDICATE));
+  EXPECT_EQ(2147483650, dict->stringToId(f, OBJECT));
+  EXPECT_EQ(2147483651, dict->stringToId(g, SUBJECT));
+  EXPECT_EQ(2147483651, dict->stringToId(h, PREDICATE));
+  EXPECT_EQ(2147483651, dict->stringToId(i, OBJECT));
+}

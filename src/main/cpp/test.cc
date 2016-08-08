@@ -15,7 +15,7 @@ int main() {
   Controller controller;
 
   // Build a snapshot
-  std::vector<TripleString> triples;
+  /*std::vector<TripleString> triples;
   for(int i = 0; i < 10; i++) {
     string e = std::to_string(i);
     triples.push_back(TripleString(e, e, e));
@@ -71,7 +71,29 @@ int main() {
     std::remove(SNAPSHOT_FILENAME_BASE(id).c_str());
     std::remove((SNAPSHOT_FILENAME_BASE(id) + ".index").c_str());
     itS++;
-  }
+  }*/
+
+  // Create dictmanager
+  DictionaryManager *dict;
+  dict = new DictionaryManager(0);
+  std::string a = "a";
+  std::string b = "b";
+  int ia = dict->insert(a, SUBJECT);
+  int ib = dict->insert(b, SUBJECT);
+  cout << "a:" << ia << endl;
+  cout << "b:" << ib << endl;
+  delete dict;
+
+  DictionaryManager *dict2;
+  dict2 = new DictionaryManager(0);
+  int ib2 = dict2->stringToId(b, SUBJECT);
+  int ia2 = dict2->stringToId(a, SUBJECT);
+  cout << "a2:" << ia2 << endl;
+  cout << "b2:" << ib2 << endl;
+  delete dict2;
+
+  // Delete dict file
+  std::remove(PATCHDICT_FILENAME_BASE(0).c_str());
 
 
   /*SnapshotManager snapshotManager;

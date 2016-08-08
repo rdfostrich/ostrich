@@ -12,7 +12,7 @@ protected:
     PatchTree* patchTree;
     DictionaryManager dict;
 
-    PatchTreeTest() : patchTree(NULL) {}
+    PatchTreeTest() : patchTree(NULL), dict(DictionaryManager(0)) {}
 
     virtual ~PatchTreeTest() {
 
@@ -30,6 +30,8 @@ protected:
         remove(TREEFILESUB("pso"));
         remove(TREEFILESUB("pos"));
         remove(TREEFILESUB("osp"));
+
+        remove(PATCHDICT_FILENAME_BASE(0).c_str());
     }
 };
 

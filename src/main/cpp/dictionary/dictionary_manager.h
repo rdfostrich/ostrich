@@ -1,6 +1,8 @@
 #ifndef TPFPATCH_STORE_DICTIONARY_MANAGER_H
 #define TPFPATCH_STORE_DICTIONARY_MANAGER_H
 
+#define PATCHDICT_FILENAME_BASE(id) ("snapshotpatch_" + std::to_string(id) + ".dic")
+
 #include <Dictionary.hpp>
 #include <HDTVocabulary.hpp>
 #include <Triples.hpp>
@@ -14,11 +16,12 @@ class DictionaryManager : public ModifiableDictionary {
   ModifiableDictionary *patchDict; // Additional dictionary
 
   const unsigned int bitmask;
+  int snapshotId;
 
 public:
-  DictionaryManager(Dictionary *hdtDict, ModifiableDictionary *patchDict);
-  DictionaryManager(Dictionary *hdtDict);
-  DictionaryManager();
+  DictionaryManager(int snapshotId, Dictionary *hdtDict, ModifiableDictionary *patchDict);
+  DictionaryManager(int snapshotId, Dictionary *hdtDict);
+  DictionaryManager(int snapshotId);
   ~DictionaryManager();
 
   /**
@@ -91,6 +94,9 @@ public:
   unsigned int getMapping();
 
   void getSuggestions(const char *base, TripleComponentRole role, std::vector<string> &out, int maxResults);
+protected:
+  void load();
+  void save();
 };
 
 class DictManagerIterator : public IteratorUCharString {

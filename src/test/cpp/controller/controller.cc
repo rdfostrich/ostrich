@@ -38,6 +38,7 @@ protected:
             int id = itS->first;
             std::remove(SNAPSHOT_FILENAME_BASE(id).c_str());
             std::remove((SNAPSHOT_FILENAME_BASE(id) + ".index").c_str());
+            std::remove(PATCHDICT_FILENAME_BASE(id).c_str()); // Dict for the patch trees per snapshot
             itS++;
         }
     }

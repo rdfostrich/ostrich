@@ -11,7 +11,7 @@ protected:
     PatchTreeManager patchTreeManager;
     DictionaryManager dict;
 
-    PatchTreeManagerTest() : patchTreeManager() {}
+    PatchTreeManagerTest() : patchTreeManager(), dict(DictionaryManager(0)) {}
 
     virtual void SetUp() {
     }
@@ -29,6 +29,8 @@ protected:
             std::remove(PATCHTREE_FILENAME(id, "osp").c_str());
             itP++;
         }
+
+        remove(PATCHDICT_FILENAME_BASE(0).c_str());
     }
 };
 

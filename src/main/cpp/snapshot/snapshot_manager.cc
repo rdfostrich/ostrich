@@ -36,12 +36,7 @@ HDT* SnapshotManager::load_snapshot(int snapshot_id) {
     loaded_snapshots[snapshot_id] = hdt::HDTManager::loadHDT(fileName.c_str());
 
     // load dictionary as well
-    DictionaryManager* dict = new DictionaryManager(loaded_snapshots[snapshot_id]->getDictionary());
-    ifstream dictFile(fileName + ".dic");
-    if (dictFile.is_open()) {
-      ControlInformation ci = ControlInformation();
-      dict->load(dictFile, ci);
-    }
+    DictionaryManager* dict = new DictionaryManager(snapshot_id, loaded_snapshots[snapshot_id]->getDictionary());
     loaded_dictionaries[snapshot_id] = dict;
 
     return loaded_snapshots[snapshot_id];

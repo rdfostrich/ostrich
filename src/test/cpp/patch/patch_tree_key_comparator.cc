@@ -6,13 +6,14 @@
 #include "../../../main/cpp/dictionary/dictionary_manager.h"
 
 TEST(PatchTreeKeyComparatorTest, CompareSimple) {
-    DictionaryManager dict;
+    DictionaryManager dict(0);
     PatchTreeKeyComparator comp(comp_s, comp_p, comp_o, &dict);
     ASSERT_EQ(-1, comp.compare(Triple("a", "a", "a", &dict), Triple("b", "b", "b", &dict)));
+    std::remove(PATCHDICT_FILENAME_BASE(0).c_str());
 }
 
 TEST(PatchTreeKeyComparatorTest, CompareComplexSPO) {
-    DictionaryManager dict;
+    DictionaryManager dict(0);
     PatchTreeKeyComparator comp(comp_s, comp_p, comp_o, &dict);
     ASSERT_EQ(1 , comp.compare(Triple("b", "b", "b", &dict), Triple("a", "a", "a", &dict)));
     ASSERT_EQ(1 , comp.compare(Triple("b", "b", "b", &dict), Triple("a", "a", "b", &dict)));
@@ -49,10 +50,11 @@ TEST(PatchTreeKeyComparatorTest, CompareComplexSPO) {
     ASSERT_EQ(-1, comp.compare(Triple("b", "b", "b", &dict), Triple("c", "c", "a", &dict)));
     ASSERT_EQ(-1, comp.compare(Triple("b", "b", "b", &dict), Triple("c", "c", "b", &dict)));
     ASSERT_EQ(-1, comp.compare(Triple("b", "b", "b", &dict), Triple("c", "c", "c", &dict)));
+    std::remove(PATCHDICT_FILENAME_BASE(0).c_str());
 }
 
 TEST(PatchTreeKeyComparatorTest, CompareComplexSOP) {
-    DictionaryManager dict;
+    DictionaryManager dict(0);
     PatchTreeKeyComparator comp(comp_s, comp_o, comp_p, &dict);
     ASSERT_EQ(1 , comp.compare(Triple("b", "b", "b", &dict), Triple("a", "a", "a", &dict)));
     ASSERT_EQ(1 , comp.compare(Triple("b", "b", "b", &dict), Triple("a", "a", "b", &dict)));
@@ -89,4 +91,5 @@ TEST(PatchTreeKeyComparatorTest, CompareComplexSOP) {
     ASSERT_EQ(-1, comp.compare(Triple("b", "b", "b", &dict), Triple("c", "c", "a", &dict)));
     ASSERT_EQ(-1, comp.compare(Triple("b", "b", "b", &dict), Triple("c", "c", "b", &dict)));
     ASSERT_EQ(-1, comp.compare(Triple("b", "b", "b", &dict), Triple("c", "c", "c", &dict)));
+    std::remove(PATCHDICT_FILENAME_BASE(0).c_str());
 }

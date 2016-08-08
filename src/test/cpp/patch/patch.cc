@@ -10,10 +10,14 @@ protected:
     Patch patchElements;
     DictionaryManager dict;
 
-    PatchElementsTest() : dict(), patchElements(Patch(&dict)) {}
+    PatchElementsTest() : dict(0), patchElements(Patch(&dict)) {}
 
     virtual void SetUp() {
         patchElements = Patch(&dict);
+    }
+
+    virtual void TearDown() {
+        std::remove(PATCHDICT_FILENAME_BASE(0).c_str());
     }
 };
 

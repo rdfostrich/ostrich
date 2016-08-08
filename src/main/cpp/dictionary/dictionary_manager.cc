@@ -11,24 +11,47 @@
 using namespace std;
 using namespace hdt;
 
-DictionaryManager::DictionaryManager(Dictionary *hdtDict, ModifiableDictionary *patchDict)
-    : hdtDict(hdtDict), patchDict(patchDict), bitmask(2147483648) {};
-
-DictionaryManager::DictionaryManager(Dictionary *hdtDict)
-    : hdtDict(hdtDict), bitmask(2147483648) {
-  // Create additional dictionary
-  patchDict = new PlainDictionary();
+DictionaryManager::DictionaryManager(int snapshotId, Dictionary *hdtDict, ModifiableDictionary *patchDict)
+    : snapshotId(snapshotId), hdtDict(hdtDict), patchDict(patchDict), bitmask(2147483648) {
+  load();
 };
 
-DictionaryManager::DictionaryManager() : bitmask(2147483648) {
+DictionaryManager::DictionaryManager(int snapshotId, Dictionary *hdtDict)
+    : snapshotId(snapshotId), hdtDict(hdtDict), bitmask(2147483648) {
+  // Create additional dictionary
+  patchDict = new PlainDictionary();
+  load();
+};
+
+DictionaryManager::DictionaryManager(int snapshotId) : snapshotId(snapshotId), bitmask(2147483648) {
   // Create two empty default dictionaries dictionary,
   hdtDict = new PlainDictionary();
   patchDict = new PlainDictionary();
+  load();
 };
 
 DictionaryManager::~DictionaryManager() {
+  save();
   delete hdtDict;
   delete patchDict;
+}
+
+void DictionaryManager::load() {
+  ifstream dictFile(PATCHDICT_FILENAME_BASE(snapshotId));
+  if (dictFile.is_open()) {
+    ControlInformation ci = ControlInformation();
+    ci.load(dictFile);
+    patchDict->load(dictFile, ci);
+  }
+}
+
+void DictionaryManager::save() {
+  ofstream dictFile;
+  dictFile.open(PATCHDICT_FILENAME_BASE(snapshotId));
+  ControlInformation ci = ControlInformation();
+  StdoutProgressListener listener;
+  patchDict->save(dictFile, ci, &listener);
+  dictFile.close();
 }
 
 std::string DictionaryManager::idToString(unsigned int id,
