@@ -17,6 +17,7 @@ private:
     std::map<int, DictionaryManager*> loaded_dictionaries;
 public:
     SnapshotManager();
+    ~SnapshotManager();
     /**
      * Get the id of the snapshot that is smaller or equal than the given patch id.
      * @param patch_id The patch id to look up.

@@ -92,14 +92,22 @@ void cleanup_controller(Controller* controller) {
     // Delete snapshot files
     std::map<int, HDT*> snapshots = controller->get_snapshot_manager()->get_snapshots();
     std::map<int, HDT*>::iterator itS = snapshots.begin();
+    std::list<int> patchDictsToDelete;
     while(itS != snapshots.end()) {
         int id = itS->first;
         std::remove(SNAPSHOT_FILENAME_BASE(id).c_str());
         std::remove((SNAPSHOT_FILENAME_BASE(id) + ".index").c_str());
+
+        patchDictsToDelete.push_back(id);
         itS++;
     }
 
     delete controller;
+
+    std::list<int>::iterator it;
+    for(it=patchDictsToDelete.begin(); it!=patchDictsToDelete.end(); ++it) {
+        std::remove((PATCHDICT_FILENAME_BASE(*it)).c_str());
+    }
 }
 
 long long test_insert_size(int snapshot_size, int additions, int deletions, int addition_deletions) {
@@ -154,6 +162,7 @@ std::ifstream::pos_type patchstore_size(Controller* controller) {
         int id = itS->first;
         size += filesize(SNAPSHOT_FILENAME_BASE(id));
         size += filesize((SNAPSHOT_FILENAME_BASE(id) + ".index"));
+        size += filesize((PATCHDICT_FILENAME_BASE(id)));
         itS++;
     }
 
@@ -335,7 +344,7 @@ int main_manual() {
     cleanup_controller(controller);*/
 
     // File size
-    /*Controller* controller = setup_snapshot(10000);
+    Controller* controller = setup_snapshot(10000);
     int patches = 100;
     int i;
     cout << "patches,size" << endl;
@@ -344,8 +353,10 @@ int main_manual() {
         // Force a flush to patchtree file
         delete controller;
         controller = new Controller();
+        controller->get_snapshot_manager()->load_snapshot(0); // Force-reload snapshot 0 to make sure our dictmanager is loaded
 
-        populate_controller(controller, 0, 200, 0, i);
+        populate_controller(controller, 100, 0, 0, i);
         cout << "" << i << "," << patchstore_size(controller) << endl;
-    }*/
+    }
+    cleanup_controller(controller);
 }

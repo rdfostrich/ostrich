@@ -8,7 +8,26 @@
 
 using namespace hdt;
 
-SnapshotManager::SnapshotManager() : loaded_snapshots(detect_snapshots()) {}
+SnapshotManager::SnapshotManager() : loaded_snapshots(detect_snapshots()), loaded_dictionaries(std::map<int, DictionaryManager*>()) {}
+
+SnapshotManager::~SnapshotManager() {
+    /*std::map<int, HDT*>::iterator it = loaded_snapshots.begin();
+    while(it != loaded_snapshots.end()) {
+        HDT* hdt = it->second;
+        if(hdt != NULL) {
+            delete hdt;
+        }
+        it++;
+    }*/
+    std::map<int, DictionaryManager*>::iterator it2 = loaded_dictionaries.begin();
+    while(it2 != loaded_dictionaries.end()) {
+        DictionaryManager* dict = it2->second;
+        if(dict != NULL) {
+            delete dict;
+        }
+        it2++;
+    }
+}
 
 int SnapshotManager::get_latest_snapshot(int patch_id) {
     std::map<int, HDT*>::iterator it = loaded_snapshots.lower_bound(patch_id);

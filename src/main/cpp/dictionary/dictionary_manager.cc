@@ -32,7 +32,6 @@ DictionaryManager::DictionaryManager(int snapshotId) : snapshotId(snapshotId), b
 
 DictionaryManager::~DictionaryManager() {
   save();
-  delete hdtDict;
   delete patchDict;
 }
 
