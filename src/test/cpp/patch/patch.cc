@@ -17,7 +17,7 @@ protected:
     }
 
     virtual void TearDown() {
-        std::remove(PATCHDICT_FILENAME_BASE(0).c_str());
+        DictionaryManager::cleanup(0);
     }
 };
 

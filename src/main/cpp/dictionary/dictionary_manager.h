@@ -55,6 +55,10 @@ public:
 
   Dictionary* getHdtDict() const;
   ModifiableDictionary* getPatchDict() const;
+  /**
+   * Removes all the files that were created by the dictionary manager of the given id.
+   */
+  static void cleanup(int snapshotId);
 
   /**
   * Proxied methods

@@ -150,6 +150,6 @@ void Controller::cleanup(Controller* controller) {
     // Delete dictionaries
     std::list<int>::iterator it;
     for(it=patchDictsToDelete.begin(); it!=patchDictsToDelete.end(); ++it) {
-        std::remove((PATCHDICT_FILENAME_BASE(*it)).c_str());
+        DictionaryManager::cleanup(*it);
     }
 }

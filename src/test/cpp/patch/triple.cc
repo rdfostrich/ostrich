@@ -23,7 +23,7 @@ TEST(TripleTest, Fields) {
     ASSERT_EQ("s1", triple.get_subject(dict)) << "Subject is not saved correctly";
     ASSERT_EQ("p1", triple.get_predicate(dict)) << "Predicate is not saved correctly";
     ASSERT_EQ("o1", triple.get_object(dict)) << "Object is not saved correctly";
-    std::remove(PATCHDICT_FILENAME_BASE(0).c_str());
+    DictionaryManager::cleanup(0);
 }
 
 TEST(TripleTest, FieldsOverlap) {
@@ -32,7 +32,7 @@ TEST(TripleTest, FieldsOverlap) {
     ASSERT_EQ("a", triple.get_subject(dict)) << "Subject is not saved correctly";
     ASSERT_EQ("a", triple.get_predicate(dict)) << "Predicate is not saved correctly";
     ASSERT_EQ("a", triple.get_object(dict)) << "Object is not saved correctly";
-    std::remove(PATCHDICT_FILENAME_BASE(0).c_str());
+    DictionaryManager::cleanup(0);
 }
 
 TEST(TripleTest, ToStringRaw) {
@@ -44,14 +44,14 @@ TEST(TripleTest, ToString) {
     DictionaryManager dict(0);
     Triple triple("s1", "p1", "o1", &dict);
     ASSERT_EQ("s1 p1 o1.", triple.to_string(dict)) << "to_string is incorrect";
-    std::remove(PATCHDICT_FILENAME_BASE(0).c_str());
+    DictionaryManager::cleanup(0);
 }
 
 TEST(TripleTest, ToStringOverlap) {
     DictionaryManager dict(0);
     Triple triple("a", "a", "a", &dict);
     ASSERT_EQ("a a a.", triple.to_string(dict)) << "to_string is incorrect";
-    std::remove(PATCHDICT_FILENAME_BASE(0).c_str());
+    DictionaryManager::cleanup(0);
 }
 
 TEST(TripleTest, SerializationRaw) {
@@ -84,7 +84,7 @@ TEST(TripleTest, Serialization) {
     ASSERT_EQ(tripleIn.to_string(dict), tripleOut.to_string(dict)) << "Serialization failed";
     free((char*) data);
 
-    std::remove(PATCHDICT_FILENAME_BASE(0).c_str());
+    DictionaryManager::cleanup(0);
 }
 
 TEST(TripleTest, SerializationLong) {
@@ -102,7 +102,7 @@ TEST(TripleTest, SerializationLong) {
     ASSERT_EQ(tripleIn.to_string(dict), tripleOut.to_string(dict)) << "Serialization failed";
     free((char*) data);
 
-    std::remove(PATCHDICT_FILENAME_BASE(0).c_str());
+    DictionaryManager::cleanup(0);
 }
 
 TEST(TripleTest, SerializationSize) {
@@ -116,5 +116,5 @@ TEST(TripleTest, SerializationSize) {
     ASSERT_EQ(12, size) << "Serialization length is too high";
     free((char*) data);
 
-    std::remove(PATCHDICT_FILENAME_BASE(0).c_str());
+    DictionaryManager::cleanup(0);
 }

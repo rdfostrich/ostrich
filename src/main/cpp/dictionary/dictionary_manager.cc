@@ -117,6 +117,10 @@ ModifiableDictionary* DictionaryManager::getPatchDict() const {
   return patchDict;
 }
 
+void DictionaryManager::cleanup(int snapshotId) {
+  std::remove((PATCHDICT_FILENAME_BASE(snapshotId)).c_str());
+}
+
 size_t DictionaryManager::getNumberOfElements() {
   return hdtDict->getNumberOfElements() + patchDict->getNumberOfElements();
 }
