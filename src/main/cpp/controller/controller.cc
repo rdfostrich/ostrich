@@ -117,3 +117,39 @@ DictionaryManager *Controller::get_dictionary_manager(int patch_id) const {
     }
     return get_snapshot_manager()->get_dictionary_manager(snapshot_id);
 }
+
+void Controller::cleanup(Controller* controller) {
+    // Delete patch files
+    std::map<int, PatchTree*> patches = controller->get_patch_tree_manager()->get_patch_trees();
+    std::map<int, PatchTree*>::iterator itP = patches.begin();
+    while(itP != patches.end()) {
+        int id = itP->first;
+        std::remove(PATCHTREE_FILENAME(id, "spo").c_str());
+        std::remove(PATCHTREE_FILENAME(id, "pos").c_str());
+        std::remove(PATCHTREE_FILENAME(id, "pso").c_str());
+        std::remove(PATCHTREE_FILENAME(id, "sop").c_str());
+        std::remove(PATCHTREE_FILENAME(id, "osp").c_str());
+        itP++;
+    }
+
+    // Delete snapshot files
+    std::map<int, HDT*> snapshots = controller->get_snapshot_manager()->get_snapshots();
+    std::map<int, HDT*>::iterator itS = snapshots.begin();
+    std::list<int> patchDictsToDelete;
+    while(itS != snapshots.end()) {
+        int id = itS->first;
+        std::remove(SNAPSHOT_FILENAME_BASE(id).c_str());
+        std::remove((SNAPSHOT_FILENAME_BASE(id) + ".index").c_str());
+
+        patchDictsToDelete.push_back(id);
+        itS++;
+    }
+
+    delete controller;
+
+    // Delete dictionaries
+    std::list<int>::iterator it;
+    for(it=patchDictsToDelete.begin(); it!=patchDictsToDelete.end(); ++it) {
+        std::remove((PATCHDICT_FILENAME_BASE(*it)).c_str());
+    }
+}

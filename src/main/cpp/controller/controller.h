@@ -32,6 +32,10 @@ public:
      * @return The DictionaryManager file for a certain patch id, this patch id does not have to be created yet.
      */
     DictionaryManager* get_dictionary_manager(int patch_id) const;
+    /**
+     * Removes all the files that were created by the controller.
+     */
+    static void cleanup(Controller* controller);
 };
 
 
