@@ -24,8 +24,8 @@ project(${PROJECT_NAME_STR})
 
 set(SOURCE_FILES
         #src/main/cpp/test.cc
-        src/test/cpp/performance.cc
-        #src/test/cpp/bear.cc
+        #src/test/cpp/performance.cc
+        src/test/cpp/bear.cc
 )
 set(COMMON_FILES
         src/main/cpp/controller/controller.cc src/main/cpp/controller/controller.h
@@ -89,6 +89,10 @@ else (KYOTO_SHARED_LIBRARY MATCHES KYOTO_LIBRARY-NOTFOUND)
         add_definitions(-DHAS_KYOTO)
     endif (KYOTO_INCLUDE_DIR MATCHES KYOTO_INCLUDE_DIR-NOTFOUND)
 endif (KYOTO_SHARED_LIBRARY MATCHES KYOTO_LIBRARY-NOTFOUND)
+
+if (Kyoto-FOUND)
+    add_definitions(-DHAVE_KYOTO)
+endif()
 
 # Add Boost
 # find_package(Boost CONFIG REQUIRED COMPONENTS container)
