@@ -8,8 +8,8 @@
 using namespace std;
 using namespace kyotocabinet;
 
-PatchTree::PatchTree(string file_name, DictionaryManager* dict) {
-    tripleStore = new TripleStore(file_name, dict);
+PatchTree::PatchTree(string file_name, DictionaryManager* dict, int8_t kc_opts) {
+    tripleStore = new TripleStore(file_name, dict, kc_opts);
 };
 
 PatchTree::~PatchTree() {

@@ -21,7 +21,7 @@ private:
     PatchTreeKeyComparator* keyComparator;
     PatchElementComparator* elementComparator;
 public:
-    PatchTree(string file_name, DictionaryManager* dict);
+    PatchTree(string file_name, DictionaryManager* dict, int8_t kc_opts = 0);
     ~PatchTree();
     /**
      * Append the given patch elements to the tree with given patch id.

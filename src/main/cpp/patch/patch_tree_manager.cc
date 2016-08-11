@@ -2,7 +2,7 @@
 #include <iostream>
 #include "patch_tree_manager.h"
 
-PatchTreeManager::PatchTreeManager() : loaded_patches(detect_patch_trees()) {}
+PatchTreeManager::PatchTreeManager(int8_t kc_opts) : loaded_patches(detect_patch_trees()), kc_opts(kc_opts) {}
 
 PatchTreeManager::~PatchTreeManager() {
     std::map<int, PatchTree*>::iterator it = loaded_patches.begin();
@@ -55,7 +55,7 @@ const std::map<int, PatchTree*>& PatchTreeManager::get_patch_trees() const {
 
 PatchTree* PatchTreeManager::load_patch_tree(int patch_id_start, DictionaryManager* dict) {
     // TODO: We might want to look into unloading patch trees if they aren't used for a while. (using splay-tree/queue?)
-    return loaded_patches[patch_id_start] = new PatchTree(PATCHTREE_FILENAME_BASE(patch_id_start), dict);
+    return loaded_patches[patch_id_start] = new PatchTree(PATCHTREE_FILENAME_BASE(patch_id_start), dict, kc_opts);
 }
 
 PatchTree* PatchTreeManager::get_patch_tree(int patch_id_start, DictionaryManager* dict) {

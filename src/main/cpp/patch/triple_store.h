@@ -26,7 +26,7 @@ protected:
     void open(TreeDB* db, string name);
     void close(TreeDB* db, string name);
 public:
-    TripleStore(string base_file_name, DictionaryManager* dict);
+    TripleStore(string base_file_name, DictionaryManager* dict, int8_t kc_opts = 0);
     ~TripleStore();
     TreeDB* getTree(Triple triple_pattern);
     bool isDefaultTree(Triple triple_pattern);

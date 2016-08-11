@@ -27,7 +27,7 @@ class CombinedTripleIterator;
 #endif
 
 Controller* setup_snapshot(int snapshot_size) {
-    Controller* controller = new Controller();
+    Controller* controller = new Controller(HashDB::TCOMPRESS);
 
     // Build a snapshot
     std::vector<TripleString> triples;
@@ -226,7 +226,7 @@ void populate_controller_with_version(Controller* controller, int patch_id, stri
 }
 
 Controller* init(string basePath, int& patch_id) {
-    Controller* controller = new Controller();
+    Controller* controller = new Controller(HashDB::TCOMPRESS);
 
     DIR *dir;
     struct dirent *ent;
@@ -260,7 +260,7 @@ void test_lookups(Controller* controller, int patches, Triple triple_pattern) {
     }
 }
 
-int main() {
+int main_() {
     // read patch-ified files (additions/deletions)
     int patches = 0;
     // TODO: don't hardcode path to patches
@@ -275,7 +275,7 @@ int main() {
     cleanup_controller(controller);
 }
 
-int main_manual() {
+int main() {
     int duplicates = 1;
 
     //test_insert_size(1000, 10, 0, 0); // WARM-UP
@@ -352,10 +352,10 @@ int main_manual() {
     while(i < patches) {
         // Force a flush to patchtree file
         delete controller;
-        controller = new Controller();
+        controller = new Controller(HashDB::TCOMPRESS);
         controller->get_snapshot_manager()->load_snapshot(0); // Force-reload snapshot 0 to make sure our dictmanager is loaded
 
-        populate_controller(controller, 100, 0, 0, i);
+        populate_controller(controller, 0, 200, 0, i);
         cout << "" << i << "," << patchstore_size(controller) << endl;
     }
     cleanup_controller(controller);

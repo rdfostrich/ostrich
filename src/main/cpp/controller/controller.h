@@ -10,7 +10,7 @@ private:
     PatchTreeManager* patchTreeManager;
     SnapshotManager* snapshotManager;
 public:
-    Controller();
+    Controller(int8_t kc_opts = 0);
     ~Controller();
     TripleIterator* get(const Triple& triple_pattern, int offset, int patch_id) const;
     /**

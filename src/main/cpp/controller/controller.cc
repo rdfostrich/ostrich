@@ -1,7 +1,7 @@
 #include "controller.h"
 #include "snapshot_patch_iterator_triple_id.h"
 
-Controller::Controller() : patchTreeManager(new PatchTreeManager()), snapshotManager(new SnapshotManager()) {}
+Controller::Controller(int8_t kc_opts) : patchTreeManager(new PatchTreeManager(kc_opts)), snapshotManager(new SnapshotManager()) {}
 
 Controller::~Controller() {
     delete patchTreeManager;

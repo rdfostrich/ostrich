@@ -12,8 +12,10 @@ class PatchTreeManager {
 private:
     // Mapping from LOADED patchtree_id -> patch_id
     std::map<int, PatchTree*> loaded_patches;
+    // Options for KC trees
+    int8_t kc_opts;
 public:
-    PatchTreeManager();
+    PatchTreeManager(int8_t kc_opts = 0);
     ~PatchTreeManager();
     /**
      * Add the given patch to a patch tree.

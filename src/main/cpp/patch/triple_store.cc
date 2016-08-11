@@ -5,7 +5,7 @@
 using namespace std;
 using namespace kyotocabinet;
 
-TripleStore::TripleStore(string base_file_name, DictionaryManager* dict) : dict(dict) {
+TripleStore::TripleStore(string base_file_name, DictionaryManager* dict, int8_t kc_opts) : dict(dict) {
     // Construct trees
     index_spo = new TreeDB();
     index_sop = new TreeDB();
@@ -20,6 +20,12 @@ TripleStore::TripleStore(string base_file_name, DictionaryManager* dict) : dict(
     index_pos->tune_comparator(new PatchTreeKeyComparator(comp_p, comp_o, comp_s, dict));
     index_osp->tune_comparator(new PatchTreeKeyComparator(comp_o, comp_s, comp_p, dict));
     element_comparator = new PatchElementComparator(spo_comparator);
+
+    index_spo->tune_options(kc_opts);
+    index_sop->tune_options(kc_opts);
+    index_pso->tune_options(kc_opts);
+    index_pos->tune_options(kc_opts);
+    index_osp->tune_options(kc_opts);
 
     // Open the databases
     open(index_spo, base_file_name + "_spo");
