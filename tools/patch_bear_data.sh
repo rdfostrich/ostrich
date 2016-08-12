@@ -15,6 +15,10 @@ for i in $(seq 1 $end); do
     deletionslocation="$location/$i/main.deletions.txt"
     mkdir -p $location/$i
 
+    if [ ! -f $second ]; then
+        gunzip $location/$i.nt.gz
+    fi
+
     # Write patch
     if [ ! -f $first ]; then
         sed "s/^/+/g" $second > $outputlocation
