@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "../../../main/cpp/patch/patch.h"
-#include "../../../main/cpp/patch/Triple.h"
+#include "../../../main/cpp/patch/triple.h"
 #include "../../../main/cpp/patch/patch_tree_key_comparator.h"
 #include "../../../main/cpp/dictionary/dictionary_manager.h"
 

@@ -81,7 +81,7 @@ HDT* SnapshotManager::get_snapshot(int snapshot_id) {
 
 HDT* SnapshotManager::create_snapshot(int snapshot_id, IteratorTripleString* triples, string base_uri) {
     BasicHDT* basicHdt = new BasicHDT();
-    basicHdt->loadFromTriples(triples, base_uri);
+    basicHdt->loadFromTriples(triples, base_uri, new StdoutProgressListener());
     basicHdt->saveToHDT(SNAPSHOT_FILENAME_BASE(snapshot_id).c_str());
     return load_snapshot(snapshot_id);
 }

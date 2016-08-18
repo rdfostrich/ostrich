@@ -62,9 +62,9 @@ void Evaluator::populate_controller_with_version(int patch_id, string path) {
 
     long added;
     if (first) {
-        std::cout.setstate(std::ios_base::failbit); // Disable cout info from HDT
+        //std::cout.setstate(std::ios_base::failbit); // Disable cout info from HDT
         HDT* hdt = controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
-        std::cout.clear();
+        //std::cout.clear();
         added = hdt->getTriples()->getNumberOfElements();
         delete it;
     } else {

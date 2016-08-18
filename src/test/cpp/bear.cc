@@ -1,15 +1,10 @@
 #include <iostream>
 #include <kchashdb.h>
-#include <util/StopWatch.hpp>
-#include <rdf/RDFParserNtriples.hpp>
-#include <dirent.h>
 #include <HDT.hpp>
 
 #include "../../main/cpp/patch/patch_tree.h"
-#include "../../main/cpp/snapshot/snapshot_manager.h"
-#include "../../main/cpp/snapshot/vector_triple_iterator.h"
 #include "../../main/cpp/controller/controller.h"
-#include "../../main/cpp/snapshot/combined_triple_iterator.h"
+#include "../../main/cpp/evaluate/evaluator.h"
 
 #define BASEURI "<http://example.org>"
 
@@ -38,12 +33,16 @@ void test_lookups_for_queries(Evaluator& evaluator, string queriesFilePath) {
     }
 }
 
-int main() {
-    // TODO: don't hardcode path
-    Evaluator evaluator;
-    evaluator.init("/Users/rtaelman/nosync/patch-generator/bear/patches");
+int main(int argc, char *argv[]) {
+    if (argc != 3) {
+        cerr << "Usage: " << argv[0] << " path_to_patches path_to_queries" << endl;
+        exit(1);
+    }
 
-    test_lookups_for_queries(evaluator, "/Users/rtaelman/nosync/BEAR/queries/subjectLookup/queries-sel-100-e0.1.txt");
+    Evaluator evaluator;
+    evaluator.init(argv[1]);
+
+    test_lookups_for_queries(evaluator, ((std::string) argv[2]) + "/queries-sel-100-e0.1.txt");
 
     evaluator.cleanup_controller();
 }

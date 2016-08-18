@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.3)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -stdlib=libc++")
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include("ext/hunter/HunterGate.cmake")
 HunterGate(
     URL "https://github.com/ruslo/hunter/archive/v0.12.40.tar.gz"
@@ -111,8 +113,13 @@ file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/src/test/cpp/*.cpp)
 add_executable(${PROJECT_TEST_NAME} ${TEST_FILES} ${HDT_FILES} ${COMMON_FILES})
 add_dependencies(${PROJECT_TEST_NAME} googletest)
 
+if(NOT MSVC)
+    set(PThreadLib -pthread)
+endif()
+
 if(NOT WIN32)
     target_link_libraries(${PROJECT_TEST_NAME}
+            ${PThreadLib}
             ${GTEST_LIBS_DIR}/libgtest.a
             ${GTEST_LIBS_DIR}/libgtest_main.a
             )
