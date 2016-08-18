@@ -1,7 +1,7 @@
 #!/bin/bash
 
 location="ftp://nassdataweb.infor.uva.es/BEAR"
-wget -ncr $location
+wget -N -r $location
 
 mkdir -p ../data
 mv nassdataweb.infor.uva.es/BEAR/* ../data
