@@ -11,8 +11,8 @@ for i in $(seq 1 $end); do
     first="$location/$iprev.nt"
     second="$location/$i.nt"
     outputlocation="$location/$i.nt.patch"
-    additionslocation="$location/$i/main.additions.txt"
-    deletionslocation="$location/$i/main.deletions.txt"
+    additionslocation="$location/$i/main.nt.additions.txt"
+    deletionslocation="$location/$i/main.nt.deletions.txt"
     mkdir -p $location/$i
 
     if [ ! -f $second ]; then
