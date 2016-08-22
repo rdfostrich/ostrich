@@ -4,6 +4,7 @@
 #include "patch_tree.h"
 #include "patch_tree_key_comparator.h"
 #include "triple_iterator.h"
+#include "../simpleprogresslistener.h"
 
 using namespace std;
 using namespace kyotocabinet;
@@ -16,20 +17,25 @@ PatchTree::~PatchTree() {
     delete tripleStore;
 }
 
-void PatchTree::append_unsafe(const Patch& patch, int patch_id) {
+void PatchTree::append_unsafe(const Patch& patch, int patch_id, ProgressListener* progressListener) {
     // Reconstruct the full patch and add the new elements.
     // We need this for finding their relative positions.
+    NOTIFYMSG(progressListener, "Reconstructing...\n");
     Patch existing_patch = reconstruct_patch(patch_id);
+    NOTIFYMSG(progressListener, "Adding interal patch...\n");
     existing_patch.addAll(patch);
+    NOTIFYMSG(progressListener, "Applying local changes...\n");
     existing_patch = existing_patch.apply_local_changes();
 
     // insert in other triplestore trees
+    NOTIFYMSG(progressListener, "Inserting into auxiliary triple stores...\n");
     tripleStore->insertAddition(&existing_patch, patch_id);
 
     // Pre-calculate all inserting-patch triple positions.
     // We could instead do this during patch creation, but
     // I'm not convinced that this would speed up anything
     // since the total complexity will be the same.
+    NOTIFYMSG(progressListener, "Precalculating patch positions...\n");
     unordered_map<Triple, long> inserting_patch_triple_positions;
     for (long i = 0; i < patch.get_size(); i++) {
         inserting_patch_triple_positions[patch.get(i).get_triple()] = i;
@@ -46,7 +52,11 @@ void PatchTree::append_unsafe(const Patch& patch, int patch_id) {
     unordered_map<long, PatchPosition> _p_;
     unordered_map<long, PatchPosition> __o;
     PatchPosition ___ = 0;
+    NOTIFYMSG(progressListener, ("Inserting " + to_string(existing_patch.get_size()) + " into main triple store...\n").c_str());
     for(int i = 0; i < existing_patch.get_size(); i++) {
+        if (i % 10000 == 0) {
+            NOTIFYLVL(progressListener, "Triple insertion", i);
+        }
         PatchElement patchElement = existing_patch.get(i);
         unordered_map<Triple, long>::iterator it_in_inserting_patch = inserting_patch_triple_positions.find(patchElement.get_triple());
         long index_in_inserting_patch = it_in_inserting_patch != inserting_patch_triple_positions.end() ? it_in_inserting_patch->second : -1;
@@ -78,16 +88,17 @@ void PatchTree::append_unsafe(const Patch& patch, int patch_id) {
         const char* new_raw_value = value.serialize(&new_value_size);
         tripleStore->getTree()->set(raw_key, key_size, new_raw_value, new_value_size);
     }
+    NOTIFYMSG(progressListener, "\nFinished patch insertion\n");
 }
 
-bool PatchTree::append(const Patch& patch, int patch_id) {
+bool PatchTree::append(const Patch& patch, int patch_id, ProgressListener* progressListener) {
     for(long i = 0; i < patch.get_size(); i++) {
         // We IGNORE the element type, because it makes no sense to have +/- for the same triple in the same patch!
         if(contains(patch.get(i), patch_id, true)) {
             return false;
         }
     }
-    append_unsafe(patch, patch_id);
+    append_unsafe(patch, patch_id, progressListener);
     return true;
 }
 

@@ -28,18 +28,20 @@ public:
      * This can OVERWRITE existing elements without a warning.
      * @param patch The patch elements
      * @param patch_id The id of the patch
+     * @param progressListener an optional progress listener.
      * @note If an error occurs, some elements might have already been added.
      * If you want to change this behaviour, you'll have to first check if the patch elements are really new.
      */
-    void append_unsafe(const Patch& patch, int patch_id);
+    void append_unsafe(const Patch& patch, int patch_id, ProgressListener* progressListener = NULL);
     /**
      * Append the given patch elements to the tree with given patch id.
      * This safe append will first check if the patch is completely new, only then it will add the data
      * @param patch The patch elements
      * @param patch_id The id of the patch
+     * @param progressListener an optional progress listener.
      * @return If the patch was added, otherwise the patch was not completely new.
      */
-    bool append(const Patch& patch, int patch_id);
+    bool append(const Patch& patch, int patch_id, ProgressListener* progressListener = NULL);
     /**
      * Check if the given patch element is present in the tree.
      * @param patch_element The patch element to look for

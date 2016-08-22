@@ -18,11 +18,11 @@ private:
     int patch_count = 0;
     Controller* controller;
 public:
-    void init(string patchesBasePatch, int startIndex, int endIndex);
+    void init(string patchesBasePatch, int startIndex, int endIndex, ProgressListener* progressListener = NULL);
     void test_lookup(string s, string p, string o);
     void cleanup_controller();
 protected:
-    void populate_controller_with_version(int patch_id, string path);
+    void populate_controller_with_version(int patch_id, string path, ProgressListener* progressListener = NULL);
     IteratorTripleString* get_from_file(string file);
     long long measure_lookup(Triple triple_pattern, int offset, int patch_id, int limit);
 };

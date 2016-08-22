@@ -97,9 +97,9 @@ TripleIterator* Controller::get(const Triple& triple_pattern, int offset, int pa
     return new SnapshotPatchIteratorTripleID(snapshot_it, deletion_it, addition_it, patchTree->get_spo_comparator());
 }
 
-bool Controller::append(const Patch& patch, int patch_id, DictionaryManager* dict) {
+bool Controller::append(const Patch& patch, int patch_id, DictionaryManager* dict, ProgressListener* progressListener) {
     // TODO: this will require some changes when we implement automatic snapshot creation.
-    return get_patch_tree_manager()->append(patch, patch_id, dict);
+    return get_patch_tree_manager()->append(patch, patch_id, dict, progressListener);
 }
 
 PatchTreeManager* Controller::get_patch_tree_manager() const {

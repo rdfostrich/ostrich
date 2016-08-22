@@ -50,7 +50,9 @@ set(COMMON_FILES
         src/main/cpp/snapshot/iterator_triple_id_to_string.cc src/main/cpp/snapshot/iterator_triple_id_to_string.h
         src/main/cpp/patch/patch_tree_manager.cc src/main/cpp/patch/patch_tree_manager.h
         src/main/cpp/snapshot/combined_triple_iterator.cc src/main/cpp/snapshot/combined_triple_iterator.h
-        src/main/cpp/patch/patch_element_comparator.cc src/main/cpp/patch/patch_element_comparator.h src/main/cpp/evaluate/evaluator.cc src/main/cpp/evaluate/evaluator.h)
+        src/main/cpp/patch/patch_element_comparator.cc src/main/cpp/patch/patch_element_comparator.h
+        src/main/cpp/evaluate/evaluator.cc src/main/cpp/evaluate/evaluator.h
+        src/main/cpp/simpleprogresslistener.cc src/main/cpp/simpleprogresslistener.h)
 
 set(TEST_FILES
         src/test/cpp/controller/controller.cc

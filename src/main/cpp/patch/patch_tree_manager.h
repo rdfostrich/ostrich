@@ -22,9 +22,10 @@ public:
      * @param patch The patch to add.
      * @param patch_id The id of the patch to add.
      * @param dict The dictionary that must be used in the patch tree if a new one will be created.
+     * @param progressListener an optional progress listener.
      * @return If the append succeeded.
      */
-    bool append(const Patch& patch, int patch_id, DictionaryManager* dict);
+    bool append(const Patch& patch, int patch_id, DictionaryManager* dict, ProgressListener* progressListener = NULL);
     /**
      * Find all patch trees in the current directory.
      * @return The found patch trees

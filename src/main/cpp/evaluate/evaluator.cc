@@ -6,23 +6,24 @@
 #include "../snapshot/combined_triple_iterator.h"
 
 #include "evaluator.h"
+#include "../simpleprogresslistener.h"
 
-void Evaluator::init(string patchesBasePatch, int startIndex, int endIndex) {
+void Evaluator::init(string patchesBasePatch, int startIndex, int endIndex, ProgressListener* progressListener) {
     controller = new Controller(HashDB::TCOMPRESS);
 
     DIR *dir;
     if ((dir = opendir(patchesBasePatch.c_str())) != NULL) {
         for (int i = startIndex; i <= endIndex; i++) {
             string versionname = to_string(i);
-            cout << versionname << endl; // TODO
+            NOTIFYMSG(progressListener, ("Version " + versionname + "\n").c_str());
             string path = patchesBasePatch + k_path_separator + versionname;
-            populate_controller_with_version(patch_count++, path);
+            populate_controller_with_version(patch_count++, path, progressListener);
         }
         closedir(dir);
     }
 }
 
-void Evaluator::populate_controller_with_version(int patch_id, string path) {
+void Evaluator::populate_controller_with_version(int patch_id, string path, ProgressListener* progressListener) {
     std::smatch base_match;
     std::regex regex_additions("([a-z0-9]*).nt.additions.txt");
     std::regex regex_deletions("([a-z0-9]*).nt.deletions.txt");
@@ -32,9 +33,17 @@ void Evaluator::populate_controller_with_version(int patch_id, string path) {
     Patch patch(dict);
     CombinedTripleIterator* it = new CombinedTripleIterator();
 
+    if ((first && controller->get_snapshot_manager()->get_snapshot(patch_id) != NULL)
+            || (!first && controller->get_patch_tree_manager()->get_patch_tree_id(patch_id) >= 0)) {
+        cout << "Skipped loading patch because it already exists." << endl;
+        return;
+    }
+
     DIR *dir;
     struct dirent *ent;
     StopWatch st;
+    cout << "Loading patch... " << endl;
+    int count = 0;
     if ((dir = opendir(path.c_str())) != NULL) {
         while ((ent = readdir(dir)) != NULL) {
             string filename = string(ent->d_name);
@@ -49,6 +58,10 @@ void Evaluator::populate_controller_with_version(int patch_id, string path) {
                     while (subIt->hasNext()) {
                         TripleString* tripleString = subIt->next();
                         patch.add(PatchElement(Triple(tripleString->getSubject(), tripleString->getPredicate(), tripleString->getObject(), dict), additions));
+                        count++;
+                        if (count % 10000 == 0) {
+                            NOTIFYLVL(progressListener, "Triple loading", count);
+                        }
                     }
                 }
             }
@@ -57,7 +70,7 @@ void Evaluator::populate_controller_with_version(int patch_id, string path) {
     }
     long long duration = st.stopReal() / 1000;
 
-    long added;
+    long long added;
     if (first) {
         //std::cout.setstate(std::ios_base::failbit); // Disable cout info from HDT
         HDT* hdt = controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
@@ -66,11 +79,12 @@ void Evaluator::populate_controller_with_version(int patch_id, string path) {
         delete it;
     } else {
         added = patch.get_size();
-        controller->append(patch, patch_id, dict);
+        NOTIFYMSG(progressListener, "\nAppending patch...\n");
+        controller->append(patch, patch_id, dict, progressListener);
     }
     cout << "  Added: " << added << endl;
     cout << "  Duration: " << duration << endl;
-    double rate = (double) added / duration;
+    long long rate = added / duration;
     cout << "  Rate: " << rate << " triples / ms" << endl;
 }
 
@@ -83,8 +97,7 @@ long long Evaluator::measure_lookup(Triple triple_pattern, int offset, int patch
     TripleIterator* ti = controller->get(triple_pattern, offset, patch_id);
     // Dummy loop over iterator
     Triple t;
-    while(limit-- > 0 && ti->next(&t));
-
+    while((limit == -2 || limit-- > 0) && ti->next(&t));
     return st.stopReal() / 1000;
 }
 
@@ -92,18 +105,20 @@ void Evaluator::test_lookup(string s, string p, string o) {
     DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
     Triple triple_pattern(s, p, o, dict);
     cout << ">> pattern: " << triple_pattern.to_string(*dict) << endl;
-    cout << "patch,offset,lookup-ms-0-1,lookup-ms-0-50,lookup-ms-0-100" << endl;
+    cout << "patch,offset,lookup-ms-1,lookup-ms-50,lookup-ms-100,lookup-ms-inf" << endl;
     for(int i = 0; i < patch_count; i++) {
         for(int offset = 0; offset < 1000; offset+=100) {
             long d1 = measure_lookup(triple_pattern, offset, i, 1);
             long d50 = measure_lookup(triple_pattern, offset, i, 50);
             long d100 = measure_lookup(triple_pattern, offset, i, 100);
+            long dinf = measure_lookup(triple_pattern, offset, i, -2);
             cout << "" << i << "," << offset << ","
-            << d1 << "," << d50 << "," << d100 << "," << endl;
+            << d1 << "," << d50 << "," << d100 << "," << dinf << endl;
         }
     }
 }
 
 void Evaluator::cleanup_controller() {
-    Controller::cleanup(controller);
+    //Controller::cleanup(controller);
+    delete controller; // TODO
 }

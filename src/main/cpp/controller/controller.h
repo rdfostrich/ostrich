@@ -17,9 +17,10 @@ public:
      * Add the given patch to a patch tree.
      * @param patch The patch to add.
      * @param patch_id The id of the patch to add.
+     * @param progressListener an optional progress listener.
      * @return If the append succeeded.
      */
-    bool append(const Patch& patch, int patch_id, DictionaryManager* dict);
+    bool append(const Patch& patch, int patch_id, DictionaryManager* dict, ProgressListener* progressListener = NULL);
     /**
      * @return The internal patchtree manager.
      */
