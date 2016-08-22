@@ -34,15 +34,15 @@ void test_lookups_for_queries(Evaluator& evaluator, string queriesFilePath) {
 }
 
 int main(int argc, char *argv[]) {
-    if (argc != 3) {
+    if (argc != 5) {
         cerr << "Usage: " << argv[0] << " path_to_patches path_to_queries" << endl;
         exit(1);
     }
 
     Evaluator evaluator;
-    evaluator.init(argv[1]);
+    evaluator.init(argv[1], stoi(argv[2]), stoi(argv[3]));
 
-    test_lookups_for_queries(evaluator, ((std::string) argv[2]) + "/queries-sel-100-e0.1.txt");
+    test_lookups_for_queries(evaluator, ((std::string) argv[4]) + "/queries-sel-100-e0.1.txt");
 
     evaluator.cleanup_controller();
 }

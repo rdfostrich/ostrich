@@ -7,19 +7,16 @@
 
 #include "evaluator.h"
 
-void Evaluator::init(string patchesBasePatch) {
+void Evaluator::init(string patchesBasePatch, int startIndex, int endIndex) {
     controller = new Controller(HashDB::TCOMPRESS);
 
     DIR *dir;
-    struct dirent *ent;
     if ((dir = opendir(patchesBasePatch.c_str())) != NULL) {
-        while ((ent = readdir(dir)) != NULL) {
-            string versionname = string(ent->d_name);
-            if (versionname != "." && versionname != ".." && versionname != ".DS_Store") {
-                cout << versionname << endl; // TODO
-                string path = patchesBasePatch + k_path_separator + versionname;
-                populate_controller_with_version(patch_count++, path);
-            }
+        for (int i = startIndex; i <= endIndex; i++) {
+            string versionname = to_string(i);
+            cout << versionname << endl; // TODO
+            string path = patchesBasePatch + k_path_separator + versionname;
+            populate_controller_with_version(patch_count++, path);
         }
         closedir(dir);
     }

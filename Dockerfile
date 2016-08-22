@@ -40,4 +40,4 @@ RUN cd /opt/patchstore/build && make
 WORKDIR /var/evalrun
 
 # Default command
-CMD ["/opt/patchstore/build/tpfpatch_store", "/var/patches", "/var/queries"]
+CMD ["/opt/patchstore/build/tpfpatch_store", "/var/patches", "1", "58", "/var/queries"]

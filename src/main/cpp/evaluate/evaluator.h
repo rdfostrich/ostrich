@@ -18,7 +18,7 @@ private:
     int patch_count = 0;
     Controller* controller;
 public:
-    void init(string patchesBasePatch);
+    void init(string patchesBasePatch, int startIndex, int endIndex);
     void test_lookup(string s, string p, string o);
     void cleanup_controller();
 protected:

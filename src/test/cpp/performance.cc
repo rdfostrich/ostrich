@@ -151,7 +151,7 @@ std::ifstream::pos_type patchstore_size(Controller* controller) {
 int main() {
     // TODO: don't hardcode path to patches
     Evaluator evaluator;
-    evaluator.init("/Users/rtaelman/nosync/patch-generator/dbpedia/patches");
+    evaluator.init("/Users/rtaelman/nosync/patch-generator/dbpedia/patches", 2, 5);
 
     evaluator.test_lookup("", "", "");
     evaluator.test_lookup("", "http://www.w3.org/2000/01/rdf-schema#label", "");
