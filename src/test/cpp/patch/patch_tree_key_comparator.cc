@@ -4,6 +4,8 @@
 #include "../../../main/cpp/patch/triple.h"
 #include "../../../main/cpp/patch/patch_tree_key_comparator.h"
 #include "../../../main/cpp/dictionary/dictionary_manager.h"
+#include <dictionary/PlainDictionary.hpp>
+#include <HDTEnums.hpp>
 
 TEST(PatchTreeKeyComparatorTest, CompareSimple) {
     DictionaryManager dict(0);
@@ -91,5 +93,61 @@ TEST(PatchTreeKeyComparatorTest, CompareComplexSOP) {
     ASSERT_EQ(-1, comp.compare(Triple("b", "b", "b", &dict), Triple("c", "c", "a", &dict)));
     ASSERT_EQ(-1, comp.compare(Triple("b", "b", "b", &dict), Triple("c", "c", "b", &dict)));
     ASSERT_EQ(-1, comp.compare(Triple("b", "b", "b", &dict), Triple("c", "c", "c", &dict)));
+    DictionaryManager::cleanup(0);
+}
+
+TEST(PatchTreeKeyComparatorTest, CompareInterDictTypes) {
+    PlainDictionary* hdtDict = new PlainDictionary();
+    DictionaryManager dict(0, hdtDict);
+    PatchTreeKeyComparator comp(comp_s, comp_o, comp_p, &dict);
+    string b("b");
+    hdtDict->insert(b, SUBJECT);
+    string d("d");
+    hdtDict->insert(d, SUBJECT);
+    string f("f");
+    hdtDict->insert(f, SUBJECT);
+
+    ASSERT_EQ(false, comp.compare(Triple("a", "a", "a", &dict), Triple("a", "a", "a", &dict)) > 0);
+    ASSERT_EQ(false, comp.compare(Triple("a", "a", "a", &dict), Triple("b", "a", "a", &dict)) > 0);
+    ASSERT_EQ(false, comp.compare(Triple("a", "a", "a", &dict), Triple("c", "a", "a", &dict)) > 0);
+    ASSERT_EQ(false, comp.compare(Triple("a", "a", "a", &dict), Triple("d", "a", "a", &dict)) > 0);
+    ASSERT_EQ(false, comp.compare(Triple("a", "a", "a", &dict), Triple("e", "a", "a", &dict)) > 0);
+    ASSERT_EQ(false, comp.compare(Triple("a", "a", "a", &dict), Triple("f", "a", "a", &dict)) > 0);
+
+    ASSERT_EQ(false, comp.compare(Triple("a", "a", "a", &dict), Triple("a", "a", "a", &dict)) < 0);
+    ASSERT_EQ(false, comp.compare(Triple("b", "a", "a", &dict), Triple("a", "a", "a", &dict)) < 0);
+    ASSERT_EQ(false, comp.compare(Triple("c", "a", "a", &dict), Triple("a", "a", "a", &dict)) < 0);
+    ASSERT_EQ(false, comp.compare(Triple("d", "a", "a", &dict), Triple("a", "a", "a", &dict)) < 0);
+    ASSERT_EQ(false, comp.compare(Triple("e", "a", "a", &dict), Triple("a", "a", "a", &dict)) < 0);
+    ASSERT_EQ(false, comp.compare(Triple("f", "a", "a", &dict), Triple("a", "a", "a", &dict)) < 0);
+
+    ASSERT_EQ(true , comp.compare(Triple("b", "a", "a", &dict), Triple("a", "a", "a", &dict)) > 0);
+    ASSERT_EQ(false, comp.compare(Triple("b", "a", "a", &dict), Triple("b", "a", "a", &dict)) > 0);
+    ASSERT_EQ(false, comp.compare(Triple("b", "a", "a", &dict), Triple("c", "a", "a", &dict)) > 0);
+    ASSERT_EQ(false, comp.compare(Triple("b", "a", "a", &dict), Triple("d", "a", "a", &dict)) > 0);
+    ASSERT_EQ(false, comp.compare(Triple("b", "a", "a", &dict), Triple("e", "a", "a", &dict)) > 0);
+    ASSERT_EQ(false, comp.compare(Triple("b", "a", "a", &dict), Triple("f", "a", "a", &dict)) > 0);
+
+    ASSERT_EQ(true , comp.compare(Triple("a", "a", "a", &dict), Triple("b", "a", "a", &dict)) < 0);
+    ASSERT_EQ(false, comp.compare(Triple("b", "a", "a", &dict), Triple("b", "a", "a", &dict)) < 0);
+    ASSERT_EQ(false, comp.compare(Triple("c", "a", "a", &dict), Triple("b", "a", "a", &dict)) < 0);
+    ASSERT_EQ(false, comp.compare(Triple("d", "a", "a", &dict), Triple("b", "a", "a", &dict)) < 0);
+    ASSERT_EQ(false, comp.compare(Triple("e", "a", "a", &dict), Triple("b", "a", "a", &dict)) < 0);
+    ASSERT_EQ(false, comp.compare(Triple("f", "a", "a", &dict), Triple("b", "a", "a", &dict)) < 0);
+
+    ASSERT_EQ(true , comp.compare(Triple("c", "a", "a", &dict), Triple("a", "a", "a", &dict)) > 0);
+    ASSERT_EQ(true , comp.compare(Triple("c", "a", "a", &dict), Triple("b", "a", "a", &dict)) > 0);
+    ASSERT_EQ(false, comp.compare(Triple("c", "a", "a", &dict), Triple("c", "a", "a", &dict)) > 0);
+    ASSERT_EQ(false, comp.compare(Triple("c", "a", "a", &dict), Triple("d", "a", "a", &dict)) > 0);
+    ASSERT_EQ(false, comp.compare(Triple("c", "a", "a", &dict), Triple("e", "a", "a", &dict)) > 0);
+    ASSERT_EQ(false, comp.compare(Triple("c", "a", "a", &dict), Triple("f", "a", "a", &dict)) > 0);
+
+    ASSERT_EQ(true , comp.compare(Triple("a", "a", "a", &dict), Triple("c", "a", "a", &dict)) < 0);
+    ASSERT_EQ(true , comp.compare(Triple("b", "a", "a", &dict), Triple("c", "a", "a", &dict)) < 0);
+    ASSERT_EQ(false, comp.compare(Triple("c", "a", "a", &dict), Triple("c", "a", "a", &dict)) < 0);
+    ASSERT_EQ(false, comp.compare(Triple("d", "a", "a", &dict), Triple("c", "a", "a", &dict)) < 0);
+    ASSERT_EQ(false, comp.compare(Triple("e", "a", "a", &dict), Triple("c", "a", "a", &dict)) < 0);
+    ASSERT_EQ(false, comp.compare(Triple("f", "a", "a", &dict), Triple("c", "a", "a", &dict)) < 0);
+
     DictionaryManager::cleanup(0);
 }
