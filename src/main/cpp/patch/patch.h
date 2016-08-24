@@ -16,7 +16,7 @@ protected:
     PatchElementComparator* element_comparator;
 public:
     Patch(PatchElementComparator* element_comparator);
-    Patch(Dictionary* dict);
+    Patch(DictionaryManager* dict);
     /**
      * Add an element to the patch
      * @param element The element to add

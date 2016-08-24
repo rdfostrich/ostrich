@@ -4,7 +4,7 @@
 
 Patch::Patch(PatchElementComparator* element_comparator) : elements(), element_comparator(element_comparator) {}
 
-Patch::Patch(Dictionary* dict) : Patch(new PatchElementComparator(new PatchTreeKeyComparator(comp_s, comp_p, comp_o, dict))) {}
+Patch::Patch(DictionaryManager* dict) : Patch(new PatchElementComparator(new PatchTreeKeyComparator(comp_s, comp_p, comp_o, dict))) {}
 
 void Patch::add(const PatchElement& element) {
     std::vector<PatchElement>::iterator itToInsert = std::lower_bound(

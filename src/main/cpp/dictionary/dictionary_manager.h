@@ -62,6 +62,14 @@ public:
   static void cleanup(int snapshotId);
 
   /**
+   * @param componentId1 The first id
+   * @param componentId2 The second id
+   * @param role SUBJECT, PREDICATE or OBJECT
+   * @return The comparisson
+   */
+  int compareComponent(unsigned int componentId1, unsigned int componentId2, TripleComponentRole role);
+
+  /**
   * Proxied methods
   *
   **/

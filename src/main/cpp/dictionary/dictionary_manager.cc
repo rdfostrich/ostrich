@@ -211,3 +211,14 @@ unsigned int DictionaryManager::getMapping() {
 }
 
 void DictionaryManager::getSuggestions(const char *base, TripleComponentRole role, std::vector<string> &out, int maxResults) {}
+
+int DictionaryManager::compareComponent(unsigned int componentId1, unsigned int componentId2,
+                                        TripleComponentRole role) {
+  unsigned int sharedCount = hdtDict->getNshared();
+  bool shared1 = componentId1 > sharedCount;
+  bool shared2 = componentId2 > sharedCount;
+  if (shared1 == shared2) {
+    return static_cast<int32_t>(componentId1 - componentId2);
+  }
+  return idToString(componentId1, role).compare(idToString(componentId2, role));
+}

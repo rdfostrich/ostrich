@@ -4,10 +4,11 @@
 #include <kchashdb.h>
 #include <Dictionary.hpp>
 #include "triple.h"
+#include "../dictionary/dictionary_manager.h"
 
 using namespace kyotocabinet;
 
-typedef std::function<int32_t(const PatchTreeKey&, const PatchTreeKey&, Dictionary& dict)> comp;
+typedef std::function<int32_t(const PatchTreeKey&, const PatchTreeKey&, DictionaryManager& dict)> comp;
 extern comp comp_s;
 extern comp comp_p;
 extern comp comp_o;
@@ -18,9 +19,9 @@ protected:
     comp compare_1;
     comp compare_2;
     comp compare_3;
-    Dictionary* dict;
+    DictionaryManager* dict;
 public:
-    PatchTreeKeyComparator(comp compare_1, comp compare_2, comp compare_3, Dictionary* dict);
+    PatchTreeKeyComparator(comp compare_1, comp compare_2, comp compare_3, DictionaryManager* dict);
     int32_t compare(const char* akbuf, size_t aksiz, const char* bkbuf, size_t bksiz);
     int32_t compare(const PatchTreeKey& key1, const PatchTreeKey& key2);
 };

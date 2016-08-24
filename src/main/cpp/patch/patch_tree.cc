@@ -22,7 +22,7 @@ void PatchTree::append_unsafe(const Patch& patch, int patch_id, ProgressListener
     // We need this for finding their relative positions.
     NOTIFYMSG(progressListener, "Reconstructing...\n");
     Patch existing_patch = reconstruct_patch(patch_id);
-    NOTIFYMSG(progressListener, "Adding interal patch...\n");
+    NOTIFYMSG(progressListener, "Adding internal patch...\n");
     existing_patch.addAll(patch);
     NOTIFYMSG(progressListener, "Applying local changes...\n");
     existing_patch = existing_patch.apply_local_changes();
