@@ -11,7 +11,7 @@
 using namespace std;
 using namespace hdt;
 
-DictionaryManager::DictionaryManager(int snapshotId, Dictionary *hdtDict, ModifiableDictionary *patchDict)
+DictionaryManager::DictionaryManager(int snapshotId, Dictionary *hdtDict, PlainDictionary *patchDict)
     : snapshotId(snapshotId), hdtDict(hdtDict), patchDict(patchDict), bitmask(2147483648) {
   load();
 };
@@ -102,7 +102,13 @@ unsigned int DictionaryManager::insert(std::string &str,
   } catch (exception e) {
   } // ID is not in there
 
-  id = bitmask | patchDict->insert(str, position);
+  unsigned int originalId = patchDict->stringToId(str, position);
+  if (originalId == 0) {
+    patchDict->insert(str, position == SUBJECT ? NOT_SHARED_SUBJECT : (position == PREDICATE ? NOT_SHARED_PREDICATE
+                                                                                             : NOT_SHARED_OBJECT));
+    originalId = patchDict->stringToId(str, position);
+  }
+  id = bitmask | originalId;
   //cout << "Patch dictionary gives id  " << id << endl;
   // cout << "Snapshot dictionary does not have " << str << endl;
 

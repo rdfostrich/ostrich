@@ -4,6 +4,7 @@
 #define PATCHDICT_FILENAME_BASE(id) ("snapshotpatch_" + std::to_string(id) + ".dic")
 
 #include <Dictionary.hpp>
+#include <dictionary/PlainDictionary.hpp>
 #include <HDTVocabulary.hpp>
 #include <Triples.hpp>
 
@@ -13,13 +14,13 @@ using namespace hdt;
 class DictionaryManager : public ModifiableDictionary {
 
   Dictionary *hdtDict;             // Dictionary from HDT file
-  ModifiableDictionary *patchDict; // Additional dictionary
+  PlainDictionary *patchDict; // Additional dictionary
 
   const unsigned int bitmask;
   int snapshotId;
 
 public:
-  DictionaryManager(int snapshotId, Dictionary *hdtDict, ModifiableDictionary *patchDict);
+  DictionaryManager(int snapshotId, Dictionary *hdtDict, PlainDictionary *patchDict);
   DictionaryManager(int snapshotId, Dictionary *hdtDict);
   DictionaryManager(int snapshotId);
   ~DictionaryManager();

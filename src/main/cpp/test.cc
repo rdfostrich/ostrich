@@ -74,7 +74,7 @@ int main() {
   }*/
 
   // Create dictmanager
-  DictionaryManager *dict;
+  /*DictionaryManager *dict;
   dict = new DictionaryManager(0);
   std::string a = "a";
   std::string b = "b";
@@ -93,7 +93,17 @@ int main() {
   delete dict2;
 
   // Delete dict file
-  std::remove(PATCHDICT_FILENAME_BASE(0).c_str());
+  std::remove(PATCHDICT_FILENAME_BASE(0).c_str());*/
+
+  DictionaryManager* dict = new DictionaryManager(0);
+  Triple triple("a", "a", "a", dict);
+
+  cout << triple.get_subject(*dict) << endl;
+  cout << triple.get_predicate(*dict) << endl;
+  cout << triple.get_object(*dict) << endl;
+
+  delete dict;
+  DictionaryManager::cleanup(0);
 
 
   /*SnapshotManager snapshotManager;
