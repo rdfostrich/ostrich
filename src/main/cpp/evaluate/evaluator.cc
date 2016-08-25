@@ -62,6 +62,10 @@ void Evaluator::populate_controller_with_version(int patch_id, string path, Prog
                         if (count % 10000 == 0) {
                             NOTIFYLVL(progressListener, "Triple loading", count);
                         }
+                        // TODO: !!!!!!!
+                        if (count > 100000) {
+                            break;
+                        }
                     }
                 }
             }
@@ -105,15 +109,17 @@ void Evaluator::test_lookup(string s, string p, string o) {
     DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
     Triple triple_pattern(s, p, o, dict);
     cout << ">> pattern: " << triple_pattern.to_string(*dict) << endl;
-    cout << "patch,offset,lookup-ms-1,lookup-ms-50,lookup-ms-100,lookup-ms-inf" << endl;
+    //cout << "patch,offset,lookup-ms-1,lookup-ms-50,lookup-ms-100,lookup-ms-inf" << endl;
+    cout << "patch,offset,lookup-ms-1,lookup-ms-inf" << endl;
     for(int i = 0; i < patch_count; i++) {
-        for(int offset = 0; offset < 1000; offset+=100) {
+        for(int offset = 0; offset < 1000; offset+=500) {
             long d1 = measure_lookup(triple_pattern, offset, i, 1);
-            long d50 = measure_lookup(triple_pattern, offset, i, 50);
-            long d100 = measure_lookup(triple_pattern, offset, i, 100);
+            //long d50 = measure_lookup(triple_pattern, offset, i, 50);
+            //long d100 = measure_lookup(triple_pattern, offset, i, 100);
             long dinf = measure_lookup(triple_pattern, offset, i, -2);
-            cout << "" << i << "," << offset << ","
-            << d1 << "," << d50 << "," << d100 << "," << dinf << endl;
+            //cout << "" << i << "," << offset << ","
+            //<< d1 << "," << d50 << "," << d100 << "," << dinf << endl;
+            cout << "" << i << "," << offset << "," << d1 << "," << dinf << endl;
         }
     }
 }
