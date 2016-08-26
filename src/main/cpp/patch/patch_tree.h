@@ -51,6 +51,20 @@ public:
      */
     bool contains(const PatchElement& patch_element, int patch_id, bool ignore_type) const;
     /**
+     * Check if the given patch element is present in the addition tree.
+     * @param patch_element The patch element to look for
+     * @param patch_id The id of the patch to look for
+     * @return If the patch is present in the addition tree.
+     */
+    bool contains_addition(const PatchElement& patch_element, int patch_id) const;
+    /**
+     * Check if the given patch element is present in the deletion tree.
+     * @param patch_element The patch element to look for
+     * @param patch_id The id of the patch to look for
+     * @return If the patch is present in the deletion tree.
+     */
+    bool contains_deletion(const PatchElement& patch_element, int patch_id) const;
+    /**
      * Reconstruct a patch based on the given patch id.
      * It will loop over the tree and rebuild the patch.
      * @param patch_id The patch id
@@ -106,7 +120,7 @@ public:
      * @param triple_pattern Only triples that match the given pattern will be returned in the iterator.
      * @return The iterator that will loop over the tree for the given patch.
      */
-    PatchTreeTripleIterator * addition_iterator_from(long offset, int patch_id, const Triple& triple_pattern) const;
+    PatchTreeTripleIterator* addition_iterator_from(long offset, int patch_id, const Triple& triple_pattern) const;
 
     /**
      * @return The comparator for this patch tree in SPO order.

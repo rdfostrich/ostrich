@@ -25,6 +25,7 @@ protected:
 
     virtual void TearDown() {
         delete patchTree;
+        remove(TREEFILESUB("spo_deletions"));
         remove(TREEFILESUB("spo"));
         remove(TREEFILESUB("sop"));
         remove(TREEFILESUB("pso"));
@@ -53,15 +54,15 @@ TEST_F(PatchTreeTest, AppendUnsafeContains) {
 
     ASSERT_EQ(true, it.next(&key, &value)) << "Iterator does not contain an element after append";
     ASSERT_EQ("s1 p1 o1.", key.to_string(dict)) << "Found key is incorrect";
-    ASSERT_EQ(false, value.get(0).is_addition()) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(0).get_patch_id()) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(0).get_patch_positions().sp_) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(0).get_patch_positions().s_o) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(0).get_patch_positions().s__) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(0).get_patch_positions()._po) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(0).get_patch_positions()._p_) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(0).get_patch_positions().__o) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(0).get_patch_positions().___) << "Found value is incorrect";
+    ASSERT_EQ(true, value.is_deletion(0, true)) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(0).get_patch_id()) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(0).get_patch_positions().sp_) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(0).get_patch_positions().s_o) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(0).get_patch_positions().s__) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(0).get_patch_positions()._po) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(0).get_patch_positions()._p_) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(0).get_patch_positions().__o) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(0).get_patch_positions().___) << "Found value is incorrect";
 
     ASSERT_EQ(false, it.next(&key, &value)) << "Iterator contains another element after a single append";
 
@@ -147,10 +148,10 @@ TEST_F(PatchTreeTest, IteratorOrder) {
     patch.add(PatchElement(Triple("s", "z", "o", &dict), false));
     patch.add(PatchElement(Triple("s", "a", "o", &dict), true));
     // Expected order:
-    // a p o +
     // g p o -
-    // s a o +
     // s z o -
+    // a p o +
+    // s a o +
     patchTree->append_unsafe(patch, 0);
 
     PatchTreeKey iteratorKey = Triple("a", "a", "a", &dict);
@@ -160,51 +161,37 @@ TEST_F(PatchTreeTest, IteratorOrder) {
 
     ASSERT_EQ(true, it.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("a p o.", key.to_string(dict)) << "First key is incorrect";
-    ASSERT_EQ(true, value.get(0).is_addition()) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(0).get_patch_id()) << "Found value is incorrect";
-    ASSERT_EQ(-1, value.get(0).get_patch_positions().sp_) << "Found value is incorrect";
-    ASSERT_EQ(-1, value.get(0).get_patch_positions().s_o) << "Found value is incorrect";
-    ASSERT_EQ(-1, value.get(0).get_patch_positions().s__) << "Found value is incorrect";
-    ASSERT_EQ(-1, value.get(0).get_patch_positions()._po) << "Found value is incorrect";
-    ASSERT_EQ(-1, value.get(0).get_patch_positions()._p_) << "Found value is incorrect";
-    ASSERT_EQ(-1, value.get(0).get_patch_positions().__o) << "Found value is incorrect";
-    ASSERT_EQ(-1, value.get(0).get_patch_positions().___) << "Found value is incorrect";
+    ASSERT_EQ(true, value.is_addition(0, true)) << "Found value is incorrect";
+    ASSERT_EQ(true, value.get_addition()->is_patch_id(0)) << "Found value is incorrect";
 
     ASSERT_EQ(true, it.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("g p o.", key.to_string(dict)) << "Second key is incorrect";
-    ASSERT_EQ(false, value.get(0).is_addition()) << "Second value is incorrect";
-    ASSERT_EQ(0, value.get(0).get_patch_id()) << "Second value is incorrect";
-    ASSERT_EQ(0, value.get(0).get_patch_positions().sp_) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(0).get_patch_positions().s_o) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(0).get_patch_positions().s__) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(0).get_patch_positions()._po) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(0).get_patch_positions()._p_) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(0).get_patch_positions().__o) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(0).get_patch_positions().___) << "Found value is incorrect";
+    ASSERT_EQ(true, value.is_deletion(0, true)) << "Second value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(0).get_patch_id()) << "Second value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(0).get_patch_positions().sp_) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(0).get_patch_positions().s_o) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(0).get_patch_positions().s__) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(0).get_patch_positions()._po) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(0).get_patch_positions()._p_) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(0).get_patch_positions().__o) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(0).get_patch_positions().___) << "Found value is incorrect";
 
     ASSERT_EQ(true, it.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("s a o.", key.to_string(dict)) << "Third key is incorrect";
-    ASSERT_EQ(true, value.get(0).is_addition()) << "Third value is incorrect";
-    ASSERT_EQ(0, value.get(0).get_patch_id()) << "Third value is incorrect";
-    ASSERT_EQ(-1, value.get(0).get_patch_positions().sp_) << "Found value is incorrect";
-    ASSERT_EQ(-1, value.get(0).get_patch_positions().s_o) << "Found value is incorrect";
-    ASSERT_EQ(-1, value.get(0).get_patch_positions().s__) << "Found value is incorrect";
-    ASSERT_EQ(-1, value.get(0).get_patch_positions()._po) << "Found value is incorrect";
-    ASSERT_EQ(-1, value.get(0).get_patch_positions()._p_) << "Found value is incorrect";
-    ASSERT_EQ(-1, value.get(0).get_patch_positions().__o) << "Found value is incorrect";
-    ASSERT_EQ(-1, value.get(0).get_patch_positions().___) << "Found value is incorrect";
+    ASSERT_EQ(true, value.is_addition(0, true)) << "Third value is incorrect";
+    ASSERT_EQ(true, value.get_addition()->is_patch_id(0)) << "Third value is incorrect";
 
     ASSERT_EQ(true, it.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("s z o.", key.to_string(dict)) << "Fourth key is incorrect";
-    ASSERT_EQ(false, value.get(0).is_addition()) << "Fourth value is incorrect";
-    ASSERT_EQ(0, value.get(0).get_patch_id()) << "Fourth value is incorrect";
-    ASSERT_EQ(0, value.get(0).get_patch_positions().sp_) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(0).get_patch_positions().s_o) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(0).get_patch_positions().s__) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(0).get_patch_positions()._po) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(0).get_patch_positions()._p_) << "Found value is incorrect";
-    ASSERT_EQ(1, value.get(0).get_patch_positions().__o) << "Found value is incorrect";
-    ASSERT_EQ(1, value.get(0).get_patch_positions().___) << "Found value is incorrect";
+    ASSERT_EQ(true, value.is_deletion(0, true)) << "Fourth value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(0).get_patch_id()) << "Fourth value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(0).get_patch_positions().sp_) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(0).get_patch_positions().s_o) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(0).get_patch_positions().s__) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(0).get_patch_positions()._po) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(0).get_patch_positions()._p_) << "Found value is incorrect";
+    ASSERT_EQ(1, value.get_deletion()->get(0).get_patch_positions().__o) << "Found value is incorrect";
+    ASSERT_EQ(1, value.get_deletion()->get(0).get_patch_positions().___) << "Found value is incorrect";
 
     ASSERT_EQ(false, it.next(&key, &value)) << "Iterator should be finished";
 }
@@ -237,12 +224,12 @@ TEST_F(PatchTreeTest, PatchIterator) {
     PatchTreeValue value;
 
     ASSERT_EQ(true, it.next(&key, &value)) << "Iterator has a no next value";
-    ASSERT_EQ("s a o.", key.to_string(dict)) << "Third key is incorrect";
-    ASSERT_EQ(true, value.get(2).is_addition()) << "Third value is incorrect";
+    ASSERT_EQ("s a o.", key.to_string(dict)) << "Fourth key is incorrect";
+    ASSERT_EQ(true, value.is_addition(2, true)) << "Fourth value is incorrect";
 
     ASSERT_EQ(true, it.next(&key, &value)) << "Iterator has a no next value";
-    ASSERT_EQ("s z o.", key.to_string(dict)) << "Fourth key is incorrect";
-    ASSERT_EQ(false, value.get(2).is_addition()) << "Fourth value is incorrect";
+    ASSERT_EQ("s z o.", key.to_string(dict)) << "Third key is incorrect";
+    ASSERT_EQ(false, value.is_addition(2, true)) << "Third value is incorrect";
 
     ASSERT_EQ(false, it.next(&key, &value)) << "Iterator should be finished";
 }
@@ -252,14 +239,27 @@ TEST_F(PatchTreeTest, OffsetFilteredPatchIterator) {
     patch1.add(PatchElement(Triple("g", "p", "o", &dict), false));
     patch1.add(PatchElement(Triple("a", "p", "o", &dict), true));
     patch1.add(PatchElement(Triple("s", "z", "o", &dict), false));
-    patch1.add(PatchElement(Triple("s", "a", "o", &dict), true));
+    patch1.add(PatchElement(Triple("s", "a", "o", &dict), true));cout << "A" << endl;
     patchTree->append(patch1, 1);
+    /*
+OUTPUT: (WRONG!!!)
+a p o. (+)
+g p o. (-)
+s a o. (+)
+s z o. (-)
+
+---
+a p o. (-)
+g p o. (-)
+s a o. (-)
+s z o. (-)
+     */
 
     Patch patch2(&dict);
     patch2.add(PatchElement(Triple("q", "p", "o", &dict), false));
     patch2.add(PatchElement(Triple("g", "p", "o", &dict), true));
     patch2.add(PatchElement(Triple("s", "z", "o", &dict), false));
-    patch2.add(PatchElement(Triple("s", "a", "o", &dict), true));
+    patch2.add(PatchElement(Triple("s", "a", "o", &dict), true));cout << "B" << endl;
     patchTree->append(patch2, 2);
 
     Patch patch3(&dict);
@@ -269,29 +269,42 @@ TEST_F(PatchTreeTest, OffsetFilteredPatchIterator) {
     patch3.add(PatchElement(Triple("l", "a", "o", &dict), true));
     patchTree->append(patch3, 3);
 
+    // Expected order for patch 1:
+    // a p o +
+    // g p o -
+    // s a o +
+    // s z o -
+
+    // Expected order for patch 2:
+    // a p o +
+    // g p o + L
+    // q p o -
+    // s a o +
+    // s z o -
+
     PatchTreeIterator it = patchTree->iterator(2, false); // Iterate over all elements of patch only 2
     PatchTreeKey key;
     PatchTreeValue value;
 
     ASSERT_EQ(true, it.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("a p o.", key.to_string(dict)) << "First key is incorrect";
-    ASSERT_EQ(true, value.get(2).is_addition()) << "First value is incorrect";
+    ASSERT_EQ(true, value.is_addition(2, true)) << "First value is incorrect";
 
     ASSERT_EQ(true, it.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("g p o.", key.to_string(dict)) << "First key is incorrect";
-    ASSERT_EQ(true, value.get(2).is_addition()) << "First value is incorrect";
+    ASSERT_EQ(true, value.is_addition(2, true)) << "First value is incorrect";
 
     ASSERT_EQ(true, it.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("q p o.", key.to_string(dict)) << "Second key is incorrect";
-    ASSERT_EQ(false, value.get(2).is_addition()) << "Second value is incorrect";
+    ASSERT_EQ(true, value.is_deletion(2, true)) << "Second value is incorrect";
 
     ASSERT_EQ(true, it.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("s a o.", key.to_string(dict)) << "Third key is incorrect";
-    ASSERT_EQ(true, value.get(2).is_addition()) << "Third value is incorrect";
+    ASSERT_EQ(true, value.is_addition(2, true)) << "Third value is incorrect";
 
     ASSERT_EQ(true, it.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("s z o.", key.to_string(dict)) << "Fourth key is incorrect";
-    ASSERT_EQ(false, value.get(2).is_addition()) << "Fourth value is incorrect";
+    ASSERT_EQ(true, value.is_deletion(2, true)) << "Fourth value is incorrect";
 
     ASSERT_EQ(false, it.next(&key, &value)) << "Iterator should be finished";
 
@@ -299,25 +312,125 @@ TEST_F(PatchTreeTest, OffsetFilteredPatchIterator) {
 
     ASSERT_EQ(true, it2.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("a p o.", key.to_string(dict)) << "First key is incorrect";
-    ASSERT_EQ(true, value.get(2).is_addition()) << "First value is incorrect";
+    ASSERT_EQ(true, value.is_addition(2, true)) << "First value is incorrect";
 
     ASSERT_EQ(true, it2.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("g p o.", key.to_string(dict)) << "First key is incorrect";
-    ASSERT_EQ(true, value.get(2).is_addition()) << "First value is incorrect";
+    ASSERT_EQ(true, value.is_addition(2, true)) << "First value is incorrect";
 
     ASSERT_EQ(true, it2.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("q p o.", key.to_string(dict)) << "Second key is incorrect";
-    ASSERT_EQ(false, value.get(2).is_addition()) << "Second value is incorrect";
+    ASSERT_EQ(false, value.is_addition(2, true)) << "Second value is incorrect";
 
     ASSERT_EQ(true, it2.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("s a o.", key.to_string(dict)) << "Third key is incorrect";
-    ASSERT_EQ(true, value.get(2).is_addition()) << "Third value is incorrect";
+    ASSERT_EQ(true, value.is_addition(2, true)) << "Third value is incorrect";
 
     ASSERT_EQ(true, it2.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("s z o.", key.to_string(dict)) << "Fourth key is incorrect";
-    ASSERT_EQ(false, value.get(2).is_addition()) << "Fourth value is incorrect";
+    ASSERT_EQ(true, value.is_deletion(2, true)) << "Fourth value is incorrect";
 
     ASSERT_EQ(false, it2.next(&key, &value)) << "Iterator should be finished";
+}
+
+TEST_F(PatchTreeTest, ReconstructPatchSimple1) {
+    Patch patch1(&dict);
+    patch1.add(PatchElement(Triple("g", "p", "o", &dict), false));
+    patch1.add(PatchElement(Triple("a", "p", "o", &dict), true));
+    patchTree->append_unsafe(patch1, 1);
+
+    Patch patch2_copy = patchTree->reconstruct_patch(1);
+    ASSERT_EQ("a p o. (+)\n"
+              "g p o. (-)\n", patch2_copy.to_string(dict)) << "Reconstructed patch should be equal to inserted patch";
+}
+
+TEST_F(PatchTreeTest, ReconstructPatchSimple2) {
+    Patch patch1(&dict);
+    patch1.add(PatchElement(Triple("g", "p", "o", &dict), false));
+    patch1.add(PatchElement(Triple("a", "p", "o", &dict), true));
+    patchTree->append_unsafe(patch1, 1);
+
+    Patch patch2_copy = patchTree->reconstruct_patch(2);
+    ASSERT_EQ("a p o. (+)\n"
+              "g p o. (-)\n", patch2_copy.to_string(dict)) << "Reconstructed patch should be equal to inserted patch";
+}
+
+TEST_F(PatchTreeTest, ReconstructPatchSimple3) {
+    Patch patch1(&dict);
+    patch1.add(PatchElement(Triple("g", "p", "o", &dict), false));
+    patch1.add(PatchElement(Triple("a", "p", "o", &dict), true));
+    patchTree->append_unsafe(patch1, 1);
+
+    Patch patch2(&dict);
+    patch2.add(PatchElement(Triple("q", "p", "o", &dict), false));
+    patch2.add(PatchElement(Triple("g", "p", "o", &dict), true));
+    patchTree->append_unsafe(patch2, 2);
+
+    Patch patch2_copy = patchTree->reconstruct_patch(2);
+    ASSERT_EQ("a p o. (+)\n"
+              "g p o. (+) L\n"
+              "q p o. (-)\n", patch2_copy.to_string(dict)) << "Reconstructed patch should be equal to inserted patch";
+}
+
+TEST_F(PatchTreeTest, ReconstructPatchSimple4) {
+    Patch patch1(&dict);
+    patch1.add(PatchElement(Triple("g", "p", "o", &dict), true));
+    patch1.add(PatchElement(Triple("a", "p", "o", &dict), true));
+    patchTree->append_unsafe(patch1, 1);
+
+    Patch patch2(&dict);
+    patch2.add(PatchElement(Triple("q", "p", "o", &dict), false));
+    patch2.add(PatchElement(Triple("g", "p", "o", &dict), false));
+    patchTree->append_unsafe(patch2, 2);
+
+    Patch patch2_copy = patchTree->reconstruct_patch(2);
+    ASSERT_EQ("a p o. (+)\n"
+              "g p o. (-) L\n"
+              "q p o. (-)\n", patch2_copy.to_string(dict)) << "Reconstructed patch should be equal to inserted patch";
+}
+
+TEST_F(PatchTreeTest, ReconstructPatchSimple5) {
+    Patch patch1(&dict);
+    patch1.add(PatchElement(Triple("g", "p", "o", &dict), true));
+    patch1.add(PatchElement(Triple("a", "p", "o", &dict), true));
+    patchTree->append_unsafe(patch1, 1);
+
+    Patch patch2(&dict);
+    patch2.add(PatchElement(Triple("q", "p", "o", &dict), false));
+    patch2.add(PatchElement(Triple("g", "p", "o", &dict), false));
+    patchTree->append_unsafe(patch2, 2);
+
+    Patch patch3(&dict);
+    patch3.add(PatchElement(Triple("g", "p", "o", &dict), true));
+    patch3.add(PatchElement(Triple("a", "p", "o", &dict), false));
+    patchTree->append_unsafe(patch3, 3);
+
+    Patch patch2_copy = patchTree->reconstruct_patch(2);
+    ASSERT_EQ("a p o. (+)\n"
+              "g p o. (-) L\n"
+              "q p o. (-)\n", patch2_copy.to_string(dict)) << "Reconstructed patch should be equal to inserted patch";
+}
+
+TEST_F(PatchTreeTest, ReconstructPatchSimple6) {
+    Patch patch1(&dict);
+    patch1.add(PatchElement(Triple("g", "p", "o", &dict), false));
+    patch1.add(PatchElement(Triple("a", "p", "o", &dict), true));
+    patchTree->append_unsafe(patch1, 1);
+
+    Patch patch2(&dict);
+    patch2.add(PatchElement(Triple("q", "p", "o", &dict), false));
+    patch2.add(PatchElement(Triple("g", "p", "o", &dict), true));
+    patchTree->append_unsafe(patch2, 2);
+
+    Patch patch3(&dict);
+    patch3.add(PatchElement(Triple("g", "p", "o", &dict), false));
+    patch3.add(PatchElement(Triple("a", "p", "o", &dict), false));
+    patchTree->append_unsafe(patch3, 3);
+
+    Patch patch2_copy = patchTree->reconstruct_patch(2);
+    ASSERT_EQ("a p o. (+)\n"
+              "g p o. (+) L\n"
+              "q p o. (-)\n", patch2_copy.to_string(dict)) << "Reconstructed patch should be equal to inserted patch";
 }
 
 TEST_F(PatchTreeTest, ReconstructPatchSingle) {
@@ -343,7 +456,11 @@ TEST_F(PatchTreeTest, ReconstructPatchSingle) {
     patchTree->append_unsafe(patch3, 3);
 
     Patch patch2_copy = patchTree->reconstruct_patch(2);
-    ASSERT_EQ("a p o. (+)\ng p o. (+) L\nq p o. (-)\ns a o. (+)\ns z o. (-)\n", patch2_copy.to_string(dict)) << "Reconstructed patch should be equal to inserted patch";
+    ASSERT_EQ("a p o. (+)\n"
+              "g p o. (+) L\n"
+              "q p o. (-)\n"
+              "s a o. (+)\n"
+              "s z o. (-)\n", patch2_copy.to_string(dict)) << "Reconstructed patch should be equal to inserted patch";
 }
 
 TEST_F(PatchTreeTest, ReconstructPatchComposite) {
@@ -468,53 +585,51 @@ TEST_F(PatchTreeTest, RelativePatchPositions) {
 
     ASSERT_EQ(true, it.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("a b c.", key.to_string(dict)) << "First key is incorrect";
-    ASSERT_EQ(-1, value.get(1).get_patch_positions().sp_) << "Found value is incorrect";
-    ASSERT_EQ(-1, value.get(1).get_patch_positions().s_o) << "Found value is incorrect";
-    ASSERT_EQ(-1, value.get(1).get_patch_positions().s__) << "Found value is incorrect";
-    ASSERT_EQ(-1, value.get(1).get_patch_positions()._po) << "Found value is incorrect";
-    ASSERT_EQ(-1, value.get(1).get_patch_positions()._p_) << "Found value is incorrect";
-    ASSERT_EQ(-1, value.get(1).get_patch_positions().__o) << "Found value is incorrect";
-    ASSERT_EQ(-1, value.get(1).get_patch_positions().___) << "Found value is incorrect";
+    ASSERT_EQ(true, value.is_addition(1, true)) << "Found value is incorrect";
 
     ASSERT_EQ(true, it.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("a p o.", key.to_string(dict)) << "First key is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().sp_) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().s_o) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().s__) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions()._po) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions()._p_) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().__o) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().___) << "Found value is incorrect";
+    ASSERT_EQ(true, value.is_deletion(1, true)) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().sp_) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().s_o) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().s__) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions()._po) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions()._p_) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().__o) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().___) << "Found value is incorrect";
 
     ASSERT_EQ(true, it.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("g p o.", key.to_string(dict)) << "Second key is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().sp_) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().s_o) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().s__) << "Found value is incorrect";
-    ASSERT_EQ(1, value.get(1).get_patch_positions()._po) << "Found value is incorrect";
-    ASSERT_EQ(1, value.get(1).get_patch_positions()._p_) << "Found value is incorrect";
-    ASSERT_EQ(1, value.get(1).get_patch_positions().__o) << "Found value is incorrect";
-    ASSERT_EQ(1, value.get(1).get_patch_positions().___) << "Found value is incorrect";
+    ASSERT_EQ(true, value.is_deletion(1, true)) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().sp_) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().s_o) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().s__) << "Found value is incorrect";
+    ASSERT_EQ(1, value.get_deletion()->get(1).get_patch_positions()._po) << "Found value is incorrect";
+    ASSERT_EQ(1, value.get_deletion()->get(1).get_patch_positions()._p_) << "Found value is incorrect";
+    ASSERT_EQ(1, value.get_deletion()->get(1).get_patch_positions().__o) << "Found value is incorrect";
+    ASSERT_EQ(1, value.get_deletion()->get(1).get_patch_positions().___) << "Found value is incorrect";
 
     ASSERT_EQ(true, it.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("s a o.", key.to_string(dict)) << "Third key is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().sp_) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().s_o) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().s__) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions()._po) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions()._p_) << "Found value is incorrect";
-    ASSERT_EQ(2, value.get(1).get_patch_positions().__o) << "Found value is incorrect";
-    ASSERT_EQ(2, value.get(1).get_patch_positions().___) << "Found value is incorrect";
+    ASSERT_EQ(true, value.is_deletion(1, true)) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().sp_) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().s_o) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().s__) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions()._po) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions()._p_) << "Found value is incorrect";
+    ASSERT_EQ(2, value.get_deletion()->get(1).get_patch_positions().__o) << "Found value is incorrect";
+    ASSERT_EQ(2, value.get_deletion()->get(1).get_patch_positions().___) << "Found value is incorrect";
 
     ASSERT_EQ(true, it.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("s z o.", key.to_string(dict)) << "Fourth key is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().sp_) << "Found value is incorrect";
-    ASSERT_EQ(1, value.get(1).get_patch_positions().s_o) << "Found value is incorrect";
-    ASSERT_EQ(1, value.get(1).get_patch_positions().s__) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions()._po) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions()._p_) << "Found value is incorrect";
-    ASSERT_EQ(3, value.get(1).get_patch_positions().__o) << "Found value is incorrect";
-    ASSERT_EQ(3, value.get(1).get_patch_positions().___) << "Found value is incorrect";
+    ASSERT_EQ(true, value.is_deletion(1, true)) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().sp_) << "Found value is incorrect";
+    ASSERT_EQ(1, value.get_deletion()->get(1).get_patch_positions().s_o) << "Found value is incorrect";
+    ASSERT_EQ(1, value.get_deletion()->get(1).get_patch_positions().s__) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions()._po) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions()._p_) << "Found value is incorrect";
+    ASSERT_EQ(3, value.get_deletion()->get(1).get_patch_positions().__o) << "Found value is incorrect";
+    ASSERT_EQ(3, value.get_deletion()->get(1).get_patch_positions().___) << "Found value is incorrect";
 
     ASSERT_EQ(false, it.next(&key, &value)) << "Iterator should be finished";
 
@@ -536,73 +651,73 @@ TEST_F(PatchTreeTest, RelativePatchPositions) {
 
     ASSERT_EQ(true, it2.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("a a a.", key.to_string(dict)) << "First key is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().sp_) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().s_o) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().s__) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions()._po) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions()._p_) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().__o) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().___) << "Found value is incorrect";
+    ASSERT_EQ(true, value.is_deletion(1, true)) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().sp_) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().s_o) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().s__) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions()._po) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions()._p_) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().__o) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().___) << "Found value is incorrect";
 
     ASSERT_EQ(true, it2.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("a b c.", key.to_string(dict)) << "First key is incorrect";
-    ASSERT_EQ(-1, value.get(1).get_patch_positions().sp_) << "Found value is incorrect";
-    ASSERT_EQ(-1, value.get(1).get_patch_positions().s_o) << "Found value is incorrect";
-    ASSERT_EQ(-1, value.get(1).get_patch_positions().s__) << "Found value is incorrect";
-    ASSERT_EQ(-1, value.get(1).get_patch_positions()._po) << "Found value is incorrect";
-    ASSERT_EQ(-1, value.get(1).get_patch_positions()._p_) << "Found value is incorrect";
-    ASSERT_EQ(-1, value.get(1).get_patch_positions().__o) << "Found value is incorrect";
-    ASSERT_EQ(-1, value.get(1).get_patch_positions().___) << "Found value is incorrect";
+    ASSERT_EQ(true, value.is_addition(1, true)) << "Found value is incorrect";
 
     ASSERT_EQ(true, it2.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("a p o.", key.to_string(dict)) << "Second key is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().sp_) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().s_o) << "Found value is incorrect";
-    ASSERT_EQ(1, value.get(1).get_patch_positions().s__) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions()._po) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions()._p_) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().__o) << "Found value is incorrect";
-    ASSERT_EQ(1, value.get(1).get_patch_positions().___) << "Found value is incorrect";
+    ASSERT_EQ(true, value.is_deletion(1, true)) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().sp_) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().s_o) << "Found value is incorrect";
+    ASSERT_EQ(1, value.get_deletion()->get(1).get_patch_positions().s__) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions()._po) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions()._p_) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().__o) << "Found value is incorrect";
+    ASSERT_EQ(1, value.get_deletion()->get(1).get_patch_positions().___) << "Found value is incorrect";
 
     ASSERT_EQ(true, it2.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("g p o.", key.to_string(dict)) << "Third key is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().sp_) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().s_o) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().s__) << "Found value is incorrect";
-    ASSERT_EQ(1, value.get(1).get_patch_positions()._po) << "Found value is incorrect";
-    ASSERT_EQ(1, value.get(1).get_patch_positions()._p_) << "Found value is incorrect";
-    ASSERT_EQ(1, value.get(1).get_patch_positions().__o) << "Found value is incorrect";
-    ASSERT_EQ(2, value.get(1).get_patch_positions().___) << "Found value is incorrect";
+    ASSERT_EQ(true, value.is_deletion(1, true)) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().sp_) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().s_o) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().s__) << "Found value is incorrect";
+    ASSERT_EQ(1, value.get_deletion()->get(1).get_patch_positions()._po) << "Found value is incorrect";
+    ASSERT_EQ(1, value.get_deletion()->get(1).get_patch_positions()._p_) << "Found value is incorrect";
+    ASSERT_EQ(1, value.get_deletion()->get(1).get_patch_positions().__o) << "Found value is incorrect";
+    ASSERT_EQ(2, value.get_deletion()->get(1).get_patch_positions().___) << "Found value is incorrect";
 
     ASSERT_EQ(true, it2.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("s a o.", key.to_string(dict)) << "Fourth key is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().sp_) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().s_o) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().s__) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions()._po) << "Found value is incorrect";
-    ASSERT_EQ(1, value.get(1).get_patch_positions()._p_) << "Found value is incorrect";
-    ASSERT_EQ(2, value.get(1).get_patch_positions().__o) << "Found value is incorrect";
-    ASSERT_EQ(3, value.get(1).get_patch_positions().___) << "Found value is incorrect";
+    ASSERT_EQ(true, value.is_deletion(1, true)) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().sp_) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().s_o) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().s__) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions()._po) << "Found value is incorrect";
+    ASSERT_EQ(1, value.get_deletion()->get(1).get_patch_positions()._p_) << "Found value is incorrect";
+    ASSERT_EQ(2, value.get_deletion()->get(1).get_patch_positions().__o) << "Found value is incorrect";
+    ASSERT_EQ(3, value.get_deletion()->get(1).get_patch_positions().___) << "Found value is incorrect";
 
     ASSERT_EQ(true, it2.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("s z o.", key.to_string(dict)) << "Fifth key is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().sp_) << "Found value is incorrect";
-    ASSERT_EQ(1, value.get(1).get_patch_positions().s_o) << "Found value is incorrect";
-    ASSERT_EQ(1, value.get(1).get_patch_positions().s__) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions()._po) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions()._p_) << "Found value is incorrect";
-    ASSERT_EQ(3, value.get(1).get_patch_positions().__o) << "Found value is incorrect";
-    ASSERT_EQ(4, value.get(1).get_patch_positions().___) << "Found value is incorrect";
+    ASSERT_EQ(true, value.is_deletion(1, true)) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().sp_) << "Found value is incorrect";
+    ASSERT_EQ(1, value.get_deletion()->get(1).get_patch_positions().s_o) << "Found value is incorrect";
+    ASSERT_EQ(1, value.get_deletion()->get(1).get_patch_positions().s__) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions()._po) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions()._p_) << "Found value is incorrect";
+    ASSERT_EQ(3, value.get_deletion()->get(1).get_patch_positions().__o) << "Found value is incorrect";
+    ASSERT_EQ(4, value.get_deletion()->get(1).get_patch_positions().___) << "Found value is incorrect";
 
     ASSERT_EQ(true, it2.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("z z z.", key.to_string(dict)) << "Sixth key is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().sp_) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().s_o) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().s__) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions()._po) << "Found value is incorrect";
-    ASSERT_EQ(1, value.get(1).get_patch_positions()._p_) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().__o) << "Found value is incorrect";
-    ASSERT_EQ(5, value.get(1).get_patch_positions().___) << "Found value is incorrect";
+    ASSERT_EQ(true, value.is_deletion(1, true)) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().sp_) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().s_o) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().s__) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions()._po) << "Found value is incorrect";
+    ASSERT_EQ(1, value.get_deletion()->get(1).get_patch_positions()._p_) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().__o) << "Found value is incorrect";
+    ASSERT_EQ(5, value.get_deletion()->get(1).get_patch_positions().___) << "Found value is incorrect";
 
     ASSERT_EQ(false, it2.next(&key, &value)) << "Iterator should be finished";
 }
@@ -629,33 +744,29 @@ TEST_F(PatchTreeTest, RelativePatchPositions2) {
 
     ASSERT_EQ(true, it1.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("a a a.", key.to_string(dict)) << "Key is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().sp_) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().s_o) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().s__) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions()._po) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions()._p_) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().__o) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().___) << "Found value is incorrect";
+    ASSERT_EQ(true, value.is_deletion(1, true)) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().sp_) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().s_o) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().s__) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions()._po) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions()._p_) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().__o) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().___) << "Found value is incorrect";
 
     ASSERT_EQ(true, it1.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("a b c.", key.to_string(dict)) << "Key is incorrect";
-    ASSERT_EQ(-1, value.get(1).get_patch_positions().sp_) << "Found value is incorrect";
-    ASSERT_EQ(-1, value.get(1).get_patch_positions().s_o) << "Found value is incorrect";
-    ASSERT_EQ(-1, value.get(1).get_patch_positions().s__) << "Found value is incorrect";
-    ASSERT_EQ(-1, value.get(1).get_patch_positions()._po) << "Found value is incorrect";
-    ASSERT_EQ(-1, value.get(1).get_patch_positions()._p_) << "Found value is incorrect";
-    ASSERT_EQ(-1, value.get(1).get_patch_positions().__o) << "Found value is incorrect";
-    ASSERT_EQ(-1, value.get(1).get_patch_positions().___) << "Found value is incorrect";
+    ASSERT_EQ(true, value.is_addition(1, true)) << "Found value is incorrect";
 
     ASSERT_EQ(true, it1.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("z z z.", key.to_string(dict)) << "Key is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().sp_) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().s_o) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().s__) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions()._po) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions()._p_) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(1).get_patch_positions().__o) << "Found value is incorrect";
-    ASSERT_EQ(1, value.get(1).get_patch_positions().___) << "Found value is incorrect";
+    ASSERT_EQ(true, value.is_deletion(1, true)) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().sp_) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().s_o) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().s__) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions()._po) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions()._p_) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(1).get_patch_positions().__o) << "Found value is incorrect";
+    ASSERT_EQ(1, value.get_deletion()->get(1).get_patch_positions().___) << "Found value is incorrect";
 
     ASSERT_EQ(false, it1.next(&key, &value)) << "Iterator should be finished";
 
@@ -667,35 +778,37 @@ TEST_F(PatchTreeTest, RelativePatchPositions2) {
 
     ASSERT_EQ(true, it2.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("a a a.", key.to_string(dict)) << "Key is incorrect";
-    ASSERT_EQ(0, value.get(2).get_patch_positions().sp_) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(2).get_patch_positions().s_o) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(2).get_patch_positions().s__) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(2).get_patch_positions()._po) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(2).get_patch_positions()._p_) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(2).get_patch_positions().__o) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(2).get_patch_positions().___) << "Found value is incorrect";
+    ASSERT_EQ(true, value.is_deletion(2, true)) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(2).get_patch_positions().sp_) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(2).get_patch_positions().s_o) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(2).get_patch_positions().s__) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(2).get_patch_positions()._po) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(2).get_patch_positions()._p_) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(2).get_patch_positions().__o) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(2).get_patch_positions().___) << "Found value is incorrect";
 
     ASSERT_EQ(true, it2.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("a b c.", key.to_string(dict)) << "Key is incorrect";
-    // The positions are -1, this means that even though this is a deletion, it
-    // is not a deletion relative to the snapshot, but only internally inside the patch. (it did not exist in the snapshot)
-    ASSERT_EQ(-1, value.get(2).get_patch_positions().sp_) << "Found value is incorrect";
-    ASSERT_EQ(-1, value.get(2).get_patch_positions().s_o) << "Found value is incorrect";
-    ASSERT_EQ(-1, value.get(2).get_patch_positions().s__) << "Found value is incorrect";
-    ASSERT_EQ(-1, value.get(2).get_patch_positions()._po) << "Found value is incorrect";
-    ASSERT_EQ(-1, value.get(2).get_patch_positions()._p_) << "Found value is incorrect";
-    ASSERT_EQ(-1, value.get(2).get_patch_positions().__o) << "Found value is incorrect";
-    ASSERT_EQ(-1, value.get(2).get_patch_positions().___) << "Found value is incorrect";
+    ASSERT_EQ(true, value.is_deletion(2, true)) << "Found value is incorrect";
+    // This is a local change, so all patch positions are -1 because they are not applicable.
+    ASSERT_EQ(-1, value.get_deletion()->get(2).get_patch_positions().sp_) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get_deletion()->get(2).get_patch_positions().s_o) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get_deletion()->get(2).get_patch_positions().s__) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get_deletion()->get(2).get_patch_positions()._po) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get_deletion()->get(2).get_patch_positions()._p_) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get_deletion()->get(2).get_patch_positions().__o) << "Found value is incorrect";
+    ASSERT_EQ(-1, value.get_deletion()->get(2).get_patch_positions().___) << "Found value is incorrect";
 
     ASSERT_EQ(true, it2.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("z z z.", key.to_string(dict)) << "Key is incorrect";
-    ASSERT_EQ(0, value.get(2).get_patch_positions().sp_) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(2).get_patch_positions().s_o) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(2).get_patch_positions().s__) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(2).get_patch_positions()._po) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(2).get_patch_positions()._p_) << "Found value is incorrect";
-    ASSERT_EQ(0, value.get(2).get_patch_positions().__o) << "Found value is incorrect";
-    ASSERT_EQ(1, value.get(2).get_patch_positions().___) << "Found value is incorrect";
+    ASSERT_EQ(true, value.is_deletion(2, true)) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(2).get_patch_positions().sp_) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(2).get_patch_positions().s_o) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(2).get_patch_positions().s__) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(2).get_patch_positions()._po) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(2).get_patch_positions()._p_) << "Found value is incorrect";
+    ASSERT_EQ(0, value.get_deletion()->get(2).get_patch_positions().__o) << "Found value is incorrect";
+    ASSERT_EQ(1, value.get_deletion()->get(2).get_patch_positions().___) << "Found value is incorrect";
 
     ASSERT_EQ(false, it2.next(&key, &value)) << "Iterator should be finished";
 }
@@ -850,7 +963,7 @@ TEST_F(PatchTreeTest, DeletionIterator) {
     ASSERT_EQ(true, it4.next(&pt)) << "Iterator has a no next value";
     ASSERT_EQ("g p o.", pt.triple.to_string(dict)) << "Element is incorrect";
     ASSERT_EQ(0, pt.position) << "Element is incorrect";
-    
+
     ASSERT_EQ(true, it4.next(&pt)) << "Iterator has a no next value";
     ASSERT_EQ("s z o.", pt.triple.to_string(dict)) << "Element is incorrect";
     ASSERT_EQ(1, pt.position) << "Element is incorrect";

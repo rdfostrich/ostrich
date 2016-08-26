@@ -62,10 +62,6 @@ void Evaluator::populate_controller_with_version(int patch_id, string path, Prog
                         if (count % 10000 == 0) {
                             NOTIFYLVL(progressListener, "Triple loading", count);
                         }
-                        // TODO: !!!!!!!
-                        if (count > 100000) {
-                            break;
-                        }
                     }
                 }
             }
@@ -125,6 +121,5 @@ void Evaluator::test_lookup(string s, string p, string o) {
 }
 
 void Evaluator::cleanup_controller() {
-    //Controller::cleanup(controller);
-    delete controller; // TODO
+    Controller::cleanup(controller);
 }

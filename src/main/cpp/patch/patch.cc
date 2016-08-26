@@ -10,9 +10,13 @@ void Patch::add(const PatchElement& element) {
     std::vector<PatchElement>::iterator itToInsert = std::lower_bound(
             elements.begin(), elements.end(), element, element_comparator->get());
     // Overwrite existing element if triple is already present, otherwise insert new element.
-    if(itToInsert != elements.end() && itToInsert->get_triple().to_string() == element.get_triple().to_string()
-       && itToInsert->is_addition() == element.is_addition() && itToInsert->is_local_change() == element.is_local_change()) {
+    if(itToInsert != elements.end() && itToInsert->get_triple().to_string() == element.get_triple().to_string()) {
+        bool was_addition_change = itToInsert->is_addition() != element.is_addition();
+        bool was_local_change = itToInsert->is_local_change();
         *itToInsert = element;
+        if (was_addition_change) {
+            itToInsert->set_local_change(!was_local_change);
+        }
     } else {
         elements.insert(itToInsert, element);
     }
@@ -111,6 +115,18 @@ PatchPosition Patch::position_of_strict(const PatchElement& element) const {
     return -1;
 }
 
+string Patch::to_string() const {
+    string ret;
+    for(int i = 0; i < elements.size(); i++) {
+        ret += elements[i].to_string();
+        if(elements[i].is_local_change()) {
+            ret += " L";
+        }
+        ret += "\n";
+    }
+    return ret;
+}
+
 string Patch::to_string(Dictionary& dict) const {
     string ret;
     for(int i = 0; i < elements.size(); i++) {
@@ -138,22 +154,4 @@ long Patch::index_of_triple(const Triple& triple) const {
         return std::distance(elements.begin(), findIt2);
     }
     return -1;
-}
-
-Patch Patch::apply_local_changes() const {
-    Patch newPatch(element_comparator);
-    for(int i = 0; i < get_size(); i++) {
-        PatchElement patchElement = get(i);
-        long existing_index = newPatch.index_of_triple(patchElement.get_triple());
-        if(existing_index >= 0) {
-            PatchElement existingElement = newPatch.get(existing_index);
-            if(existingElement.is_addition() != patchElement.is_addition() && !patchElement.is_local_change()) {
-                patchElement.set_local_change(!existingElement.is_local_change());
-                newPatch.overwrite(existing_index, patchElement);
-            }
-        } else {
-            newPatch.add(patchElement);
-        }
-    }
-    return newPatch;
 }

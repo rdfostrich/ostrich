@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "../../../main/cpp/patch/patch_tree.h"
-#include "../../../main/cpp/patch/patch_tree_value.h"
+#include "../../../main/cpp/patch/patch_tree_deletion_value.h"
 #include "../../../main/cpp/dictionary/dictionary_manager.h"
 
 // The fixture for testing class Patch.
@@ -59,9 +59,8 @@ TEST_F(PatchElementsTest, AddAllOverlap) {
     patchElements.addAll(patch2);
 
     ASSERT_EQ("s1 p1 o1. (-)", patchElements.get(0).to_string(dict)) << "First element is incorrect";
-    ASSERT_EQ("s1 p1 o1. (+)", patchElements.get(1).to_string(dict)) << "Second element is incorrect";
-    ASSERT_EQ("s2 p2 o2. (-)", patchElements.get(2).to_string(dict)) << "Third element is incorrect";
-    ASSERT_EQ("s3 p3 o3. (-)", patchElements.get(3).to_string(dict)) << "Fourth element is incorrect";
+    ASSERT_EQ("s2 p2 o2. (-)", patchElements.get(1).to_string(dict)) << "Third element is incorrect";
+    ASSERT_EQ("s3 p3 o3. (-)", patchElements.get(2).to_string(dict)) << "Fourth element is incorrect";
 }
 
 TEST_F(PatchElementsTest, ToString) {
@@ -403,7 +402,7 @@ TEST_F(PatchElementsTest, PositionNotPresent) {
     patchElements.add(PatchElement(Triple("s", "a", "o", &dict), true));
 
     ASSERT_EQ(0, patchElements.position_of(PatchElement(Triple("g", "p", "o", &dict), false))) << "Found position is wrong";
-    ASSERT_EQ(2, patchElements.position_of(PatchElement(Triple("q", "p", "o", &dict), true ))) << "Found position is wrong";
+    ASSERT_EQ(1, patchElements.position_of(PatchElement(Triple("q", "p", "o", &dict), true ))) << "Found position is wrong";
     ASSERT_EQ(0, patchElements.position_of(PatchElement(Triple("a", "a", "a", &dict), true ))) << "Found position is wrong";
     ASSERT_EQ(4, patchElements.position_of(PatchElement(Triple("s", "z", "z", &dict), false))) << "Found position is wrong";
 }
@@ -426,24 +425,42 @@ TEST_F(PatchElementsTest, PositionStrict) {
 TEST_F(PatchElementsTest, ApplyLocalChanges) {
     Patch p1(&dict);
     p1.add(PatchElement(Triple("a", "a", "a", &dict), false));
-    ASSERT_EQ("a a a. (-)\n", p1.apply_local_changes().to_string(dict));
+    ASSERT_EQ("a a a. (-)\n", p1.to_string(dict));
 
     Patch p2(&dict);
     p2.add(PatchElement(Triple("a", "a", "a", &dict), false));
     p2.add(PatchElement(Triple("a", "a", "a", &dict), true));
-    ASSERT_EQ("a a a. (+) L\n", p2.apply_local_changes().to_string(dict));
+    ASSERT_EQ("a a a. (+) L\n", p2.to_string(dict));
 
     Patch p3(&dict);
     PatchElement p3e = PatchElement(Triple("a", "a", "a", &dict), false);
     p3e.set_local_change(true);
     p3.add(p3e);
     p3.add(PatchElement(Triple("a", "a", "a", &dict), true));
-    ASSERT_EQ("a a a. (+)\n", p3.apply_local_changes().to_string(dict));
+    ASSERT_EQ("a a a. (+)\n", p3.to_string(dict));
 
     Patch p4(&dict);
     PatchElement p4e = PatchElement(Triple("a", "a", "a", &dict), true);
     p4e.set_local_change(true);
     p4.add(p4e);
     p4.add(PatchElement(Triple("a", "a", "a", &dict), false));
-    ASSERT_EQ("a a a. (-)\n", p4.apply_local_changes().to_string(dict));
+    ASSERT_EQ("a a a. (-)\n", p4.to_string(dict));
+
+    Patch p5(&dict);
+    p5.add(PatchElement(Triple("a", "a", "a", &dict), true));
+    p5.add(PatchElement(Triple("a", "a", "a", &dict), false));
+    ASSERT_EQ("a a a. (-) L\n", p5.to_string(dict));
+
+    Patch p6(&dict);
+    p6.add(PatchElement(Triple("a", "a", "a", &dict), true));
+    p6.add(PatchElement(Triple("a", "a", "a", &dict), false));
+    p6.add(PatchElement(Triple("a", "a", "a", &dict), true));
+    ASSERT_EQ("a a a. (+)\n", p6.to_string(dict));
+
+    Patch p7(&dict);
+    p7.add(PatchElement(Triple("a", "a", "a", &dict), true));
+    p7.add(PatchElement(Triple("a", "a", "a", &dict), false));
+    p7.add(PatchElement(Triple("a", "a", "a", &dict), true));
+    p7.add(PatchElement(Triple("a", "a", "a", &dict), false));
+    ASSERT_EQ("a a a. (-) L\n", p7.to_string(dict));
 }

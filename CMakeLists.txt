@@ -36,7 +36,8 @@ set(COMMON_FILES
         src/main/cpp/patch/patch_element.cc src/main/cpp/patch/patch_element.h
         src/main/cpp/patch/patch.cc src/main/cpp/patch/patch.h
         src/main/cpp/patch/patch_tree_value.cc src/main/cpp/patch/patch_tree_value.h
-        src/main/cpp/patch/patch_tree_addition_value.cpp src/main/cpp/patch/patch_tree_addition_value.h
+        src/main/cpp/patch/patch_tree_deletion_value.cc src/main/cpp/patch/patch_tree_deletion_value.h
+        src/main/cpp/patch/patch_tree_addition_value.cc src/main/cpp/patch/patch_tree_addition_value.h
         src/main/cpp/patch/patch_tree_key_comparator.cc src/main/cpp/patch/patch_tree_key_comparator.h
         src/main/cpp/patch/patch_tree.cc src/main/cpp/patch/patch_tree.h
         src/main/cpp/patch/patch_tree_iterator.cc src/main/cpp/patch/patch_tree_iterator.h
@@ -47,7 +48,6 @@ set(COMMON_FILES
         src/main/cpp/snapshot/snapshot_manager.cc src/main/cpp/snapshot/snapshot_manager.h
         src/main/cpp/snapshot/vector_triple_iterator.cc src/main/cpp/snapshot/vector_triple_iterator.h
         src/main/cpp/controller/snapshot_patch_iterator_triple_id.cc src/main/cpp/controller/snapshot_patch_iterator_triple_id.h
-        src/main/cpp/snapshot/iterator_triple_id_to_string.cc src/main/cpp/snapshot/iterator_triple_id_to_string.h
         src/main/cpp/patch/patch_tree_manager.cc src/main/cpp/patch/patch_tree_manager.h
         src/main/cpp/snapshot/combined_triple_iterator.cc src/main/cpp/snapshot/combined_triple_iterator.h
         src/main/cpp/patch/patch_element_comparator.cc src/main/cpp/patch/patch_element_comparator.h
@@ -60,6 +60,7 @@ set(TEST_FILES
         src/test/cpp/patch/patch_element.cc
         src/test/cpp/patch/patch.cc
         src/test/cpp/patch/patch_tree_addition_value.cc
+        src/test/cpp/patch/patch_tree_deletion_value.cc
         src/test/cpp/patch/patch_tree_value.cc
         src/test/cpp/patch/patch_tree_key_comparator.cc
         src/test/cpp/patch/patch_tree.cc

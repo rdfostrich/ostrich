@@ -6,7 +6,7 @@
 #include <map>
 #include <unordered_map>
 #include "patch_element.h"
-#include "patch_tree_value.h"
+#include "patch_tree_deletion_value.h"
 #include "patch_element_comparator.h"
 
 // A Patch contains an ordered list of PatchElements
@@ -87,6 +87,10 @@ public:
      */
     PatchPosition position_of_strict(const PatchElement& element) const;
     /**
+     * @return The raw string representation of this patch.
+     */
+    string to_string() const;
+    /**
      * @param dict The dictionary to decode from
      * @return The string representation of this patch.
      */
@@ -96,13 +100,6 @@ public:
      * @return The index of the found triple or -1.
      */
     long index_of_triple(const Triple& triple) const;
-    /**
-     * Derive a patch that detects local changes and correctly
-     * removed those patch elements that have been removed due to the
-     * local changes.
-     * @return The derived patch, with local change markings.
-     */
-    Patch apply_local_changes() const;
 };
 
 #endif //TPFPATCH_STORE_PATCH_H

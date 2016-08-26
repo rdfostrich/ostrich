@@ -6,7 +6,6 @@
 #include <HDT.hpp>
 #include "../patch/patch.h"
 #include <Dictionary.hpp>
-#include "iterator_triple_id_to_string.h"
 #include "../dictionary/dictionary_manager.h"
 
 using namespace hdt;

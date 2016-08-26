@@ -6,6 +6,7 @@
 class PatchTreeAdditionValue {
 protected:
     std::vector<int> patches;
+    std::vector<int> local_changes;
 public:
     PatchTreeAdditionValue();
     /**
@@ -20,9 +21,34 @@ public:
      */
     bool is_patch_id(int patch_id) const;
     /**
-     * @return The number of PatchTreeValueElement's stored in this value.
+     * Get the index of the given patch in this value list.
+     * @param patch_id The id of the patch to find
+     * @return The index of the given patch in this value list. -1 if not found.
+     */
+    long get_patchvalue_index(int patch_id) const;
+    /**
+     * Get a patch id by position.
+     * @param i The index to check the patch id for
+     * @return The patch id.
+     */
+    int get_patch_id_at(long i) const;
+    /**
+     * @return The number of PatchTreeDeletionValueElement's stored in this value.
      */
     long get_size() const;
+    /**
+     * Mark the given patch element as being a local change.
+     * @param patch_id The id of the patch to set
+     */
+    void set_local_change(int patch_id);
+    /**
+     * Check if this element is an element (+) relative to the given patch itself,
+     * For example in the series [t1- t1+ t1-], the element at index 1 is a local change,
+     * while the others are global changes (with respect to the snapshot).
+     * @param patch_id The id of the patch to get
+     * @return If it is a local change.
+     */
+    bool is_local_change(int patch_id) const;
     /**
      * @return The string representation of this value.
      */

@@ -12,7 +12,10 @@ TEST(PatchTreeAdditionValueTest, ToString) {
     value.add(7);
     value.add(7);
 
-    ASSERT_EQ("{0,2,5,7,10}", value.to_string()) << "to_string is incorrect";
+    value.set_local_change(5);
+    value.set_local_change(10);
+
+    ASSERT_EQ("{0,2,5L,7,10L}", value.to_string()) << "to_string is incorrect";
 }
 
 TEST(PatchTreeAdditionValueTest, Lookup) {
@@ -24,6 +27,8 @@ TEST(PatchTreeAdditionValueTest, Lookup) {
     value.add(7);
     value.add(7);
     value.add(7);
+
+    value.set_local_change(5);
 
     ASSERT_EQ(true, value.is_patch_id(0)) << "to_string is incorrect";
     ASSERT_EQ(false, value.is_patch_id(1)) << "to_string is incorrect";
@@ -37,6 +42,10 @@ TEST(PatchTreeAdditionValueTest, Lookup) {
     ASSERT_EQ(false, value.is_patch_id(9)) << "to_string is incorrect";
     ASSERT_EQ(true, value.is_patch_id(10)) << "to_string is incorrect";
     ASSERT_EQ(false, value.is_patch_id(11)) << "to_string is incorrect";
+
+    ASSERT_EQ(false, value.is_local_change(4)) << "to_string is incorrect";
+    ASSERT_EQ(true, value.is_local_change(5)) << "to_string is incorrect";
+    ASSERT_EQ(false, value.is_local_change(6)) << "to_string is incorrect";
 }
 
 TEST(PatchTreeAdditionValueTest, Serialization) {
@@ -48,6 +57,8 @@ TEST(PatchTreeAdditionValueTest, Serialization) {
     valueIn.add(7);
     valueIn.add(7);
     valueIn.add(7);
+
+    valueIn.set_local_change(5);
 
     // Serialize
     size_t size;

@@ -3,7 +3,6 @@
 #include "triple.h"
 #include "patch_tree_key_comparator.h"
 
-// TODO: use dictionary
 Triple::Triple() {}
 
 Triple::Triple(const TripleID& tripleId) :
@@ -61,20 +60,10 @@ const char* Triple::serialize(size_t* size) const {
 }
 
 void Triple::deserialize(const char* data, size_t size) {
-  //TODO: replace below by int parsing
   memcpy(&subject, data,  sizeof(subject));
   memcpy(&predicate, &data[sizeof(subject)],  sizeof(predicate));
   memcpy(&object, &data[sizeof(subject) + sizeof(predicate)],  sizeof(object));
 }
-
-// TODO: rm
-/*bool Triple::operator < (const Triple& rhs) const {
-    return PatchTreeKeyComparator::comparator_spo.compare(*this, rhs) < 0;
-}
-
-bool Triple::operator > (const Triple& rhs) const {
-    return PatchTreeKeyComparator::comparator_spo.compare(*this, rhs) > 0;
-}*/
 
 bool Triple::operator == (const Triple& rhs) const {
     return get_subject() == rhs.get_subject()
@@ -95,7 +84,6 @@ bool Triple::is_all_matching_pattern(const Triple& triple_pattern) {
 std::size_t std::hash<Triple>::operator()(const Triple& triple) const {
     using std::size_t;
     using std::hash;
-    // TODO: use dict encoded values for even faster hashing!
     return ((triple.get_subject()
           ^ (triple.get_predicate() << 1)) >> 1)
           ^ (triple.get_object() << 1);

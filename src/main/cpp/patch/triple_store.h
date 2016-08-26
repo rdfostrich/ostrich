@@ -13,6 +13,7 @@ using namespace kyotocabinet;
 
 class TripleStore {
 private:
+    TreeDB* index_spo_deletions;
     TreeDB* index_spo;
     TreeDB* index_sop;
     TreeDB* index_pso;
@@ -29,8 +30,8 @@ public:
     TripleStore(string base_file_name, DictionaryManager* dict, int8_t kc_opts = 0);
     ~TripleStore();
     TreeDB* getTree(Triple triple_pattern);
-    bool isDefaultTree(Triple triple_pattern);
-    TreeDB* getTree();
+    TreeDB* getDefaultAdditionsTree();
+    TreeDB* getDeletionsTree();
     void insertAddition(Patch* patch, int patch_id);
     /**
      * @return The comparator for this patch tree in SPO order.

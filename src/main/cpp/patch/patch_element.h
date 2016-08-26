@@ -35,11 +35,14 @@ public:
      */
     bool is_local_change() const;
     /**
+     * @return The raw string representation of this patch.
+     */
+    const string to_string() const;
+    /**
      * @param dict The dictionary to decode from
      * @return The string representation of this patch.
      */
     const string to_string(Dictionary& dict) const;
-    // TODO: rm
     //bool operator < (const PatchElement &rhs) const { return triple < rhs.triple || (triple == rhs.triple && !addition && rhs.addition); }
     bool operator == (const PatchElement &rhs) const { return triple == rhs.triple && addition == rhs.addition; }
 };

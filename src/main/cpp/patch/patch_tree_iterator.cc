@@ -4,25 +4,26 @@
 
 #include "patch_tree_iterator.h"
 
-PatchTreeIterator::PatchTreeIterator(DB::Cursor *cursor)
-        : cursor(cursor), is_patch_id_filter(false), is_patch_id_filter_exact(false), patch_id_filter(-1),
-          is_addition_filter(false), addition_filter(-1),
+PatchTreeIterator::PatchTreeIterator(DB::Cursor* cursor_deletions, DB::Cursor* cursor_additions, PatchTreeKeyComparator* comparator)
+        : cursor_deletions(cursor_deletions), cursor_additions(cursor_additions), comparator(comparator),
+          is_patch_id_filter(false),
+          is_patch_id_filter_exact(false), patch_id_filter(-1),
           is_triple_pattern_filter(false), triple_pattern_filter(Triple(0, 0, 0)),
-          reverse(false), is_filter_local_changes(false), deletion_tree(true) {}
+          reverse(false), is_filter_local_changes(false),
+          has_temp_key_deletion(false), has_temp_key_addition(false),
+          temp_key_deletion(new PatchTreeKey()), temp_key_addition(new PatchTreeKey()) {}
 
 PatchTreeIterator::~PatchTreeIterator() {
-    delete cursor;
+    delete cursor_deletions;
+    delete cursor_additions;
+    delete temp_key_deletion;
+    delete temp_key_addition;
 }
 
 void PatchTreeIterator::set_patch_filter(int patch_id, bool exact) {
     this->is_patch_id_filter = true;
     this->is_patch_id_filter_exact = exact;
     this->patch_id_filter = patch_id;
-}
-
-void PatchTreeIterator::set_type_filter(bool addition) {
-    this->is_addition_filter = true;
-    this->addition_filter = addition;
 }
 
 void PatchTreeIterator::set_triple_pattern_filter(Triple triple_pattern) {
@@ -38,12 +39,12 @@ void PatchTreeIterator::set_filter_local_changes(bool filter_local_changes) {
     this->is_filter_local_changes = filter_local_changes;
 }
 
-void PatchTreeIterator::set_deletion_tree(bool deletion_tree) {
-    this->deletion_tree = deletion_tree;
+bool PatchTreeIterator::is_deletion_tree() const {
+    return cursor_deletions != NULL;
 }
 
-bool PatchTreeIterator::is_deletion_tree() const {
-    return this->deletion_tree;
+bool PatchTreeIterator::is_addition_tree() const {
+    return cursor_additions != NULL;
 }
 
 void PatchTreeIterator::set_reverse(bool reverse) {
@@ -54,9 +55,9 @@ bool PatchTreeIterator::is_reverse() const {
     return this->reverse;
 }
 
-bool PatchTreeIterator::next(PatchTreeKey* key, PatchTreeValue* value, bool silent_step) {
-    if(!deletion_tree) {
-        throw std::invalid_argument("Tried to call PatchTreeIterator::next(PatchTreeKey* key, PatchTreeValue* value) on an addition tree.");
+bool PatchTreeIterator::next_deletion(PatchTreeKey* key, PatchTreeDeletionValue* value, bool silent_step) {
+    if(!is_deletion_tree()) {
+        throw std::invalid_argument("Tried to call PatchTreeIterator::next_deletion(PatchTreeKey* key, PatchTreeDeletionValue* value) on non-deletion tree.");
     }
     bool filter_valid = false;
     const char* kbp;
@@ -67,31 +68,26 @@ bool PatchTreeIterator::next(PatchTreeKey* key, PatchTreeValue* value, bool sile
     // Loop over all elements in the tree until we find an element matching the filter (patch_id)
     // If the filter is not enabled, this loop will be executed only once.
     while (!filter_valid) {
-        kbp = cursor->get(&ksp, &vbp, &vsp);
+        kbp = cursor_deletions->get(&ksp, &vbp, &vsp);
         if (!kbp) return false;
         value->deserialize(vbp, vsp);
 
         if(is_patch_id_filter) {
             if(is_patch_id_filter_exact) {
                 long element = value->get_patchvalue_index(patch_id_filter);
-                filter_valid = element >= 0
-                               && (!is_addition_filter || (value->get_patch(element).is_addition() == addition_filter));
+                filter_valid = element >= 0;
             } else {
                 bool done = false;
                 for(long i = value->get_size() - 1; i >= 0 && !done; i--) {
-                    PatchTreeValueElement element = value->get_patch(i);
+                    PatchTreeDeletionValueElement element = value->get_patch(i);
                     if(element.get_patch_id() <= patch_id_filter) {
                         done = true;
-                        filter_valid = (!is_addition_filter || (element.is_addition() == addition_filter));
+                        filter_valid = true;
                     }
                 }
             }
         } else {
-            if(is_addition_filter) {
-                filter_valid = value->get_patch(value->get_size() - 1).is_addition() == addition_filter;
-            } else {
-                filter_valid = true;
-            }
+            filter_valid = true;
         }
 
         if(filter_valid && is_filter_local_changes) {
@@ -107,15 +103,15 @@ bool PatchTreeIterator::next(PatchTreeKey* key, PatchTreeValue* value, bool sile
         //delete[] vbp; // Apparently kyoto cabinet does not require the values to be deleted
 
         if(!silent_step || !filter_valid) {
-            reverse ? cursor->step_back() : cursor->step();
+            reverse ? cursor_deletions->step_back() : cursor_deletions->step();
         }
     }
     return true;
 }
 
-bool PatchTreeIterator::next(PatchTreeKey* key, PatchTreeAdditionValue* value) {
-    if(deletion_tree) {
-        throw std::invalid_argument("Tried to call PatchTreeIterator::next(PatchTreeKey* key, PatchTreeAdditionValue* value) on a deletion tree.");
+bool PatchTreeIterator::next_addition(PatchTreeKey* key, PatchTreeAdditionValue* value) {
+    if(!is_addition_tree()) {
+        throw std::invalid_argument("Tried to call PatchTreeIterator::next_addition(PatchTreeKey* key, PatchTreeAdditionValue* value) on a non-addition tree.");
     }
     bool filter_valid = false;
     const char* kbp;
@@ -126,15 +122,35 @@ bool PatchTreeIterator::next(PatchTreeKey* key, PatchTreeAdditionValue* value) {
     // Loop over all elements in the tree until we find an element matching the filter (patch_id)
     // If the filter is not enabled, this loop will be executed only once.
     while (!filter_valid) {
-        kbp = cursor->get(&ksp, &vbp, &vsp);
+        kbp = cursor_additions->get(&ksp, &vbp, &vsp);
         if (!kbp) return false;
-        reverse ? cursor->step_back() : cursor->step();
+        reverse ? cursor_additions->step_back() : cursor_additions->step();
         value->deserialize(vbp, vsp);
 
-        filter_valid = value->is_patch_id(patch_id_filter);
+        if(is_patch_id_filter) {
+            if(is_patch_id_filter_exact) {
+                filter_valid = value->is_patch_id(patch_id_filter);
+            } else {
+                bool done = false;
+                for(long i = value->get_size() - 1; i >= 0 && !done; i--) {
+                    int patch_id = value->get_patch_id_at(i);
+                    if(patch_id >= 0 && patch_id <= patch_id_filter) {
+                        done = true;
+                        filter_valid = true;
+                    }
+                }
+            }
+        } else {
+            filter_valid = true;
+        }
+
         if(filter_valid) {
             key->deserialize(kbp, ksp); // Small optimization to only deserialize the key when needed.
             filter_valid = !is_triple_pattern_filter || Triple::pattern_match_triple(*key, triple_pattern_filter);
+        }
+
+        if(filter_valid && is_filter_local_changes) {
+            filter_valid = !value->is_local_change(patch_id_filter);
         }
 
         delete[] kbp;
@@ -143,18 +159,84 @@ bool PatchTreeIterator::next(PatchTreeKey* key, PatchTreeAdditionValue* value) {
     return true;
 }
 
-bool PatchTreeIterator::next_addition(PatchTreeKey* key, PatchTreeAdditionValue* value) {
-    if(deletion_tree) {
-        PatchTreeValue v;
-        bool ret = next(key, &v);
-        for(long i = 0; i < v.get_size(); i++) {
-            PatchTreeValueElement el = v.get_patch(i);
-            if(el.is_addition()) {
-                value->add(el.get_patch_id());
-            }
-        }
-        return ret;
+bool PatchTreeIterator::next(PatchTreeKey* key, PatchTreeValue* value) {
+    value->set_deletion(false);
+    value->set_addition(false);
+
+    // Delegate to +/- iterators if iterating over a pure +/- tree.
+    if (is_deletion_tree() && !is_addition_tree()) {
+        value->set_deletion(true);
+        return next_deletion(key, value->get_deletion());
+    }
+    if (!is_deletion_tree() && is_addition_tree()) {
+        value->set_addition(true);
+        return next_addition(key, value->get_addition());
+    }
+
+    size_t size;
+    const char* data;
+
+    // Temporarily force including local change results, we handle the later.
+    bool old_is_filter_local_changes = is_filter_local_changes;
+    is_filter_local_changes = false;
+    // Call +/- iterators
+    // The temp_key_deletion and temp_key_addition are optional previous results,
+    // stored in order to avoid having to go over elements more than once.
+    bool had_deletion = has_temp_key_deletion || next_deletion(temp_key_deletion, value->get_deletion());
+    bool had_addition = has_temp_key_addition || next_addition(temp_key_addition, value->get_addition());
+    is_filter_local_changes = old_is_filter_local_changes;
+
+    bool return_addition;
+    if (had_deletion != had_addition) {
+        return_addition = had_addition;
+        has_temp_key_deletion = false;
+        has_temp_key_addition = false;
     } else {
+        if (!had_deletion && !had_addition) return false;
+
+        // When we get here, both the - and + iterator has a next value, choose the smallest one.
+        int comparison = comparator->compare(*temp_key_deletion, *temp_key_addition);
+        if (comparison == 0) {
+            // Temporarily mark the value as both an + and - to make sure we can perform the following operations
+            value->set_deletion(true);
+            value->set_addition(true);
+
+            // Return largest patch id
+            long deletion_patch_id;
+            long addition_patch_id;
+            if (is_patch_id_filter) {
+                deletion_patch_id = value->get_deletion_patch_id(patch_id_filter, is_patch_id_filter_exact);
+                addition_patch_id = value->get_addition_patch_id(patch_id_filter, is_patch_id_filter_exact);
+            } else {
+                deletion_patch_id = value->get_deletion()->get_patch(
+                        value->get_deletion()->get_size() - 1).get_patch_id();
+                addition_patch_id = value->get_addition()->get_patch_id_at(value->get_addition()->get_size() - 1);
+            }
+            return_addition = addition_patch_id > deletion_patch_id;
+            has_temp_key_deletion = false;
+            has_temp_key_addition = false;
+        } else if (comparison > 0) {
+            return_addition = true;
+            has_temp_key_deletion = true;
+            has_temp_key_addition = false;
+        } else {
+            return_addition = false;
+            has_temp_key_deletion = false;
+            has_temp_key_addition = true;
+        }
+    }
+
+    // Correctly mark our return value.
+    value->set_deletion(!return_addition);
+    value->set_addition(return_addition);
+
+    // If we encountered a local change, and we are filtering those, trigger the next iteration.
+    if (is_filter_local_changes && value->is_local_change(patch_id_filter)) {
         return next(key, value);
     }
+
+    // If needed, optimize
+    data = (return_addition ? temp_key_addition : temp_key_deletion)->serialize(&size);
+    key->deserialize(data, size);
+    return true;
 }
