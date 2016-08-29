@@ -232,7 +232,9 @@ PositionedTripleIterator* PatchTree::deletion_iterator_from(const Triple& offset
 
 PatchTreeTripleIterator* PatchTree::addition_iterator_from(long offset, int patch_id, const Triple& triple_pattern) const {
     DB::Cursor* cursor = tripleStore->getTree(triple_pattern)->cursor();
-    cursor->jump();
+    size_t size;
+    const char* data = triple_pattern.serialize(&size);
+    cursor->jump(data, size);
     PatchTreeIterator* it = new PatchTreeIterator(NULL, cursor, get_spo_comparator());
     it->set_patch_filter(patch_id, true);
     it->set_triple_pattern_filter(triple_pattern);
