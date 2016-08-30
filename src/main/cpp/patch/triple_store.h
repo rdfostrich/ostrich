@@ -32,7 +32,7 @@ public:
     TreeDB* getTree(Triple triple_pattern);
     TreeDB* getDefaultAdditionsTree();
     TreeDB* getDeletionsTree();
-    void insertAddition(Patch* patch, int patch_id);
+    void insertAddition(Patch* patch, int patch_id, ProgressListener* progressListener = NULL);
     /**
      * @return The comparator for this patch tree in SPO order.
      */

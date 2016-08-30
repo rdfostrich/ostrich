@@ -24,8 +24,8 @@ void PatchTree::append_unsafe(const Patch& patch, int patch_id, ProgressListener
     existing_patch.addAll(patch);
 
     // insert in other triplestore trees
-    NOTIFYMSG(progressListener, "Inserting into auxiliary triple stores...\n");
-    tripleStore->insertAddition(&existing_patch, patch_id);
+    NOTIFYMSG(progressListener, ("Inserting " + to_string(existing_patch.get_size()) + " into auxiliary triple stores...\n").c_str());
+    tripleStore->insertAddition(&existing_patch, patch_id, progressListener);
 
     // Pre-calculate all inserting-patch triple positions.
     // We could instead do this during patch creation, but

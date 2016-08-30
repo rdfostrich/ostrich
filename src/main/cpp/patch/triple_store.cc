@@ -1,6 +1,7 @@
 #include "triple_store.h"
 #include "patch_tree_addition_value.h"
 #include "patch_tree_key_comparator.h"
+#include "../simpleprogresslistener.h"
 
 using namespace std;
 using namespace kyotocabinet;
@@ -85,9 +86,12 @@ TreeDB* TripleStore::getDeletionsTree() {
     return index_spo_deletions;
 }
 
-void TripleStore::insertAddition(Patch* patch, int patch_id) {
+void TripleStore::insertAddition(Patch* patch, int patch_id, ProgressListener* progressListener) {
     for(int i = 0; i < patch->get_size(); i++) {
         PatchElement patchElement = patch->get(i);
+        if (i % 10000 == 0) {
+            NOTIFYLVL(progressListener, "Triple insertion", i);
+        }
         if(patchElement.is_addition()) {
             // Look up the value for the given triple key in the tree.
             size_t key_size, value_size;
