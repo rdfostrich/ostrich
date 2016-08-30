@@ -203,11 +203,22 @@ PatchTreeIterator PatchTree::iterator(PatchTreeKey *key, int patch_id, bool exac
 
 std::pair<PatchPosition, Triple> PatchTree::deletion_count(const Triple& triple_pattern, int patch_id) const {
     DB::Cursor* cursor_deletions = tripleStore->getDeletionsTree()->cursor();
-    cursor_deletions->jump_back();
+
+    // Try jumping backwards to the position where the triple_pattern matches
+    // If this jump succeeds, we will be _before_ the last matching triple, so we keep the normal iteration order.
+    // If this jump failed, we jump to the very last record, which will be _after_ the last matching triple, so we reverse the iteration order.
+    size_t size;
+    const char* data = triple_pattern.serialize(&size);
+    bool hasJumped = cursor_deletions->jump_back(data, size);
+    if (!hasJumped) {
+        cursor_deletions->jump_back();
+    }
+    free((char*) data);
+
     PatchTreeIterator patchTreeIterator(cursor_deletions, NULL, get_spo_comparator());
     patchTreeIterator.set_patch_filter(patch_id, true);
     patchTreeIterator.set_triple_pattern_filter(triple_pattern);
-    patchTreeIterator.set_reverse(true);
+    if (!hasJumped) patchTreeIterator.set_reverse(true);
 
     PatchTreeKey key;
     PatchTreeDeletionValue value;
