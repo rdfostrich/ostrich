@@ -32,6 +32,7 @@ TripleIterator* Controller::get(const Triple& triple_pattern, int offset, int pa
     PositionedTripleIterator* deletion_it;
     long added_offset = 0;
     bool check_offseted_deletions = true;
+    std::pair<PatchPosition, Triple> deletion_count_data = patchTree->deletion_count(triple_pattern, patch_id);
     // This loop continuously determines new snapshot iterators until it finds one that contains
     // no new deletions with respect to the snapshot iterator from last iteration.
     // This loop is required to handle special cases like the one in the ControllerTest::EdgeCase1.
@@ -52,12 +53,11 @@ TripleIterator* Controller::get(const Triple& triple_pattern, int offset, int pa
             if (deletion_it->next(&first_deletion_triple, true)) {
                 snapshot_offset = first_deletion_triple.position;
             } else {
-                std::pair<PatchPosition, Triple> data = patchTree->deletion_count(triple_pattern, patch_id);
-                if(data.first == 0) {
+                if(deletion_count_data.first == 0) {
                     snapshot_offset = 0;
                 } else {
-                    bool is_smaller_than_first = patchTree->get_spo_comparator()->compare(firstTriple, data.second) < 0;
-                    snapshot_offset = is_smaller_than_first ? 0 : data.first;
+                    bool is_smaller_than_first = patchTree->get_spo_comparator()->compare(firstTriple, deletion_count_data.second) < 0;
+                    snapshot_offset = is_smaller_than_first ? 0 : deletion_count_data.first;
                 }
             }
             long previous_added_offset = added_offset;
@@ -91,7 +91,7 @@ TripleIterator* Controller::get(const Triple& triple_pattern, int offset, int pa
     }
 
     // TODO: as an optimization, we should construct this iterator in a lazy manner?
-    long addition_offset = offset - snapshot_count + patchTree->deletion_count(triple_pattern, patch_id).first;
+    long addition_offset = offset - snapshot_count + deletion_count_data.first;
     PatchTreeTripleIterator * addition_it = patchTree->addition_iterator_from(addition_offset, patch_id, triple_pattern);
 
     return new SnapshotPatchIteratorTripleID(snapshot_it, deletion_it, addition_it, patchTree->get_spo_comparator());
