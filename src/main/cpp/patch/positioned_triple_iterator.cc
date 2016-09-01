@@ -18,3 +18,7 @@ bool PositionedTripleIterator::next(PositionedTriple *positioned_triple, bool si
     }
     return ret;
 }
+
+PatchTreeIterator *PositionedTripleIterator::getPatchTreeIterator() {
+    return this->it;
+}

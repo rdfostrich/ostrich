@@ -46,6 +46,10 @@ public:
      */
     void set_triple_pattern_filter(Triple triple_pattern);
     /**
+     * Do not filter on triple patterns.
+     */
+    void reset_triple_pattern_filter();
+    /**
      * Indicate that this iterator should ignore local changes.
      */
     void set_filter_local_changes(bool filter_local_changes);
@@ -91,6 +95,14 @@ public:
      * @return If this next element exists, otherwise the key and value will be invalid and should be ignored.
      */
     bool next(PatchTreeKey* key, PatchTreeValue* value);
+    /**
+     * @return The internal deletion cursor, nullable.
+     */
+    DB::Cursor* getDeletionCursor();
+    /**
+     * @return The internal addition cursor, nullable.
+     */
+    DB::Cursor* getAdditionCursor();
 };
 
 

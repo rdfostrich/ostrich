@@ -18,6 +18,7 @@ public:
     PositionedTripleIterator(PatchTreeIterator* it, int patch_id, Triple triple_pattern);
     ~PositionedTripleIterator();
     bool next(PositionedTriple* positioned_triple, bool silent_step = false);
+    PatchTreeIterator* getPatchTreeIterator();
 };
 
 

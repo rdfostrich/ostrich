@@ -35,6 +35,10 @@ void PatchTreeIterator::set_triple_pattern_filter(Triple triple_pattern) {
     }
 }
 
+void PatchTreeIterator::reset_triple_pattern_filter() {
+    this->is_triple_pattern_filter = false;
+}
+
 void PatchTreeIterator::set_filter_local_changes(bool filter_local_changes) {
     this->is_filter_local_changes = filter_local_changes;
 }
@@ -239,4 +243,12 @@ bool PatchTreeIterator::next(PatchTreeKey* key, PatchTreeValue* value) {
     data = (return_addition ? temp_key_addition : temp_key_deletion)->serialize(&size);
     key->deserialize(data, size);
     return true;
+}
+
+DB::Cursor *PatchTreeIterator::getDeletionCursor() {
+    return this->cursor_deletions;
+}
+
+DB::Cursor *PatchTreeIterator::getAdditionCursor() {
+    return this->cursor_additions;
 }

@@ -5,7 +5,13 @@ SnapshotPatchIteratorTripleID::SnapshotPatchIteratorTripleID(
         IteratorTripleID* snapshot_it, PositionedTripleIterator* deletion_it,
         PatchTreeTripleIterator* addition_it, PatchTreeKeyComparator* spo_comparator)
         : snapshot_it(snapshot_it), deletion_it(deletion_it),
-          addition_it(addition_it), spo_comparator(spo_comparator) {}
+          addition_it(addition_it), spo_comparator(spo_comparator) {
+    if (deletion_it != NULL) {
+        // Reset the filter, because from here on we only need to know if a triple is in the tree or not.
+        // So we don't need the filter, because this will introduce unnecessary (possibly huge for specific triple patterns) overhead.
+        deletion_it->getPatchTreeIterator()->reset_triple_pattern_filter();
+    }
+}
 
 bool SnapshotPatchIteratorTripleID::next(Triple* triple) {
     while(snapshot_it != NULL || addition_it != NULL) {
@@ -21,6 +27,15 @@ bool SnapshotPatchIteratorTripleID::next(Triple* triple) {
             PositionedTriple deleted_triple;
             bool emit_triple = true;
             bool found_triple_before_snapshot_triple = true;
+
+            // Jump to the position in the tree where the snapshot triple *would be*.
+            // If we find it, we skip it, because that's an actual deletion.
+            // If we don't find it, emit it, because that's not a deletion.
+            size_t size;
+            const char* data = triple->serialize(&size);
+            deletion_it->getPatchTreeIterator()->getDeletionCursor()->jump(data, size);
+            free((void *) data);
+
             while (found_triple_before_snapshot_triple) {
                 if (deletion_it->next(&deleted_triple, true)) {
                     if(deleted_triple.triple == *triple) {
