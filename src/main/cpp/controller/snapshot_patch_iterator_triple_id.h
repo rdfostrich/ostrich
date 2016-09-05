@@ -12,9 +12,13 @@ private:
     PositionedTripleIterator* deletion_it;
     PatchTreeTripleIterator* addition_it;
     PatchTreeKeyComparator* spo_comparator;
+
+    bool has_last_deleted_triple;
+    PositionedTriple* last_deleted_triple;
 public:
     SnapshotPatchIteratorTripleID(IteratorTripleID* snapshot_it, PositionedTripleIterator* deletion_it,
                                   PatchTreeTripleIterator * addition_it, PatchTreeKeyComparator* spo_comparator);
+    ~SnapshotPatchIteratorTripleID();
     bool next(Triple* triple);
 };
 

@@ -11,6 +11,11 @@ SnapshotPatchIteratorTripleID::SnapshotPatchIteratorTripleID(
         // So we don't need the filter, because this will introduce unnecessary (possibly huge for specific triple patterns) overhead.
         deletion_it->getPatchTreeIterator()->reset_triple_pattern_filter();
     }
+    last_deleted_triple = new PositionedTriple();
+}
+
+SnapshotPatchIteratorTripleID::~SnapshotPatchIteratorTripleID() {
+    delete last_deleted_triple;
 }
 
 bool SnapshotPatchIteratorTripleID::next(Triple* triple) {
@@ -24,7 +29,6 @@ bool SnapshotPatchIteratorTripleID::next(Triple* triple) {
             // If we find a match, we know that we DON'T have to emit this snapshot triple.
             // If we find don't find a match and find a triple > snapshot triple, we are
             // certain that we DO have to emit this snapshot triple.
-            PositionedTriple deleted_triple;
             bool emit_triple = true;
             bool found_triple_before_snapshot_triple = true;
 
@@ -37,19 +41,19 @@ bool SnapshotPatchIteratorTripleID::next(Triple* triple) {
             free((void *) data);
 
             while (found_triple_before_snapshot_triple) {
-                if (deletion_it->next(&deleted_triple, true)) {
-                    if(deleted_triple.triple == *triple) {
+                if (has_last_deleted_triple || deletion_it->next(last_deleted_triple, false, false)) {
+                    if(last_deleted_triple->triple == *triple) {
                         // This 'confirms' the iteration step, we won't need this element hereafter.
-                        // TODO: this may be implemented more efficiently, but this will become a bit more complicated...
-                        deletion_it->next(&deleted_triple);
+                        has_last_deleted_triple = false;
                         emit_triple = false;
                         found_triple_before_snapshot_triple = false;
-                    } else if (spo_comparator->compare(deleted_triple.triple, *triple) > 0) {
+                    } else if (spo_comparator->compare(last_deleted_triple->triple, *triple) > 0) {
+                        // This 'skips' the iteration step, use the same triple next iteration.
+                        has_last_deleted_triple = true;
                         found_triple_before_snapshot_triple = false;
                     } else {
                         // This 'confirms' the iteration step, we won't need this element hereafter.
-                        // TODO: this may be implemented more efficiently, but this will become a bit more complicated...
-                        deletion_it->next(&deleted_triple);
+                        has_last_deleted_triple = false;
                     }
                 } else {
                     found_triple_before_snapshot_triple = false;

@@ -8,13 +8,15 @@ PositionedTripleIterator::~PositionedTripleIterator() {
     delete it;
 }
 
-bool PositionedTripleIterator::next(PositionedTriple *positioned_triple, bool silent_step) {
+bool PositionedTripleIterator::next(PositionedTriple *positioned_triple, bool silent_step, bool get_position) {
     PatchTreeKey key;
     PatchTreeDeletionValue value;
     bool ret = it->next_deletion(&key, &value, silent_step);
     if(ret) {
         positioned_triple->triple = key;
-        positioned_triple->position = value.get(patch_id).get_patch_positions().get_by_pattern(triple_pattern);
+        if (get_position) {
+            positioned_triple->position = value.get(patch_id).get_patch_positions().get_by_pattern(triple_pattern);
+        }
     }
     return ret;
 }

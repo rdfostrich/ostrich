@@ -17,7 +17,7 @@ protected:
 public:
     PositionedTripleIterator(PatchTreeIterator* it, int patch_id, Triple triple_pattern);
     ~PositionedTripleIterator();
-    bool next(PositionedTriple* positioned_triple, bool silent_step = false);
+    bool next(PositionedTriple* positioned_triple, bool silent_step = false, bool get_position = true);
     PatchTreeIterator* getPatchTreeIterator();
 };
 
