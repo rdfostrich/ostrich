@@ -67,12 +67,8 @@ TripleIterator* Controller::get(const Triple& triple_pattern, int offset, int pa
             added_offset = snapshot_offset;
 
             // Make a new snapshot iterator for the new offset
-            if (snapshot_it->canGoTo()) {
-                snapshot_it->goTo(offset + added_offset);
-            } else {
-                delete snapshot_it;
-                snapshot_it = SnapshotManager::search_with_offset(snapshot, triple_pattern, offset + added_offset);
-            }
+            delete snapshot_it;
+            snapshot_it = SnapshotManager::search_with_offset(snapshot, triple_pattern, offset + added_offset);
 
             // Check if we need to loop again
             check_offseted_deletions = previous_added_offset < added_offset;
@@ -90,6 +86,7 @@ TripleIterator* Controller::get(const Triple& triple_pattern, int offset, int pa
 
     // Calculate the offset for our addition iterator.
     if (snapshot_count == -1) {
+        snapshot_count = 0;
         IteratorTripleID *tmp_it = SnapshotManager::search_with_offset(snapshot, triple_pattern, 0);
         while (tmp_it->hasNext()) {
             tmp_it->next();
