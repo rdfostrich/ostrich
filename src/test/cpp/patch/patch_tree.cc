@@ -101,6 +101,38 @@ TEST_F(PatchTreeTest, AppendNotNew) {
     ASSERT_EQ(false, patchTree->append(patch3, 0)) << "Appending a patch with one elements succeeded where it should have failed";
 }
 
+TEST_F(PatchTreeTest, AppendRemove) {
+    Patch patch1(&dict);
+    for(int i = 0; i < 1000; i++) {
+        string e = std::to_string(i);
+        patch1.add(PatchElement(Triple("b" + e, "b" + e, "b" + e, &dict), true));
+    }
+    ASSERT_EQ(true, patchTree->append(patch1, 0)) << "Appending a patch failed at an iteration";
+
+    Patch patch2(&dict);
+    for(int i = 0; i < 1000; i++) {
+        string e = std::to_string(i * 20);
+        patch2.add(PatchElement(Triple(e, e, e, &dict), false));
+    }
+    ASSERT_EQ(true, patchTree->append(patch2, 1)) << "Appending a patch failed at an iteration";
+
+    Patch patch3(&dict);
+    for(int i = 0; i < 1000; i++) {
+        string e = std::to_string(i * 3);
+        patch3.add(PatchElement(Triple("b" + e, "b" + e, "b" + e, &dict), false));
+    }
+    ASSERT_EQ(true, patchTree->append(patch3, 2)) << "Appending a patch failed at an iteration";
+
+    for(int i = 0; i < 1000; i++) {
+        string e = std::to_string(i);
+        ASSERT_EQ(true, patchTree->contains(PatchElement(Triple("b" + e, "b" + e, "b" + e, &dict), true), 0, false)) << "Failing to append a patch should not have (some) of its element added.";
+        ASSERT_EQ(false, patchTree->contains(PatchElement(Triple("b" + e, "b" + e, "b" + e, &dict), false), 0, false)) << "Failing to append a patch should not have (some) of its element added.";
+
+        ASSERT_EQ(false, patchTree->contains(PatchElement(Triple("b" + e, "b" + e, "b" + e, &dict), true), 2, false)) << "Failing to append a patch should not have (some) of its element added.";
+        ASSERT_EQ(true, patchTree->contains(PatchElement(Triple("b" + e, "b" + e, "b" + e, &dict), false), 2, false)) << "Failing to append a patch should not have (some) of its element added.";
+    }
+}
+
 TEST_F(PatchTreeTest, RepeatAppendRemove1) {
     for(int i = 0; i < 10; i++) {
         Patch patch(&dict);

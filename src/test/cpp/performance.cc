@@ -64,48 +64,13 @@ void populate_controller(Controller* controller, int additions, int deletions, i
     }
 }
 
-void cleanup_controller(Controller* controller) {
-    // Delete patch files
-    std::map<int, PatchTree*> patches = controller->get_patch_tree_manager()->get_patch_trees();
-    std::map<int, PatchTree*>::iterator itP = patches.begin();
-    while(itP != patches.end()) {
-        int id = itP->first;
-        std::remove(PATCHTREE_FILENAME(id, "spo").c_str());
-        std::remove(PATCHTREE_FILENAME(id, "pos").c_str());
-        std::remove(PATCHTREE_FILENAME(id, "pso").c_str());
-        std::remove(PATCHTREE_FILENAME(id, "sop").c_str());
-        std::remove(PATCHTREE_FILENAME(id, "osp").c_str());
-        itP++;
-    }
-
-    // Delete snapshot files
-    std::map<int, HDT*> snapshots = controller->get_snapshot_manager()->get_snapshots();
-    std::map<int, HDT*>::iterator itS = snapshots.begin();
-    std::list<int> patchDictsToDelete;
-    while(itS != snapshots.end()) {
-        int id = itS->first;
-        std::remove(SNAPSHOT_FILENAME_BASE(id).c_str());
-        std::remove((SNAPSHOT_FILENAME_BASE(id) + ".index").c_str());
-
-        patchDictsToDelete.push_back(id);
-        itS++;
-    }
-
-    delete controller;
-
-    std::list<int>::iterator it;
-    for(it=patchDictsToDelete.begin(); it!=patchDictsToDelete.end(); ++it) {
-        std::remove((PATCHDICT_FILENAME_BASE(*it)).c_str());
-    }
-}
-
 long long test_insert_size(int snapshot_size, int additions, int deletions, int addition_deletions) {
     StopWatch st;
     int patch_id = 1;
     Controller* controller = setup_snapshot(snapshot_size);
     populate_controller(controller, additions, deletions, addition_deletions, patch_id);
     long long duration = st.stopReal() / 1000;
-    cleanup_controller(controller);
+    Controller::cleanup(controller);
     return duration;
 }
 
@@ -148,7 +113,7 @@ std::ifstream::pos_type patchstore_size(Controller* controller) {
     return size;
 }
 
-int main() {
+int main_() {
     // TODO: don't hardcode path to patches
     Evaluator evaluator;
     evaluator.init("/Users/rtaelman/nosync/patch-generator/dbpedia/patches", 2, 5);
@@ -160,13 +125,13 @@ int main() {
     evaluator.cleanup_controller();
 }
 
-int main_manual() {
+int main() {
     int duplicates = 1;
 
-    //test_insert_size(1000, 10, 0, 0); // WARM-UP
+    test_insert_size(1000, 10, 0, 0); // WARM-UP
 
     // Insert (increasing patch-size)
-    /*cout << "triples,additions-ms,deletions-ms,addition-deletions-ms" << endl;
+    cout << "triples,additions-ms,deletions-ms,addition-deletions-ms" << endl;
     for(int i = 0; i < 1000; i += 10) {
         long long total_additions = 0;
         long long total_deletions = 0;
@@ -177,7 +142,7 @@ int main_manual() {
             total_addition_deletions += test_insert_size(1000, i, 0, i);
         }
         cout << "" << i << "," << total_additions / duplicates << "," << total_deletions / duplicates<< "," << total_addition_deletions / duplicates << endl;
-    }*/
+    }
 
     // Insert (increasing patch-count) (duration per patch)
     /*cout << "patches,additions-ms,deletions-ms,addition-deletions-ms" << endl;
