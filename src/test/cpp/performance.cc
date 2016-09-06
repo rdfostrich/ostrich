@@ -11,6 +11,7 @@
 #include "../../main/cpp/controller/controller.h"
 #include "../../main/cpp/snapshot/combined_triple_iterator.h"
 #include "../../main/cpp/evaluate/evaluator.h"
+#include "../../main/cpp/simpleprogresslistener.h"
 
 using namespace std;
 using namespace kyotocabinet;
@@ -92,6 +93,7 @@ std::ifstream::pos_type patchstore_size(Controller* controller) {
     std::map<int, PatchTree*>::iterator itP = patches.begin();
     while(itP != patches.end()) {
         int id = itP->first;
+        size += filesize(PATCHTREE_FILENAME(id, "spo_deletions"));
         size += filesize(PATCHTREE_FILENAME(id, "spo"));
         size += filesize(PATCHTREE_FILENAME(id, "pos"));
         size += filesize(PATCHTREE_FILENAME(id, "pso"));
@@ -113,10 +115,18 @@ std::ifstream::pos_type patchstore_size(Controller* controller) {
     return size;
 }
 
-int main_() {
+long test_lookup(Controller* controller, Triple triple_pattern, int offset, int patch_id, int limit) {
+    StopWatch st;
+    TripleIterator* ti = controller->get(triple_pattern, offset, patch_id);
+    Triple t;
+    while((limit == -2 || limit-- > 0) && ti->next(&t));
+    return st.stopReal() / 1000;
+}
+
+int main() {
     // TODO: don't hardcode path to patches
     Evaluator evaluator;
-    evaluator.init("/Users/rtaelman/nosync/patch-generator/dbpedia/patches", 2, 5);
+    evaluator.init("/Users/rtaelman/nosync/patch-generator/dbpedia/patches", 2, 5, new SimpleProgressListener());
 
     evaluator.test_lookup("", "", "");
     evaluator.test_lookup("", "http://www.w3.org/2000/01/rdf-schema#label", "");
@@ -125,13 +135,13 @@ int main_() {
     evaluator.cleanup_controller();
 }
 
-int main() {
+int main_manual() {
     int duplicates = 1;
 
     test_insert_size(1000, 10, 0, 0); // WARM-UP
 
     // Insert (increasing patch-size)
-    cout << "triples,additions-ms,deletions-ms,addition-deletions-ms" << endl;
+    /*cout << "triples,additions-ms,deletions-ms,addition-deletions-ms" << endl;
     for(int i = 0; i < 1000; i += 10) {
         long long total_additions = 0;
         long long total_deletions = 0;
@@ -142,7 +152,7 @@ int main() {
             total_addition_deletions += test_insert_size(1000, i, 0, i);
         }
         cout << "" << i << "," << total_additions / duplicates << "," << total_deletions / duplicates<< "," << total_addition_deletions / duplicates << endl;
-    }
+    }*/
 
     // Insert (increasing patch-count) (duration per patch)
     /*cout << "patches,additions-ms,deletions-ms,addition-deletions-ms" << endl;
@@ -163,9 +173,9 @@ int main() {
         cout << "" << i1 << "," << total_additions / duplicates << "," << total_deletions / duplicates<< "," << total_addition_deletions / duplicates << endl;
     }
     //}
-    cleanup_controller(controller1);
-    cleanup_controller(controller2);
-    cleanup_controller(controller3);*/
+    Controller::cleanup(controller1);
+    Controller::cleanup(controller2);
+    Controller::cleanup(controller3);*/
 
     // Lookup
     // Increasing patch id
@@ -191,7 +201,7 @@ int main() {
              << d100_1 << "," << d100_50 << "," << d100_100
              << endl;
     }
-    cleanup_controller(controller);*/
+    Controller::cleanup(controller);*/
 
     // File size
     /*Controller* controller = setup_snapshot(10000);
@@ -208,5 +218,5 @@ int main() {
         populate_controller(controller, 0, 200, 0, i);
         cout << "" << i << "," << patchstore_size(controller) << endl;
     }
-    cleanup_controller(controller);*/
+    Controller::cleanup(controller);*/
 }
