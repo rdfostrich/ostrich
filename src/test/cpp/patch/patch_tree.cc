@@ -266,27 +266,14 @@ TEST_F(PatchTreeTest, OffsetFilteredPatchIterator) {
     patch1.add(PatchElement(Triple("g", "p", "o", &dict), false));
     patch1.add(PatchElement(Triple("a", "p", "o", &dict), true));
     patch1.add(PatchElement(Triple("s", "z", "o", &dict), false));
-    patch1.add(PatchElement(Triple("s", "a", "o", &dict), true));cout << "A" << endl;
+    patch1.add(PatchElement(Triple("s", "a", "o", &dict), true));
     patchTree->append(patch1, 1);
-    /*
-OUTPUT: (WRONG!!!)
-a p o. (+)
-g p o. (-)
-s a o. (+)
-s z o. (-)
-
----
-a p o. (-)
-g p o. (-)
-s a o. (-)
-s z o. (-)
-     */
 
     Patch patch2(&dict);
     patch2.add(PatchElement(Triple("q", "p", "o", &dict), false));
     patch2.add(PatchElement(Triple("g", "p", "o", &dict), true));
     patch2.add(PatchElement(Triple("s", "z", "o", &dict), false));
-    patch2.add(PatchElement(Triple("s", "a", "o", &dict), true));cout << "B" << endl;
+    patch2.add(PatchElement(Triple("s", "a", "o", &dict), true));
     patchTree->append(patch2, 2);
 
     Patch patch3(&dict);
