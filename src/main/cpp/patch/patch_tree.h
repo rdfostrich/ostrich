@@ -11,6 +11,10 @@
 #include "triple_store.h"
 #include "triple_iterator.h"
 
+#define PATCHTREE_FILENAME_BASE(id) ("patchtree_" + std::to_string(id) + ".kct")
+#define PATCHTREE_FILENAME(id,suffix) (PATCHTREE_FILENAME_BASE(id) + "_" + suffix)
+#define METADATA_FILENAME_BASE(id) ("meta_" + std::to_string(id) + ".dat")
+
 using namespace std;
 using namespace kyotocabinet;
 
@@ -20,8 +24,11 @@ private:
     TripleStore* tripleStore;
     PatchTreeKeyComparator* keyComparator;
     PatchElementComparator* elementComparator;
+    string metadata_filename;
+    int min_patch_id;
+    int max_patch_id;
 public:
-    PatchTree(string file_name, DictionaryManager* dict, int8_t kc_opts = 0);
+    PatchTree(int min_patch_id, DictionaryManager* dict, int8_t kc_opts = 0);
     ~PatchTree();
     /**
      * Append the given patch elements to the tree with given patch id.
@@ -130,6 +137,17 @@ public:
      * @return The comparator for this patch tree in SPO order.
      */
     PatchElementComparator* get_element_comparator() const;
+    /**
+     * @return The largest patch id that is currently available.
+     */
+    int get_max_patch_id();
+    /**
+     * @return The smallest patch id that is currently available.
+     */
+    int get_min_patch_id();
+protected:
+    void write_metadata();
+    void read_metadata();
 };
 
 #endif //TPFPATCH_STORE_PATCH_TREE_H

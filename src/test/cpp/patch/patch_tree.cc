@@ -2,9 +2,7 @@
 
 #include "../../../main/cpp/patch/patch_tree.h"
 #include "../../../main/cpp/dictionary/dictionary_manager.h"
-
-#define TREEFILE "_test_tree.kct"
-#define TREEFILESUB(x) TREEFILE "_" x
+#include "../../../main/cpp/patch/patch_tree_manager.h"
 
 // The fixture for testing class PatchTree.
 class PatchTreeTest : public ::testing::Test {
@@ -19,18 +17,18 @@ protected:
     }
 
     virtual void SetUp() {
-        remove(TREEFILE);
-        patchTree = new PatchTree(TREEFILE, &dict);
+        patchTree = new PatchTree(0, &dict);
     }
 
     virtual void TearDown() {
         delete patchTree;
-        remove(TREEFILESUB("spo_deletions"));
-        remove(TREEFILESUB("spo"));
-        remove(TREEFILESUB("sop"));
-        remove(TREEFILESUB("pso"));
-        remove(TREEFILESUB("pos"));
-        remove(TREEFILESUB("osp"));
+        std::remove(PATCHTREE_FILENAME(0, "spo_deletions").c_str());
+        std::remove(PATCHTREE_FILENAME(0, "spo").c_str());
+        std::remove(PATCHTREE_FILENAME(0, "pos").c_str());
+        std::remove(PATCHTREE_FILENAME(0, "pso").c_str());
+        std::remove(PATCHTREE_FILENAME(0, "sop").c_str());
+        std::remove(PATCHTREE_FILENAME(0, "osp").c_str());
+        std::remove(METADATA_FILENAME_BASE(0).c_str());
 
         DictionaryManager::cleanup(0);
     }
@@ -127,9 +125,6 @@ TEST_F(PatchTreeTest, AppendRemove) {
         string e = std::to_string(i);
         ASSERT_EQ(true, patchTree->contains(PatchElement(Triple("b" + e, "b" + e, "b" + e, &dict), true), 0, false)) << "Failing to append a patch should not have (some) of its element added.";
         ASSERT_EQ(false, patchTree->contains(PatchElement(Triple("b" + e, "b" + e, "b" + e, &dict), false), 0, false)) << "Failing to append a patch should not have (some) of its element added.";
-
-        ASSERT_EQ(false, patchTree->contains(PatchElement(Triple("b" + e, "b" + e, "b" + e, &dict), true), 2, false)) << "Failing to append a patch should not have (some) of its element added.";
-        ASSERT_EQ(true, patchTree->contains(PatchElement(Triple("b" + e, "b" + e, "b" + e, &dict), false), 2, false)) << "Failing to append a patch should not have (some) of its element added.";
     }
 }
 
@@ -1397,4 +1392,29 @@ TEST_F(PatchTreeTest, AdditionIteratorOtherIndexes) {
     ASSERT_EQ("a p o.", pt.to_string(dict)) << "Element is incorrect";
 
     ASSERT_EQ(false, it10.next(&pt)) << "Iterator should be finished";
+}
+
+TEST_F(PatchTreeTest, Metadata) {
+    ASSERT_EQ(0, patchTree->get_min_patch_id()) << "Min patch id is incorrect";
+    ASSERT_EQ(0, patchTree->get_max_patch_id()) << "Max patch id is incorrect";
+
+    Patch patch1(&dict);
+    patch1.add(PatchElement(Triple("s1", "p1", "o1", &dict), true));
+    patchTree->append_unsafe(patch1, 0);
+
+    ASSERT_EQ(0, patchTree->get_min_patch_id()) << "Min patch id is incorrect";
+    ASSERT_EQ(0, patchTree->get_max_patch_id()) << "Max patch id is incorrect";
+
+    Patch patch2(&dict);
+    patch2.add(PatchElement(Triple("s1", "p1", "o1", &dict), true));
+    patchTree->append_unsafe(patch2, 1);
+
+    ASSERT_EQ(0, patchTree->get_min_patch_id()) << "Min patch id is incorrect";
+    ASSERT_EQ(1, patchTree->get_max_patch_id()) << "Max patch id is incorrect";
+
+    delete patchTree;
+    patchTree = new PatchTree(0, &dict);
+
+    ASSERT_EQ(0, patchTree->get_min_patch_id()) << "Min patch id is incorrect";
+    ASSERT_EQ(1, patchTree->get_max_patch_id()) << "Max patch id is incorrect";
 }

@@ -1,9 +1,6 @@
 #ifndef TPFPATCH_STORE_PATCHTREEMANAGER_H
 #define TPFPATCH_STORE_PATCHTREEMANAGER_H
 
-#define PATCHTREE_FILENAME_BASE(id) ("patchtree_" + std::to_string(id) + ".kct")
-#define PATCHTREE_FILENAME(id,suffix) (PATCHTREE_FILENAME_BASE(id) + "_" + suffix)
-
 #include <regex>
 #include <map>
 #include "patch_tree.h"
@@ -71,6 +68,10 @@ public:
      * @return The id of a patch.
      */
     Patch get_patch(int patch_id, DictionaryManager* dict);
+    /**
+     * @return The largest patch id that is currently available.
+     */
+    int get_max_patch_id();
 };
 
 

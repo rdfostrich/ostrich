@@ -125,6 +125,7 @@ void Controller::cleanup(Controller* controller) {
     // Delete patch files
     std::map<int, PatchTree*> patches = controller->get_patch_tree_manager()->get_patch_trees();
     std::map<int, PatchTree*>::iterator itP = patches.begin();
+    std::list<int> patchMetadataToDelete;
     while(itP != patches.end()) {
         int id = itP->first;
         std::remove(PATCHTREE_FILENAME(id, "spo_deletions").c_str());
@@ -133,6 +134,7 @@ void Controller::cleanup(Controller* controller) {
         std::remove(PATCHTREE_FILENAME(id, "pso").c_str());
         std::remove(PATCHTREE_FILENAME(id, "sop").c_str());
         std::remove(PATCHTREE_FILENAME(id, "osp").c_str());
+        patchMetadataToDelete.push_back(id);
         itP++;
     }
 
@@ -152,8 +154,14 @@ void Controller::cleanup(Controller* controller) {
     delete controller;
 
     // Delete dictionaries
-    std::list<int>::iterator it;
-    for(it=patchDictsToDelete.begin(); it!=patchDictsToDelete.end(); ++it) {
-        DictionaryManager::cleanup(*it);
+    std::list<int>::iterator it1;
+    for(it1=patchDictsToDelete.begin(); it1!=patchDictsToDelete.end(); ++it1) {
+        DictionaryManager::cleanup(*it1);
+    }
+
+    // Delete metadata files
+    std::list<int>::iterator it2;
+    for(it2=patchMetadataToDelete.begin(); it2!=patchMetadataToDelete.end(); ++it2) {
+        std::remove(METADATA_FILENAME_BASE(*it2).c_str());
     }
 }

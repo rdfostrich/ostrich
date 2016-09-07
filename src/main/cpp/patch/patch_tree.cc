@@ -1,5 +1,6 @@
 #include <iostream>
 #include <kchashdb.h>
+#include <fstream>
 
 #include "patch_tree.h"
 #include "../simpleprogresslistener.h"
@@ -7,11 +8,14 @@
 using namespace std;
 using namespace kyotocabinet;
 
-PatchTree::PatchTree(string file_name, DictionaryManager* dict, int8_t kc_opts) {
-    tripleStore = new TripleStore(file_name, dict, kc_opts);
+PatchTree::PatchTree(int min_patch_id, DictionaryManager* dict, int8_t kc_opts)
+        : metadata_filename(METADATA_FILENAME_BASE(min_patch_id)), min_patch_id(min_patch_id), max_patch_id(min_patch_id) {
+    tripleStore = new TripleStore(PATCHTREE_FILENAME_BASE(min_patch_id), dict, kc_opts);
+    read_metadata();
 };
 
 PatchTree::~PatchTree() {
+    write_metadata();
     delete tripleStore;
 }
 
@@ -88,6 +92,10 @@ void PatchTree::append_unsafe(const Patch& patch, int patch_id, ProgressListener
         }
     }
     NOTIFYMSG(progressListener, "\nFinished patch insertion\n");
+
+    if (patch_id > max_patch_id) {
+        max_patch_id = patch_id;
+    }
 }
 
 bool PatchTree::append(const Patch& patch, int patch_id, ProgressListener* progressListener) {
@@ -263,4 +271,30 @@ PatchTreeKeyComparator* PatchTree::get_spo_comparator() const {
 
 PatchElementComparator *PatchTree::get_element_comparator() const {
     return tripleStore->get_element_comparator();
+}
+
+int PatchTree::get_max_patch_id() {
+    return max_patch_id;
+}
+
+int PatchTree::get_min_patch_id() {
+    return min_patch_id;
+}
+
+void PatchTree::write_metadata() {
+    ofstream metadata_file;
+    metadata_file.open(metadata_filename);
+    metadata_file << get_max_patch_id();
+    metadata_file.close();
+}
+
+void PatchTree::read_metadata() {
+    ifstream metadata_file;
+    metadata_file.open(metadata_filename);
+    if (metadata_file.good()) {
+        string max_patch_id_str;
+        metadata_file >> max_patch_id_str;
+        max_patch_id = stoi(max_patch_id_str);
+        metadata_file.close();
+    }
 }

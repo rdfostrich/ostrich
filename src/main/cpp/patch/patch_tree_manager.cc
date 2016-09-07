@@ -55,7 +55,7 @@ const std::map<int, PatchTree*>& PatchTreeManager::get_patch_trees() const {
 
 PatchTree* PatchTreeManager::load_patch_tree(int patch_id_start, DictionaryManager* dict) {
     // TODO: We might want to look into unloading patch trees if they aren't used for a while. (using splay-tree/queue?)
-    return loaded_patches[patch_id_start] = new PatchTree(PATCHTREE_FILENAME_BASE(patch_id_start), dict, kc_opts);
+    return loaded_patches[patch_id_start] = new PatchTree(patch_id_start, dict, kc_opts);
 }
 
 PatchTree* PatchTreeManager::get_patch_tree(int patch_id_start, DictionaryManager* dict) {
@@ -99,4 +99,12 @@ Patch PatchTreeManager::get_patch(int patch_id, DictionaryManager* dict) {
         return Patch(dict);
     }
     return get_patch_tree(patchtree_id, dict)->reconstruct_patch(patch_id, true);
+}
+
+int PatchTreeManager::get_max_patch_id() {
+    std::map<int, PatchTree*>::const_iterator it = --loaded_patches.end();
+    if (it != loaded_patches.begin()) {
+        return it->second->get_max_patch_id();
+    }
+    return 0;
 }
