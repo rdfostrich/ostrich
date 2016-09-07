@@ -34,6 +34,10 @@ public:
      */
     DictionaryManager* get_dictionary_manager(int patch_id) const;
     /**
+     * @return The largest patch id that is currently available.
+     */
+    int get_max_patch_id();
+    /**
      * Removes all the files that were created by the controller.
      */
     static void cleanup(Controller* controller);

@@ -121,6 +121,10 @@ DictionaryManager *Controller::get_dictionary_manager(int patch_id) const {
     return get_snapshot_manager()->get_dictionary_manager(snapshot_id);
 }
 
+int Controller::get_max_patch_id() {
+    return get_patch_tree_manager()->get_max_patch_id();
+}
+
 void Controller::cleanup(Controller* controller) {
     // Delete patch files
     std::map<int, PatchTree*> patches = controller->get_patch_tree_manager()->get_patch_trees();
