@@ -1,3 +1,4 @@
+#include <fstream>
 #include <iostream>
 #include <string>
 
@@ -5,6 +6,9 @@
 #include <HDTVocabulary.hpp>
 #include <Triples.hpp>
 #include <dictionary/PlainDictionary.hpp>
+#include <boost/iostreams/filtering_streambuf.hpp>
+#include <boost/iostreams/copy.hpp>
+#include <boost/iostreams/filter/zlib.hpp>
 
 #include "dictionary_manager.h"
 
@@ -36,21 +40,35 @@ DictionaryManager::~DictionaryManager() {
 }
 
 void DictionaryManager::load() {
-  ifstream dictFile(PATCHDICT_FILENAME_BASE(snapshotId));
+  ifstream dictFile(PATCHDICT_FILENAME_BASE(snapshotId), ios_base::in | ios_base::binary);
   if (dictFile.is_open()) {
+    boost::iostreams::filtering_streambuf<boost::iostreams::input> in;
+#ifdef COMPRESS_DICT
+    in.push(boost::iostreams::zlib_decompressor());
+#endif
+    in.push(dictFile);
+    in.set_auto_close(false);
+    std::istream decompressed(&in);
     ControlInformation ci = ControlInformation();
-    ci.load(dictFile);
-    patchDict->load(dictFile, ci);
+    ci.load(decompressed);
+    patchDict->load(decompressed, ci);
   }
 }
 
 void DictionaryManager::save() {
   ofstream dictFile;
-  dictFile.open(PATCHDICT_FILENAME_BASE(snapshotId));
+  dictFile.open(PATCHDICT_FILENAME_BASE(snapshotId), ios_base::out | ios_base::binary);
+  boost::iostreams::filtering_streambuf<boost::iostreams::output> out;
+#ifdef COMPRESS_DICT
+  out.push(boost::iostreams::zlib_compressor());
+#endif
+  out.push(dictFile);
+
+  out.set_auto_close(false);
+  std::ostream compressed(&out);
   ControlInformation ci = ControlInformation();
   StdoutProgressListener listener;
-  patchDict->save(dictFile, ci, &listener);
-  dictFile.close();
+  patchDict->save(compressed, ci, &listener);
 }
 
 std::string DictionaryManager::idToString(unsigned int id,

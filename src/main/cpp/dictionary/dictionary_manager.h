@@ -2,6 +2,7 @@
 #define TPFPATCH_STORE_DICTIONARY_MANAGER_H
 
 #define PATCHDICT_FILENAME_BASE(id) ("snapshotpatch_" + std::to_string(id) + ".dic")
+#define COMPRESS_DICT
 
 #include <Dictionary.hpp>
 #include <dictionary/PlainDictionary.hpp>

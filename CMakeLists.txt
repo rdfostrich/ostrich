@@ -99,8 +99,16 @@ if (Kyoto-FOUND)
     add_definitions(-DHAVE_KYOTO)
 endif()
 
+# Add zlib
+hunter_add_package(ZLIB)
+find_package(ZLIB CONFIG REQUIRED)
+include_directories(${ZLIB_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME_STR} ${ZLIB_LIBRARIES})
+
 # Add Boost
-# find_package(Boost CONFIG REQUIRED COMPONENTS container)
+hunter_add_package(Boost COMPONENTS iostreams)
+find_package(Boost CONFIG REQUIRED COMPONENTS iostreams)
+target_link_libraries(${PROJECT_NAME_STR} Boost::iostreams)
 
 # 3rdparty Libraries
 set(EXT_PROJECTS_DIR ${PROJECT_SOURCE_DIR}/ext)
@@ -140,5 +148,7 @@ endif()
 target_link_libraries(${PROJECT_TEST_NAME} ${LIBSTDCXX})
 target_link_libraries(${PROJECT_TEST_NAME} ${KYOTO_SHARED_LIBRARY})
 target_link_libraries(${PROJECT_TEST_NAME} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(${PROJECT_TEST_NAME} ${ZLIB_LIBRARIES})
+target_link_libraries(${PROJECT_TEST_NAME} Boost::iostreams)
 
 add_test(test1 ${PROJECT_TEST_NAME})
