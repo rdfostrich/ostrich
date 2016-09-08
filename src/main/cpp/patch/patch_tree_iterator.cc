@@ -127,9 +127,21 @@ bool PatchTreeIterator::next_addition(PatchTreeKey* key, PatchTreeAdditionValue*
     // If the filter is not enabled, this loop will be executed only once.
     while (!filter_valid) {
         kbp = cursor_additions->get(&ksp, &vbp, &vsp);
-        if (!kbp) return false;
+        if (!kbp) {
+            return false;
+        }
         reverse ? cursor_additions->step_back() : cursor_additions->step();
         value->deserialize(vbp, vsp);
+
+        key->deserialize(kbp, ksp);
+        if (is_triple_pattern_filter && !Triple::pattern_match_triple(*key, triple_pattern_filter)) {
+            // We stop iterating here, because due to the fact that we are always using a triple pattern tree
+            // in which our triple patterns will match continuous series of triples, and we will always start
+            // iterating on a match, there won't be any matches anymore hereafter.
+            delete[] kbp;
+
+            return false;
+        }
 
         if(is_patch_id_filter) {
             if(is_patch_id_filter_exact) {
@@ -146,18 +158,6 @@ bool PatchTreeIterator::next_addition(PatchTreeKey* key, PatchTreeAdditionValue*
             }
         } else {
             filter_valid = true;
-        }
-
-        if(filter_valid) {
-            key->deserialize(kbp, ksp); // Small optimization to only deserialize the key when needed.
-            filter_valid = !is_triple_pattern_filter || Triple::pattern_match_triple(*key, triple_pattern_filter);
-            if (!filter_valid) {
-                // We stop iterating here, because due to the fact that we are always using a triple pattern tree
-                // in which our triple patterns will match continuous series of triples, and we will always start
-                // iterating on a match, there won't be any matches anymore hereafter.
-                delete[] kbp;
-                return false;
-            }
         }
 
         if(filter_valid && is_filter_local_changes) {
