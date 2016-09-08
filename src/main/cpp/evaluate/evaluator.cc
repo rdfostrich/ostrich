@@ -33,9 +33,18 @@ void Evaluator::populate_controller_with_version(int patch_id, string path, Prog
     Patch patch(dict);
     CombinedTripleIterator* it = new CombinedTripleIterator();
 
-    if ((first && controller->get_snapshot_manager()->get_snapshot(patch_id) != NULL)
-            || (!first && controller->get_patch_tree_manager()->get_patch_tree_id(patch_id) >= 0)) {
-        cout << "Skipped loading patch because it already exists." << endl;
+    if (controller->get_max_patch_id() >= patch_id) {
+        if (first) {
+            cout << "Skipped constructing snapshot because it already exists, loaded instead." << endl;
+            controller->get_snapshot_manager()->load_snapshot(patch_id);
+        } else {
+            cout << "Skipped constructing patch because it already exists, loading instead..." << endl;
+            DictionaryManager* dict_patch = controller->get_dictionary_manager(patch_id);
+            if (controller->get_patch_tree_manager()->get_patch_tree(patch_id, dict_patch)->get_max_patch_id() < patch_id) {
+                controller->get_patch_tree_manager()->load_patch_tree(patch_id, dict_patch);
+            }
+            cout << "Loaded!" << endl;
+        }
         return;
     }
 
@@ -43,14 +52,15 @@ void Evaluator::populate_controller_with_version(int patch_id, string path, Prog
     struct dirent *ent;
     StopWatch st;
     cout << "Loading patch... " << endl;
-    int count = 0;
     if ((dir = opendir(path.c_str())) != NULL) {
         while ((ent = readdir(dir)) != NULL) {
             string filename = string(ent->d_name);
             string full_path = path + k_path_separator + filename;
             if (filename != "." && filename != "..") {
+                int count = 0;
                 bool additions = std::regex_match(filename, base_match, regex_additions);
                 bool deletions = std::regex_match(filename, base_match, regex_deletions);
+                cout << "\nFILE: " << full_path << endl; // TODO
                 if (first && additions) {
                     it->appendIterator(get_from_file(full_path));
                 } else if(!first && (additions || deletions)) {
@@ -94,10 +104,15 @@ IteratorTripleString* Evaluator::get_from_file(string file) {
 
 long long Evaluator::measure_lookup(Triple triple_pattern, int offset, int patch_id, int limit) {
     StopWatch st;
+    //StopWatch st2;
     TripleIterator* ti = controller->get(triple_pattern, offset, patch_id);
+    //cout << "A: " << (st2.stopReal()) << endl;st2.reset(); // TODO
     // Dummy loop over iterator
     Triple t;
-    while((limit == -2 || limit-- > 0) && ti->next(&t));
+    long count = 0;
+    while((limit == -2 || limit-- > 0) && ti->next(&t)) { count++; };
+    //cout << "Results: " << count << endl; // TODO
+    //cout << "b: " << (st2.stopReal()) << endl;st2.reset(); // TODO
     return st.stopReal() / 1000;
 }
 
@@ -105,17 +120,17 @@ void Evaluator::test_lookup(string s, string p, string o) {
     DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
     Triple triple_pattern(s, p, o, dict);
     cout << ">> pattern: " << triple_pattern.to_string(*dict) << endl;
-    //cout << "patch,offset,lookup-ms-1,lookup-ms-50,lookup-ms-100,lookup-ms-inf" << endl;
-    cout << "patch,offset,lookup-ms-1,lookup-ms-inf" << endl;
+    cout << "patch,offset,lookup-ms-1,lookup-ms-50,lookup-ms-100,lookup-ms-inf" << endl;
+    //cout << "patch,offset,lookup-ms-1,lookup-ms-inf" << endl;
     for(int i = 0; i < patch_count; i++) {
         for(int offset = 0; offset < 1000; offset+=500) {
             long d1 = measure_lookup(triple_pattern, offset, i, 1);
-            //long d50 = measure_lookup(triple_pattern, offset, i, 50);
-            //long d100 = measure_lookup(triple_pattern, offset, i, 100);
+            long d50 = measure_lookup(triple_pattern, offset, i, 50);
+            long d100 = measure_lookup(triple_pattern, offset, i, 100);
             long dinf = measure_lookup(triple_pattern, offset, i, -2);
-            //cout << "" << i << "," << offset << ","
-            //<< d1 << "," << d50 << "," << d100 << "," << dinf << endl;
-            cout << "" << i << "," << offset << "," << d1 << "," << dinf << endl;
+            cout << "" << i << "," << offset << ","
+            << d1 << "," << d50 << "," << d100 << "," << dinf << endl;
+            //cout << "" << i << "," << offset << "," << d1 << "," << dinf << endl;
         }
     }
 }

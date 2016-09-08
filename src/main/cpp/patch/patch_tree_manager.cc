@@ -101,10 +101,15 @@ Patch PatchTreeManager::get_patch(int patch_id, DictionaryManager* dict) {
     return get_patch_tree(patchtree_id, dict)->reconstruct_patch(patch_id, true);
 }
 
-int PatchTreeManager::get_max_patch_id() {
-    std::map<int, PatchTree*>::const_iterator it = --loaded_patches.end();
-    if (it != loaded_patches.begin()) {
-        return it->second->get_max_patch_id();
+int PatchTreeManager::get_max_patch_id(DictionaryManager* dict) {
+    if (loaded_patches.size() > 0) {
+        std::map<int, PatchTree*>::const_iterator it = loaded_patches.end();
+        --it;
+        PatchTree* patchTree = it->second;
+        if (patchTree == NULL) {
+            patchTree = load_patch_tree(it->first, dict);
+        }
+        return patchTree->get_max_patch_id();
     }
-    return 0;
+    return -1;
 }

@@ -69,9 +69,10 @@ public:
      */
     Patch get_patch(int patch_id, DictionaryManager* dict);
     /**
+     * @param dict The dictionary that must be used in the patch tree if a new one will be created.
      * @return The largest patch id that is currently available.
      */
-    int get_max_patch_id();
+    int get_max_patch_id(DictionaryManager* dict);
 };
 
 

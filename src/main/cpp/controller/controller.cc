@@ -122,7 +122,11 @@ DictionaryManager *Controller::get_dictionary_manager(int patch_id) const {
 }
 
 int Controller::get_max_patch_id() {
-    return get_patch_tree_manager()->get_max_patch_id();
+    int max_patch_id = get_patch_tree_manager()->get_max_patch_id(get_snapshot_manager()->get_dictionary_manager(0));
+    if (max_patch_id < 0) {
+        return get_snapshot_manager()->get_latest_snapshot(0);
+    }
+    return max_patch_id;
 }
 
 void Controller::cleanup(Controller* controller) {
