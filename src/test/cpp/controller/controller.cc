@@ -99,6 +99,7 @@ TEST_F(ControllerTest, GetSimple) {
     Triple t;
 
     // Request version 0 (snapshot)
+    ASSERT_EQ(3, controller->get_count(Triple("", "", "", dict), 0)) << "Count is incorrect";
     TripleIterator* it0 = controller->get(Triple("", "", "", dict), 0, 0);
 
     ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
@@ -113,6 +114,7 @@ TEST_F(ControllerTest, GetSimple) {
     ASSERT_EQ(false, it0->next(&t)) << "Iterator should be finished";
 
     // Request version 1 (patch)
+    ASSERT_EQ(2, controller->get_count(Triple("", "", "", dict), 1)) << "Count is incorrect";
     TripleIterator* it1 = controller->get(Triple("", "", "", dict), 0, 1);
 
     ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
@@ -124,6 +126,7 @@ TEST_F(ControllerTest, GetSimple) {
     ASSERT_EQ(false, it1->next(&t)) << "Iterator should be finished";
 
     // Request version 1 (patch) at offset 1
+    ASSERT_EQ(2, controller->get_count(Triple("", "", "", dict), 1)) << "Count is incorrect";
     TripleIterator* it2 = controller->get(Triple("", "", "", dict), 1, 1);
 
     ASSERT_EQ(true, it2->next(&t)) << "Iterator has a no next value";
@@ -132,6 +135,7 @@ TEST_F(ControllerTest, GetSimple) {
     ASSERT_EQ(false, it2->next(&t)) << "Iterator should be finished";
 
     // Request version 0 (snapshot) for ? ? <c>
+    ASSERT_EQ(1, controller->get_count(Triple("", "", "<c>", dict), 0)) << "Count is incorrect";
     TripleIterator* it3 = controller->get(Triple("", "", "<c>", dict), 0, 0);
 
     ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
@@ -140,6 +144,7 @@ TEST_F(ControllerTest, GetSimple) {
     ASSERT_EQ(false, it3->next(&t)) << "Iterator should be finished";
 
     // Request version 1 (patch) for ? ? <c>
+    ASSERT_EQ(1, controller->get_count(Triple("", "", "<c>", dict), 1)) << "Count is incorrect";
     TripleIterator* it4 = controller->get(Triple("", "", "<c>", dict), 0, 1);
 
     ASSERT_EQ(true, it4->next(&t)) << "Iterator has a no next value";
@@ -210,6 +215,7 @@ TEST_F(ControllerTest, GetComplex1) {
     Triple t;
 
     // Request version 0 (snapshot)
+    ASSERT_EQ(4, controller->get_count(Triple("", "", "", dict), 0)) << "Count is incorrect";
     TripleIterator* it0 = controller->get(Triple("", "", "", dict), 0, 0);
 
     ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
@@ -227,6 +233,7 @@ TEST_F(ControllerTest, GetComplex1) {
     ASSERT_EQ(false, it0->next(&t)) << "Iterator should be finished";
 
     // Request version 1 (patch)
+    ASSERT_EQ(4, controller->get_count(Triple("", "", "", dict), 1)) << "Count is incorrect";
     TripleIterator* it1 = controller->get(Triple("", "", "", dict), 0, 1);
 
     ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
@@ -282,6 +289,7 @@ TEST_F(ControllerTest, GetComplex1) {
     ASSERT_EQ(false, it5->next(&t)) << "Iterator should be finished";
 
     // Request version 2 (patch)
+    ASSERT_EQ(3, controller->get_count(Triple("", "", "", dict), 2)) << "Count is incorrect";
     TripleIterator* it6 = controller->get(Triple("", "", "", dict), 0, 2);
 
     ASSERT_EQ(true, it6->next(&t)) << "Iterator has a no next value";
@@ -382,6 +390,7 @@ TEST_F(ControllerTest, GetComplex2) {
     Triple t;
 
     // Request version 0 (snapshot)
+    ASSERT_EQ(4, controller->get_count(Triple("", "", "o", dict), 0)) << "Count is incorrect";
     TripleIterator* it0 = controller->get(Triple("", "", "o", dict), 0, 0);
 
     ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
@@ -399,6 +408,7 @@ TEST_F(ControllerTest, GetComplex2) {
     ASSERT_EQ(false, it0->next(&t)) << "Iterator should be finished";
 
     // Request version 1 (patch)
+    ASSERT_EQ(4, controller->get_count(Triple("", "", "o", dict), 1)) << "Count is incorrect";
     TripleIterator* it1 = controller->get(Triple("", "", "o", dict), 0, 1);
 
     ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
@@ -454,6 +464,7 @@ TEST_F(ControllerTest, GetComplex2) {
     ASSERT_EQ(false, it5->next(&t)) << "Iterator should be finished";
 
     // Request version 2 (patch)
+    ASSERT_EQ(3, controller->get_count(Triple("", "", "o", dict), 2)) << "Count is incorrect";
     TripleIterator* it6 = controller->get(Triple("", "", "o", dict), 0, 2);
 
     ASSERT_EQ(true, it6->next(&t)) << "Iterator has a no next value";
@@ -548,6 +559,7 @@ TEST_F(ControllerTest, GetComplex3) {
     Triple t;
 
     // Request version 0 (snapshot)
+    ASSERT_EQ(1, controller->get_count(Triple("s", "", "", dict), 0)) << "Count is incorrect";
     TripleIterator* it0 = controller->get(Triple("s", "", "", dict), 0, 0);
 
     ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
@@ -556,6 +568,7 @@ TEST_F(ControllerTest, GetComplex3) {
     ASSERT_EQ(false, it0->next(&t)) << "Iterator should be finished";
 
     // Request version 1 (patch)
+    ASSERT_EQ(1, controller->get_count(Triple("s", "", "", dict), 1)) << "Count is incorrect";
     TripleIterator* it1 = controller->get(Triple("s", "", "", dict), 0, 1);
 
     ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
@@ -569,6 +582,7 @@ TEST_F(ControllerTest, GetComplex3) {
     ASSERT_EQ(false, it2->next(&t)) << "Iterator should be finished";
 
     // Request version 2 (patch)
+    ASSERT_EQ(1, controller->get_count(Triple("s", "", "", dict), 2)) << "Count is incorrect";
     TripleIterator* it6 = controller->get(Triple("s", "", "", dict), 0, 2);
 
     ASSERT_EQ(true, it6->next(&t)) << "Iterator has a no next value";

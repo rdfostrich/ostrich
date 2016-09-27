@@ -265,6 +265,16 @@ PatchTreeTripleIterator* PatchTree::addition_iterator_from(long offset, int patc
     return new PatchTreeTripleIterator(it, patch_id, triple_pattern);
 }
 
+size_t PatchTree::addition_count(int patch_id, const Triple& triple_pattern) const {
+    PatchTreeTripleIterator* it = addition_iterator_from(0, patch_id, triple_pattern);
+    size_t count = 0;
+    Triple* triple = new Triple();
+    while (it->next(triple)) count++;
+    delete triple;
+    delete it;
+    return count;
+}
+
 PatchTreeKeyComparator* PatchTree::get_spo_comparator() const {
     return tripleStore->get_spo_comparator();
 }

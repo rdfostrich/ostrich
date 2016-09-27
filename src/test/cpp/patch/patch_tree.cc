@@ -1115,6 +1115,7 @@ TEST_F(PatchTreeTest, AdditionIterator) {
     /*
      * Looping over all additions in patch 1 starting from beginning
      */
+    ASSERT_EQ(2, patchTree->addition_count(1, Triple("", "", "", &dict))) << "Addition count is wrong";
     PatchTreeTripleIterator it1 = *patchTree->addition_iterator_from(0, 1, Triple("", "", "", &dict));
 
     ASSERT_EQ(true, it1.next(&pt)) << "Iterator has a no next value";
@@ -1128,6 +1129,7 @@ TEST_F(PatchTreeTest, AdditionIterator) {
     /*
      * Looping over s a o additions in patch 1 starting from beginning
      */
+    ASSERT_EQ(1, patchTree->addition_count(1, Triple("s", "a", "o", &dict))) << "Addition count is wrong";
     PatchTreeTripleIterator it2 = *patchTree->addition_iterator_from(0, 1, Triple("s", "a", "o", &dict));
 
     ASSERT_EQ(true, it2.next(&pt)) << "Iterator has a no next value";
@@ -1138,6 +1140,7 @@ TEST_F(PatchTreeTest, AdditionIterator) {
     /*
      * Looping over all additions in patch 1 starting from 1
      */
+    ASSERT_EQ(2, patchTree->addition_count(1, Triple("", "", "", &dict))) << "Addition count is wrong";
     PatchTreeTripleIterator it3 = *patchTree->addition_iterator_from(1, 1, Triple("", "", "", &dict));
 
     ASSERT_EQ(true, it3.next(&pt)) << "Iterator has a no next value";
@@ -1148,6 +1151,7 @@ TEST_F(PatchTreeTest, AdditionIterator) {
     /*
      * Looping over all additions in patch 2 starting from beginning
      */
+    ASSERT_EQ(2, patchTree->addition_count(2, Triple("", "", "", &dict))) << "Addition count is wrong";
     PatchTreeTripleIterator it4 = *patchTree->addition_iterator_from(0, 2, Triple("", "", "", &dict));
 
     ASSERT_EQ(true, it4.next(&pt)) << "Iterator has a no next value";
@@ -1161,6 +1165,7 @@ TEST_F(PatchTreeTest, AdditionIterator) {
     /*
      * Looping over all additions in patch 5 starting from beginning
      */
+    ASSERT_EQ(2, patchTree->addition_count(5, Triple("", "", "", &dict))) << "Addition count is wrong";
     PatchTreeTripleIterator it5 = *patchTree->addition_iterator_from(0, 5, Triple("", "", "", &dict));
 
     ASSERT_EQ(true, it5.next(&pt)) << "Iterator has a no next value";
@@ -1249,6 +1254,7 @@ TEST_F(PatchTreeTest, AdditionIteratorOtherIndexes) {
     /*
      * Looping over ? ? ? additions in patch 5
      */
+    ASSERT_EQ(2, patchTree->addition_count(5, Triple("", "", "", &dict))) << "Addition count is wrong";
     PatchTreeTripleIterator it1 = *patchTree->addition_iterator_from(0, 5, Triple("", "", "", &dict));
 
     ASSERT_EQ(true, it1.next(&pt)) << "Iterator has a no next value";
@@ -1262,6 +1268,7 @@ TEST_F(PatchTreeTest, AdditionIteratorOtherIndexes) {
     /*
      * Looping over ? ? o additions in patch 5
      */
+    ASSERT_EQ(2, patchTree->addition_count(5, Triple("", "", "o", &dict))) << "Addition count is wrong";
     PatchTreeTripleIterator it2 = *patchTree->addition_iterator_from(0, 5, Triple("", "", "o", &dict));
 
     ASSERT_EQ(true, it2.next(&pt)) << "Iterator has a no next value";
@@ -1275,6 +1282,7 @@ TEST_F(PatchTreeTest, AdditionIteratorOtherIndexes) {
     /*
      * Looping over ? a ? additions in patch 5
      */
+    ASSERT_EQ(2, patchTree->addition_count(5, Triple("", "a", "", &dict))) << "Addition count is wrong";
     PatchTreeTripleIterator it3 = *patchTree->addition_iterator_from(0, 5, Triple("", "a", "", &dict));
 
     ASSERT_EQ(true, it3.next(&pt)) << "Iterator has a no next value";
@@ -1288,6 +1296,7 @@ TEST_F(PatchTreeTest, AdditionIteratorOtherIndexes) {
     /*
      * Looping over ? a o additions in patch 5
      */
+    ASSERT_EQ(2, patchTree->addition_count(5, Triple("", "a", "o", &dict))) << "Addition count is wrong";
     PatchTreeTripleIterator it4 = *patchTree->addition_iterator_from(0, 5, Triple("", "a", "o", &dict));
 
     ASSERT_EQ(true, it4.next(&pt)) << "Iterator has a no next value";
@@ -1301,6 +1310,7 @@ TEST_F(PatchTreeTest, AdditionIteratorOtherIndexes) {
     /*
      * Looping over s ? o additions in patch 5
      */
+    ASSERT_EQ(1, patchTree->addition_count(5, Triple("s", "", "o", &dict))) << "Addition count is wrong";
     PatchTreeTripleIterator it5 = *patchTree->addition_iterator_from(0, 5, Triple("s", "", "o", &dict));
 
     ASSERT_EQ(true, it5.next(&pt)) << "Iterator has a no next value";
@@ -1311,6 +1321,7 @@ TEST_F(PatchTreeTest, AdditionIteratorOtherIndexes) {
     /*
      * Looping over s a ? additions in patch 5
      */
+    ASSERT_EQ(1, patchTree->addition_count(5, Triple("s", "a", "", &dict))) << "Addition count is wrong";
     PatchTreeTripleIterator it6 = *patchTree->addition_iterator_from(0, 5, Triple("s", "a", "", &dict));
 
     ASSERT_EQ(true, it6.next(&pt)) << "Iterator has a no next value";
@@ -1321,6 +1332,7 @@ TEST_F(PatchTreeTest, AdditionIteratorOtherIndexes) {
     /*
      * Looping over s a o additions in patch 5
      */
+    ASSERT_EQ(1, patchTree->addition_count(5, Triple("s", "a", "o", &dict))) << "Addition count is wrong";
     PatchTreeTripleIterator it7 = *patchTree->addition_iterator_from(0, 5, Triple("s", "a", "o", &dict));
 
     ASSERT_EQ(true, it7.next(&pt)) << "Iterator has a no next value";
@@ -1331,6 +1343,7 @@ TEST_F(PatchTreeTest, AdditionIteratorOtherIndexes) {
     /*
      * Looping over s ? o additions in patch 5
      */
+    ASSERT_EQ(1, patchTree->addition_count(5, Triple("s", "", "", &dict))) << "Addition count is wrong";
     PatchTreeTripleIterator it7_2 = *patchTree->addition_iterator_from(0, 5, Triple("s", "", "", &dict));
 
     ASSERT_EQ(true, it7_2.next(&pt)) << "Iterator has a no next value";
@@ -1341,6 +1354,7 @@ TEST_F(PatchTreeTest, AdditionIteratorOtherIndexes) {
     /*
      * Looping over ? ? ? additions in patch 6
      */
+    ASSERT_EQ(3, patchTree->addition_count(6, Triple("", "", "", &dict))) << "Addition count is wrong";
     PatchTreeTripleIterator it8 = *patchTree->addition_iterator_from(0, 6, Triple("", "", "", &dict));
 
     ASSERT_EQ(true, it8.next(&pt)) << "Iterator has a no next value";
@@ -1357,6 +1371,7 @@ TEST_F(PatchTreeTest, AdditionIteratorOtherIndexes) {
     /*
      * Looping over ? ? o additions in patch 6
      */
+    ASSERT_EQ(3, patchTree->addition_count(6, Triple("", "", "o", &dict))) << "Addition count is wrong";
     PatchTreeTripleIterator it9 = *patchTree->addition_iterator_from(0, 6, Triple("", "", "o", &dict));
 
     ASSERT_EQ(true, it9.next(&pt)) << "Iterator has a no next value";
@@ -1373,6 +1388,7 @@ TEST_F(PatchTreeTest, AdditionIteratorOtherIndexes) {
     /*
      * Looping over ? p ? additions in patch 6
      */
+    ASSERT_EQ(1, patchTree->addition_count(6, Triple("", "p", "", &dict))) << "Addition count is wrong";
     PatchTreeTripleIterator it10 = *patchTree->addition_iterator_from(0, 6, Triple("", "p", "", &dict));
 
     ASSERT_EQ(true, it10.next(&pt)) << "Iterator has a no next value";

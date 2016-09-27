@@ -13,6 +13,7 @@ public:
     Controller(int8_t kc_opts = 0);
     ~Controller();
     TripleIterator* get(const Triple& triple_pattern, int offset, int patch_id) const;
+    size_t get_count(const Triple& triple_pattern, int patch_id, bool allowEstimates = false) const;
     /**
      * Add the given patch to a patch tree.
      * @param patch The patch to add.

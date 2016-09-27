@@ -9,6 +9,37 @@ Controller::~Controller() {
     delete snapshotManager;
 }
 
+size_t Controller::get_count(const Triple& triple_pattern, int patch_id, bool allowEstimates) const {
+    int snapshot_id = get_snapshot_manager()->get_latest_snapshot(patch_id);
+    if(snapshot_id < 0) {
+        return 0;
+    }
+
+    HDT* snapshot = get_snapshot_manager()->get_snapshot(snapshot_id);
+    IteratorTripleID* snapshot_it = SnapshotManager::search_with_offset(snapshot, triple_pattern, 0);
+    size_t snapshot_count = snapshot_it->estimatedNumResults();
+    if (!allowEstimates && snapshot_it->numResultEstimation() != EXACT) {
+        snapshot_count = 0;
+        while (snapshot_it->hasNext()) {
+            snapshot_it->next();
+            snapshot_count++;
+        }
+    }
+    if(snapshot_id == patch_id) {
+        return snapshot_count;
+    }
+
+    DictionaryManager *dict = get_snapshot_manager()->get_dictionary_manager(snapshot_id);
+    PatchTree* patchTree = get_patch_tree_manager()->get_patch_tree(patch_id, dict);
+    if(patchTree == NULL) {
+        return snapshot_count;
+    }
+
+    std::pair<PatchPosition, Triple> deletion_count_data = patchTree->deletion_count(triple_pattern, patch_id);
+    size_t addition_count = patchTree->addition_count(patch_id, triple_pattern);
+    return snapshot_count - deletion_count_data.first + addition_count;
+}
+
 TripleIterator* Controller::get(const Triple& triple_pattern, int offset, int patch_id) const {
     // Find the snapshot
     int snapshot_id = get_snapshot_manager()->get_latest_snapshot(patch_id);
