@@ -52,7 +52,8 @@ set(COMMON_FILES
         src/main/cpp/snapshot/combined_triple_iterator.cc src/main/cpp/snapshot/combined_triple_iterator.h
         src/main/cpp/patch/patch_element_comparator.cc src/main/cpp/patch/patch_element_comparator.h
         src/main/cpp/evaluate/evaluator.cc src/main/cpp/evaluate/evaluator.h
-        src/main/cpp/simpleprogresslistener.cc src/main/cpp/simpleprogresslistener.h)
+        src/main/cpp/simpleprogresslistener.cc src/main/cpp/simpleprogresslistener.h
+        src/main/cpp/controller/patch_builder.cc src/main/cpp/controller/patch_builder.h)
 
 set(TEST_FILES
         src/test/cpp/controller/controller.cc

@@ -4,6 +4,7 @@
 #include "../patch/patch_tree.h"
 #include "../snapshot/snapshot_manager.h"
 #include "../patch/patch_tree_manager.h"
+#include "patch_builder.h"
 
 class Controller {
 private:
@@ -38,6 +39,10 @@ public:
      * @return The largest patch id that is currently available.
      */
     int get_max_patch_id();
+    /**
+     * @return a new patch builder.
+     */
+    PatchBuilder* new_patch();
     /**
      * Removes all the files that were created by the controller.
      */

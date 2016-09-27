@@ -205,3 +205,7 @@ void Controller::cleanup(Controller* controller) {
         std::remove(METADATA_FILENAME_BASE(*it2).c_str());
     }
 }
+
+PatchBuilder* Controller::new_patch() {
+    return new PatchBuilder(this);
+}

@@ -71,6 +71,24 @@ TEST_F(ControllerTest, GetEdge) {
     ASSERT_EQ(false, it2->next(&t)) << "Iterator should be finished";
 }
 
+TEST_F(ControllerTest, PatchBuilder) {
+    controller->new_patch()
+            ->addition(TripleString("a", "a", "a"))
+            ->addition(TripleString("b", "b", "b"))
+            ->addition(TripleString("c", "c", "c"))
+            ->commit();
+
+    controller->new_patch()
+            ->deletion(TripleString("a", "a", "a"))
+            ->addition(TripleString("d", "d", "d"))
+            ->deletion(TripleString("c", "c", "c"))
+            ->commit();
+
+    DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
+    ASSERT_EQ(3, controller->get_count(Triple("", "", "", dict), 0)) << "Count is incorrect";
+    ASSERT_EQ(2, controller->get_count(Triple("", "", "", dict), 1)) << "Count is incorrect";
+}
+
 TEST_F(ControllerTest, GetSimple) {
     // Build a snapshot
     std::vector<TripleString> triples;
