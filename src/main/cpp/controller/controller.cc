@@ -9,11 +9,11 @@ Controller::~Controller() {
     delete snapshotManager;
 }
 
-size_t Controller::get_count_estimated(const Triple& triple_pattern, int patch_id) const {
-    return get_count(triple_pattern, patch_id, true);
+size_t Controller::get_version_materialized_count_estimated(const Triple& triple_pattern, int patch_id) const {
+    return get_version_materialized_count(triple_pattern, patch_id, true);
 }
 
-size_t Controller::get_count(const Triple& triple_pattern, int patch_id, bool allowEstimates) const {
+size_t Controller::get_version_materialized_count(const Triple& triple_pattern, int patch_id, bool allowEstimates) const {
     int snapshot_id = get_snapshot_manager()->get_latest_snapshot(patch_id);
     if(snapshot_id < 0) {
         return 0;
@@ -44,7 +44,7 @@ size_t Controller::get_count(const Triple& triple_pattern, int patch_id, bool al
     return snapshot_count - deletion_count_data.first + addition_count;
 }
 
-TripleIterator* Controller::get(const Triple& triple_pattern, int offset, int patch_id) const {
+TripleIterator* Controller::get_version_materialized(const Triple &triple_pattern, int offset, int patch_id) const {
     // Find the snapshot
     int snapshot_id = get_snapshot_manager()->get_latest_snapshot(patch_id);
     if(snapshot_id < 0) {

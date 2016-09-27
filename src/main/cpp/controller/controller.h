@@ -13,9 +13,37 @@ private:
 public:
     Controller(int8_t kc_opts = 0);
     ~Controller();
-    TripleIterator* get(const Triple& triple_pattern, int offset, int patch_id) const;
-    size_t get_count(const Triple& triple_pattern, int patch_id, bool allowEstimates = false) const;
-    size_t get_count_estimated(const Triple& triple_pattern, int patch_id) const;
+    /**
+     * Get an iterator for all triples matching the given triple pattern with a certain offset
+     * in the list of all triples for the given patch id.
+     * @param triple_pattern Only triples matching this pattern will be returned.
+     * @param offset A certain offset the iterator should start with.
+     * @param patch_id The patch id for which triples should be returned.
+     */
+    TripleIterator* get_version_materialized(const Triple &triple_pattern, int offset, int patch_id) const;
+    size_t get_version_materialized_count(const Triple& triple_pattern, int patch_id, bool allowEstimates = false) const;
+    size_t get_version_materialized_count_estimated(const Triple& triple_pattern, int patch_id) const;
+    /**
+     * Get an addition/deletion iterator for all triples matching the given triple pattern with a certain offset
+     * in the list of all triples that have been added or removed from patch_id_start until patch_id_end.
+     * Triples are annotated with addition or deletion.
+     * @param triple_pattern Only triples matching this pattern will be returned.
+     * @param offset A certain offset the iterator should start with.
+     * @param patch_id The patch id for which triples should be returned.
+     */
+    // TODO: two cases: patch_id_start is snapshot and patch_id_start is not a snapshot (algorithm will have to reconstruct the 2 patches and expose it via join-merge through an iterator)
+    //PatchElementIterator* get_delta_materialized(const Triple &triple_pattern, int offset, int patch_id_start, int patch_id_end) const;
+    /**
+     * Get an addition/deletion iterator for all triples matching the given triple pattern with a certain offset
+     * in the list of all triples that exist for any patch id.
+     * Triples are annotated with the version in which they are valid.
+     * @param triple_pattern Only triples matching this pattern will be returned.
+     * @param offset A certain offset the iterator should start with.
+     * @param patch_id The patch id for which triples should be returned.
+     */
+    // TODO
+    //PatchElementIterator* get_version(const Triple &triple_pattern, int offset) const;
+
     /**
      * Add the given patch to a patch tree.
      * @param patch The patch to add.
