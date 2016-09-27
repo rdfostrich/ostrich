@@ -9,6 +9,10 @@ Controller::~Controller() {
     delete snapshotManager;
 }
 
+size_t Controller::get_count_estimated(const Triple& triple_pattern, int patch_id) const {
+    return get_count(triple_pattern, patch_id, true);
+}
+
 size_t Controller::get_count(const Triple& triple_pattern, int patch_id, bool allowEstimates) const {
     int snapshot_id = get_snapshot_manager()->get_latest_snapshot(patch_id);
     if(snapshot_id < 0) {
