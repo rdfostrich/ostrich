@@ -15,19 +15,20 @@
 using namespace std;
 using namespace hdt;
 
-DictionaryManager::DictionaryManager(int snapshotId, Dictionary *hdtDict, PlainDictionary *patchDict)
-    : snapshotId(snapshotId), hdtDict(hdtDict), patchDict(patchDict), bitmask(2147483648) {
+DictionaryManager::DictionaryManager(string basePath, int snapshotId, Dictionary *hdtDict, PlainDictionary *patchDict)
+    : basePath(basePath), snapshotId(snapshotId), hdtDict(hdtDict), patchDict(patchDict), bitmask(2147483648) {
   load();
 };
 
-DictionaryManager::DictionaryManager(int snapshotId, Dictionary *hdtDict)
-    : snapshotId(snapshotId), hdtDict(hdtDict), bitmask(2147483648) {
+DictionaryManager::DictionaryManager(string basePath, int snapshotId, Dictionary *hdtDict)
+    : basePath(basePath), snapshotId(snapshotId), hdtDict(hdtDict), bitmask(2147483648) {
   // Create additional dictionary
   patchDict = new PlainDictionary();
   load();
 };
 
-DictionaryManager::DictionaryManager(int snapshotId) : snapshotId(snapshotId), bitmask(2147483648) {
+DictionaryManager::DictionaryManager(string basePath, int snapshotId)
+        : basePath(basePath), snapshotId(snapshotId), bitmask(2147483648) {
   // Create two empty default dictionaries dictionary,
   hdtDict = new PlainDictionary();
   patchDict = new PlainDictionary();
@@ -40,7 +41,7 @@ DictionaryManager::~DictionaryManager() {
 }
 
 void DictionaryManager::load() {
-  ifstream dictFile(PATCHDICT_FILENAME_BASE(snapshotId), ios_base::in | ios_base::binary);
+  ifstream dictFile(basePath + PATCHDICT_FILENAME_BASE(snapshotId), ios_base::in | ios_base::binary);
   if (dictFile.is_open()) {
     boost::iostreams::filtering_streambuf<boost::iostreams::input> in;
 #ifdef COMPRESS_DICT
@@ -57,7 +58,7 @@ void DictionaryManager::load() {
 
 void DictionaryManager::save() {
   ofstream dictFile;
-  dictFile.open(PATCHDICT_FILENAME_BASE(snapshotId), ios_base::out | ios_base::binary);
+  dictFile.open(basePath + PATCHDICT_FILENAME_BASE(snapshotId), ios_base::out | ios_base::binary);
   boost::iostreams::filtering_streambuf<boost::iostreams::output> out;
 #ifdef COMPRESS_DICT
   out.push(boost::iostreams::zlib_compressor());
@@ -141,7 +142,7 @@ ModifiableDictionary* DictionaryManager::getPatchDict() const {
   return patchDict;
 }
 
-void DictionaryManager::cleanup(int snapshotId) {
+void DictionaryManager::cleanup(string basePath, int snapshotId) {
   std::remove((PATCHDICT_FILENAME_BASE(snapshotId)).c_str());
 }
 

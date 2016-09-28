@@ -2,7 +2,7 @@
 #include "controller.h"
 #include "snapshot_patch_iterator_triple_id.h"
 
-Controller::Controller(int8_t kc_opts) : patchTreeManager(new PatchTreeManager(kc_opts)), snapshotManager(new SnapshotManager()) {}
+Controller::Controller(string basePath, int8_t kc_opts) : patchTreeManager(new PatchTreeManager(basePath, kc_opts)), snapshotManager(new SnapshotManager(basePath)) {}
 
 Controller::~Controller() {
     delete patchTreeManager;
@@ -165,19 +165,19 @@ int Controller::get_max_patch_id() {
     return max_patch_id;
 }
 
-void Controller::cleanup(Controller* controller) {
+void Controller::cleanup(string basePath, Controller* controller) {
     // Delete patch files
     std::map<int, PatchTree*> patches = controller->get_patch_tree_manager()->get_patch_trees();
     std::map<int, PatchTree*>::iterator itP = patches.begin();
     std::list<int> patchMetadataToDelete;
     while(itP != patches.end()) {
         int id = itP->first;
-        std::remove(PATCHTREE_FILENAME(id, "spo_deletions").c_str());
-        std::remove(PATCHTREE_FILENAME(id, "spo").c_str());
-        std::remove(PATCHTREE_FILENAME(id, "pos").c_str());
-        std::remove(PATCHTREE_FILENAME(id, "pso").c_str());
-        std::remove(PATCHTREE_FILENAME(id, "sop").c_str());
-        std::remove(PATCHTREE_FILENAME(id, "osp").c_str());
+        std::remove((basePath + PATCHTREE_FILENAME(id, "spo_deletions")).c_str());
+        std::remove((basePath + PATCHTREE_FILENAME(id, "spo")).c_str());
+        std::remove((basePath + PATCHTREE_FILENAME(id, "pos")).c_str());
+        std::remove((basePath + PATCHTREE_FILENAME(id, "pso")).c_str());
+        std::remove((basePath + PATCHTREE_FILENAME(id, "sop")).c_str());
+        std::remove((basePath + PATCHTREE_FILENAME(id, "osp")).c_str());
         patchMetadataToDelete.push_back(id);
         itP++;
     }
@@ -188,8 +188,8 @@ void Controller::cleanup(Controller* controller) {
     std::list<int> patchDictsToDelete;
     while(itS != snapshots.end()) {
         int id = itS->first;
-        std::remove(SNAPSHOT_FILENAME_BASE(id).c_str());
-        std::remove((SNAPSHOT_FILENAME_BASE(id) + ".index").c_str());
+        std::remove((basePath + SNAPSHOT_FILENAME_BASE(id)).c_str());
+        std::remove((basePath + SNAPSHOT_FILENAME_BASE(id) + ".index").c_str());
 
         patchDictsToDelete.push_back(id);
         itS++;
@@ -200,13 +200,13 @@ void Controller::cleanup(Controller* controller) {
     // Delete dictionaries
     std::list<int>::iterator it1;
     for(it1=patchDictsToDelete.begin(); it1!=patchDictsToDelete.end(); ++it1) {
-        DictionaryManager::cleanup(*it1);
+        DictionaryManager::cleanup(basePath, *it1);
     }
 
     // Delete metadata files
     std::list<int>::iterator it2;
     for(it2=patchMetadataToDelete.begin(); it2!=patchMetadataToDelete.end(); ++it2) {
-        std::remove(METADATA_FILENAME_BASE(*it2).c_str());
+        std::remove((basePath + METADATA_FILENAME_BASE(*it2)).c_str());
     }
 }
 

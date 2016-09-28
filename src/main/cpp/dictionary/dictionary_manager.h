@@ -14,6 +14,7 @@ using namespace hdt;
 
 class DictionaryManager : public ModifiableDictionary {
 
+  string basePath;
   Dictionary *hdtDict;             // Dictionary from HDT file
   PlainDictionary *patchDict; // Additional dictionary
 
@@ -21,9 +22,9 @@ class DictionaryManager : public ModifiableDictionary {
   int snapshotId;
 
 public:
-  DictionaryManager(int snapshotId, Dictionary *hdtDict, PlainDictionary *patchDict);
-  DictionaryManager(int snapshotId, Dictionary *hdtDict);
-  DictionaryManager(int snapshotId);
+  DictionaryManager(string basePath, int snapshotId, Dictionary *hdtDict, PlainDictionary *patchDict);
+  DictionaryManager(string basePath, int snapshotId, Dictionary *hdtDict);
+  DictionaryManager(string basePath, int snapshotId);
   ~DictionaryManager();
 
   /**
@@ -60,7 +61,7 @@ public:
   /**
    * Removes all the files that were created by the dictionary manager of the given id.
    */
-  static void cleanup(int snapshotId);
+  static void cleanup(string basePath, int snapshotId);
 
   /**
    * @param componentId1 The first id

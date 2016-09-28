@@ -8,9 +8,9 @@
 using namespace std;
 using namespace kyotocabinet;
 
-PatchTree::PatchTree(int min_patch_id, DictionaryManager* dict, int8_t kc_opts)
-        : metadata_filename(METADATA_FILENAME_BASE(min_patch_id)), min_patch_id(min_patch_id), max_patch_id(min_patch_id) {
-    tripleStore = new TripleStore(PATCHTREE_FILENAME_BASE(min_patch_id), dict, kc_opts);
+PatchTree::PatchTree(string basePath, int min_patch_id, DictionaryManager* dict, int8_t kc_opts)
+        : metadata_filename(basePath + METADATA_FILENAME_BASE(min_patch_id)), min_patch_id(min_patch_id), max_patch_id(min_patch_id) {
+    tripleStore = new TripleStore(basePath + PATCHTREE_FILENAME_BASE(min_patch_id), dict, kc_opts);
     read_metadata();
 };
 

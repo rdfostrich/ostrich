@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
     }
 
     Evaluator evaluator;
-    evaluator.init(argv[1], stoi(argv[2]), stoi(argv[3]), new SimpleProgressListener());
+    evaluator.init("./", argv[1], stoi(argv[2]), stoi(argv[3]), new SimpleProgressListener());
 
     test_lookups_for_queries(evaluator, ((std::string) argv[4]) + "/subjectLookup/queries-sel-100-e0.1.txt");
 

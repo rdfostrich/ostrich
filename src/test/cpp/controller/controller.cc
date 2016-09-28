@@ -5,20 +5,21 @@
 #include "../../../main/cpp/dictionary/dictionary_manager.h"
 
 #define BASEURI "<http://example.org>"
+#define TESTPATH "./"
 
 // The fixture for testing class controller->
 class ControllerTest : public ::testing::Test {
 protected:
     Controller* controller;
 
-    ControllerTest() : controller(new Controller()) {}
+    ControllerTest() : controller(new Controller(TESTPATH)) {}
 
     virtual void SetUp() {
 
     }
 
     virtual void TearDown() {
-        Controller::cleanup(controller);
+        Controller::cleanup(TESTPATH, controller);
     }
 };
 

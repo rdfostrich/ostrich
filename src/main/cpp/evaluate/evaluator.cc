@@ -8,8 +8,8 @@
 #include "evaluator.h"
 #include "../simpleprogresslistener.h"
 
-void Evaluator::init(string patchesBasePatch, int startIndex, int endIndex, ProgressListener* progressListener) {
-    controller = new Controller(HashDB::TCOMPRESS);
+void Evaluator::init(string basePath, string patchesBasePatch, int startIndex, int endIndex, ProgressListener* progressListener) {
+    controller = new Controller(basePath, HashDB::TCOMPRESS);
 
     DIR *dir;
     if ((dir = opendir(patchesBasePatch.c_str())) != NULL) {
@@ -72,6 +72,10 @@ void Evaluator::populate_controller_with_version(int patch_id, string path, Prog
                         if (count % 10000 == 0) {
                             NOTIFYLVL(progressListener, "Triple loading", count);
                         }
+                        // TODO: !!!!!!!
+                        if (count > 100000) {
+                            break;
+                        }
                     }
                 }
             }
@@ -105,7 +109,7 @@ IteratorTripleString* Evaluator::get_from_file(string file) {
 long long Evaluator::measure_lookup(Triple triple_pattern, int offset, int patch_id, int limit) {
     StopWatch st;
     //StopWatch st2;
-    TripleIterator* ti = controller->get(triple_pattern, offset, patch_id);
+    TripleIterator* ti = controller->get_version_materialized(triple_pattern, offset, patch_id);
     //cout << "A: " << (st2.stopReal()) << endl;st2.reset(); // TODO
     // Dummy loop over iterator
     Triple t;
@@ -136,5 +140,6 @@ void Evaluator::test_lookup(string s, string p, string o) {
 }
 
 void Evaluator::cleanup_controller() {
-    Controller::cleanup(controller);
+    //Controller::cleanup(controller);
+    delete controller; // TODO
 }

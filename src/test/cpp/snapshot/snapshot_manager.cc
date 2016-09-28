@@ -4,6 +4,7 @@
 #include "../../../main/cpp/snapshot/vector_triple_iterator.h"
 
 #define BASEURI "<http://example.org>"
+#define TESTPATH "./"
 
 // The fixture for testing class snapshotManager
 class SnapshotManagerTest : public ::testing::Test {
@@ -14,7 +15,7 @@ protected:
     SnapshotManagerTest() : snapshotManager() {}
 
     virtual void SetUp() {
-        snapshotManager = new SnapshotManager();
+        snapshotManager = new SnapshotManager(TESTPATH);
 
         std::vector<TripleString> triples;
         triples.push_back(TripleString("<a>", "<a>", "<a>"));
@@ -29,8 +30,8 @@ protected:
         std::list<int> patchDictsToDelete;
         while(it != patches.end()) {
             int id = it->first;
-            std::remove(SNAPSHOT_FILENAME_BASE(id).c_str());
-            std::remove((SNAPSHOT_FILENAME_BASE(id) + ".index").c_str());
+            std::remove((TESTPATH + SNAPSHOT_FILENAME_BASE(id)).c_str());
+            std::remove((TESTPATH + SNAPSHOT_FILENAME_BASE(id) + ".index").c_str());
             patchDictsToDelete.push_back(id);
             it++;
         }
@@ -39,7 +40,7 @@ protected:
         // Delete dictionaries
         std::list<int>::iterator itd;
         for(itd=patchDictsToDelete.begin(); itd!=patchDictsToDelete.end(); ++itd) {
-            DictionaryManager::cleanup(*itd);
+            DictionaryManager::cleanup(TESTPATH, *itd);
         }
     }
 };

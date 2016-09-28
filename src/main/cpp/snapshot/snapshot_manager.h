@@ -12,10 +12,11 @@ using namespace hdt;
 
 class SnapshotManager {
 private:
+    string basePath;
     std::map<int, HDT*> loaded_snapshots;
     std::map<int, DictionaryManager*> loaded_dictionaries;
 public:
-    SnapshotManager();
+    SnapshotManager(string basePath);
     ~SnapshotManager();
     /**
      * Get the id of the snapshot that is smaller or equal than the given patch id.

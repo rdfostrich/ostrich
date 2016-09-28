@@ -126,7 +126,7 @@ long test_lookup(Controller* controller, Triple triple_pattern, int offset, int 
 int main() {
     // TODO: don't hardcode path to patches
     Evaluator evaluator;
-    evaluator.init("/Users/rtaelman/nosync/patch-generator/dbpedia/patches", 2, 5, new SimpleProgressListener());
+    evaluator.init("./", "/Users/rtaelman/nosync/patch-generator/dbpedia/patches", 2, 5, new SimpleProgressListener());
 
     evaluator.test_lookup("", "", "");
     evaluator.test_lookup("", "http://www.w3.org/2000/01/rdf-schema#label", "");

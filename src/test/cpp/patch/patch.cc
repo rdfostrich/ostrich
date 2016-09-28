@@ -3,6 +3,7 @@
 #include "../../../main/cpp/patch/patch_tree.h"
 #include "../../../main/cpp/patch/patch_tree_deletion_value.h"
 #include "../../../main/cpp/dictionary/dictionary_manager.h"
+#define TESTPATH "./"
 
 // The fixture for testing class Patch.
 class PatchElementsTest : public ::testing::Test {
@@ -10,14 +11,14 @@ protected:
     Patch patchElements;
     DictionaryManager dict;
 
-    PatchElementsTest() : dict(0), patchElements(Patch(&dict)) {}
+    PatchElementsTest() : dict(TESTPATH, 0), patchElements(Patch(&dict)) {}
 
     virtual void SetUp() {
         patchElements = Patch(&dict);
     }
 
     virtual void TearDown() {
-        DictionaryManager::cleanup(0);
+        DictionaryManager::cleanup(TESTPATH, 0);
     }
 };
 

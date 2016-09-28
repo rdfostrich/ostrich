@@ -11,7 +11,7 @@ private:
     PatchTreeManager* patchTreeManager;
     SnapshotManager* snapshotManager;
 public:
-    Controller(int8_t kc_opts = 0);
+    Controller(string basePath, int8_t kc_opts = 0);
     ~Controller();
     /**
      * Get an iterator for all triples matching the given triple pattern with a certain offset
@@ -75,7 +75,7 @@ public:
     /**
      * Removes all the files that were created by the controller.
      */
-    static void cleanup(Controller* controller);
+    static void cleanup(string basePath, Controller* controller);
 };
 
 

@@ -28,7 +28,7 @@ private:
     int min_patch_id;
     int max_patch_id;
 public:
-    PatchTree(int min_patch_id, DictionaryManager* dict, int8_t kc_opts = 0);
+    PatchTree(string basePath, int min_patch_id, DictionaryManager* dict, int8_t kc_opts = 0);
     ~PatchTree();
     /**
      * Append the given patch elements to the tree with given patch id.

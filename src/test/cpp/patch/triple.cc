@@ -2,6 +2,7 @@
 
 #include "../../../main/cpp/patch/patch_tree.h"
 #include "../../../main/cpp/dictionary/dictionary_manager.h"
+#define TESTPATH "./"
 
 TEST(TripleTest, FieldsRaw) {
     Triple triple(11, 21, 31);
@@ -18,21 +19,21 @@ TEST(TripleTest, FieldsRawOverlap) {
 }
 
 TEST(TripleTest, Fields) {
-    DictionaryManager dict(0);
+    DictionaryManager dict(TESTPATH, 0);
     Triple triple("s1", "p1", "o1", &dict);
     ASSERT_EQ("s1", triple.get_subject(dict)) << "Subject is not saved correctly";
     ASSERT_EQ("p1", triple.get_predicate(dict)) << "Predicate is not saved correctly";
     ASSERT_EQ("o1", triple.get_object(dict)) << "Object is not saved correctly";
-    DictionaryManager::cleanup(0);
+    DictionaryManager::cleanup(TESTPATH, 0);
 }
 
 TEST(TripleTest, FieldsOverlap) {
-    DictionaryManager dict(0);
+    DictionaryManager dict(TESTPATH, 0);
     Triple triple("a", "a", "a", &dict);
     ASSERT_EQ("a", triple.get_subject(dict)) << "Subject is not saved correctly";
     ASSERT_EQ("a", triple.get_predicate(dict)) << "Predicate is not saved correctly";
     ASSERT_EQ("a", triple.get_object(dict)) << "Object is not saved correctly";
-    DictionaryManager::cleanup(0);
+    DictionaryManager::cleanup(TESTPATH, 0);
 }
 
 TEST(TripleTest, ToStringRaw) {
@@ -41,17 +42,17 @@ TEST(TripleTest, ToStringRaw) {
 }
 
 TEST(TripleTest, ToString) {
-    DictionaryManager dict(0);
+    DictionaryManager dict(TESTPATH, 0);
     Triple triple("s1", "p1", "o1", &dict);
     ASSERT_EQ("s1 p1 o1.", triple.to_string(dict)) << "to_string is incorrect";
-    DictionaryManager::cleanup(0);
+    DictionaryManager::cleanup(TESTPATH, 0);
 }
 
 TEST(TripleTest, ToStringOverlap) {
-    DictionaryManager dict(0);
+    DictionaryManager dict(TESTPATH, 0);
     Triple triple("a", "a", "a", &dict);
     ASSERT_EQ("a a a.", triple.to_string(dict)) << "to_string is incorrect";
-    DictionaryManager::cleanup(0);
+    DictionaryManager::cleanup(TESTPATH, 0);
 }
 
 TEST(TripleTest, SerializationRaw) {
@@ -70,7 +71,7 @@ TEST(TripleTest, SerializationRaw) {
 }
 
 TEST(TripleTest, Serialization) {
-    DictionaryManager dict(0);
+    DictionaryManager dict(TESTPATH, 0);
     Triple tripleIn("s1", "p1", "o1", &dict);
 
     // Serialize
@@ -84,11 +85,11 @@ TEST(TripleTest, Serialization) {
     ASSERT_EQ(tripleIn.to_string(dict), tripleOut.to_string(dict)) << "Serialization failed";
     free((char*) data);
 
-    DictionaryManager::cleanup(0);
+    DictionaryManager::cleanup(TESTPATH, 0);
 }
 
 TEST(TripleTest, SerializationLong) {
-    DictionaryManager dict(0);
+    DictionaryManager dict(TESTPATH, 0);
     Triple tripleIn("abc:yioknbvfty", "def:qspdojhbgy", "ghi:pjhgfdrtyuiolk,nbvfyukl:;,n,;lkijhg", &dict);
 
     // Serialize
@@ -102,11 +103,11 @@ TEST(TripleTest, SerializationLong) {
     ASSERT_EQ(tripleIn.to_string(dict), tripleOut.to_string(dict)) << "Serialization failed";
     free((char*) data);
 
-    DictionaryManager::cleanup(0);
+    DictionaryManager::cleanup(TESTPATH, 0);
 }
 
 TEST(TripleTest, SerializationSize) {
-    DictionaryManager dict(0);
+    DictionaryManager dict(TESTPATH, 0);
     Triple tripleIn("s1", "p1", "o1", &dict);
 
     // Serialize
@@ -116,5 +117,5 @@ TEST(TripleTest, SerializationSize) {
     ASSERT_EQ(12, size) << "Serialization length is too high";
     free((char*) data);
 
-    DictionaryManager::cleanup(0);
+    DictionaryManager::cleanup(TESTPATH, 0);
 }

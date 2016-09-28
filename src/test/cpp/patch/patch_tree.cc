@@ -3,6 +3,7 @@
 #include "../../../main/cpp/patch/patch_tree.h"
 #include "../../../main/cpp/dictionary/dictionary_manager.h"
 #include "../../../main/cpp/patch/patch_tree_manager.h"
+#define TESTPATH "./"
 
 // The fixture for testing class PatchTree.
 class PatchTreeTest : public ::testing::Test {
@@ -10,27 +11,27 @@ protected:
     PatchTree* patchTree;
     DictionaryManager dict;
 
-    PatchTreeTest() : patchTree(NULL), dict(DictionaryManager(0)) {}
+    PatchTreeTest() : patchTree(NULL), dict(DictionaryManager(TESTPATH, 0)) {}
 
     virtual ~PatchTreeTest() {
 
     }
 
     virtual void SetUp() {
-        patchTree = new PatchTree(0, &dict);
+        patchTree = new PatchTree(TESTPATH, 0, &dict);
     }
 
     virtual void TearDown() {
         delete patchTree;
-        std::remove(PATCHTREE_FILENAME(0, "spo_deletions").c_str());
-        std::remove(PATCHTREE_FILENAME(0, "spo").c_str());
-        std::remove(PATCHTREE_FILENAME(0, "pos").c_str());
-        std::remove(PATCHTREE_FILENAME(0, "pso").c_str());
-        std::remove(PATCHTREE_FILENAME(0, "sop").c_str());
-        std::remove(PATCHTREE_FILENAME(0, "osp").c_str());
-        std::remove(METADATA_FILENAME_BASE(0).c_str());
+        std::remove((TESTPATH + PATCHTREE_FILENAME(0, "spo_deletions")).c_str());
+        std::remove((TESTPATH + PATCHTREE_FILENAME(0, "spo")).c_str());
+        std::remove((TESTPATH + PATCHTREE_FILENAME(0, "pos")).c_str());
+        std::remove((TESTPATH + PATCHTREE_FILENAME(0, "pso")).c_str());
+        std::remove((TESTPATH + PATCHTREE_FILENAME(0, "sop")).c_str());
+        std::remove((TESTPATH + PATCHTREE_FILENAME(0, "osp")).c_str());
+        std::remove((TESTPATH + METADATA_FILENAME_BASE(0)).c_str());
 
-        DictionaryManager::cleanup(0);
+        DictionaryManager::cleanup(TESTPATH, 0);
     }
 };
 
@@ -1416,7 +1417,7 @@ TEST_F(PatchTreeTest, Metadata) {
     ASSERT_EQ(1, patchTree->get_max_patch_id()) << "Max patch id is incorrect";
 
     delete patchTree;
-    patchTree = new PatchTree(0, &dict);
+    patchTree = new PatchTree(TESTPATH, 0, &dict);
 
     ASSERT_EQ(0, patchTree->get_min_patch_id()) << "Min patch id is incorrect";
     ASSERT_EQ(1, patchTree->get_max_patch_id()) << "Max patch id is incorrect";

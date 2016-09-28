@@ -6,16 +6,17 @@
 #include "../../../main/cpp/dictionary/dictionary_manager.h"
 #include <dictionary/PlainDictionary.hpp>
 #include <HDTEnums.hpp>
+#define TESTPATH "./"
 
 TEST(PatchTreeKeyComparatorTest, CompareSimple) {
-    DictionaryManager dict(0);
+    DictionaryManager dict(TESTPATH, 0);
     PatchTreeKeyComparator comp(comp_s, comp_p, comp_o, &dict);
     ASSERT_EQ(-1, comp.compare(Triple("a", "a", "a", &dict), Triple("b", "b", "b", &dict)));
-    DictionaryManager::cleanup(0);
+    DictionaryManager::cleanup(TESTPATH, 0);
 }
 
 TEST(PatchTreeKeyComparatorTest, CompareComplexSPO) {
-    DictionaryManager dict(0);
+    DictionaryManager dict(TESTPATH, 0);
     PatchTreeKeyComparator comp(comp_s, comp_p, comp_o, &dict);
     ASSERT_EQ(1 , comp.compare(Triple("b", "b", "b", &dict), Triple("a", "a", "a", &dict)));
     ASSERT_EQ(1 , comp.compare(Triple("b", "b", "b", &dict), Triple("a", "a", "b", &dict)));
@@ -52,11 +53,11 @@ TEST(PatchTreeKeyComparatorTest, CompareComplexSPO) {
     ASSERT_EQ(-1, comp.compare(Triple("b", "b", "b", &dict), Triple("c", "c", "a", &dict)));
     ASSERT_EQ(-1, comp.compare(Triple("b", "b", "b", &dict), Triple("c", "c", "b", &dict)));
     ASSERT_EQ(-1, comp.compare(Triple("b", "b", "b", &dict), Triple("c", "c", "c", &dict)));
-    DictionaryManager::cleanup(0);
+    DictionaryManager::cleanup(TESTPATH, 0);
 }
 
 TEST(PatchTreeKeyComparatorTest, CompareComplexSOP) {
-    DictionaryManager dict(0);
+    DictionaryManager dict(TESTPATH, 0);
     PatchTreeKeyComparator comp(comp_s, comp_o, comp_p, &dict);
     ASSERT_EQ(1 , comp.compare(Triple("b", "b", "b", &dict), Triple("a", "a", "a", &dict)));
     ASSERT_EQ(1 , comp.compare(Triple("b", "b", "b", &dict), Triple("a", "a", "b", &dict)));
@@ -93,12 +94,12 @@ TEST(PatchTreeKeyComparatorTest, CompareComplexSOP) {
     ASSERT_EQ(-1, comp.compare(Triple("b", "b", "b", &dict), Triple("c", "c", "a", &dict)));
     ASSERT_EQ(-1, comp.compare(Triple("b", "b", "b", &dict), Triple("c", "c", "b", &dict)));
     ASSERT_EQ(-1, comp.compare(Triple("b", "b", "b", &dict), Triple("c", "c", "c", &dict)));
-    DictionaryManager::cleanup(0);
+    DictionaryManager::cleanup(TESTPATH, 0);
 }
 
 TEST(PatchTreeKeyComparatorTest, CompareInterDictTypes) {
     PlainDictionary* hdtDict = new PlainDictionary();
-    DictionaryManager dict(0, hdtDict);
+    DictionaryManager dict(TESTPATH, 0, hdtDict);
     PatchTreeKeyComparator comp(comp_s, comp_o, comp_p, &dict);
     string b("b");
     hdtDict->insert(b, SUBJECT);
@@ -149,5 +150,5 @@ TEST(PatchTreeKeyComparatorTest, CompareInterDictTypes) {
     ASSERT_EQ(false, comp.compare(Triple("e", "a", "a", &dict), Triple("c", "a", "a", &dict)) < 0);
     ASSERT_EQ(false, comp.compare(Triple("f", "a", "a", &dict), Triple("c", "a", "a", &dict)) < 0);
 
-    DictionaryManager::cleanup(0);
+    DictionaryManager::cleanup(TESTPATH, 0);
 }

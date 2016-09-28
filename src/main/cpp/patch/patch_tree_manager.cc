@@ -2,7 +2,7 @@
 #include <iostream>
 #include "patch_tree_manager.h"
 
-PatchTreeManager::PatchTreeManager(int8_t kc_opts) : loaded_patches(detect_patch_trees()), kc_opts(kc_opts) {}
+PatchTreeManager::PatchTreeManager(string basePath, int8_t kc_opts) : basePath(basePath), loaded_patches(detect_patch_trees()), kc_opts(kc_opts) {}
 
 PatchTreeManager::~PatchTreeManager() {
     std::map<int, PatchTree*>::iterator it = loaded_patches.begin();
@@ -32,7 +32,7 @@ std::map<int, PatchTree*> PatchTreeManager::detect_patch_trees() const {
     std::map<int, PatchTree*> trees = std::map<int, PatchTree*>();
     DIR *dir;
     struct dirent *ent;
-    if ((dir = opendir(".")) != NULL) {
+    if ((dir = opendir(basePath.c_str())) != NULL) {
         while ((ent = readdir(dir)) != NULL) {
             if(std::regex_match(std::string(ent->d_name), base_match, r)) {
                 // The first sub_match is the whole string; the next
@@ -55,7 +55,7 @@ const std::map<int, PatchTree*>& PatchTreeManager::get_patch_trees() const {
 
 PatchTree* PatchTreeManager::load_patch_tree(int patch_id_start, DictionaryManager* dict) {
     // TODO: We might want to look into unloading patch trees if they aren't used for a while. (using splay-tree/queue?)
-    return loaded_patches[patch_id_start] = new PatchTree(patch_id_start, dict, kc_opts);
+    return loaded_patches[patch_id_start] = new PatchTree(basePath, patch_id_start, dict, kc_opts);
 }
 
 PatchTree* PatchTreeManager::get_patch_tree(int patch_id_start, DictionaryManager* dict) {

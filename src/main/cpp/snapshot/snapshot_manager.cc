@@ -8,17 +8,9 @@
 
 using namespace hdt;
 
-SnapshotManager::SnapshotManager() : loaded_snapshots(detect_snapshots()), loaded_dictionaries(std::map<int, DictionaryManager*>()) {}
+SnapshotManager::SnapshotManager(string basePath) : basePath(basePath), loaded_snapshots(detect_snapshots()), loaded_dictionaries(std::map<int, DictionaryManager*>()) {}
 
 SnapshotManager::~SnapshotManager() {
-    /*std::map<int, HDT*>::iterator it = loaded_snapshots.begin();
-    while(it != loaded_snapshots.end()) {
-        HDT* hdt = it->second;
-        if(hdt != NULL) {
-            delete hdt;
-        }
-        it++;
-    }*/
     std::map<int, DictionaryManager*>::iterator it2 = loaded_dictionaries.begin();
     while(it2 != loaded_dictionaries.end()) {
         DictionaryManager* dict = it2->second;
@@ -51,11 +43,11 @@ int SnapshotManager::get_latest_snapshot(int patch_id) {
 
 HDT* SnapshotManager::load_snapshot(int snapshot_id) {
     // TODO: We might want to look into unloading snapshots if they aren't used for a while. (using splay-tree/queue?)
-    string fileName = SNAPSHOT_FILENAME_BASE(snapshot_id);
+    string fileName = basePath + SNAPSHOT_FILENAME_BASE(snapshot_id);
     loaded_snapshots[snapshot_id] = hdt::HDTManager::loadHDT(fileName.c_str());
 
     // load dictionary as well
-    DictionaryManager* dict = new DictionaryManager(snapshot_id, loaded_snapshots[snapshot_id]->getDictionary());
+    DictionaryManager* dict = new DictionaryManager(basePath, snapshot_id, loaded_snapshots[snapshot_id]->getDictionary());
     loaded_dictionaries[snapshot_id] = dict;
 
     return loaded_snapshots[snapshot_id];
@@ -82,14 +74,14 @@ HDT* SnapshotManager::get_snapshot(int snapshot_id) {
 HDT* SnapshotManager::create_snapshot(int snapshot_id, IteratorTripleString* triples, string base_uri) {
     BasicHDT* basicHdt = new BasicHDT();
     basicHdt->loadFromTriples(triples, base_uri, new StdoutProgressListener());
-    basicHdt->saveToHDT(SNAPSHOT_FILENAME_BASE(snapshot_id).c_str());
+    basicHdt->saveToHDT((basePath + SNAPSHOT_FILENAME_BASE(snapshot_id)).c_str());
     return load_snapshot(snapshot_id);
 }
 
 HDT* SnapshotManager::create_snapshot(int snapshot_id, string triples_file, string base_uri, RDFNotation notation) {
     BasicHDT* basicHdt = new BasicHDT();
     basicHdt->loadFromRDF(triples_file.c_str(), base_uri, notation);
-    basicHdt->saveToHDT(SNAPSHOT_FILENAME_BASE(snapshot_id).c_str());
+    basicHdt->saveToHDT((basePath + SNAPSHOT_FILENAME_BASE(snapshot_id)).c_str());
     return load_snapshot(snapshot_id);
 }
 
@@ -99,7 +91,7 @@ std::map<int, HDT*> SnapshotManager::detect_snapshots() {
     std::map<int, HDT*> snapshots = std::map<int, HDT*>();
     DIR *dir;
     struct dirent *ent;
-    if ((dir = opendir(".")) != NULL) {
+    if ((dir = opendir(basePath.c_str())) != NULL) {
         while ((ent = readdir(dir)) != NULL) {
             if(std::regex_match(std::string(ent->d_name), base_match, r)) {
                 // The first sub_match is the whole string; the next

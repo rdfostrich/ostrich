@@ -7,6 +7,7 @@
 #include <hdt/BasicHDT.hpp>
 #include <dictionary/PlainDictionary.hpp>
 #include <gtest/gtest.h>
+#define TESTPATH "./"
 
 using namespace hdt;
 
@@ -28,8 +29,8 @@ protected:
     DictionaryManagerTest() {}
 
     virtual void SetUp() {
-      std::remove(PATCHDICT_FILENAME_BASE(0).c_str());
-      dict = new DictionaryManager(0);
+      std::remove((TESTPATH + PATCHDICT_FILENAME_BASE(0)).c_str());
+      dict = new DictionaryManager(TESTPATH, 0);
 
       a = "http://example.org/a";
       b = "http://example.org/b";
@@ -57,7 +58,7 @@ protected:
     }
 
     virtual void TearDown() {
-      std::remove(PATCHDICT_FILENAME_BASE(0).c_str());
+      std::remove((TESTPATH + PATCHDICT_FILENAME_BASE(0)).c_str());
     }
 };
 
@@ -109,7 +110,7 @@ TEST_F(DictionaryManagerTest, SnapshotDictionary) {
   hdtDict->insert(c, role);
 
   delete dict;
-  dict = new DictionaryManager(0, hdtDict);
+  dict = new DictionaryManager(TESTPATH, 0, hdtDict);
 
   unsigned int idA = dict->stringToId(a, role);
   unsigned int idB = dict->stringToId(b, role);
@@ -156,11 +157,11 @@ TEST_F(DictionaryManagerTest, HdtDictionary) {
 
   BasicHDT* basicHdt = new BasicHDT();
   basicHdt->loadFromTriples(it, "<http://example.org>");
-  basicHdt->saveToHDT(fileName.c_str());
-  HDT* snapshot = hdt::HDTManager::loadHDT(fileName.c_str());
+  basicHdt->saveToHDT((TESTPATH + fileName).c_str());
+  HDT* snapshot = hdt::HDTManager::loadHDT((TESTPATH + fileName).c_str());
 
   delete dict;
-  dict = new DictionaryManager(0, snapshot->getDictionary());
+  dict = new DictionaryManager(TESTPATH, 0, snapshot->getDictionary());
 
   // Order of insertion: a e f g h i literal i b c literal2
   // Presumed order: s (a c e) o(literal2 literal literal3 ; b g h i)
@@ -245,7 +246,7 @@ TEST_F(DictionaryManagerTest, HdtDictionary) {
 
 TEST_F(DictionaryManagerTest, SaveAndLoad) {
   delete dict;
-  dict = new DictionaryManager(0);
+  dict = new DictionaryManager(TESTPATH, 0);
   dict->insert(a, SUBJECT);
   dict->insert(b, PREDICATE);
   dict->insert(c, OBJECT);
@@ -257,7 +258,7 @@ TEST_F(DictionaryManagerTest, SaveAndLoad) {
   dict->insert(i, OBJECT);
 
   delete dict;
-  dict = new DictionaryManager(0);
+  dict = new DictionaryManager(TESTPATH, 0);
 
   EXPECT_EQ(2147483649, dict->stringToId(a, SUBJECT));
   EXPECT_EQ(2147483649, dict->stringToId(b, PREDICATE));
