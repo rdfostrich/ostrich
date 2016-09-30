@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.3)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -stdlib=libc++")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -stdlib=libc++ -Wno-deprecated")
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include("ext/hunter/HunterGate.cmake")
@@ -107,9 +107,9 @@ include_directories(${ZLIB_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME_STR} ${ZLIB_LIBRARIES})
 
 # Add Boost
-hunter_add_package(Boost COMPONENTS iostreams)
-find_package(Boost CONFIG REQUIRED COMPONENTS iostreams)
-target_link_libraries(${PROJECT_NAME_STR} Boost::iostreams)
+hunter_add_package(Boost COMPONENTS iostreams regex)
+find_package(Boost CONFIG REQUIRED COMPONENTS iostreams regex)
+target_link_libraries(${PROJECT_NAME_STR} Boost::iostreams Boost::regex)
 
 # 3rdparty Libraries
 set(EXT_PROJECTS_DIR ${PROJECT_SOURCE_DIR}/ext)

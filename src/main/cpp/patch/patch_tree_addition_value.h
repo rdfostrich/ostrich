@@ -2,6 +2,8 @@
 #define TPFPATCH_STORE_PATCH_TREE_ADDITION_VALUE_H
 
 #include <vector>
+#include <string>
+#include <stddef.h>
 
 class PatchTreeAdditionValue {
 protected:
