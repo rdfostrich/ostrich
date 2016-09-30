@@ -1,0 +1,7 @@
+build_image:
+  script:
+    - docker build -t ostrich .
+
+test_all:
+  script:
+    - docker run ostrich /opt/patchstore/build/tpfpatch_store_test
