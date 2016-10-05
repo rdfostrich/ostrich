@@ -103,6 +103,12 @@ public:
      */
     PatchTreeIterator iterator(PatchTreeKey* key, int patch_id, bool exact) const;
     /**
+     * Get an iterator starting for the given triple_pattern and only emitting the elements in the given patch.
+     * @param triple_pattern The triple pattern to filter by
+     * @return The iterator that will loop over the tree for the given patch.
+     */
+    PatchTreeIterator* iterator(const Triple* triple_pattern) const;
+    /**
      * Get the number of deletions.
      * @param triple_pattern The triple pattern to match by.
      * @param patch_id The patch id to get the deletions for, this patch id must exist within the tree!

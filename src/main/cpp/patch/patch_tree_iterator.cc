@@ -43,6 +43,10 @@ void PatchTreeIterator::set_filter_local_changes(bool filter_local_changes) {
     this->is_filter_local_changes = filter_local_changes;
 }
 
+int PatchTreeIterator::get_patch_id_filter() {
+    return this->patch_id_filter;
+}
+
 bool PatchTreeIterator::is_deletion_tree() const {
     return cursor_deletions != NULL;
 }

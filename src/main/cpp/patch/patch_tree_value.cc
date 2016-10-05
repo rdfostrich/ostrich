@@ -71,3 +71,8 @@ void PatchTreeValue::set_deletion(bool has_deletion) {
 bool PatchTreeValue::is_local_change(int patch_id) const {
     return has_addition ? addition->is_local_change(patch_id) : (has_deletion ? deletion->is_local_change(patch_id) : false);
 }
+
+bool PatchTreeValue::is_delta_type_equal(int patch_id_start, int patch_id_end) {
+    return is_addition(patch_id_start, false) == is_addition(patch_id_end, false)
+           && is_deletion(patch_id_start, false) == is_deletion(patch_id_end, false);
+}

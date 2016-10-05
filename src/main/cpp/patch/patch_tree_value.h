@@ -55,6 +55,13 @@ public:
      * @return If it is a local change.
      */
     bool is_local_change(int patch_id) const;
+    /**
+     * Check if the addition or deletion tag is the same between versions.
+     * @param patch_id_start The first patch id
+     * @param patch_id_end The second patch id
+     * @return If addition/deletion is the same.
+     */
+    bool is_delta_type_equal(int patch_id_start, int patch_id_end);
 };
 
 

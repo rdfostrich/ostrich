@@ -5,6 +5,7 @@
 #include "../snapshot/snapshot_manager.h"
 #include "../patch/patch_tree_manager.h"
 #include "patch_builder.h"
+#include "triple_delta_iterator.h"
 
 class Controller {
 private:
@@ -31,8 +32,9 @@ public:
      * @param offset A certain offset the iterator should start with.
      * @param patch_id The patch id for which triples should be returned.
      */
-    // TODO: two cases: patch_id_start is snapshot and patch_id_start is not a snapshot (algorithm will have to reconstruct the 2 patches and expose it via join-merge through an iterator)
-    //PatchElementIterator* get_delta_materialized(const Triple &triple_pattern, int offset, int patch_id_start, int patch_id_end) const;
+    TripleDeltaIterator* get_delta_materialized(const Triple &triple_pattern, int offset, int patch_id_start, int patch_id_end) const;
+    size_t get_delta_materialized_count(const Triple& triple_pattern, int patch_id_start, int patch_id_end, bool allowEstimates = false) const;
+    size_t get_delta_materialized_count_estimated(const Triple& triple_pattern, int patch_id_start, int patch_id_end) const;
     /**
      * Get an addition/deletion iterator for all triples matching the given triple pattern with a certain offset
      * in the list of all triples that exist for any patch id.
@@ -42,7 +44,7 @@ public:
      * @param patch_id The patch id for which triples should be returned.
      */
     // TODO
-    //PatchElementIterator* get_version(const Triple &triple_pattern, int offset) const;
+    //TripleVersionIterator* get_version(const Triple &triple_pattern, int offset) const;
 
     /**
      * Add the given patch to a patch tree.

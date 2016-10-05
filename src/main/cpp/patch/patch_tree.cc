@@ -209,6 +209,19 @@ PatchTreeIterator PatchTree::iterator(PatchTreeKey *key, int patch_id, bool exac
     return patchTreeIterator;
 }
 
+PatchTreeIterator* PatchTree::iterator(const Triple *triple_pattern) const {
+    DB::Cursor* cursor_deletions = tripleStore->getDeletionsTree()->cursor();
+    DB::Cursor* cursor_additions = tripleStore->getDefaultAdditionsTree()->cursor();
+    size_t size;
+    const char* data = triple_pattern->serialize(&size);
+    cursor_deletions->jump(data, size);
+    cursor_additions->jump(data, size);
+    free((char*) data);
+    PatchTreeIterator* patchTreeIterator = new PatchTreeIterator(cursor_deletions, cursor_additions, get_spo_comparator());
+    patchTreeIterator->set_triple_pattern_filter(*triple_pattern);
+    return patchTreeIterator;
+}
+
 std::pair<PatchPosition, Triple> PatchTree::deletion_count(const Triple& triple_pattern, int patch_id) const {
     DB::Cursor* cursor_deletions = tripleStore->getDeletionsTree()->cursor();
 

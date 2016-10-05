@@ -54,6 +54,10 @@ public:
      */
     void set_filter_local_changes(bool filter_local_changes);
     /**
+     * @return The patch id filter.
+     */
+    int get_patch_id_filter();
+    /**
      * @return If this iterator is iterating over a deletion tree.
      */
     bool is_deletion_tree() const;

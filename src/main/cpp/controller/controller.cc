@@ -135,6 +135,76 @@ TripleIterator* Controller::get_version_materialized(const Triple &triple_patter
     return new SnapshotPatchIteratorTripleID(snapshot_it, deletion_it, addition_it, patchTree->get_spo_comparator());
 }
 
+size_t Controller::get_delta_materialized_count(const Triple &triple_pattern, int patch_id_start, int patch_id_end, bool allowEstimates) const {
+    return get_delta_materialized(triple_pattern, 0, patch_id_start, patch_id_end)->get_count();
+}
+
+size_t Controller::get_delta_materialized_count_estimated(const Triple &triple_pattern, int patch_id_start, int patch_id_end) const {
+    return get_delta_materialized_count(triple_pattern, patch_id_start, patch_id_end, true);
+}
+
+TripleDeltaIterator* Controller::get_delta_materialized(const Triple &triple_pattern, int offset, int patch_id_start,
+                                                         int patch_id_end) const {
+    if (patch_id_end <= patch_id_start) {
+        return new EmptyTripleDeltaIterator();
+    }
+
+    // Find the snapshot
+    int snapshot_id_start = get_snapshot_manager()->get_latest_snapshot(patch_id_start);
+    int snapshot_id_end = get_snapshot_manager()->get_latest_snapshot(patch_id_end);
+    if (snapshot_id_start < 0 || snapshot_id_end < 0) {
+        return new EmptyTripleDeltaIterator();
+    }
+
+    // start = snapshot, end = snapshot
+    if(snapshot_id_start == patch_id_start && snapshot_id_end == patch_id_end) {
+        // TODO: implement this when multiple snapshots are supported
+        throw std::invalid_argument("Multiple snapshots are not supported.");
+    }
+
+    // start = snapshot, end = patch
+    if(snapshot_id_start == patch_id_start && snapshot_id_end != patch_id_end) {
+        DictionaryManager *dict = get_snapshot_manager()->get_dictionary_manager(snapshot_id_end);
+        if (snapshot_id_start == snapshot_id_end) {
+            // Return iterator for the end patch relative to the start snapshot
+            PatchTree* patchTree = get_patch_tree_manager()->get_patch_tree(patch_id_end, dict);
+            if(patchTree == NULL) {
+                throw std::invalid_argument("Could not find the given end patch id");
+            }
+            PatchTreeIterator* patchTreeIterator = patchTree->iterator(&triple_pattern);
+            patchTreeIterator->set_patch_filter(patch_id_end, true);
+            return (new ForwardPatchTripleDeltaIterator(patchTreeIterator))->offset(offset);
+        } else {
+            // TODO: implement this when multiple snapshots are supported
+            throw std::invalid_argument("Multiple snapshots are not supported.");
+        }
+    }
+
+    // start = patch, end = snapshot
+    if(snapshot_id_start != patch_id_start && snapshot_id_end == patch_id_end) {
+        // TODO: implement this when multiple snapshots are supported
+        throw std::invalid_argument("Multiple snapshots are not supported.");
+    }
+
+    // start = patch, end = patch
+    if(snapshot_id_start != patch_id_start && snapshot_id_end != patch_id_end) {
+        DictionaryManager *dict = get_snapshot_manager()->get_dictionary_manager(snapshot_id_end);
+        if (snapshot_id_start == snapshot_id_end) {
+            // Return diff between two patches relative to the same snapshot
+            PatchTree* patchTree = get_patch_tree_manager()->get_patch_tree(patch_id_end, dict);
+            if(patchTree == NULL) {
+                throw std::invalid_argument("Could not find the given end patch id");
+            }
+            PatchTreeIterator* patchTreeIterator = patchTree->iterator(&triple_pattern);
+            return (new FowardDiffPatchTripleDeltaIterator(patchTreeIterator, patch_id_start, patch_id_end))->offset(offset);
+        } else {
+            // TODO: implement this when multiple snapshots are supported
+            throw std::invalid_argument("Multiple snapshots are not supported.");
+        }
+    }
+    return nullptr;
+}
+
 bool Controller::append(const Patch& patch, int patch_id, DictionaryManager* dict, ProgressListener* progressListener) {
     // TODO: this will require some changes when we implement automatic snapshot creation.
     return get_patch_tree_manager()->append(patch, patch_id, dict, progressListener);
