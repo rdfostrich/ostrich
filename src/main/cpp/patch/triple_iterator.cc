@@ -7,8 +7,8 @@ bool EmptyTripleIterator::next(Triple *triple) {
     return false;
 }
 
-PatchTreeTripleIterator::PatchTreeTripleIterator(PatchTreeIterator* it, int patch_id, Triple triple_pattern)
-        : it(it), patch_id(patch_id), triple_pattern(triple_pattern) {}
+PatchTreeTripleIterator::PatchTreeTripleIterator(PatchTreeIterator* it, Triple triple_pattern)
+        : it(it), triple_pattern(triple_pattern) {}
 
 PatchTreeTripleIterator::~PatchTreeTripleIterator() {
     delete it;

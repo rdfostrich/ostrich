@@ -243,7 +243,7 @@ std::pair<PatchPosition, Triple> PatchTree::deletion_count(const Triple& triple_
 
     PatchTreeKey key;
     PatchTreeDeletionValue value;
-    while(patchTreeIterator.next_deletion(&key, &value)) {
+    if(patchTreeIterator.next_deletion(&key, &value)) {
         return std::make_pair(value.get(patch_id).get_patch_positions().get_by_pattern(triple_pattern) + 1, key);
     }
     return std::make_pair((PatchPosition) 0, Triple());
@@ -256,10 +256,22 @@ PositionedTripleIterator* PatchTree::deletion_iterator_from(const Triple& offset
     cursor_deletions->jump(data, size);
     free((char*) data);
     PatchTreeIterator* it = new PatchTreeIterator(cursor_deletions, NULL, get_spo_comparator());
-    it->set_patch_filter(patch_id, false);
+    if (patch_id >= 0) it->set_patch_filter(patch_id, false);
     it->set_triple_pattern_filter(triple_pattern);
     it->set_filter_local_changes(true);
     return new PositionedTripleIterator(it, patch_id, triple_pattern);
+}
+
+PatchTreeDeletionValue* PatchTree::get_deletion_value(const Triple &triple) const {
+    size_t ksp, vsp;
+    const char* kbp = triple.serialize(&ksp);
+    const char* vbp = tripleStore->getDeletionsTree()->get(kbp, ksp, &vsp);
+    if (vbp != NULL) {
+        PatchTreeDeletionValue* value = new PatchTreeDeletionValue();
+        value->deserialize(vbp, vsp);
+        return value;
+    }
+    return NULL;
 }
 
 PatchTreeTripleIterator* PatchTree::addition_iterator_from(long offset, int patch_id, const Triple& triple_pattern) const {
@@ -275,7 +287,17 @@ PatchTreeTripleIterator* PatchTree::addition_iterator_from(long offset, int patc
     PatchTreeKey key;
     PatchTreeAdditionValue value;
     while(offset-- > 0 && it->next_addition(&key, &value));
-    return new PatchTreeTripleIterator(it, patch_id, triple_pattern);
+    return new PatchTreeTripleIterator(it, triple_pattern);
+}
+
+PatchTreeIterator* PatchTree::addition_iterator(const Triple &triple_pattern) const {
+    DB::Cursor* cursor = tripleStore->getTree(triple_pattern)->cursor();
+    size_t size;
+    const char* data = triple_pattern.serialize(&size);
+    cursor->jump(data, size);
+    PatchTreeIterator* it = new PatchTreeIterator(NULL, cursor, get_spo_comparator());
+    it->set_triple_pattern_filter(triple_pattern);
+    return it;
 }
 
 size_t PatchTree::addition_count(int patch_id, const Triple& triple_pattern) const {
@@ -288,6 +310,18 @@ size_t PatchTree::addition_count(int patch_id, const Triple& triple_pattern) con
     return count;
 }
 
+PatchTreeAdditionValue* PatchTree::get_addition_value(const Triple &triple) const {
+    size_t ksp, vsp;
+    const char* kbp = triple.serialize(&ksp);
+    const char* vbp = tripleStore->getDefaultAdditionsTree()->get(kbp, ksp, &vsp);
+    if (vbp != NULL) {
+        PatchTreeAdditionValue* value = new PatchTreeAdditionValue();
+        value->deserialize(vbp, vsp);
+        return value;
+    }
+    return NULL;
+}
+
 PatchTreeKeyComparator* PatchTree::get_spo_comparator() const {
     return tripleStore->get_spo_comparator();
 }
@@ -296,11 +330,11 @@ PatchElementComparator *PatchTree::get_element_comparator() const {
     return tripleStore->get_element_comparator();
 }
 
-int PatchTree::get_max_patch_id() {
+const int PatchTree::get_max_patch_id() {
     return max_patch_id;
 }
 
-int PatchTree::get_min_patch_id() {
+const int PatchTree::get_min_patch_id() {
     return min_patch_id;
 }
 

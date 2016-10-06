@@ -205,6 +205,48 @@ TripleDeltaIterator* Controller::get_delta_materialized(const Triple &triple_pat
     return nullptr;
 }
 
+size_t Controller::get_version_count(const Triple &triple_pattern, bool allowEstimates) const {
+    return get_version(triple_pattern, 0)->get_count();
+}
+
+size_t Controller::get_version_count_estimated(const Triple &triple_pattern) const {
+    return get_version_count(triple_pattern, true);
+}
+
+TripleVersionsIterator* Controller::get_version(const Triple &triple_pattern, int offset) const {
+    // TODO: this will require some changes when we support multiple snapshots. (probably just a simple merge for all snapshots with what is already here)
+    // Find the snapshot
+    int snapshot_id = 0;
+    HDT* snapshot = get_snapshot_manager()->get_snapshot(snapshot_id);
+    IteratorTripleID* snapshot_it = SnapshotManager::search_with_offset(snapshot, triple_pattern, offset);
+    DictionaryManager *dict = get_snapshot_manager()->get_dictionary_manager(snapshot_id);
+    PatchTree* patchTree = get_patch_tree_manager()->get_patch_tree(snapshot_id, dict);
+    if(patchTree == NULL) {
+        throw std::invalid_argument("Could not find the given end patch id");
+    }
+
+    // Snapshots have already been offsetted, calculate the remaining offset.
+    // After this, offset will only be >0 if we are past the snapshot elements and at the additions.
+    if (snapshot_it->numResultEstimation() == EXACT) {
+        offset -= snapshot_it->estimatedNumResults();
+        if (offset <= 0) {
+            offset = 0;
+        } else {
+            delete snapshot_it;
+            snapshot_it = NULL;
+        }
+    } else {
+        IteratorTripleID *tmp_it = SnapshotManager::search_with_offset(snapshot, triple_pattern, 0);
+        while (tmp_it->hasNext() && offset > 0) {
+            tmp_it->next();
+            offset--;
+        }
+        delete tmp_it;
+    }
+
+    return (new TripleVersionsIterator(triple_pattern, snapshot_it, patchTree))->offset(offset);
+}
+
 bool Controller::append(const Patch& patch, int patch_id, DictionaryManager* dict, ProgressListener* progressListener) {
     // TODO: this will require some changes when we implement automatic snapshot creation.
     return get_patch_tree_manager()->append(patch, patch_id, dict, progressListener);

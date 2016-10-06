@@ -19,10 +19,9 @@ public:
 class PatchTreeTripleIterator : public TripleIterator {
 protected:
     PatchTreeIterator* it;
-    int patch_id;
     Triple triple_pattern;
 public:
-    PatchTreeTripleIterator(PatchTreeIterator* it, int patch_id, Triple triple_pattern);
+    PatchTreeTripleIterator(PatchTreeIterator* it, Triple triple_pattern);
     ~PatchTreeTripleIterator();
     bool next(Triple* triple);
 };

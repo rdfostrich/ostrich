@@ -120,11 +120,17 @@ public:
      * Get an iterator that loops over all deletions starting from a given triple and only matching the
      * given triple pattern.
      * @param offset The triple to start from.
-     * @param patch_id The patch id to filter by, this includes all patches before this one.
+     * @param patch_id The patch id to filter by, this includes all patches before this one. -1 Won't filter on patches.
      * @param triple_pattern Only triples that match the given pattern will be returned in the iterator.
      * @return The iterator that will loop over the tree for the given patch.
      */
     PositionedTripleIterator* deletion_iterator_from(const Triple& offset, int patch_id, const Triple& triple_pattern) const;
+    /**
+     * Get the deletion value for the given triple.
+     * @param triple The triple to find
+     * @return The deletion value for the given triple, or null.
+     */
+    PatchTreeDeletionValue* get_deletion_value(const Triple& triple) const;
     /**
      * Get an iterator that loops over all additions starting with a given offset and only matching the
      * given triple pattern.
@@ -134,6 +140,18 @@ public:
      * @return The iterator that will loop over the tree for the given patch.
      */
     PatchTreeTripleIterator* addition_iterator_from(long offset, int patch_id, const Triple& triple_pattern) const;
+    /**
+     * Get an iterator that loops over all additions matching given triple pattern.
+     * @param triple_pattern Only triples that match the given pattern will be returned in the iterator.
+     * @return The iterator that will loop over the tree for the additions.
+     */
+    PatchTreeIterator* addition_iterator(const Triple& triple_pattern) const;
+    /**
+     * Get the addition value for the given triple.
+     * @param triple The triple to find
+     * @return The addition value for the given triple, or null.
+     */
+    PatchTreeAdditionValue* get_addition_value(const Triple& triple) const;
     /**
      * Get the number of additions in the given patch id for the given triple pattern.
      * @param patch_id The patch id to filter by, this includes all patches before this one.
@@ -153,11 +171,11 @@ public:
     /**
      * @return The largest patch id that is currently available.
      */
-    int get_max_patch_id();
+    const int get_max_patch_id();
     /**
      * @return The smallest patch id that is currently available.
      */
-    int get_min_patch_id();
+    const int get_min_patch_id();
 protected:
     void write_metadata();
     void read_metadata();

@@ -65,6 +65,18 @@ void Triple::deserialize(const char* data, size_t size) {
   memcpy(&object, &data[sizeof(subject) + sizeof(predicate)],  sizeof(object));
 }
 
+void Triple::set_subject(int subject) {
+    this->subject = subject;
+}
+
+void Triple::set_predicate(int predicate) {
+    this->predicate = predicate;
+}
+
+void Triple::set_object(int object) {
+    this->object = object;
+}
+
 bool Triple::operator == (const Triple& rhs) const {
     return get_subject() == rhs.get_subject()
            && get_predicate() == rhs.get_predicate()

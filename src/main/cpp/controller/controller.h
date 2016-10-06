@@ -6,6 +6,7 @@
 #include "../patch/patch_tree_manager.h"
 #include "patch_builder.h"
 #include "triple_delta_iterator.h"
+#include "triple_versions_iterator.h"
 
 class Controller {
 private:
@@ -36,15 +37,16 @@ public:
     size_t get_delta_materialized_count(const Triple& triple_pattern, int patch_id_start, int patch_id_end, bool allowEstimates = false) const;
     size_t get_delta_materialized_count_estimated(const Triple& triple_pattern, int patch_id_start, int patch_id_end) const;
     /**
-     * Get an addition/deletion iterator for all triples matching the given triple pattern with a certain offset
+     * Get an iterator for all triples matching the given triple pattern with a certain offset
      * in the list of all triples that exist for any patch id.
      * Triples are annotated with the version in which they are valid.
      * @param triple_pattern Only triples matching this pattern will be returned.
      * @param offset A certain offset the iterator should start with.
      * @param patch_id The patch id for which triples should be returned.
      */
-    // TODO
-    //TripleVersionIterator* get_version(const Triple &triple_pattern, int offset) const;
+    TripleVersionsIterator* get_version(const Triple &triple_pattern, int offset) const;
+    size_t get_version_count(const Triple& triple_pattern, bool allowEstimates = false) const;
+    size_t get_version_count_estimated(const Triple& triple_pattern) const;
 
     /**
      * Add the given patch to a patch tree.

@@ -118,9 +118,10 @@ IteratorTripleID* SnapshotManager::search_with_offset(HDT *hdt, const Triple& tr
 
     // The following step is needed to make sure that we are not using any triple component id's that are not available
     // in the HDT dict. Otherwise, HDT simply crashes.
-    TripleString tripleString;
-    hdt->getDictionary()->tripleIDtoTripleString(tripleId, tripleString);
-    hdt->getDictionary()->tripleStringtoTripleID(tripleString, tripleId);
+    // This does not seem to cause any problems anymore, so let's disable it for now, performance++ !
+    //TripleString tripleString;
+    //hdt->getDictionary()->tripleIDtoTripleString(tripleId, tripleString);
+    //hdt->getDictionary()->tripleStringtoTripleID(tripleString, tripleId);
 
     IteratorTripleID* it = hdt->getTriples()->search(tripleId);
     if(it->canGoTo()) {
