@@ -24,7 +24,9 @@ public:
 protected:
     void populate_controller_with_version(int patch_id, string path, ProgressListener* progressListener = NULL);
     IteratorTripleString* get_from_file(string file);
-    long long measure_lookup(Triple triple_pattern, int offset, int patch_id, int limit);
+    long long measure_lookup_version_materialized(Triple triple_pattern, int offset, int patch_id, int limit);
+    long long measure_lookup_delta_materialized(Triple triple_pattern, int offset, int patch_id_start, int patch_id_end, int limit);
+    long long measure_lookup_version(Triple triple_pattern, int offset, int limit);
 };
 
 

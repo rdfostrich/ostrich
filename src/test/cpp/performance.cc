@@ -17,7 +17,7 @@ using namespace std;
 using namespace kyotocabinet;
 
 Controller* setup_snapshot(int snapshot_size) {
-    Controller* controller = new Controller(HashDB::TCOMPRESS);
+    Controller* controller = new Controller("./", HashDB::TCOMPRESS);
 
     // Build a snapshot
     std::vector<TripleString> triples;
@@ -71,7 +71,7 @@ long long test_insert_size(int snapshot_size, int additions, int deletions, int 
     Controller* controller = setup_snapshot(snapshot_size);
     populate_controller(controller, additions, deletions, addition_deletions, patch_id);
     long long duration = st.stopReal() / 1000;
-    Controller::cleanup(controller);
+    Controller::cleanup("./", controller);
     return duration;
 }
 
@@ -115,10 +115,26 @@ std::ifstream::pos_type patchstore_size(Controller* controller) {
     return size;
 }
 
-long test_lookup(Controller* controller, Triple triple_pattern, int offset, int patch_id, int limit) {
+long test_lookup_version_materialized(Controller* controller, Triple triple_pattern, int offset, int patch_id, int limit) {
     StopWatch st;
-    TripleIterator* ti = controller->get(triple_pattern, offset, patch_id);
+    TripleIterator* ti = controller->get_version_materialized(triple_pattern, offset, patch_id);
     Triple t;
+    while((limit == -2 || limit-- > 0) && ti->next(&t));
+    return st.stopReal() / 1000;
+}
+
+long test_lookup_delta_materialized(Controller* controller, Triple triple_pattern, int offset, int patch_id_start, int patch_id_end, int limit) {
+    StopWatch st;
+    TripleDeltaIterator* ti = controller->get_delta_materialized(triple_pattern, offset, patch_id_start, patch_id_end);
+    TripleDelta t;
+    while((limit == -2 || limit-- > 0) && ti->next(&t));
+    return st.stopReal() / 1000;
+}
+
+long test_lookup_version(Controller* controller, Triple triple_pattern, int offset, int limit) {
+    StopWatch st;
+    TripleVersionsIterator* ti = controller->get_version(triple_pattern, offset);
+    TripleVersions t;
     while((limit == -2 || limit-- > 0) && ti->next(&t));
     return st.stopReal() / 1000;
 }
@@ -177,31 +193,91 @@ int main_manual() {
     Controller::cleanup(controller2);
     Controller::cleanup(controller3);*/
 
-    // Lookup
+    // Lookup version materialized
     // Increasing patch id
     /*Controller* controller = setup_snapshot(10000);
     DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
     int patches = 100;
-    int i;
+    int i = 0;
     while(i < patches) {
         cout << "" << i << " / " << patches << endl;
         populate_controller(controller, 0, 100, 0, i);
     }
+
+    cout << "-----version materialized-----" << endl;
     cout << "patch,lookup-ms-0-1,lookup-ms-0-50,lookup-ms-0-100,lookup-ms-100-1,lookup-ms-100-50,lookup-ms-100-100" << endl;
     for(int i = 0; i < patches; i ++) {
-        long d0_1 = test_lookup(controller, Triple("", "", "", dict), 0, i, 1);
-        long d0_50 = test_lookup(controller, Triple("", "", "", dict), 0, i, 50);
-        long d0_100 = test_lookup(controller, Triple("", "", "", dict), 0, i, 100);
+        long d0_1 = test_lookup_version_materialized(controller, Triple("", "", "", dict), 0, i, 1);
+        long d0_50 = test_lookup_version_materialized(controller, Triple("", "", "", dict), 0, i, 50);
+        long d0_100 = test_lookup_version_materialized(controller, Triple("", "", "", dict), 0, i, 100);
 
-        long d100_1 = test_lookup(controller, Triple("", "", "", dict), 100, i, 1);
-        long d100_50 = test_lookup(controller, Triple("", "", "", dict), 100, i, 50);
-        long d100_100 = test_lookup(controller, Triple("", "", "", dict), 100, i, 100);
+        long d100_1 = test_lookup_version_materialized(controller, Triple("", "", "", dict), 100, i, 1);
+        long d100_50 = test_lookup_version_materialized(controller, Triple("", "", "", dict), 100, i, 50);
+        long d100_100 = test_lookup_version_materialized(controller, Triple("", "", "", dict), 100, i, 100);
         cout << "" << i << ","
-             << d0_1 << "," << d0_50 << "," << d0_100 << ","
-             << d100_1 << "," << d100_50 << "," << d100_100
-             << endl;
+        << d0_1 << "," << d0_50 << "," << d0_100 << ","
+        << d100_1 << "," << d100_50 << "," << d100_100
+        << endl;
     }
-    Controller::cleanup(controller);*/
+    cout << "-----delta materialized (relative to origin)-----" << endl;
+    cout << "patch,lookup-ms-0-1,lookup-ms-0-50,lookup-ms-0-100,lookup-ms-100-1,lookup-ms-100-50,lookup-ms-100-100" << endl;
+    for(int i = 0; i < patches; i ++) {
+        long d0_1 = test_lookup_delta_materialized(controller, Triple("", "", "", dict), 0, 0, i, 1);
+        long d0_50 = test_lookup_delta_materialized(controller, Triple("", "", "", dict), 0, 0, i, 50);
+        long d0_100 = test_lookup_delta_materialized(controller, Triple("", "", "", dict), 0, 0, i, 100);
+
+        long d100_1 = test_lookup_delta_materialized(controller, Triple("", "", "", dict), 100, 0, i, 1);
+        long d100_50 = test_lookup_delta_materialized(controller, Triple("", "", "", dict), 100, 0, i, 50);
+        long d100_100 = test_lookup_delta_materialized(controller, Triple("", "", "", dict), 100, 0, i, 100);
+        cout << "" << i << ","
+        << d0_1 << "," << d0_50 << "," << d0_100 << ","
+        << d100_1 << "," << d100_50 << "," << d100_100
+        << endl;
+    }
+    cout << "-----delta materialized (relative to patchid/2)-----" << endl;
+    cout << "patch,lookup-ms-0-1,lookup-ms-0-50,lookup-ms-0-100,lookup-ms-100-1,lookup-ms-100-50,lookup-ms-100-100" << endl;
+    for(int i = 0; i < patches; i ++) {
+        long d0_1 = test_lookup_delta_materialized(controller, Triple("", "", "", dict), 0, i/2, i, 1);
+        long d0_50 = test_lookup_delta_materialized(controller, Triple("", "", "", dict), 0, i/2, i, 50);
+        long d0_100 = test_lookup_delta_materialized(controller, Triple("", "", "", dict), 0, i/2, i, 100);
+
+        long d100_1 = test_lookup_delta_materialized(controller, Triple("", "", "", dict), 100, i/2, i, 1);
+        long d100_50 = test_lookup_delta_materialized(controller, Triple("", "", "", dict), 100, i/2, i, 50);
+        long d100_100 = test_lookup_delta_materialized(controller, Triple("", "", "", dict), 100, i/2, i, 100);
+        cout << "" << i << ","
+        << d0_1 << "," << d0_50 << "," << d0_100 << ","
+        << d100_1 << "," << d100_50 << "," << d100_100
+        << endl;
+    }
+    cout << "-----delta materialized (relative to patchid-1)-----" << endl;
+    cout << "patch,lookup-ms-0-1,lookup-ms-0-50,lookup-ms-0-100,lookup-ms-100-1,lookup-ms-100-50,lookup-ms-100-100" << endl;
+    for(int i = 0; i < patches; i ++) {
+        long d0_1 = test_lookup_delta_materialized(controller, Triple("", "", "", dict), 0, i-1, i, 1);
+        long d0_50 = test_lookup_delta_materialized(controller, Triple("", "", "", dict), 0, i-1, i, 50);
+        long d0_100 = test_lookup_delta_materialized(controller, Triple("", "", "", dict), 0, i-1, i, 100);
+
+        long d100_1 = test_lookup_delta_materialized(controller, Triple("", "", "", dict), 100, i-1, i, 1);
+        long d100_50 = test_lookup_delta_materialized(controller, Triple("", "", "", dict), 100, i-1, i, 50);
+        long d100_100 = test_lookup_delta_materialized(controller, Triple("", "", "", dict), 100, i-1, i, 100);
+        cout << "" << i << ","
+        << d0_1 << "," << d0_50 << "," << d0_100 << ","
+        << d100_1 << "," << d100_50 << "," << d100_100
+        << endl;
+    }
+    cout << "-----version-----" << endl;
+    cout << "lookup-ms-0-1,lookup-ms-0-50,lookup-ms-0-100,lookup-ms-100-1,lookup-ms-100-50,lookup-ms-100-100" << endl;
+    long d0_1 = test_lookup_version(controller, Triple("", "", "", dict), 0, 1);
+    long d0_50 = test_lookup_version(controller, Triple("", "", "", dict), 0, 50);
+    long d0_100 = test_lookup_version(controller, Triple("", "", "", dict), 0, 100);
+
+    long d100_1 = test_lookup_version(controller, Triple("", "", "", dict), 100, 1);
+    long d100_50 = test_lookup_version(controller, Triple("", "", "", dict), 100, 50);
+    long d100_100 = test_lookup_version(controller, Triple("", "", "", dict), 100, 100);
+    cout << ""
+    << d0_1 << "," << d0_50 << "," << d0_100 << ","
+    << d100_1 << "," << d100_50 << "," << d100_100
+    << endl;
+    Controller::cleanup("./", controller);*/
 
     // File size
     /*Controller* controller = setup_snapshot(10000);
