@@ -12,7 +12,7 @@ void Evaluator::init(string basePath, string patchesBasePatch, int startIndex, i
     controller = new Controller(basePath, HashDB::TCOMPRESS);
 
     cout << "---INSERTION START---" << endl;
-    cout << "version,added,durationms,rate" << endl;
+    cout << "version,added,durationms,rate,accsize" << endl;
     DIR *dir;
     if ((dir = opendir(patchesBasePatch.c_str())) != NULL) {
         for (int i = startIndex; i <= endIndex; i++) {
@@ -100,7 +100,41 @@ void Evaluator::populate_controller_with_version(int patch_id, string path, Prog
         controller->append(patch, patch_id, dict, progressListener);
     }
     long long rate = added / duration;
-    cout << patch_id << "," << added << "," << duration << "," << rate << endl;
+    std::ifstream::pos_type accsize = patchstore_size(controller);
+    cout << patch_id << "," << added << "," << duration << "," << rate << "," << accsize << endl;
+}
+
+std::ifstream::pos_type Evaluator::patchstore_size(Controller* controller) {
+    long size = 0;
+
+    std::map<int, PatchTree*> patches = controller->get_patch_tree_manager()->get_patch_trees();
+    std::map<int, PatchTree*>::iterator itP = patches.begin();
+    while(itP != patches.end()) {
+        int id = itP->first;
+        size += filesize(PATCHTREE_FILENAME(id, "spo_deletions"));
+        size += filesize(PATCHTREE_FILENAME(id, "spo"));
+        size += filesize(PATCHTREE_FILENAME(id, "pos"));
+        size += filesize(PATCHTREE_FILENAME(id, "pso"));
+        size += filesize(PATCHTREE_FILENAME(id, "sop"));
+        size += filesize(PATCHTREE_FILENAME(id, "osp"));
+        itP++;
+    }
+
+    std::map<int, HDT*> snapshots = controller->get_snapshot_manager()->get_snapshots();
+    std::map<int, HDT*>::iterator itS = snapshots.begin();
+    while(itS != snapshots.end()) {
+        int id = itS->first;
+        size += filesize(SNAPSHOT_FILENAME_BASE(id));
+        size += filesize((SNAPSHOT_FILENAME_BASE(id) + ".index"));
+        size += filesize((PATCHDICT_FILENAME_BASE(id)));
+        itS++;
+    }
+
+    return size;
+}
+
+std::ifstream::pos_type Evaluator::filesize(string file) {
+    return std::ifstream(file.c_str(), std::ifstream::ate | std::ifstream::binary).tellg();
 }
 
 IteratorTripleString* Evaluator::get_from_file(string file) {
