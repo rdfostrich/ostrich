@@ -84,7 +84,6 @@ void Evaluator::populate_controller_with_version(int patch_id, string path, Prog
         }
         closedir(dir);
     }
-    long long duration = st.stopReal() / 1000;
 
     long long added;
     if (first) {
@@ -99,6 +98,8 @@ void Evaluator::populate_controller_with_version(int patch_id, string path, Prog
         NOTIFYMSG(progressListener, "\nAppending patch...\n");
         controller->append(patch, patch_id, dict, progressListener);
     }
+    long long duration = st.stopReal() / 1000;
+    if (duration == 0) duration = 1; // Avoid division by 0
     long long rate = added / duration;
     std::ifstream::pos_type accsize = patchstore_size(controller);
     cout << patch_id << "," << added << "," << duration << "," << rate << "," << accsize << endl;
