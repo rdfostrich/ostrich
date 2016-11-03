@@ -24,26 +24,30 @@ vector<string> split(string data, string token) {
     return output;
 }
 
-void test_lookups_for_queries(Evaluator& evaluator, string queriesFilePath) {
+void test_lookups_for_queries(Evaluator& evaluator, string queriesFilePath, int replications) {
     std::ifstream queriesFile(queriesFilePath);
     std::string line;
+    cout << "---QUERIES START: " << queriesFilePath << "---" << endl;
     while (std::getline(queriesFile, line)) {
         vector<string> line_split = split(line, " ");
         std::string element = line_split[0];
-        evaluator.test_lookup(element, "", "");
+        evaluator.test_lookup(element, "", "", replications);
     }
+    cout << "---QUERIES END---" << endl;
 }
 
 int main(int argc, char *argv[]) {
-    if (argc != 5) {
-        cerr << "Usage: " << argv[0] << " path_to_patches path_to_queries" << endl;
+    if (argc < 4) {
+        cerr << "Usage: " << argv[0] << " path_to_patches start_index end_index [path_to_queries_file replications]" << endl;
         exit(1);
     }
 
     Evaluator evaluator;
     evaluator.init("./", argv[1], stoi(argv[2]), stoi(argv[3]), new SimpleProgressListener());
 
-    test_lookups_for_queries(evaluator, ((std::string) argv[4]) + "/subjectLookup/queries-sel-100-e0.1.txt");
+    if (argc >= 6) {
+        test_lookups_for_queries(evaluator, ((std::string) argv[4]), stoi(argv[5]));
+    }
 
     evaluator.cleanup_controller();
 }

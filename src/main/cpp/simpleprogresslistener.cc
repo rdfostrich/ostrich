@@ -8,9 +8,9 @@
 using namespace std;
 
 void SimpleProgressListener::notifyProgress(float level, const char *section) {
-    cout << "\r" << section << ": " << level << flush;
+    cerr << "\r" << section << ": " << level << flush;
 }
 
 void SimpleProgressListener::notifyProgress(float task, float level, const char *section) {
-    cout << "\r" << section << ": " << level << " / " << task << flush;
+    cerr << "\r" << section << ": " << level << " / " << task << flush;
 }

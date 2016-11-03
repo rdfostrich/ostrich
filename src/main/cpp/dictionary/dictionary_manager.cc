@@ -68,8 +68,7 @@ void DictionaryManager::save() {
   out.set_auto_close(false);
   std::ostream compressed(&out);
   ControlInformation ci = ControlInformation();
-  StdoutProgressListener listener;
-  patchDict->save(compressed, ci, &listener);
+  patchDict->save(compressed, ci);
 }
 
 std::string DictionaryManager::idToString(unsigned int id,

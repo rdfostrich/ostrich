@@ -11,6 +11,8 @@
 void Evaluator::init(string basePath, string patchesBasePatch, int startIndex, int endIndex, ProgressListener* progressListener) {
     controller = new Controller(basePath, HashDB::TCOMPRESS);
 
+    cout << "---INSERTION START---" << endl;
+    cout << "version,added,durationms,rate" << endl;
     DIR *dir;
     if ((dir = opendir(patchesBasePatch.c_str())) != NULL) {
         for (int i = startIndex; i <= endIndex; i++) {
@@ -21,6 +23,7 @@ void Evaluator::init(string basePath, string patchesBasePatch, int startIndex, i
         }
         closedir(dir);
     }
+    cout << "---INSERTION END---" << endl;
 }
 
 void Evaluator::populate_controller_with_version(int patch_id, string path, ProgressListener* progressListener) {
@@ -35,15 +38,15 @@ void Evaluator::populate_controller_with_version(int patch_id, string path, Prog
 
     if (controller->get_max_patch_id() >= patch_id) {
         if (first) {
-            cout << "Skipped constructing snapshot because it already exists, loaded instead." << endl;
+            NOTIFYMSG(progressListener, "Skipped constructing snapshot because it already exists, loaded instead.\n");
             controller->get_snapshot_manager()->load_snapshot(patch_id);
         } else {
-            cout << "Skipped constructing patch because it already exists, loading instead..." << endl;
+            NOTIFYMSG(progressListener, "Skipped constructing patch because it already exists, loading instead...\n");
             DictionaryManager* dict_patch = controller->get_dictionary_manager(patch_id);
             if (controller->get_patch_tree_manager()->get_patch_tree(patch_id, dict_patch)->get_max_patch_id() < patch_id) {
                 controller->get_patch_tree_manager()->load_patch_tree(patch_id, dict_patch);
             }
-            cout << "Loaded!" << endl;
+            NOTIFYMSG(progressListener, "Loaded!\n");
         }
         return;
     }
@@ -51,7 +54,7 @@ void Evaluator::populate_controller_with_version(int patch_id, string path, Prog
     DIR *dir;
     struct dirent *ent;
     StopWatch st;
-    cout << "Loading patch... " << endl;
+    NOTIFYMSG(progressListener, "Loading patch...\n");
     if ((dir = opendir(path.c_str())) != NULL) {
         while ((ent = readdir(dir)) != NULL) {
             string filename = string(ent->d_name);
@@ -60,7 +63,7 @@ void Evaluator::populate_controller_with_version(int patch_id, string path, Prog
                 int count = 0;
                 bool additions = std::regex_match(filename, base_match, regex_additions);
                 bool deletions = std::regex_match(filename, base_match, regex_deletions);
-                cout << "\nFILE: " << full_path << endl; // TODO
+                NOTIFYMSG(progressListener, ("FILE: " + full_path + "\n").c_str());
                 if (first && additions) {
                     it->appendIterator(get_from_file(full_path));
                 } else if(!first && (additions || deletions)) {
@@ -86,9 +89,10 @@ void Evaluator::populate_controller_with_version(int patch_id, string path, Prog
 
     long long added;
     if (first) {
-        //std::cout.setstate(std::ios_base::failbit); // Disable cout info from HDT
+        NOTIFYMSG(progressListener, "\nCreating snapshot...\n");
+        std::cout.setstate(std::ios_base::failbit); // Disable cout info from HDT
         HDT* hdt = controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
-        //std::cout.clear();
+        std::cout.clear();
         added = hdt->getTriples()->getNumberOfElements();
         delete it;
     } else {
@@ -96,87 +100,98 @@ void Evaluator::populate_controller_with_version(int patch_id, string path, Prog
         NOTIFYMSG(progressListener, "\nAppending patch...\n");
         controller->append(patch, patch_id, dict, progressListener);
     }
-    cout << "  Added: " << added << endl;
-    cout << "  Duration: " << duration << endl;
     long long rate = added / duration;
-    cout << "  Rate: " << rate << " triples / ms" << endl;
+    cout << patch_id << "," << added << "," << duration << "," << rate << endl;
 }
 
 IteratorTripleString* Evaluator::get_from_file(string file) {
     return new RDFParserNtriples(file.c_str(), NTRIPLES);
 }
 
-long long Evaluator::measure_lookup_version_materialized(Triple triple_pattern, int offset, int patch_id, int limit) {
-    StopWatch st;
-    //StopWatch st2;
-    TripleIterator* ti = controller->get_version_materialized(triple_pattern, offset, patch_id);
-    //cout << "A: " << (st2.stopReal()) << endl;st2.reset(); // TODO
-    // Dummy loop over iterator
-    Triple t;
-    long count = 0;
-    while((limit == -2 || limit-- > 0) && ti->next(&t)) { count++; };
-    //cout << "Results: " << count << endl; // TODO
-    //cout << "b: " << (st2.stopReal()) << endl;st2.reset(); // TODO
-    return st.stopReal() / 1000;
+long long Evaluator::measure_lookup_version_materialized(Triple triple_pattern, int offset, int patch_id, int limit, int replications) {
+    long long total = 0;
+    for (int i = 0; i < replications; i++) {
+        StopWatch st;
+        //StopWatch st2;
+        TripleIterator* ti = controller->get_version_materialized(triple_pattern, offset, patch_id);
+        //cout << "A: " << (st2.stopReal()) << endl;st2.reset(); // TODO
+        // Dummy loop over iterator
+        Triple t;
+        long count = 0;
+        while((limit == -2 || limit-- > 0) && ti->next(&t)) { count++; };
+        //cout << "Results: " << count << endl; // TODO
+        //cout << "b: " << (st2.stopReal()) << endl;st2.reset(); // TODO
+        total += st.stopReal() / 1000;
+    }
+    return total / replications;
 }
 
-long long Evaluator::measure_lookup_delta_materialized(Triple triple_pattern, int offset, int patch_id_start, int patch_id_end, int limit) {
-    StopWatch st;
-    TripleDeltaIterator* ti = controller->get_delta_materialized(triple_pattern, offset, patch_id_start, patch_id_end);
-    TripleDelta t;
-    long count = 0;
-    while((limit == -2 || limit-- > 0) && ti->next(&t)) { count++; };
-    return st.stopReal() / 1000;
+long long Evaluator::measure_lookup_delta_materialized(Triple triple_pattern, int offset, int patch_id_start, int patch_id_end, int limit, int replications) {
+    long long total = 0;
+    for (int i = 0; i < replications; i++) {
+        StopWatch st;
+        TripleDeltaIterator *ti = controller->get_delta_materialized(triple_pattern, offset, patch_id_start,
+                                                                     patch_id_end);
+        TripleDelta t;
+        long count = 0;
+        while ((limit == -2 || limit-- > 0) && ti->next(&t)) { count++; };
+        total += st.stopReal() / 1000;
+    }
+    return total / replications;
 }
 
-long long Evaluator::measure_lookup_version(Triple triple_pattern, int offset, int limit) {
-    StopWatch st;
-    TripleVersionsIterator* ti = controller->get_version(triple_pattern, offset);
-    TripleVersions t;
-    long count = 0;
-    while((limit == -2 || limit-- > 0) && ti->next(&t)) { count++; };
-    return st.stopReal() / 1000;
+long long Evaluator::measure_lookup_version(Triple triple_pattern, int offset, int limit, int replications) {
+    long long total = 0;
+    for (int i = 0; i < replications; i++) {
+        StopWatch st;
+        TripleVersionsIterator* ti = controller->get_version(triple_pattern, offset);
+        TripleVersions t;
+        long count = 0;
+        while((limit == -2 || limit-- > 0) && ti->next(&t)) { count++; };
+        total += st.stopReal() / 1000;
+    }
+    return total / replications;
 }
 
-void Evaluator::test_lookup(string s, string p, string o) {
+void Evaluator::test_lookup(string s, string p, string o, int replications) {
     DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
     Triple triple_pattern(s, p, o, dict);
-    cout << ">> pattern: " << triple_pattern.to_string(*dict) << endl;
+    cout << "---PATTERN START: " << triple_pattern.to_string(*dict) << endl;
 
-    cout << ">>> version materialized" << endl;
+    cout << "--- ---VERSION MATERIALIZED" << endl;
     cout << "patch,offset,lookup-ms-1,lookup-ms-50,lookup-ms-100,lookup-ms-inf" << endl;
     for(int i = 0; i < patch_count; i++) {
         for(int offset = 0; offset < 1000; offset+=500) {
-            long d1 = measure_lookup_version_materialized(triple_pattern, offset, i, 1);
-            long d50 = measure_lookup_version_materialized(triple_pattern, offset, i, 50);
-            long d100 = measure_lookup_version_materialized(triple_pattern, offset, i, 100);
-            long dinf = measure_lookup_version_materialized(triple_pattern, offset, i, -2);
+            long d1 = measure_lookup_version_materialized(triple_pattern, offset, i, 1, replications);
+            long d50 = measure_lookup_version_materialized(triple_pattern, offset, i, 50, replications);
+            long d100 = measure_lookup_version_materialized(triple_pattern, offset, i, 100, replications);
+            long dinf = measure_lookup_version_materialized(triple_pattern, offset, i, -2, replications);
             cout << "" << i << "," << offset << "," << d1 << "," << d50 << "," << d100 << "," << dinf << endl;
         }
     }
 
-    cout << ">>> delta materialized" << endl;
+    cout << "--- ---DELTA MATERIALIZED" << endl;
     cout << "patch_start,patch_end,offset,lookup-ms-1,lookup-ms-50,lookup-ms-100,lookup-ms-inf" << endl;
     for(int i = 0; i < patch_count; i++) {
         for(int j = 0; j < i; j+=i/2+1) {
             if (j > 0) j--;
             for (int offset = 0; offset < 1000; offset += 500) {
-                long d1 = measure_lookup_delta_materialized(triple_pattern, offset, j, i, 1);
-                long d50 = measure_lookup_delta_materialized(triple_pattern, offset, j, i, 50);
-                long d100 = measure_lookup_delta_materialized(triple_pattern, offset, j, i, 100);
-                long dinf = measure_lookup_delta_materialized(triple_pattern, offset, j, i, -2);
+                long d1 = measure_lookup_delta_materialized(triple_pattern, offset, j, i, 1, replications);
+                long d50 = measure_lookup_delta_materialized(triple_pattern, offset, j, i, 50, replications);
+                long d100 = measure_lookup_delta_materialized(triple_pattern, offset, j, i, 100, replications);
+                long dinf = measure_lookup_delta_materialized(triple_pattern, offset, j, i, -2, replications);
                 cout << "" << j << "," << i << "," << offset << "," << d1 << "," << d50 << "," << d100 << "," << dinf << endl;
             }
         }
     }
 
-    cout << ">>> version" << endl;
+    cout << "--- ---VERSION" << endl;
     cout << "offset,lookup-ms-1,lookup-ms-50,lookup-ms-100,lookup-ms-inf" << endl;
     for(int offset = 0; offset < 1000; offset+=500) {
-        long d1 = measure_lookup_version(triple_pattern, offset, 1);
-        long d50 = measure_lookup_version(triple_pattern, offset, 50);
-        long d100 = measure_lookup_version(triple_pattern, offset, 100);
-        long dinf = measure_lookup_version(triple_pattern, offset, -2);
+        long d1 = measure_lookup_version(triple_pattern, offset, 1, replications);
+        long d50 = measure_lookup_version(triple_pattern, offset, 50, replications);
+        long d100 = measure_lookup_version(triple_pattern, offset, 100, replications);
+        long dinf = measure_lookup_version(triple_pattern, offset, -2, replications);
         cout << "" << offset << "," << d1 << "," << d50 << "," << d100 << "," << dinf << endl;
     }
 }
