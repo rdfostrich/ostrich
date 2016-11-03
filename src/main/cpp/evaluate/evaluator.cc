@@ -90,7 +90,7 @@ void Evaluator::populate_controller_with_version(int patch_id, string path, Prog
     if (first) {
         NOTIFYMSG(progressListener, "\nCreating snapshot...\n");
         std::cout.setstate(std::ios_base::failbit); // Disable cout info from HDT
-        HDT* hdt = controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
+        HDT* hdt = controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI, new SimpleProgressListener());
         std::cout.clear();
         added = hdt->getTriples()->getNumberOfElements();
         delete it;

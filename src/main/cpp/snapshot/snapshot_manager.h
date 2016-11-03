@@ -41,7 +41,7 @@ public:
      * @param base_uri The base uri for the triples graph.
      * @return The created snapshot
      */
-    HDT* create_snapshot(int snapshot_id, IteratorTripleString* triples, string base_uri);
+    HDT* create_snapshot(int snapshot_id, IteratorTripleString* triples, string base_uri, ProgressListener* listener = NULL);
     /**
      * Create a HDT file for the given snapshot id.
      * It will automatically be persisted in this manager.
