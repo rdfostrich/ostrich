@@ -10,7 +10,7 @@ void Patch::add(const PatchElement& element) {
     std::vector<PatchElement>::iterator itToInsert = std::lower_bound(
             elements.begin(), elements.end(), element, element_comparator->get());
     // Overwrite existing element if triple is already present, otherwise insert new element.
-    if(itToInsert != elements.end() && itToInsert->get_triple().to_string() == element.get_triple().to_string()) {
+    if(itToInsert != elements.end() && itToInsert->get_triple() == element.get_triple()) {
         bool was_addition_change = itToInsert->is_addition() != element.is_addition();
         bool was_local_change = itToInsert->is_local_change();
         *itToInsert = element;
