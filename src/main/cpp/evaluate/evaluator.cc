@@ -96,7 +96,7 @@ void Evaluator::populate_controller_with_version(int patch_id, string path, Prog
     } else {
         added = patch.get_size();
         NOTIFYMSG(progressListener, "\nAppending patch...\n");
-        controller->append(patch, patch_id, dict, progressListener);
+        controller->append(patch, patch_id, dict, false, progressListener);
     }
     long long duration = st.stopReal() / 1000;
     if (duration == 0) duration = 1; // Avoid division by 0

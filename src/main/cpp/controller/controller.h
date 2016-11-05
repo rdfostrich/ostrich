@@ -52,10 +52,11 @@ public:
      * Add the given patch to a patch tree.
      * @param patch The patch to add.
      * @param patch_id The id of the patch to add.
+     * @param check_uniqueness If triple uniqueness for the given patch id must be checked, will slow down insertion if true, which is the default behaviour.
      * @param progressListener an optional progress listener.
      * @return If the append succeeded.
      */
-    bool append(const PatchIndexed& patch, int patch_id, DictionaryManager* dict, ProgressListener* progressListener = NULL);
+    bool append(const PatchIndexed& patch, int patch_id, DictionaryManager* dict, bool check_uniqueness = true, ProgressListener* progressListener = NULL);
     /**
      * @return The internal patchtree manager.
      */
