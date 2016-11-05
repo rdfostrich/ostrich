@@ -5,7 +5,7 @@
 PatchBuilder::PatchBuilder(Controller* controller) : controller(controller), patch_id(-1) {
     dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
     if (dict != NULL) {
-        patch = new Patch(dict);
+        patch = new PatchUnsorted;
     } else {
         patch = NULL;
     }

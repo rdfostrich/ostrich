@@ -55,7 +55,7 @@ public:
      * @param progressListener an optional progress listener.
      * @return If the append succeeded.
      */
-    bool append(const Patch& patch, int patch_id, DictionaryManager* dict, ProgressListener* progressListener = NULL);
+    bool append(const PatchIndexed& patch, int patch_id, DictionaryManager* dict, ProgressListener* progressListener = NULL);
     /**
      * @return The internal patchtree manager.
      */

@@ -12,7 +12,7 @@ class PatchBuilder {
 private:
     Controller* controller;
     DictionaryManager* dict;
-    Patch* patch;
+    PatchUnsorted* patch;
     std::vector<TripleString> triples;
     int patch_id;
 public:

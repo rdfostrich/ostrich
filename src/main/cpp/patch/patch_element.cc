@@ -1,9 +1,14 @@
 #include "patch_element.h"
 
 PatchElement::PatchElement(const Triple& triple, bool addition) : triple(triple), addition(addition), local_change(false) {}
+PatchElement::PatchElement(const Triple& triple, bool addition, bool local_change) : triple(triple), addition(addition), local_change(local_change) {}
 
 const Triple& PatchElement::get_triple() const {
     return triple;
+}
+
+void PatchElement::set_addition(bool addition) {
+    this->addition = addition;
 }
 
 bool PatchElement::is_addition() const {

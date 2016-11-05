@@ -2,11 +2,49 @@
 #include <iostream>
 #include "patch.h"
 
-Patch::Patch(PatchElementComparator* element_comparator) : elements(), element_comparator(element_comparator) {}
+void Patch::addAll(const Patch &patch) {
+    PatchIterator* it = patch.iterator();
+    while (it->has_next()) {
+        add(it->next());
+    }
+    delete it;
+}
 
-Patch::Patch(DictionaryManager* dict) : Patch(new PatchElementComparator(new PatchTreeKeyComparator(comp_s, comp_p, comp_o, dict))) {}
+string Patch::to_string() const {
+    string ret;
+    PatchIterator* it = iterator();
+    while (it->has_next()) {
+        const PatchElement& element = it->next();
+        ret += element.to_string();
+        if(element.is_local_change()) {
+            ret += " L";
+        }
+        ret += "\n";
+    }
+    delete it;
+    return ret;
+}
 
-void Patch::add(const PatchElement& element) {
+string Patch::to_string(Dictionary& dict) const {
+    string ret;
+    PatchIterator* it = iterator();
+    while (it->has_next()) {
+        const PatchElement& element = it->next();
+        ret += element.to_string(dict);
+        if(element.is_local_change()) {
+            ret += " L";
+        }
+        ret += "\n";
+    }
+    delete it;
+    return ret;
+}
+
+PatchSorted::PatchSorted(PatchElementComparator* element_comparator) : elements(), element_comparator(element_comparator) {}
+
+PatchSorted::PatchSorted(DictionaryManager* dict) : PatchSorted(new PatchElementComparator(new PatchTreeKeyComparator(comp_s, comp_p, comp_o, dict))) {}
+
+void PatchSorted::add(const PatchElement& element) {
     std::vector<PatchElement>::iterator itToInsert = std::lower_bound(
             elements.begin(), elements.end(), element, element_comparator->get());
     // Overwrite existing element if triple is already present, otherwise insert new element.
@@ -22,25 +60,31 @@ void Patch::add(const PatchElement& element) {
     }
 }
 
-void Patch::overwrite(long i, const PatchElement& element) {
+void PatchSorted::add_unsorted(const PatchElement &element) {
+    elements.push_back(element);
+}
+
+void PatchSorted::sort() {
+    std::sort(elements.begin(), elements.end(), element_comparator->get());
+}
+
+void PatchSorted::overwrite(long i, const PatchElement& element) {
     elements[i] = element;
 }
 
-void Patch::addAll(const Patch& patch) {
-    for(int i = 0; i < patch.get_size(); i++) {
-        add(patch.get(i));
-    }
-}
-
-unsigned long Patch::get_size() const {
+unsigned long PatchSorted::get_size() const {
     return elements.size();
 }
 
-const PatchElement& Patch::get(long index) const {
+const PatchElement& PatchSorted::get(long index) const {
     if(index < 0 || index >= get_size()) {
         throw std::invalid_argument("Index out of bounds");
     }
     return elements[index];
+}
+
+PatchIterator* PatchSorted::iterator() const {
+    return new PatchIteratorVector(elements.cbegin(), elements.cend());
 }
 
 inline PatchPosition contains_and_increment_position(unordered_map<long, PatchPosition>& m, long hash) {
@@ -53,7 +97,7 @@ inline PatchPosition contains_and_increment_position(unordered_map<long, PatchPo
     return pos;
 }
 
-PatchPositions Patch::positions(const PatchElement& element,
+PatchPositions PatchSorted::positions(const PatchElement& element,
                                  unordered_map<long, PatchPosition>& sp_,
                                  unordered_map<long, PatchPosition>& s_o,
                                  unordered_map<long, PatchPosition>& s__,
@@ -81,7 +125,7 @@ PatchPositions Patch::positions(const PatchElement& element,
     return positions;
 }
 
-PatchPosition Patch::position_of_pattern(const PatchElement& element, bool s, bool p, bool o, bool type) const {
+PatchPosition PatchSorted::position_of_pattern(const PatchElement& element, bool s, bool p, bool o, bool type) const {
     // First find the position of the element in O(log n)
     std::vector<PatchElement>::const_iterator findIt = std::lower_bound(elements.begin(), elements.end(), element,
                                                                         element_comparator->get());
@@ -100,13 +144,13 @@ PatchPosition Patch::position_of_pattern(const PatchElement& element, bool s, bo
     return position;
 }
 
-PatchPosition Patch::position_of(const PatchElement& element) const {
+PatchPosition PatchSorted::position_of(const PatchElement& element) const {
     std::vector<PatchElement>::const_iterator findIt = std::lower_bound(elements.begin(), elements.end(), element,
                                                                         element_comparator->get());
     return std::distance(elements.begin(), findIt);
 }
 
-PatchPosition Patch::position_of_strict(const PatchElement& element) const {
+PatchPosition PatchSorted::position_of_strict(const PatchElement& element) const {
     std::vector<PatchElement>::const_iterator findIt = std::lower_bound(elements.begin(), elements.end(), element,
                                                                         element_comparator->get());
     if (findIt != elements.end() && *findIt == element) {
@@ -115,31 +159,7 @@ PatchPosition Patch::position_of_strict(const PatchElement& element) const {
     return -1;
 }
 
-string Patch::to_string() const {
-    string ret;
-    for(int i = 0; i < elements.size(); i++) {
-        ret += elements[i].to_string();
-        if(elements[i].is_local_change()) {
-            ret += " L";
-        }
-        ret += "\n";
-    }
-    return ret;
-}
-
-string Patch::to_string(Dictionary& dict) const {
-    string ret;
-    for(int i = 0; i < elements.size(); i++) {
-        ret += elements[i].to_string(dict);
-        if(elements[i].is_local_change()) {
-            ret += " L";
-        }
-        ret += "\n";
-    }
-    return ret;
-}
-
-long Patch::index_of_triple(const Triple& triple) const {
+long PatchSorted::index_of_triple(const Triple& triple) const {
     PatchElement element1(triple, false);
     std::vector<PatchElement>::const_iterator findIt1 = std::lower_bound(elements.begin(), elements.end(), element1,
                                                                          element_comparator->get());
@@ -154,4 +174,94 @@ long Patch::index_of_triple(const Triple& triple) const {
         return std::distance(elements.begin(), findIt2);
     }
     return -1;
+}
+
+void PatchUnsorted::add(const PatchElement &element) {
+    elements.push_back(element);
+}
+
+unsigned long PatchUnsorted::get_size() const {
+    return elements.size();
+}
+
+const PatchElement &PatchUnsorted::get(long index) const {
+    if(index < 0 || index >= get_size()) {
+        throw std::invalid_argument("Index out of bounds");
+    }
+    return elements[index];
+}
+
+PatchIterator* PatchUnsorted::iterator() const {
+    return new PatchIteratorVector(elements.cbegin(), elements.cend());
+}
+
+void PatchHashed::add(const PatchElement &element) {
+    elements.insert(std::pair<Triple, std::pair<bool, bool>>(element.get_triple(), std::pair<bool, bool>(element.is_addition(), element.is_local_change())));
+}
+
+unsigned long PatchHashed::get_size() const {
+    return elements.size();
+}
+
+PatchIterator* PatchHashed::iterator() const {
+    return new PatchIteratorHashed(elements.cbegin(), elements.cend());
+}
+
+PatchSorted* PatchHashed::join_sorted(const Patch &patch, PatchElementComparator *element_comparator) {
+    PatchSorted* new_patch = new PatchSorted(element_comparator);
+    std::unordered_set<Triple> skip_elements;
+
+    // Optimized bulk insertion of new patch
+    PatchIterator* it = patch.iterator();
+    while (it->has_next()) {
+        const PatchElement& element = it->next();
+        std::unordered_map<Triple, std::pair<bool, bool>>::iterator existing_element = elements.find(element.get_triple());
+        if (existing_element != elements.end()) {
+            PatchElement new_element(element);
+            bool was_addition_change = existing_element->second.first != element.is_addition();
+            bool was_local_change = existing_element->second.second;
+            if (was_addition_change) {
+                new_element.set_local_change(!was_local_change);
+            }
+            new_patch->add_unsorted(new_element);
+            skip_elements.insert(new_element.get_triple());
+        } else {
+            new_patch->add_unsorted(element);
+        }
+    }
+    delete it;
+
+    // Add all elements from this patch that haven't been added yet
+    for (const std::pair<Triple, std::pair<bool, bool>>& element : elements) {
+        if (skip_elements.find(element.first) == skip_elements.end()) {
+            new_patch->add_unsorted(PatchElement(element.first, element.second.first, element.second.second));
+        }
+    }
+
+    // Sort afterwards instead of always maintaining a sorted state in the vector.
+    new_patch->sort();
+    return new_patch;
+}
+
+PatchIteratorVector::PatchIteratorVector(std::vector<PatchElement>::const_iterator it, std::vector<PatchElement>::const_iterator it_end) : it(it), it_end(it_end) {}
+PatchIteratorVector::~PatchIteratorVector() {}
+
+bool PatchIteratorVector::has_next() {
+    return it != it_end;
+}
+
+const PatchElement PatchIteratorVector::next() {
+    return *(it++);
+}
+
+PatchIteratorHashed::PatchIteratorHashed(std::unordered_map<Triple, std::pair<bool, bool>>::const_iterator it, std::unordered_map<Triple, std::pair<bool, bool>>::const_iterator it_end) : it(it), it_end(it_end) {}
+PatchIteratorHashed::~PatchIteratorHashed() {}
+
+bool PatchIteratorHashed::has_next() {
+    return it != it_end;
+}
+
+const PatchElement PatchIteratorHashed::next() {
+    std::pair<Triple, std::pair<bool, bool>> data = *(it++);
+    return PatchElement(data.first, data.second.first, data.second.second);
 }

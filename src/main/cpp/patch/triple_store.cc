@@ -86,7 +86,7 @@ TreeDB* TripleStore::getDeletionsTree() {
     return index_spo_deletions;
 }
 
-void TripleStore::insertAddition(Patch* patch, int patch_id, ProgressListener* progressListener) {
+void TripleStore::insertAddition(PatchSorted* patch, int patch_id, ProgressListener* progressListener) {
     for(int i = 0; i < patch->get_size(); i++) {
         PatchElement patchElement = patch->get(i);
         if (i % 10000 == 0) {

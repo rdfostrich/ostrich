@@ -8,13 +8,13 @@
 // The fixture for testing class Patch.
 class PatchElementsTest : public ::testing::Test {
 protected:
-    Patch patchElements;
+    PatchSorted patchElements;
     DictionaryManager dict;
 
-    PatchElementsTest() : dict(TESTPATH, 0), patchElements(Patch(&dict)) {}
+    PatchElementsTest() : dict(TESTPATH, 0), patchElements(PatchSorted(&dict)) {}
 
     virtual void SetUp() {
-        patchElements = Patch(&dict);
+        patchElements = PatchSorted(&dict);
     }
 
     virtual void TearDown() {
@@ -34,7 +34,7 @@ TEST_F(PatchElementsTest, AddMultiple) {
 }
 
 TEST_F(PatchElementsTest, AddAll) {
-    Patch patch2(&dict);
+    PatchSorted patch2(&dict);
 
     patchElements.add(PatchElement(Triple("s1", "p1", "o1", &dict), true));
     patchElements.add(PatchElement(Triple("s3", "p3", "o3", &dict), false));
@@ -50,7 +50,7 @@ TEST_F(PatchElementsTest, AddAll) {
 }
 
 TEST_F(PatchElementsTest, AddAllOverlap) {
-    Patch patch2(&dict);
+    PatchSorted patch2(&dict);
 
     patchElements.add(PatchElement(Triple("s1", "p1", "o1", &dict), true));
     patchElements.add(PatchElement(Triple("s3", "p3", "o3", &dict), false));
@@ -424,44 +424,62 @@ TEST_F(PatchElementsTest, PositionStrict) {
 }
 
 TEST_F(PatchElementsTest, ApplyLocalChanges) {
-    Patch p1(&dict);
+    PatchSorted p1(&dict);
     p1.add(PatchElement(Triple("a", "a", "a", &dict), false));
     ASSERT_EQ("a a a. (-)\n", p1.to_string(dict));
 
-    Patch p2(&dict);
+    PatchSorted p2(&dict);
     p2.add(PatchElement(Triple("a", "a", "a", &dict), false));
     p2.add(PatchElement(Triple("a", "a", "a", &dict), true));
     ASSERT_EQ("a a a. (+) L\n", p2.to_string(dict));
 
-    Patch p3(&dict);
+    PatchSorted p3(&dict);
     PatchElement p3e = PatchElement(Triple("a", "a", "a", &dict), false);
     p3e.set_local_change(true);
     p3.add(p3e);
     p3.add(PatchElement(Triple("a", "a", "a", &dict), true));
     ASSERT_EQ("a a a. (+)\n", p3.to_string(dict));
 
-    Patch p4(&dict);
+    PatchSorted p4(&dict);
     PatchElement p4e = PatchElement(Triple("a", "a", "a", &dict), true);
     p4e.set_local_change(true);
     p4.add(p4e);
     p4.add(PatchElement(Triple("a", "a", "a", &dict), false));
     ASSERT_EQ("a a a. (-)\n", p4.to_string(dict));
 
-    Patch p5(&dict);
+    PatchSorted p5(&dict);
     p5.add(PatchElement(Triple("a", "a", "a", &dict), true));
     p5.add(PatchElement(Triple("a", "a", "a", &dict), false));
     ASSERT_EQ("a a a. (-) L\n", p5.to_string(dict));
 
-    Patch p6(&dict);
+    PatchSorted p6(&dict);
     p6.add(PatchElement(Triple("a", "a", "a", &dict), true));
     p6.add(PatchElement(Triple("a", "a", "a", &dict), false));
     p6.add(PatchElement(Triple("a", "a", "a", &dict), true));
     ASSERT_EQ("a a a. (+)\n", p6.to_string(dict));
 
-    Patch p7(&dict);
+    PatchSorted p7(&dict);
     p7.add(PatchElement(Triple("a", "a", "a", &dict), true));
     p7.add(PatchElement(Triple("a", "a", "a", &dict), false));
     p7.add(PatchElement(Triple("a", "a", "a", &dict), true));
     p7.add(PatchElement(Triple("a", "a", "a", &dict), false));
     ASSERT_EQ("a a a. (-) L\n", p7.to_string(dict));
+}
+
+TEST_F(PatchElementsTest, JoinSorted) {
+    PatchTreeKeyComparator comp_key(comp_s, comp_p, comp_o, &dict);
+    PatchElementComparator comp(&comp_key);
+    PatchHashed patch_existing;
+    patch_existing.add(PatchElement(Triple("a", "a", "a", &dict), true));
+    patch_existing.add(PatchElement(Triple("a", "a", "b", &dict), false));
+
+    PatchSorted patch_new(&dict);
+    patch_new.add(PatchElement(Triple("a", "a", "a", &dict), false));
+    patch_new.add(PatchElement(Triple("a", "a", "c", &dict), false));
+
+    PatchSorted* patch_combined = patch_existing.join_sorted(patch_new, &comp);
+    ASSERT_EQ("a a a. (-) L\n"
+              "a a b. (-)\n"
+              "a a c. (-)\n", patch_combined->to_string(dict));
+    delete patch_combined;
 }

@@ -22,11 +22,17 @@ using namespace kyotocabinet;
 class PatchTree {
 private:
     TripleStore* tripleStore;
-    PatchTreeKeyComparator* keyComparator;
-    PatchElementComparator* elementComparator;
     string metadata_filename;
     int min_patch_id;
     int max_patch_id;
+protected:
+    /**
+     * Reconstruct the given patch id in the given patch.
+     * It will loop over the tree and rebuild the patch.
+     * @param patch_id The patch id
+     * @param ignore_local_changes If local changes should be ignored when reconstructing the patch, false by default.
+     */
+    void reconstruct_to_patch(Patch* patch, int patch_id, bool ignore_local_changes = false) const;
 public:
     PatchTree(string basePath, int min_patch_id, DictionaryManager* dict, int8_t kc_opts = 0);
     ~PatchTree();
@@ -39,7 +45,7 @@ public:
      * @note If an error occurs, some elements might have already been added.
      * If you want to change this behaviour, you'll have to first check if the patch elements are really new.
      */
-    void append_unsafe(const Patch& patch, int patch_id, ProgressListener* progressListener = NULL);
+    void append_unsafe(const PatchIndexed& patch, int patch_id, ProgressListener* progressListener = NULL);
     /**
      * Append the given patch elements to the tree with given patch id.
      * This safe append will first check if the patch is completely new, only then it will add the data
@@ -48,7 +54,7 @@ public:
      * @param progressListener an optional progress listener.
      * @return If the patch was added, otherwise the patch was not completely new.
      */
-    bool append(const Patch& patch, int patch_id, ProgressListener* progressListener = NULL);
+    bool append(const PatchIndexed& patch, int patch_id, ProgressListener* progressListener = NULL);
     /**
      * Check if the given patch element is present in the tree.
      * @param patch_element The patch element to look for
@@ -72,13 +78,21 @@ public:
      */
     bool contains_deletion(const PatchElement& patch_element, int patch_id) const;
     /**
-     * Reconstruct a patch based on the given patch id.
+     * Reconstruct a hashed patch based on the given patch id.
      * It will loop over the tree and rebuild the patch.
      * @param patch_id The patch id
      * @param ignore_local_changes If local changes should be ignored when reconstructing the patch, false by default.
      * @return The reconstructed patch
      */
-    Patch reconstruct_patch(int patch_id, bool ignore_local_changes = false) const;
+    PatchHashed* reconstruct_patch_hashed(int patch_id, bool ignore_local_changes = false) const;
+    /**
+     * Reconstruct a sorted patch based on the given patch id.
+     * It will loop over the tree and rebuild the patch.
+     * @param patch_id The patch id
+     * @param ignore_local_changes If local changes should be ignored when reconstructing the patch, false by default.
+     * @return The reconstructed patch
+     */
+    PatchSorted* reconstruct_patch(int patch_id, bool ignore_local_changes = false) const;
     /**
      * Get an iterator starting from the given key.
      * @param key The key to start from

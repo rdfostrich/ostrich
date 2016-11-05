@@ -101,16 +101,16 @@ TEST_F(PatchTreeManagerTest, GetPatchTreeId) {
 }
 
 TEST_F(PatchTreeManagerTest, AppendPatch) {
-    Patch patch1(&dict);
+    PatchSorted patch1(&dict);
     patch1.add(PatchElement(Triple("s1", "p1", "o1", &dict), true));
     patch1.add(PatchElement(Triple("s2", "p2", "o2", &dict), false));
     patch1.add(PatchElement(Triple("s3", "p3", "o3", &dict), false));
     patch1.add(PatchElement(Triple("s4", "p4", "o4", &dict), true));
     
-    Patch patch2(&dict);
+    PatchSorted patch2(&dict);
     patch2.add(PatchElement(Triple("s1", "p1", "o1", &dict), true));
     
-    Patch patch3(&dict);
+    PatchSorted patch3(&dict);
     patch3.add(PatchElement(Triple("a", "b", "c", &dict), true));
     
     ASSERT_EQ(true, patchTreeManager->append(patch1, 0, &dict));
@@ -120,23 +120,23 @@ TEST_F(PatchTreeManagerTest, AppendPatch) {
 }
 
 TEST_F(PatchTreeManagerTest, GetPatch) {
-    Patch patch1(&dict);
+    PatchSorted patch1(&dict);
     patch1.add(PatchElement(Triple("s1", "p1", "o1", &dict), true));
     patch1.add(PatchElement(Triple("s2", "p2", "o2", &dict), false));
     patch1.add(PatchElement(Triple("s3", "p3", "o3", &dict), false));
     patch1.add(PatchElement(Triple("s4", "p4", "o4", &dict), true));
     
-    Patch patch2(&dict);
+    PatchSorted patch2(&dict);
     patch2.add(PatchElement(Triple("a", "b", "c", &dict), true));
     
-    Patch patch3(&dict);
+    PatchSorted patch3(&dict);
     patch3.add(PatchElement(Triple("s4", "p4", "o4", &dict), false));
     
     patchTreeManager->append(patch1, 0, &dict);
     patchTreeManager->append(patch2, 1, &dict);
     patchTreeManager->append(patch3, 2, &dict);
     
-    ASSERT_EQ("s1 p1 o1. (+)\ns2 p2 o2. (-)\ns3 p3 o3. (-)\ns4 p4 o4. (+)\n", patchTreeManager->get_patch(0, &dict).to_string(dict));
-    ASSERT_EQ("a b c. (+)\ns1 p1 o1. (+)\ns2 p2 o2. (-)\ns3 p3 o3. (-)\ns4 p4 o4. (+)\n", patchTreeManager->get_patch(1, &dict).to_string(dict));
-    ASSERT_EQ("a b c. (+)\ns1 p1 o1. (+)\ns2 p2 o2. (-)\ns3 p3 o3. (-)\n", patchTreeManager->get_patch(2, &dict).to_string(dict));
+    ASSERT_EQ("s1 p1 o1. (+)\ns2 p2 o2. (-)\ns3 p3 o3. (-)\ns4 p4 o4. (+)\n", patchTreeManager->get_patch(0, &dict)->to_string(dict));
+    ASSERT_EQ("a b c. (+)\ns1 p1 o1. (+)\ns2 p2 o2. (-)\ns3 p3 o3. (-)\ns4 p4 o4. (+)\n", patchTreeManager->get_patch(1, &dict)->to_string(dict));
+    ASSERT_EQ("a b c. (+)\ns1 p1 o1. (+)\ns2 p2 o2. (-)\ns3 p3 o3. (-)\n", patchTreeManager->get_patch(2, &dict)->to_string(dict));
 }

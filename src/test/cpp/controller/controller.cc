@@ -52,7 +52,7 @@ TEST_F(ControllerTest, GetEdge) {
     ASSERT_EQ(false, it1->next(&t)) << "Iterator should be finished";
 
     // Apply a simple patch
-    Patch patch1(dict);
+    PatchSorted patch1(dict);
     patch1.add(PatchElement(Triple("<a>", "<a>", "<b>", dict), false));
     patchTreeManager->append(patch1, 1, dict);
 
@@ -102,7 +102,7 @@ TEST_F(ControllerTest, GetVersionMaterializedSimple) {
     DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
 
     // Apply a simple patch
-    Patch patch1(dict);
+    PatchSorted patch1(dict);
     patch1.add(PatchElement(Triple("<a>", "<a>", "<b>", dict), false));
     patchTreeManager->append(patch1, 1, dict);
 
@@ -184,33 +184,33 @@ TEST_F(ControllerTest, GetVersionMaterializedComplex1) {
     PatchTreeManager* patchTreeManager = controller->get_patch_tree_manager();
     DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
 
-    Patch patch1(dict);
+    PatchSorted patch1(dict);
     patch1.add(PatchElement(Triple("g", "p", "o", dict), false));
     patch1.add(PatchElement(Triple("a", "p", "o", dict), true));
     patchTreeManager->append(patch1, 1, dict);
 
-    Patch patch2(dict);
+    PatchSorted patch2(dict);
     patch2.add(PatchElement(Triple("s", "z", "o", dict), false));
     patch2.add(PatchElement(Triple("s", "a", "o", dict), true));
     patchTreeManager->append(patch2, 1, dict);
 
-    Patch patch3(dict);
+    PatchSorted patch3(dict);
     patch3.add(PatchElement(Triple("g", "p", "o", dict), false));
     patch3.add(PatchElement(Triple("a", "p", "o", dict), false));
     patch3.add(PatchElement(Triple("h", "z", "o", dict), false));
     patch3.add(PatchElement(Triple("l", "a", "o", dict), true));
     patchTreeManager->append(patch3, 2, dict);
 
-    Patch patch4(dict);
+    PatchSorted patch4(dict);
     patch4.add(PatchElement(Triple("h", "p", "o", dict), false));
     patch4.add(PatchElement(Triple("s", "z", "o", dict), false));
     patchTreeManager->append(patch4, 4, dict);
 
-    Patch patch5(dict);
+    PatchSorted patch5(dict);
     patch5.add(PatchElement(Triple("h", "p", "o", dict), true));
     patchTreeManager->append(patch5, 5, dict);
 
-    Patch patch6(dict);
+    PatchSorted patch6(dict);
     patch6.add(PatchElement(Triple("a", "p", "o", dict), true));
     patchTreeManager->append(patch6, 6, dict);
 
@@ -359,33 +359,33 @@ TEST_F(ControllerTest, GetVersionMaterializedComplex2) {
     PatchTreeManager* patchTreeManager = controller->get_patch_tree_manager();
     DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
 
-    Patch patch1(dict);
+    PatchSorted patch1(dict);
     patch1.add(PatchElement(Triple("g", "p", "o", dict), false));
     patch1.add(PatchElement(Triple("a", "p", "o", dict), true));
     patchTreeManager->append(patch1, 1, dict);
 
-    Patch patch2(dict);
+    PatchSorted patch2(dict);
     patch2.add(PatchElement(Triple("s", "z", "o", dict), false));
     patch2.add(PatchElement(Triple("s", "a", "o", dict), true));
     patchTreeManager->append(patch2, 1, dict);
 
-    Patch patch3(dict);
+    PatchSorted patch3(dict);
     patch3.add(PatchElement(Triple("g", "p", "o", dict), false));
     patch3.add(PatchElement(Triple("a", "p", "o", dict), false));
     patch3.add(PatchElement(Triple("h", "z", "o", dict), false));
     patch3.add(PatchElement(Triple("l", "a", "o", dict), true));
     patchTreeManager->append(patch3, 2, dict);
 
-    Patch patch4(dict);
+    PatchSorted patch4(dict);
     patch4.add(PatchElement(Triple("h", "p", "o", dict), false));
     patch4.add(PatchElement(Triple("s", "z", "o", dict), false));
     patchTreeManager->append(patch4, 4, dict);
 
-    Patch patch5(dict);
+    PatchSorted patch5(dict);
     patch5.add(PatchElement(Triple("h", "p", "o", dict), true));
     patchTreeManager->append(patch5, 5, dict);
 
-    Patch patch6(dict);
+    PatchSorted patch6(dict);
     patch6.add(PatchElement(Triple("a", "p", "o", dict), true));
     patchTreeManager->append(patch6, 6, dict);
 
@@ -534,33 +534,33 @@ TEST_F(ControllerTest, GetVersionMaterializedComplex3) {
     PatchTreeManager* patchTreeManager = controller->get_patch_tree_manager();
     DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
 
-    Patch patch1(dict);
+    PatchSorted patch1(dict);
     patch1.add(PatchElement(Triple("g", "p", "o", dict), false));
     patch1.add(PatchElement(Triple("a", "p", "o", dict), true));
     patchTreeManager->append(patch1, 1, dict);
 
-    Patch patch2(dict);
+    PatchSorted patch2(dict);
     patch2.add(PatchElement(Triple("s", "z", "o", dict), false));
     patch2.add(PatchElement(Triple("s", "a", "o", dict), true));
     patchTreeManager->append(patch2, 1, dict);
 
-    Patch patch3(dict);
+    PatchSorted patch3(dict);
     patch3.add(PatchElement(Triple("g", "p", "o", dict), false));
     patch3.add(PatchElement(Triple("a", "p", "o", dict), false));
     patch3.add(PatchElement(Triple("h", "z", "o", dict), false));
     patch3.add(PatchElement(Triple("l", "a", "o", dict), true));
     patchTreeManager->append(patch3, 2, dict);
 
-    Patch patch4(dict);
+    PatchSorted patch4(dict);
     patch4.add(PatchElement(Triple("h", "p", "o", dict), false));
     patch4.add(PatchElement(Triple("s", "z", "o", dict), false));
     patchTreeManager->append(patch4, 4, dict);
 
-    Patch patch5(dict);
+    PatchSorted patch5(dict);
     patch5.add(PatchElement(Triple("h", "p", "o", dict), true));
     patchTreeManager->append(patch5, 5, dict);
 
-    Patch patch6(dict);
+    PatchSorted patch6(dict);
     patch6.add(PatchElement(Triple("a", "p", "o", dict), true));
     patchTreeManager->append(patch6, 6, dict);
 
@@ -646,7 +646,7 @@ TEST_F(ControllerTest, EdgeCaseVersionMaterialized1) {
     PatchTreeManager* patchTreeManager = controller->get_patch_tree_manager();
     DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
 
-    Patch patch1(dict);
+    PatchSorted patch1(dict);
     patch1.add(PatchElement(Triple("0", "0", "0", dict), false));
     patch1.add(PatchElement(Triple("1", "1", "1", dict), false));
     patch1.add(PatchElement(Triple("2", "2", "2", dict), false));

@@ -15,7 +15,7 @@ PatchTreeManager::~PatchTreeManager() {
     }
 }
 
-bool PatchTreeManager::append(const Patch& patch, int patch_id, DictionaryManager* dict, ProgressListener* progressListener) {
+bool PatchTreeManager::append(const PatchIndexed& patch, int patch_id, DictionaryManager* dict, ProgressListener* progressListener) {
     int patchtree_id = get_patch_tree_id(patch_id);
     PatchTree* patchtree;
     if(patchtree_id < 0) {
@@ -93,10 +93,10 @@ int PatchTreeManager::get_patch_tree_id(int patch_id) const {
     return it->first;
 }
 
-Patch PatchTreeManager::get_patch(int patch_id, DictionaryManager* dict) {
+Patch* PatchTreeManager::get_patch(int patch_id, DictionaryManager* dict) {
     int patchtree_id = get_patch_tree_id(patch_id);
     if(patchtree_id < 0) {
-        return Patch(dict);
+        return new PatchSorted(dict);
     }
     return get_patch_tree(patchtree_id, dict)->reconstruct_patch(patch_id, true);
 }

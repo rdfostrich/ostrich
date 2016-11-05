@@ -9,25 +9,42 @@
 #include "patch_tree_deletion_value.h"
 #include "patch_element_comparator.h"
 
-// A Patch contains an ordered list of PatchElements
-class Patch {
-protected:
-    std::vector<PatchElement> elements;
-    PatchElementComparator* element_comparator;
+class PatchIterator {
 public:
-    Patch(PatchElementComparator* element_comparator);
-    Patch(DictionaryManager* dict);
+    virtual ~PatchIterator(){};
+    virtual bool has_next() = 0;
+    virtual const PatchElement next() = 0;
+};
+
+class PatchIteratorVector : public PatchIterator {
+protected:
+    std::vector<PatchElement>::const_iterator it;
+    std::vector<PatchElement>::const_iterator it_end;
+public:
+    PatchIteratorVector(std::vector<PatchElement>::const_iterator it, std::vector<PatchElement>::const_iterator it_end);
+    ~PatchIteratorVector();
+    bool has_next();
+    const PatchElement next();
+};
+
+class PatchIteratorHashed : public PatchIterator {
+protected:
+    std::unordered_map<Triple, std::pair<bool, bool>>::const_iterator it;
+    std::unordered_map<Triple, std::pair<bool, bool>>::const_iterator it_end;
+public:
+    PatchIteratorHashed(std::unordered_map<Triple, std::pair<bool, bool>>::const_iterator it, std::unordered_map<Triple, std::pair<bool, bool>>::const_iterator it_end);
+    ~PatchIteratorHashed();
+    bool has_next();
+    const PatchElement next();
+};
+
+class Patch {
+public:
     /**
      * Add an element to the patch
      * @param element The element to add
      */
-    void add(const PatchElement& element);
-    /**
-     * Overwrite the element at the given position.
-     * @param i The index to overwrite.
-     * @param element The element to set.
-     */
-    void overwrite(long i, const PatchElement& element);
+    virtual void add(const PatchElement& element) = 0;
     /**
      * Copy all patch elements from the given patch into this patch.
      * @param patch The patch to get all elements from
@@ -37,13 +54,53 @@ public:
      * The current size of the patch.
      * @return The size
      */
-    unsigned long get_size() const;
+    virtual unsigned long get_size() const = 0;
+    /**
+     * @return The raw string representation of this patch.
+     */
+    string to_string() const;
+    /**
+     * @param dict The dictionary to decode from
+     * @return The string representation of this patch.
+     */
+    string to_string(Dictionary& dict) const;
+    virtual PatchIterator* iterator() const = 0;
+};
+
+class PatchIndexed : public Patch {
+public:
     /**
      * Get the patch element at the given position.
      * @param index The index to get a patch element from
      * @return The patch element, will throw an exception if the index is out of bounds.
      */
+    virtual const PatchElement& get(long index) const = 0;
+};
+
+// A PatchSorted contains an ordered list of PatchElements
+class PatchSorted : public PatchIndexed {
+protected:
+    std::vector<PatchElement> elements;
+    PatchElementComparator* element_comparator;
+public:
+    PatchSorted(PatchElementComparator* element_comparator);
+    PatchSorted(DictionaryManager* dict);
+    void add(const PatchElement& element);
+    /**
+     * Add the given patch element in an unsorted manner.
+     * @param element The patch element
+     */
+    void add_unsorted(const PatchElement &element);
+    void sort();
+    /**
+     * Overwrite the element at the given position.
+     * @param i The index to overwrite.
+     * @param element The element to set.
+     */
+    void overwrite(long i, const PatchElement& element);
+    unsigned long get_size() const;
     const PatchElement& get(long index) const;
+    PatchIterator* iterator() const;
     /**
      * Find the DELETION positions of the given element in this patch based on the pattern-based caches.
      * Additions are thus ignored when doing the counts
@@ -87,19 +144,37 @@ public:
      */
     PatchPosition position_of_strict(const PatchElement& element) const;
     /**
-     * @return The raw string representation of this patch.
-     */
-    string to_string() const;
-    /**
-     * @param dict The dictionary to decode from
-     * @return The string representation of this patch.
-     */
-    string to_string(Dictionary& dict) const;
-    /**
      * @param triple The triple to check
      * @return The index of the found triple or -1.
      */
     long index_of_triple(const Triple& triple) const;
+};
+
+// A PatchUnsorted contains an unordered list of PatchElements
+class PatchUnsorted : public PatchIndexed {
+protected:
+    std::vector<PatchElement> elements;
+public:
+    void add(const PatchElement& element);
+    unsigned long get_size() const;
+    const PatchElement& get(long index) const;
+    PatchIterator* iterator() const;
+};
+
+// A PatchHashed contains an unordered set of PatchElements
+class PatchHashed : public Patch {
+protected:
+    std::unordered_map<Triple, std::pair<bool, bool>> elements;
+public:
+    void add(const PatchElement& element);
+    unsigned long get_size() const;
+    PatchIterator* iterator() const;
+    /**
+     * Copy all patch elements from this and the given patch into a new patch patch.
+     * This is optimized for merging large patches.
+     * @param patch The patch to get all elements from
+     */
+    PatchSorted* join_sorted(const Patch &patch, PatchElementComparator *element_comparator);
 };
 
 #endif //TPFPATCH_STORE_PATCH_H

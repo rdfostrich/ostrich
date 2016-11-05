@@ -23,7 +23,7 @@ public:
      * @param progressListener an optional progress listener.
      * @return If the append succeeded.
      */
-    bool append(const Patch& patch, int patch_id, DictionaryManager* dict, ProgressListener* progressListener = NULL);
+    bool append(const PatchIndexed& patch, int patch_id, DictionaryManager* dict, ProgressListener* progressListener = NULL);
     /**
      * Find all patch trees in the current directory.
      * @return The found patch trees
@@ -68,7 +68,7 @@ public:
      * @param dict The dictionary that must be used in the patch tree if a new one will be created.
      * @return The id of a patch.
      */
-    Patch get_patch(int patch_id, DictionaryManager* dict);
+    Patch* get_patch(int patch_id, DictionaryManager* dict);
     /**
      * @param dict The dictionary that must be used in the patch tree if a new one will be created.
      * @return The largest patch id that is currently available.

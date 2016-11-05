@@ -19,17 +19,18 @@ PatchTree::~PatchTree() {
     delete tripleStore;
 }
 
-void PatchTree::append_unsafe(const Patch& patch, int patch_id, ProgressListener* progressListener) {
+void PatchTree::append_unsafe(const PatchIndexed& patch, int patch_id, ProgressListener* progressListener) {
     // Reconstruct the full patch and add the new elements.
     // We need this for finding their relative positions.
     NOTIFYMSG(progressListener, "Reconstructing...\n");
-    Patch existing_patch = reconstruct_patch(patch_id);
+    PatchHashed* patch_existing = reconstruct_patch_hashed(patch_id);
     NOTIFYMSG(progressListener, "Adding internal patch...\n");
-    existing_patch.addAll(patch);
+    PatchSorted* patch_combined = patch_existing->join_sorted(patch, get_element_comparator());
+    delete patch_existing;
 
     // insert in other triplestore trees
-    NOTIFYMSG(progressListener, ("Inserting " + to_string(existing_patch.get_size()) + " into auxiliary triple stores...\n").c_str());
-    tripleStore->insertAddition(&existing_patch, patch_id, progressListener);
+    NOTIFYMSG(progressListener, ("Inserting " + to_string(patch_combined->get_size()) + " into auxiliary triple stores...\n").c_str());
+    tripleStore->insertAddition(patch_combined, patch_id, progressListener);
 
     // Pre-calculate all inserting-patch triple positions.
     // We could instead do this during patch creation, but
@@ -37,7 +38,7 @@ void PatchTree::append_unsafe(const Patch& patch, int patch_id, ProgressListener
     // since the total complexity will be the same.
     NOTIFYMSG(progressListener, "Precalculating patch positions...\n");
     unordered_map<Triple, long> inserting_patch_triple_positions;
-    for (long i = 0; i < patch.get_size(); i++) {
+    for (int i = 0; i < patch.get_size(); i++) {
         inserting_patch_triple_positions[patch.get(i).get_triple()] = i;
     }
 
@@ -52,12 +53,12 @@ void PatchTree::append_unsafe(const Patch& patch, int patch_id, ProgressListener
     unordered_map<long, PatchPosition> _p_;
     unordered_map<long, PatchPosition> __o;
     PatchPosition ___ = 0;
-    NOTIFYMSG(progressListener, ("Inserting " + to_string(existing_patch.get_size()) + " into main triple store...\n").c_str());
-    for(int i = 0; i < existing_patch.get_size(); i++) {
+    NOTIFYMSG(progressListener, ("Inserting " + to_string(patch_combined->get_size()) + " into main triple store...\n").c_str());
+    for(int i = 0; i < patch_combined->get_size(); i++) {
         if (i % 10000 == 0) {
             NOTIFYLVL(progressListener, "Triple insertion", i);
         }
-        PatchElement patchElement = existing_patch.get(i);
+        PatchElement patchElement = patch_combined->get(i);
         unordered_map<Triple, long>::iterator it_in_inserting_patch = inserting_patch_triple_positions.find(patchElement.get_triple());
         long index_in_inserting_patch = it_in_inserting_patch != inserting_patch_triple_positions.end() ? it_in_inserting_patch->second : -1;
         bool is_in_inserting_patch = index_in_inserting_patch >= 0;
@@ -77,7 +78,7 @@ void PatchTree::append_unsafe(const Patch& patch, int patch_id, ProgressListener
             }
 
             // Calculate the patch positions for all triple patterns (except for S P O, will be 0 anyways)
-            PatchPositions patch_positions = existing_patch.positions(patchElement, sp_, s_o, s__, _po, _p_, __o, ___);
+            PatchPositions patch_positions = patch_combined->positions(patchElement, sp_, s_o, s__, _po, _p_, __o, ___);
             // Add (or update) the value in the tree
             PatchTreeDeletionValueElement patchTreeValueElement(patch_id, patch_positions);
             if (patchElement.is_local_change()) {
@@ -96,15 +97,19 @@ void PatchTree::append_unsafe(const Patch& patch, int patch_id, ProgressListener
     if (patch_id > max_patch_id) {
         max_patch_id = patch_id;
     }
+    delete patch_combined;
 }
 
-bool PatchTree::append(const Patch& patch, int patch_id, ProgressListener* progressListener) {
-    for(long i = 0; i < patch.get_size(); i++) {
+bool PatchTree::append(const PatchIndexed& patch, int patch_id, ProgressListener* progressListener) {
+    PatchIterator* it = patch.iterator();
+    while (it->has_next()) {
+        const PatchElement& element = it->next();
         // We IGNORE the element type, because it makes no sense to have +/- for the same triple in the same patch!
-        if(contains(patch.get(i), patch_id, true)) {
+        if(contains(element, patch_id, true)) {
             return false;
         }
     }
+    delete it;
     append_unsafe(patch, patch_id, progressListener);
     return true;
 }
@@ -159,18 +164,28 @@ bool PatchTree::contains_deletion(const PatchElement& patch_element, int patch_i
     return ret;
 }
 
-Patch PatchTree::reconstruct_patch(int patch_id, bool ignore_local_changes) const {
+void PatchTree::reconstruct_to_patch(Patch* patch, int patch_id, bool ignore_local_changes) const {
     PatchTreeIterator it = iterator(patch_id, false);
     it.set_filter_local_changes(ignore_local_changes);
     PatchTreeKey key;
     PatchTreeValue value;
-    Patch patch(get_element_comparator());
     while(it.next(&key, &value)) {
         PatchElement patchElement(key, value.is_addition(patch_id, false));
         // If the value does not exist yet for this patch id, go look at the previous patch id.
         patchElement.set_local_change(value.is_exact(patch_id) ? value.is_local_change(patch_id) : value.is_local_change(patch_id - 1));
-        patch.add(patchElement);
+        patch->add(patchElement);
     }
+}
+
+PatchHashed* PatchTree::reconstruct_patch_hashed(int patch_id, bool ignore_local_changes) const {
+    PatchHashed* patch = new PatchHashed();
+    reconstruct_to_patch(patch, patch_id, ignore_local_changes);
+    return patch;
+}
+
+PatchSorted* PatchTree::reconstruct_patch(int patch_id, bool ignore_local_changes) const {
+    PatchSorted* patch = new PatchSorted(get_element_comparator());
+    reconstruct_to_patch(patch, patch_id, ignore_local_changes);
     return patch;
 }
 

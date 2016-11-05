@@ -12,11 +12,17 @@ protected:
     bool local_change;
 public:
     PatchElement(const Triple& triple, bool addition);
+    PatchElement(const Triple& triple, bool addition, bool local_change);
     /**
      * Get the triple
      * @return The triple
      */
     const Triple& get_triple() const;
+    /**
+     * Set the addition flag
+     * @param addition If this is an addition.
+     */
+    void set_addition(bool addition);
     /**
      * Check if this element is an addition, otherwise it is a deletion
      * @return If it is an addition
@@ -45,6 +51,7 @@ public:
     const string to_string(Dictionary& dict) const;
     //bool operator < (const PatchElement &rhs) const { return triple < rhs.triple || (triple == rhs.triple && !addition && rhs.addition); }
     bool operator == (const PatchElement &rhs) const { return triple == rhs.triple && addition == rhs.addition; }
+    bool operator != (const PatchElement &rhs) const { return !operator==(rhs); }
 };
 
 #endif //TPFPATCH_STORE_PATCH_ELEMENT_H
