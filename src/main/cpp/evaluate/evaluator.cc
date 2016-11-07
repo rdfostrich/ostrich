@@ -204,7 +204,7 @@ void Evaluator::test_lookup(string s, string p, string o, int replications) {
         }
     }
 
-    cout << "--- ---DELTA MATERIALIZED" << endl;
+    /*cout << "--- ---DELTA MATERIALIZED" << endl;
     cout << "patch_start,patch_end,offset,lookup-ms-1,lookup-ms-50,lookup-ms-100,lookup-ms-inf" << endl;
     for(int i = 0; i < patch_count; i++) {
         for(int j = 0; j < i; j+=i/2+1) {
@@ -217,7 +217,7 @@ void Evaluator::test_lookup(string s, string p, string o, int replications) {
                 cout << "" << j << "," << i << "," << offset << "," << d1 << "," << d50 << "," << d100 << "," << dinf << endl;
             }
         }
-    }
+    }*/
 
     cout << "--- ---VERSION" << endl;
     cout << "offset,lookup-ms-1,lookup-ms-50,lookup-ms-100,lookup-ms-inf" << endl;
