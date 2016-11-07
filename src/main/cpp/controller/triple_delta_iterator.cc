@@ -23,6 +23,7 @@ void TripleDelta::set_addition(bool addition) {
 TripleDeltaIterator* TripleDeltaIterator::offset(int offset) {
     TripleDelta td;
     while(offset-- > 0 && next(&td));
+    return this;
 }
 
 size_t TripleDeltaIterator::get_count() {
