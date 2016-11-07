@@ -23,8 +23,11 @@ for file in query-$query-*; do
         sed -i "" '1,1d; $d' $file
         targetbase="$query/"
 
-        sed '/--- ---VERSION MATERIALIZED$/,/--- ---DELTA MATERIALIZED/!d' $file | sed '1,1d; $d' > "$targetbase/versionmat-$pattern.csv"
-        sed '/--- ---DELTA MATERIALIZED$/,/--- ---VERSION/!d' $file | sed '1,1d; $d' > "$targetbase/deltamat-$pattern.csv"
+        #sed '/--- ---VERSION MATERIALIZED$/,/--- ---DELTA MATERIALIZED/!d' $file | sed '1,1d; $d' > "$targetbase/versionmat-$pattern.csv"
+        #sed '/--- ---DELTA MATERIALIZED$/,/--- ---VERSION/!d' $file | sed '1,1d; $d' > "$targetbase/deltamat-$pattern.csv"
+        #sed '/--- ---VERSION$/,$!d' $file | sed '1,1d' > "$targetbase/version-$pattern.csv"
+
+        sed '/--- ---VERSION MATERIALIZED$/,/--- ---VERSION/!d' $file | sed '1,1d; $d' > "$targetbase/versionmat-$pattern.csv"
         sed '/--- ---VERSION$/,$!d' $file | sed '1,1d' > "$targetbase/version-$pattern.csv"
 
         rm $file
