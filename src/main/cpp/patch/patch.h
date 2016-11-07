@@ -75,6 +75,7 @@ public:
      * @return The patch element, will throw an exception if the index is out of bounds.
      */
     virtual const PatchElement& get(long index) const = 0;
+    virtual const std::vector<PatchElement>& get_vector() const = 0;
 };
 
 // A PatchSorted contains an ordered list of PatchElements
@@ -85,6 +86,7 @@ protected:
 public:
     PatchSorted(PatchElementComparator* element_comparator);
     PatchSorted(DictionaryManager* dict);
+    PatchSorted(PatchElementComparator* element_comparator, std::vector<PatchElement> elements);
     void add(const PatchElement& element);
     /**
      * Add the given patch element in an unsorted manner.
@@ -101,6 +103,7 @@ public:
     unsigned long get_size() const;
     const PatchElement& get(long index) const;
     PatchIterator* iterator() const;
+    const std::vector<PatchElement>& get_vector() const;
     /**
      * Find the DELETION positions of the given element in this patch based on the pattern-based caches.
      * Additions are thus ignored when doing the counts
@@ -159,6 +162,7 @@ public:
     unsigned long get_size() const;
     const PatchElement& get(long index) const;
     PatchIterator* iterator() const;
+    const std::vector<PatchElement>& get_vector() const;
 };
 
 // A PatchHashed contains an unordered set of PatchElements
@@ -174,7 +178,7 @@ public:
      * This is optimized for merging large patches.
      * @param patch The patch to get all elements from
      */
-    PatchSorted* join_sorted(const Patch &patch, PatchElementComparator *element_comparator);
+    PatchSorted* join_sorted(const PatchIndexed &patch, PatchElementComparator *element_comparator);
 };
 
 #endif //TPFPATCH_STORE_PATCH_H

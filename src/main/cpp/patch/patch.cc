@@ -44,6 +44,8 @@ PatchSorted::PatchSorted(PatchElementComparator* element_comparator) : elements(
 
 PatchSorted::PatchSorted(DictionaryManager* dict) : PatchSorted(new PatchElementComparator(new PatchTreeKeyComparator(comp_s, comp_p, comp_o, dict))) {}
 
+PatchSorted::PatchSorted(PatchElementComparator* element_comparator, std::vector<PatchElement> elements) : elements(elements), element_comparator(element_comparator) {}
+
 void PatchSorted::add(const PatchElement& element) {
     std::vector<PatchElement>::iterator itToInsert = std::lower_bound(
             elements.begin(), elements.end(), element, element_comparator->get());
@@ -81,6 +83,10 @@ const PatchElement& PatchSorted::get(long index) const {
         throw std::invalid_argument("Index out of bounds");
     }
     return elements[index];
+}
+
+const std::vector<PatchElement>& PatchSorted::get_vector() const {
+    return elements;
 }
 
 PatchIterator* PatchSorted::iterator() const {
@@ -195,6 +201,10 @@ PatchIterator* PatchUnsorted::iterator() const {
     return new PatchIteratorVector(elements.cbegin(), elements.cend());
 }
 
+const std::vector<PatchElement>& PatchUnsorted::get_vector() const {
+    return elements;
+}
+
 void PatchHashed::add(const PatchElement &element) {
     elements.insert(std::pair<Triple, std::pair<bool, bool>>(element.get_triple(), std::pair<bool, bool>(element.is_addition(), element.is_local_change())));
 }
@@ -207,7 +217,14 @@ PatchIterator* PatchHashed::iterator() const {
     return new PatchIteratorHashed(elements.cbegin(), elements.cend());
 }
 
-PatchSorted* PatchHashed::join_sorted(const Patch &patch, PatchElementComparator *element_comparator) {
+PatchSorted* PatchHashed::join_sorted(const PatchIndexed &patch, PatchElementComparator *element_comparator) {
+    // If the reconstructed patch (this) is empty, simply use vector from given patch and sort that.
+    if (get_size() == 0) {
+        PatchSorted* new_patch = new PatchSorted(element_comparator, patch.get_vector());
+        new_patch->sort();
+        return new_patch;
+    }
+
     PatchSorted* new_patch = new PatchSorted(element_comparator);
     std::unordered_set<Triple> skip_elements;
 
