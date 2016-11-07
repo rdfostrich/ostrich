@@ -155,7 +155,7 @@ long long Evaluator::measure_lookup_version_materialized(Triple triple_pattern, 
         while((limit == -2 || limit-- > 0) && ti->next(&t)) { count++; };
         //cout << "Results: " << count << endl; // TODO
         //cout << "b: " << (st2.stopReal()) << endl;st2.reset(); // TODO
-        total += st.stopReal() / 1000;
+        total += st.stopReal();
     }
     return total / replications;
 }
@@ -169,7 +169,7 @@ long long Evaluator::measure_lookup_delta_materialized(Triple triple_pattern, in
         TripleDelta t;
         long count = 0;
         while ((limit == -2 || limit-- > 0) && ti->next(&t)) { count++; };
-        total += st.stopReal() / 1000;
+        total += st.stopReal();
     }
     return total / replications;
 }
@@ -182,7 +182,7 @@ long long Evaluator::measure_lookup_version(Triple triple_pattern, int offset, i
         TripleVersions t;
         long count = 0;
         while((limit == -2 || limit-- > 0) && ti->next(&t)) { count++; };
-        total += st.stopReal() / 1000;
+        total += st.stopReal();
     }
     return total / replications;
 }
@@ -193,7 +193,7 @@ void Evaluator::test_lookup(string s, string p, string o, int replications) {
     cout << "---PATTERN START: " << triple_pattern.to_string(*dict) << endl;
 
     cout << "--- ---VERSION MATERIALIZED" << endl;
-    cout << "patch,offset,lookup-ms-1,lookup-ms-50,lookup-ms-100,lookup-ms-inf" << endl;
+    cout << "patch,offset,lookup-mus-1,lookup-mus-50,lookup-mus-100,lookup-mus-inf" << endl;
     for(int i = 0; i < patch_count; i++) {
         for(int offset = 0; offset < 1000; offset+=500) {
             long d1 = measure_lookup_version_materialized(triple_pattern, offset, i, 1, replications);
@@ -205,7 +205,7 @@ void Evaluator::test_lookup(string s, string p, string o, int replications) {
     }
 
     /*cout << "--- ---DELTA MATERIALIZED" << endl;
-    cout << "patch_start,patch_end,offset,lookup-ms-1,lookup-ms-50,lookup-ms-100,lookup-ms-inf" << endl;
+    cout << "patch_start,patch_end,offset,lookup-mus-1,lookup-mus-50,lookup-mus-100,lookup-mus-inf" << endl;
     for(int i = 0; i < patch_count; i++) {
         for(int j = 0; j < i; j+=i/2+1) {
             if (j > 0) j--;
@@ -220,7 +220,7 @@ void Evaluator::test_lookup(string s, string p, string o, int replications) {
     }*/
 
     cout << "--- ---VERSION" << endl;
-    cout << "offset,lookup-ms-1,lookup-ms-50,lookup-ms-100,lookup-ms-inf" << endl;
+    cout << "offset,lookup-mus-1,lookup-mus-50,lookup-mus-100,lookup-mus-inf" << endl;
     for(int offset = 0; offset < 1000; offset+=500) {
         long d1 = measure_lookup_version(triple_pattern, offset, 1, replications);
         long d50 = measure_lookup_version(triple_pattern, offset, 50, replications);
