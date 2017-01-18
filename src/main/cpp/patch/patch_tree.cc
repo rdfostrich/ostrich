@@ -237,14 +237,14 @@ PatchTreeIterator* PatchTree::iterator(const Triple *triple_pattern) const {
     return patchTreeIterator;
 }
 
-std::pair<PatchPosition, Triple> PatchTree::deletion_count(const Triple& triple_pattern, int patch_id) const {
+std::pair<PatchPosition, Triple> PatchTree::deletion_count(const Triple &triple_pattern_jump, const Triple &triple_pattern_match, int patch_id, bool force_reverse) const {
     DB::Cursor* cursor_deletions = tripleStore->getDeletionsTree()->cursor();
 
     // Try jumping backwards to the position where the triple_pattern matches
     // If this jump succeeds, we will be _before_ the last matching triple, so we keep the normal iteration order.
     // If this jump failed, we jump to the very last record, which will be _after_ the last matching triple, so we reverse the iteration order.
     size_t size;
-    const char* data = triple_pattern.serialize(&size);
+    const char* data = triple_pattern_jump.serialize(&size);
     bool hasJumped = cursor_deletions->jump_back(data, size);
     if (!hasJumped) {
         cursor_deletions->jump_back();
@@ -253,15 +253,28 @@ std::pair<PatchPosition, Triple> PatchTree::deletion_count(const Triple& triple_
 
     PatchTreeIterator patchTreeIterator(cursor_deletions, NULL, get_spo_comparator());
     patchTreeIterator.set_patch_filter(patch_id, true);
-    patchTreeIterator.set_triple_pattern_filter(triple_pattern);
-    if (!hasJumped) patchTreeIterator.set_reverse(true);
+    patchTreeIterator.set_triple_pattern_filter(triple_pattern_match);
+    if (!hasJumped || force_reverse) patchTreeIterator.set_reverse(true);
 
     PatchTreeKey key;
     PatchTreeDeletionValue value;
-    if(patchTreeIterator.next_deletion(&key, &value)) {
-        return std::make_pair(value.get(patch_id).get_patch_positions().get_by_pattern(triple_pattern) + 1, key);
+    if(patchTreeIterator.next_deletion(&key, &value, true)) {
+        return std::make_pair(value.get(patch_id).get_patch_positions().get_by_pattern(triple_pattern_match) + 1, key);
     }
     return std::make_pair((PatchPosition) 0, Triple());
+};
+
+std::pair<PatchPosition, Triple> PatchTree::deletion_count_until(const Triple &triple_pattern, int patch_id) const {
+    return deletion_count(triple_pattern, triple_pattern, patch_id, false);
+}
+
+std::pair<PatchPosition, Triple> PatchTree::deletion_count_including(const Triple &triple_pattern, int patch_id) const {
+    unsigned int max_id = (unsigned int) -1;
+    return deletion_count(Triple(
+            triple_pattern.get_subject() == 0 ? max_id : triple_pattern.get_subject(),
+            triple_pattern.get_predicate() == 0 ? max_id : triple_pattern.get_predicate(),
+            triple_pattern.get_object() == 0 ? max_id : triple_pattern.get_object()
+    ), triple_pattern, patch_id, true);
 }
 
 PositionedTripleIterator* PatchTree::deletion_iterator_from(const Triple& offset, int patch_id, const Triple& triple_pattern) const {
@@ -316,6 +329,18 @@ PatchTreeDeletionValue* PatchTree::get_deletion_value_after(const Triple& triple
     deletion_value->deserialize(vbp, vsp);
     free((char*) kbp);
     return deletion_value;
+}
+
+PatchPositions PatchTree::get_deletion_patch_positions(const Triple& triple, int patch_id, bool override___, PatchPosition ___) const {
+    return PatchPositions(
+            deletion_count_including(Triple(triple.get_subject(), triple.get_predicate(), 0), patch_id).first,
+            deletion_count_including(Triple(triple.get_subject(), 0, triple.get_object()), patch_id).first,
+            deletion_count_including(Triple(triple.get_subject(), 0, 0), patch_id).first,
+            deletion_count_including(Triple(0, triple.get_predicate(), triple.get_object()), patch_id).first,
+            deletion_count_including(Triple(0, triple.get_predicate(), 0), patch_id).first,
+            deletion_count_including(Triple(0, 0, triple.get_object()), patch_id).first,
+            override___ ? ___ : deletion_count_including(Triple(0, 0, 0), patch_id).first
+    );
 }
 
 PatchTreeTripleIterator* PatchTree::addition_iterator_from(long offset, int patch_id, const Triple& triple_pattern) const {

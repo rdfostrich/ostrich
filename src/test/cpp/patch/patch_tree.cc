@@ -869,13 +869,13 @@ TEST_F(PatchTreeTest, DeletionCount) {
     // s a o +
     // s z o -
 
-    ASSERT_EQ(2, patchTree->deletion_count(Triple("", "", "", &dict), 1).first) << "Deletion count is incorrect";
-    ASSERT_EQ(1, patchTree->deletion_count(Triple("s", "", "", &dict), 1).first) << "Deletion count is incorrect";
-    ASSERT_EQ(0, patchTree->deletion_count(Triple("s", "a", "", &dict), 1).first) << "Deletion count is incorrect";
-    ASSERT_EQ(2, patchTree->deletion_count(Triple("", "", "o", &dict), 1).first) << "Deletion count is incorrect";
-    ASSERT_EQ(1, patchTree->deletion_count(Triple("", "p", "o", &dict), 1).first) << "Deletion count is incorrect";
-    ASSERT_EQ(1, patchTree->deletion_count(Triple("", "p", "", &dict), 1).first) << "Deletion count is incorrect";
-    ASSERT_EQ(1, patchTree->deletion_count(Triple("g", "p", "", &dict), 1).first) << "Deletion count is incorrect";
+    ASSERT_EQ(2, patchTree->deletion_count_until(Triple("", "", "", &dict), 1).first) << "Deletion count is incorrect";
+    ASSERT_EQ(1, patchTree->deletion_count_until(Triple("s", "", "", &dict), 1).first) << "Deletion count is incorrect";
+    ASSERT_EQ(0, patchTree->deletion_count_until(Triple("s", "a", "", &dict), 1).first) << "Deletion count is incorrect";
+    ASSERT_EQ(2, patchTree->deletion_count_until(Triple("", "", "o", &dict), 1).first) << "Deletion count is incorrect";
+    ASSERT_EQ(1, patchTree->deletion_count_until(Triple("", "p", "o", &dict), 1).first) << "Deletion count is incorrect";
+    ASSERT_EQ(1, patchTree->deletion_count_until(Triple("", "p", "", &dict), 1).first) << "Deletion count is incorrect";
+    ASSERT_EQ(1, patchTree->deletion_count_until(Triple("g", "p", "", &dict), 1).first) << "Deletion count is incorrect";
 
     // Patch 2
     // a p o +/-
@@ -885,7 +885,7 @@ TEST_F(PatchTreeTest, DeletionCount) {
     // s a o +
     // s z o -
 
-    ASSERT_EQ(3, patchTree->deletion_count(Triple("", "", "", &dict), 2).first) << "Deletion count is incorrect";
+    ASSERT_EQ(3, patchTree->deletion_count_until(Triple("", "", "", &dict), 2).first) << "Deletion count is incorrect";
 
     // Patch 4
     // a p o +/-
@@ -896,7 +896,7 @@ TEST_F(PatchTreeTest, DeletionCount) {
     // s a o +
     // s z o -/-
 
-    ASSERT_EQ(4, patchTree->deletion_count(Triple("", "", "", &dict), 4).first) << "Deletion count is incorrect";
+    ASSERT_EQ(4, patchTree->deletion_count_until(Triple("", "", "", &dict), 4).first) << "Deletion count is incorrect";
 }
 
 TEST_F(PatchTreeTest, DeletionIterator) {
@@ -1517,4 +1517,56 @@ TEST_F(PatchTreeTest, DeletionValueAfter) {
     ASSERT_NE((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after(Triple(0, 0, 0))) << "Deletion value must not be null";
     ASSERT_NE((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after(Triple(9, 9, 0))) << "Deletion value must not be null";
     ASSERT_NE((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after(Triple(9, 0, 0))) << "Deletion value must not be null";
+}
+
+TEST_F(PatchTreeTest, GetDeletionPatchPositions) {
+    PatchSorted patch1(&dict);
+    patch1.add(PatchElement(Triple("a", "a", "a", &dict), false));
+    patch1.add(PatchElement(Triple("b", "b", "b", &dict), true));
+    patch1.add(PatchElement(Triple("c", "c", "c", &dict), false));
+    patch1.add(PatchElement(Triple("b", "c", "a", &dict), true));
+    patchTree->append(patch1, 1);
+
+    PatchSorted patch2(&dict);
+    patch2.add(PatchElement(Triple("a", "a", "a", &dict), true));
+    patch2.add(PatchElement(Triple("f", "f", "f", &dict), false));
+    patch2.add(PatchElement(Triple("b", "c", "a", &dict), false));
+    patch2.add(PatchElement(Triple("a", "c", "a", &dict), false));
+    patch2.add(PatchElement(Triple("c", "c", "a", &dict), false));
+    patchTree->append(patch2, 2);
+
+    // Patch 1
+    // a a a -
+    // b b b +
+    // b c a +
+    // c c c -
+
+    // Patch 2
+    // a a a + (L)
+    // a c a -
+    // b b b +
+    // b c a - (L)
+    // c c a -
+    // c c c -
+    // f f f -
+
+    PatchPositions positions;
+
+    positions = patchTree->get_deletion_patch_positions(Triple("a", "a", "a", &dict), 1);
+    ASSERT_EQ(1, positions.sp_);
+    ASSERT_EQ(1, positions.s_o);
+    ASSERT_EQ(1, positions.s__);
+    ASSERT_EQ(1, positions._po);
+    ASSERT_EQ(1, positions._p_);
+    ASSERT_EQ(1, positions.__o);
+    ASSERT_EQ(2, positions.___);
+
+    positions = patchTree->get_deletion_patch_positions(Triple("c", "c", "c", &dict), 2);
+    ASSERT_EQ(2, positions.sp_);
+    ASSERT_EQ(1, positions.s_o);
+    ASSERT_EQ(2, positions.s__);
+    ASSERT_EQ(1, positions._po);
+    ASSERT_EQ(3, positions._p_);
+    ASSERT_EQ(1, positions.__o);
+    ASSERT_EQ(4, positions.___);
 }

@@ -3,7 +3,7 @@
 #include "triple.h"
 #include "patch_tree_key_comparator.h"
 
-Triple::Triple() {}
+Triple::Triple() : subject(0), predicate(0), object(0) {}
 
 Triple::Triple(const TripleID& tripleId) :
         subject(tripleId.getSubject()), predicate(tripleId.getPredicate()), object(tripleId.getObject()) {}

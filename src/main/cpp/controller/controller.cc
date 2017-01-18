@@ -39,7 +39,7 @@ size_t Controller::get_version_materialized_count(const Triple& triple_pattern, 
         return snapshot_count;
     }
 
-    std::pair<PatchPosition, Triple> deletion_count_data = patchTree->deletion_count(triple_pattern, patch_id);
+    std::pair<PatchPosition, Triple> deletion_count_data = patchTree->deletion_count_until(triple_pattern, patch_id);
     size_t addition_count = patchTree->addition_count(patch_id, triple_pattern);
     return snapshot_count - deletion_count_data.first + addition_count;
 }
@@ -69,7 +69,7 @@ TripleIterator* Controller::get_version_materialized(const Triple &triple_patter
     long added_offset = 0;
     bool check_offseted_deletions = true;
 
-    std::pair<PatchPosition, Triple> deletion_count_data = patchTree->deletion_count(triple_pattern, patch_id);
+    std::pair<PatchPosition, Triple> deletion_count_data = patchTree->deletion_count_until(triple_pattern, patch_id);
     // This loop continuously determines new snapshot iterators until it finds one that contains
     // no new deletions with respect to the snapshot iterator from last iteration.
     // This loop is required to handle special cases like the one in the ControllerTest::EdgeCase1.

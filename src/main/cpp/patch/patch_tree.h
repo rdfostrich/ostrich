@@ -123,13 +123,31 @@ public:
      */
     PatchTreeIterator* iterator(const Triple* triple_pattern) const;
     /**
-     * Get the number of deletions.
+     * Get the number of deletions for the given triple pattern.
+     * @param triple_pattern_jump The triple pattern to jump to.
+     * @param triple_pattern_match The triple pattern to match by.
+     * @param patch_id The patch id to get the deletions for, this patch id must exist within the tree!
+     * @param force_reverse If reversed traversal order must be forced.
+     * @return A pair of the amount of deletions matching the given triple pattern for the given patch id and the matching triple.
+     *         This matching triple will be undefined if the amount is zero.
+     */
+    std::pair<PatchPosition, Triple> deletion_count(const Triple &triple_pattern_jump, const Triple &triple_pattern_match, int patch_id, bool force_reverse) const;
+    /**
+     * Get the number of deletions BEFORE the given triple pattern.
+     * @param triple_pattern The triple pattern to match by.
+     * @param patch_id The patch id to get the deletions for, this patch id must exist within the tree!
+     * @return A pair of the amount of deletions matching the given triple pattern for the given patch id and the first triple.
+     *         This first triple will be undefined if the amount is zero.
+     */
+    std::pair<PatchPosition, Triple> deletion_count_until(const Triple &triple_pattern, int patch_id) const;
+    /**
+     * Get the total number of deletions matching the given triple pattern.
      * @param triple_pattern The triple pattern to match by.
      * @param patch_id The patch id to get the deletions for, this patch id must exist within the tree!
      * @return A pair of the amount of deletions matching the given triple pattern for the given patch id and the last triple.
      *         This last triple will be undefined if the amount is zero.
      */
-    std::pair<PatchPosition, Triple> deletion_count(const Triple& triple_pattern, int patch_id) const;
+    std::pair<PatchPosition, Triple> deletion_count_including(const Triple &triple_pattern, int patch_id) const;
     /**
      * Get an iterator that loops over all deletions starting from a given triple and only matching the
      * given triple pattern.
@@ -153,6 +171,13 @@ public:
      * @return The deletion value for the given triple pattern, or null.
      */
     PatchTreeDeletionValue* get_deletion_value_after(const Triple& triple_pattern) const;
+    /**
+     * Calculate the patch positions for the current triple for the current patch id.
+     * @param triple The triple to calculate the patch positions for.
+     * @param patch_id The patch in which to calculate the positions for this triple.
+     * @return The patch positions for the given triple in the given patch id.
+     */
+    PatchPositions get_deletion_patch_positions(const Triple& triple, int patch_id, bool override___ = false, PatchPosition ___ = 0) const;
     /**
      * Get an iterator that loops over all additions starting with a given offset and only matching the
      * given triple pattern.
