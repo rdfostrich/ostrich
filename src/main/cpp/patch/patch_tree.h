@@ -146,6 +146,14 @@ public:
      */
     PatchTreeDeletionValue* get_deletion_value(const Triple& triple) const;
     /**
+     * Get the deletion value at or after the given triple pattern.
+     * If the pattern is an exact match, then the exact value will be returned.
+     * Otherwise the earliest value after that matching the triple pattern will be returned.
+     * @param triple_pattern The triple pattern to lookup
+     * @return The deletion value for the given triple pattern, or null.
+     */
+    PatchTreeDeletionValue* get_deletion_value_after(const Triple& triple_pattern) const;
+    /**
      * Get an iterator that loops over all additions starting with a given offset and only matching the
      * given triple pattern.
      * @param offset The number of addition triples to skip.

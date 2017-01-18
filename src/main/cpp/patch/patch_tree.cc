@@ -289,6 +289,35 @@ PatchTreeDeletionValue* PatchTree::get_deletion_value(const Triple &triple) cons
     return NULL;
 }
 
+PatchTreeDeletionValue* PatchTree::get_deletion_value_after(const Triple& triple_pattern) const {
+    size_t ksp, vsp;
+    const char *kbp = triple_pattern.serialize(&ksp);
+    DB::Cursor* cursor = tripleStore->getDeletionsTree()->cursor();
+    if (!cursor->jump(kbp, ksp)) {
+        free((char*) kbp);
+        return NULL;
+    }
+    const char *vbp;
+    kbp = cursor->get(&ksp, &vbp, &vsp);
+    if (vbp == NULL) {
+        free((char*) kbp);
+        return NULL;
+    }
+
+    kbp = cursor->get(&ksp, &vbp, &vsp);
+    Triple triple;
+    triple.deserialize(kbp, ksp);
+    if (!Triple::pattern_match_triple(triple, triple_pattern)) {
+        free((char*) kbp);
+        return NULL;
+    }
+
+    PatchTreeDeletionValue* deletion_value = new PatchTreeDeletionValue();
+    deletion_value->deserialize(vbp, vsp);
+    free((char*) kbp);
+    return deletion_value;
+}
+
 PatchTreeTripleIterator* PatchTree::addition_iterator_from(long offset, int patch_id, const Triple& triple_pattern) const {
     DB::Cursor* cursor = tripleStore->getTree(triple_pattern)->cursor();
     size_t size;
