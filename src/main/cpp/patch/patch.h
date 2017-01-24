@@ -8,8 +8,9 @@
 #include "patch_element.h"
 #include "patch_tree_deletion_value.h"
 #include "patch_element_comparator.h"
+#include "patch_element_iterator.h"
 
-class PatchIterator {
+class PatchIterator { // TODO: rm me? or merge with PatchElementIterator?
 public:
     virtual ~PatchIterator(){};
     virtual bool has_next() = 0;
@@ -65,6 +66,20 @@ public:
      */
     string to_string(Dictionary& dict) const;
     virtual PatchIterator* iterator() const = 0;
+    /**
+     * Find the DELETION positions of the given element in this patch based on the pattern-based caches.
+     * Additions are thus ignored when doing the counts
+     * @param element The element to look for
+     * @return The relative positions for all derived triple patterns.
+     */
+    static PatchPositions positions(const Triple& element,
+                                    unordered_map<long, PatchPosition>& sp_,
+                                    unordered_map<long, PatchPosition>& s_o,
+                                    unordered_map<long, PatchPosition>& s__,
+                                    unordered_map<long, PatchPosition>& _po,
+                                    unordered_map<long, PatchPosition>& _p_,
+                                    unordered_map<long, PatchPosition>& __o,
+                                    PatchPosition& ___);
 };
 
 class PatchIndexed : public Patch {
@@ -105,20 +120,6 @@ public:
     PatchIterator* iterator() const;
     const std::vector<PatchElement>& get_vector() const;
     /**
-     * Find the DELETION positions of the given element in this patch based on the pattern-based caches.
-     * Additions are thus ignored when doing the counts
-     * @param element The element to look for
-     * @return The relative positions for all derived triple patterns.
-     */
-    PatchPositions positions(const PatchElement& element,
-                              unordered_map<long, PatchPosition>& sp_,
-                              unordered_map<long, PatchPosition>& s_o,
-                              unordered_map<long, PatchPosition>& s__,
-                              unordered_map<long, PatchPosition>& _po,
-                              unordered_map<long, PatchPosition>& _p_,
-                              unordered_map<long, PatchPosition>& __o,
-                              PatchPosition& ___) const;
-    /**
      * Find the position of the given element in this patch.
      * The boolean parameters are used to virtually include or exclude certain elements.
      * For example, if `s` is true, then only the elements from this patch that have the same subject as the
@@ -151,6 +152,7 @@ public:
      * @return The index of the found triple or -1.
      */
     long index_of_triple(const Triple& triple) const;
+    PatchElementIterator* element_iterator();
 };
 
 // A PatchUnsorted contains an unordered list of PatchElements

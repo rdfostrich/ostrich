@@ -15,7 +15,7 @@ PatchTreeManager::~PatchTreeManager() {
     }
 }
 
-bool PatchTreeManager::append(const PatchIndexed& patch, int patch_id, DictionaryManager* dict, bool check_uniqueness, ProgressListener* progressListener) {
+bool PatchTreeManager::append(PatchElementIterator* patch_it, int patch_id, DictionaryManager* dict, bool check_uniqueness, ProgressListener* progressListener) {
     int patchtree_id = get_patch_tree_id(patch_id);
     PatchTree* patchtree;
     if(patchtree_id < 0) {
@@ -24,11 +24,19 @@ bool PatchTreeManager::append(const PatchIndexed& patch, int patch_id, Dictionar
         patchtree = get_patch_tree(patchtree_id, dict);
     }
     if (check_uniqueness) {
-        return patchtree->append(patch, patch_id, progressListener);
+        return patchtree->append(patch_it, patch_id, progressListener);
     } else {
-        patchtree->append_unsafe(patch, patch_id, progressListener);
+        patchtree->append_unsafe(patch_it, patch_id, progressListener);
         return true;
     }
+}
+
+bool PatchTreeManager::append(const PatchSorted &patch, int patch_id, DictionaryManager *dict, bool check_uniqueness,
+                              ProgressListener *progressListener) {
+    PatchElementIteratorVector* it = new PatchElementIteratorVector(&patch.get_vector());
+    bool ret = append(it, patch_id, dict, check_uniqueness, progressListener);
+    delete it;
+    return ret;
 }
 
 std::map<int, PatchTree*> PatchTreeManager::detect_patch_trees() const {

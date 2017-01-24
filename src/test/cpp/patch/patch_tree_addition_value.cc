@@ -45,7 +45,7 @@ TEST(PatchTreeAdditionValueTest, Lookup) {
 
     ASSERT_EQ(false, value.is_local_change(4)) << "to_string is incorrect";
     ASSERT_EQ(true, value.is_local_change(5)) << "to_string is incorrect";
-    ASSERT_EQ(false, value.is_local_change(6)) << "to_string is incorrect";
+    ASSERT_EQ(true, value.is_local_change(6)) << "to_string is incorrect";
 }
 
 TEST(PatchTreeAdditionValueTest, Serialization) {

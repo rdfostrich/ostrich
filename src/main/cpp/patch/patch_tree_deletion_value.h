@@ -49,6 +49,18 @@ typedef struct PatchPositions {
         if(!s & !p & o) return __o;
         /*if(!s & !p & !o)*/ return ___;
     }
+    bool operator == (const PatchPositions &rhs) const {
+        return this->sp_ == rhs.sp_
+               && this->s_o == rhs.s_o
+               && this->s__ == rhs.s__
+               && this->_po == rhs._po
+               && this->_p_ == rhs._p_
+               && this->__o == rhs.__o
+               && this->___ == rhs.___;
+    }
+    bool operator != (const PatchPositions &rhs) const {
+        return !this->operator==(rhs);
+    }
 } PatchPositions;
 
 // A PatchTreeDeletionValueElement contains a patch id, a relative patch position and

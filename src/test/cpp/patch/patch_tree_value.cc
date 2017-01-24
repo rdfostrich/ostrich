@@ -36,8 +36,8 @@ TEST(PatchTreeValueTest, Addition1) {
     ASSERT_EQ(false, value.is_deletion(0, false)) << "An non-initialized value must not be a deletion";
     ASSERT_EQ(false, value.is_deletion(1, false)) << "An non-initialized value must not be a deletion";
 
-    ASSERT_EQ(true, value.is_local_change(0)) << "An non-initialized value must not be a local change";
-    ASSERT_EQ(false, value.is_local_change(1)) << "An non-initialized value must not be a local change";
+    ASSERT_EQ(true, value.is_local_change(0)) << "Set value must be a local change";
+    ASSERT_EQ(true, value.is_local_change(1)) << "Following patch ids must be a local change as well even if not explicitly set";
 }
 
 TEST(PatchTreeValueTest, Addition2) {

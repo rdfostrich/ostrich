@@ -260,10 +260,10 @@ TEST_F(PatchElementsTest, Positions) {
     // Simulate patch-position calculation
     // It is important that this occurs in the correct triple-order!
     // In this unit test we order this manually, but eventually, this orderning is automatically by the patch tree.
-    PatchPositions pos_1 = patchElements.positions(e_1, sp_, s_o, s__, _po, _p_, __o, ___);
-    PatchPositions pos_2 = patchElements.positions(e_2, sp_, s_o, s__, _po, _p_, __o, ___);
-    PatchPositions pos_3 = patchElements.positions(e_3, sp_, s_o, s__, _po, _p_, __o, ___);
-    PatchPositions pos_0 = patchElements.positions(e_0, sp_, s_o, s__, _po, _p_, __o, ___);
+    PatchPositions pos_1 = PatchPositions(); // This is an addition, so no patch positions
+    PatchPositions pos_2 = Patch::positions(e_2.get_triple(), sp_, s_o, s__, _po, _p_, __o, ___);
+    PatchPositions pos_3 = PatchPositions(); // This is an addition, so no patch positions
+    PatchPositions pos_0 = Patch::positions(e_0.get_triple(), sp_, s_o, s__, _po, _p_, __o, ___);
 
     // All additions will have position -1, because these are not taken into account when determining positions!
     ASSERT_EQ(-1, pos_1.sp_) << "Found position is wrong";

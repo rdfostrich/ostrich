@@ -3,6 +3,10 @@
 PatchElement::PatchElement(const Triple& triple, bool addition) : triple(triple), addition(addition), local_change(false) {}
 PatchElement::PatchElement(const Triple& triple, bool addition, bool local_change) : triple(triple), addition(addition), local_change(local_change) {}
 
+void PatchElement::set_triple(const Triple& triple) {
+    this->triple = triple;
+}
+
 const Triple& PatchElement::get_triple() const {
     return triple;
 }

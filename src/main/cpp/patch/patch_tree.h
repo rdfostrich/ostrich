@@ -10,6 +10,7 @@
 #include "positioned_triple_iterator.h"
 #include "triple_store.h"
 #include "triple_iterator.h"
+#include "patch_element_iterator.h"
 
 #define PATCHTREE_FILENAME_BASE(id) ("patchtree_" + std::to_string(id) + ".kct")
 #define PATCHTREE_FILENAME(id,suffix) (PATCHTREE_FILENAME_BASE(id) + "_" + suffix)
@@ -39,22 +40,31 @@ public:
     /**
      * Append the given patch elements to the tree with given patch id.
      * This can OVERWRITE existing elements without a warning.
-     * @param patch The patch elements
+     * @param patch_it A patch iterator with sorted (SPO) elements
      * @param patch_id The id of the patch
      * @param progressListener an optional progress listener.
      * @note If an error occurs, some elements might have already been added.
      * If you want to change this behaviour, you'll have to first check if the patch elements are really new.
      */
-    void append_unsafe(const PatchIndexed& patch, int patch_id, ProgressListener* progressListener = NULL);
+    void append_unsafe(PatchElementIterator *patch_it, int patch_id, ProgressListener *progressListener = NULL);
     /**
      * Append the given patch elements to the tree with given patch id.
      * This safe append will first check if the patch is completely new, only then it will add the data
-     * @param patch The patch elements
+     * @param patch_it The patch elements to add (sorted SPO)
      * @param patch_id The id of the patch
      * @param progressListener an optional progress listener.
      * @return If the patch was added, otherwise the patch was not completely new.
      */
-    bool append(const PatchIndexed& patch, int patch_id, ProgressListener* progressListener = NULL);
+    bool append(PatchElementIterator* patch_it, int patch_id, ProgressListener* progressListener = NULL);
+    /**
+     * Append the given patch elements to the tree with given patch id.
+     * This safe append will first check if the patch is completely new, only then it will add the data
+     * @param patch The patch to add
+     * @param patch_id The id of the patch
+     * @param progressListener an optional progress listener.
+     * @return If the patch was added, otherwise the patch was not completely new.
+     */
+    bool append(const PatchSorted& patch, int patch_id, ProgressListener* progressListener = NULL);
     /**
      * Check if the given patch element is present in the tree.
      * @param patch_element The patch element to look for

@@ -93,31 +93,75 @@ void TripleStore::insertAddition(PatchSorted* patch, int patch_id, ProgressListe
             NOTIFYLVL(progressListener, "Triple insertion", i);
         }
         if(patchElement.is_addition()) {
-            // Look up the value for the given triple key in the tree.
-            size_t key_size, value_size;
-            const char *raw_key = patchElement.get_triple().serialize(&key_size);
-            PatchTreeAdditionValue value;
-            // We assume that are indexes are sane, we only check one of them
-            const char *raw_value = index_spo->get(raw_key, key_size, &value_size);
-            if (raw_value) {
-                value.deserialize(raw_value, value_size);
-            }
-            value.add(patch_id);
-            if (patchElement.is_local_change()) {
-                value.set_local_change(patch_id);
-            }
-
-            // Serialize the new value and store it
-            size_t new_value_size;
-            const char *new_raw_value = value.serialize(&new_value_size);
-
-            index_spo->set(raw_key, key_size, new_raw_value, new_value_size);
-            index_sop->set(raw_key, key_size, new_raw_value, new_value_size);
-            index_pso->set(raw_key, key_size, new_raw_value, new_value_size);
-            index_pos->set(raw_key, key_size, new_raw_value, new_value_size);
-            index_osp->set(raw_key, key_size, new_raw_value, new_value_size);
+            insertAdditionSingle(&patchElement.get_triple(), patch_id, patchElement.is_local_change(), false);
         }
     }
+}
+
+void TripleStore::insertAdditionSingle(const PatchTreeKey* key, const PatchTreeAdditionValue* value) {
+    size_t key_size, value_size;
+    const char *raw_key = key->serialize(&key_size);
+    const char *raw_value = value->serialize(&value_size);
+
+    // TODO: parallelize?
+    index_spo->set(raw_key, key_size, raw_value, value_size);
+    index_sop->set(raw_key, key_size, raw_value, value_size);
+    index_pso->set(raw_key, key_size, raw_value, value_size);
+    index_pos->set(raw_key, key_size, raw_value, value_size);
+    index_osp->set(raw_key, key_size, raw_value, value_size);
+
+    free((char*) raw_key);
+    free((char*) raw_value);
+}
+
+void TripleStore::insertAdditionSingle(const PatchTreeKey* key, int patch_id, bool local_change, bool ignore_existing) {
+    // Look up the value for the given triple key in the tree.
+    size_t key_size, value_size;
+    const char *raw_key = key->serialize(&key_size);
+    PatchTreeAdditionValue value;
+    if (!ignore_existing) {
+        // We assume that are indexes are sane, we only check one of them
+        const char *raw_value = index_spo->get(raw_key, key_size, &value_size);
+        if (raw_value) {
+            value.deserialize(raw_value, value_size);
+        }
+    }
+    value.add(patch_id);
+    if (local_change) {
+        value.set_local_change(patch_id);
+    }
+
+    insertAdditionSingle(key, &value);
+}
+
+void TripleStore::insertDeletionSingle(const PatchTreeKey* key, const PatchTreeDeletionValue* value) {
+    size_t key_size, value_size;
+    const char *raw_key = key->serialize(&key_size);
+    const char *raw_value = value->serialize(&value_size);
+
+    index_spo_deletions->set(raw_key, key_size, raw_value, value_size);
+
+    free((char*) raw_key);
+    free((char*) raw_value);
+}
+
+void TripleStore::insertDeletionSingle(const PatchTreeKey* key, const PatchPositions& patch_positions, int patch_id, bool local_change, bool ignore_existing) {
+    size_t key_size, value_size;
+    const char *raw_key = key->serialize(&key_size);
+    PatchTreeDeletionValue deletion_value;
+    if (!ignore_existing) {
+        const char *raw_value = index_spo_deletions->get(raw_key, key_size, &value_size);
+        if (raw_value) {
+            deletion_value.deserialize(raw_value, value_size);
+        }
+    }
+    PatchTreeDeletionValueElement element = PatchTreeDeletionValueElement(patch_id, patch_positions);
+    if (local_change) {
+        element.set_local_change();
+    }
+    deletion_value.add(element);
+
+    insertDeletionSingle(key, &deletion_value);
 }
 
 PatchTreeKeyComparator *TripleStore::get_spo_comparator() const {

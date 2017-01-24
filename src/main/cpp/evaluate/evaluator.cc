@@ -33,8 +33,8 @@ void Evaluator::populate_controller_with_version(int patch_id, string path, Prog
 
     DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
     bool first = patch_id == 0;
-    PatchUnsorted patch;
-    CombinedTripleIterator* it = new CombinedTripleIterator();
+    CombinedTripleIterator* it_snapshot = new CombinedTripleIterator();
+    PatchElementIteratorCombined* it_patch = new PatchElementIteratorCombined();
 
     if (controller->get_max_patch_id() >= patch_id) {
         if (first) {
@@ -65,20 +65,11 @@ void Evaluator::populate_controller_with_version(int patch_id, string path, Prog
                 bool deletions = std::regex_match(filename, base_match, regex_deletions);
                 NOTIFYMSG(progressListener, ("FILE: " + full_path + "\n").c_str());
                 if (first && additions) {
-                    it->appendIterator(get_from_file(full_path));
+                    it_snapshot->appendIterator(get_from_file(full_path));
                 } else if(!first && (additions || deletions)) {
                     IteratorTripleString *subIt = get_from_file(full_path);
-                    while (subIt->hasNext()) {
-                        TripleString* tripleString = subIt->next();
-                        patch.add(PatchElement(Triple(tripleString->getSubject(), tripleString->getPredicate(), tripleString->getObject(), dict), additions));
-                        count++;
-                        if (count % 10000 == 0) {
-                            NOTIFYLVL(progressListener, "Triple loading", count);
-                        }
-                        /*if (count > 100000) {
-                            break;
-                        }*/
-                    }
+                    PatchElementIteratorTripleStrings* patchIt = new PatchElementIteratorTripleStrings(dict, subIt, additions);
+                    it_patch->appendIterator(patchIt);
                 }
             }
         }
@@ -89,14 +80,15 @@ void Evaluator::populate_controller_with_version(int patch_id, string path, Prog
     if (first) {
         NOTIFYMSG(progressListener, "\nCreating snapshot...\n");
         std::cout.setstate(std::ios_base::failbit); // Disable cout info from HDT
-        HDT* hdt = controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI, new SimpleProgressListener());
+        HDT* hdt = controller->get_snapshot_manager()->create_snapshot(0, it_snapshot, BASEURI, new SimpleProgressListener());
         std::cout.clear();
         added = hdt->getTriples()->getNumberOfElements();
-        delete it;
+        delete it_snapshot;
     } else {
-        added = patch.get_size();
         NOTIFYMSG(progressListener, "\nAppending patch...\n");
-        controller->append(patch, patch_id, dict, false, progressListener);
+        controller->append(it_patch, patch_id, dict, false, progressListener);
+        added = it_patch->getPassed();
+        delete it_patch;
     }
     long long duration = st.stopReal() / 1000;
     if (duration == 0) duration = 1; // Avoid division by 0

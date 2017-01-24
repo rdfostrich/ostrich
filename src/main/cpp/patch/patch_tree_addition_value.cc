@@ -46,8 +46,10 @@ void PatchTreeAdditionValue::set_local_change(int patch_id) {
 }
 
 bool PatchTreeAdditionValue::is_local_change(int patch_id) const {
+    if (local_changes.size() == 0) return false;
     std::vector<int>::const_iterator findIt = std::lower_bound(local_changes.begin(), local_changes.end(), patch_id);
-    return findIt != local_changes.end() && *findIt == patch_id;
+    if(findIt >= local_changes.end()) findIt--;
+    return *findIt <= patch_id;
 }
 
 std::string PatchTreeAdditionValue::to_string() const {

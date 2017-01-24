@@ -15,7 +15,7 @@ const PatchPositions& PatchTreeDeletionValueElement::get_patch_positions() const
 }
 
 void PatchTreeDeletionValueElement::set_local_change() {
-    local_change = true;
+    local_change = true; // TODO: Can we instead just set all patch positions to -1 to save some storage space?
 }
 
 bool PatchTreeDeletionValueElement::is_local_change() const {
@@ -65,6 +65,7 @@ const PatchTreeDeletionValueElement& PatchTreeDeletionValue::get(int patch_id) c
 }
 
 bool PatchTreeDeletionValue::is_local_change(int patch_id) const {
+    if (get_size() == 0) return false;
     PatchTreeDeletionValueElement item(patch_id, PatchPositions());
     std::vector<PatchTreeDeletionValueElement>::const_iterator findIt = std::lower_bound(elements.begin(), elements.end(), item);
     if(findIt < elements.begin()) {

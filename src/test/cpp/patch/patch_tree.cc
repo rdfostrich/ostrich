@@ -3,6 +3,7 @@
 #include "../../../main/cpp/patch/patch_tree.h"
 #include "../../../main/cpp/dictionary/dictionary_manager.h"
 #include "../../../main/cpp/patch/patch_tree_manager.h"
+#include <util/StopWatch.hpp>
 #define TESTPATH "./"
 
 // The fixture for testing class PatchTree.
@@ -38,13 +39,17 @@ protected:
 TEST_F(PatchTreeTest, AppendUnsafeNew) {
     PatchSorted patch(&dict);
     patch.add(PatchElement(Triple("s1", "p1", "o1", &dict), true));
-    patchTree->append_unsafe(patch, 0);
+    PatchElementIteratorVector* it = new PatchElementIteratorVector(&patch.get_vector());
+    patchTree->append_unsafe(it, 0);
+    delete it;
 }
 
 TEST_F(PatchTreeTest, AppendUnsafeContains) {
     PatchSorted patch(&dict);
     patch.add(PatchElement(Triple("s1", "p1", "o1", &dict), false));
-    patchTree->append_unsafe(patch, 0);
+    PatchElementIteratorVector* ita = new PatchElementIteratorVector(&patch.get_vector());
+    patchTree->append_unsafe(ita, 0);
+    delete ita;
 
     PatchTreeKey iteratorKey = Triple("s1", "p1", "o1", &dict);
     PatchTreeIterator it = patchTree->iterator(&iteratorKey);
@@ -104,22 +109,25 @@ TEST_F(PatchTreeTest, AppendRemove) {
     PatchSorted patch1(&dict);
     for(int i = 0; i < 1000; i++) {
         string e = std::to_string(i);
-        patch1.add(PatchElement(Triple("b" + e, "b" + e, "b" + e, &dict), true));
+        patch1.add_unsorted(PatchElement(Triple("b" + e, "b" + e, "b" + e, &dict), true));
     }
+    patch1.sort();
     ASSERT_EQ(true, patchTree->append(patch1, 0)) << "Appending a patch failed at an iteration";
 
     PatchSorted patch2(&dict);
     for(int i = 0; i < 1000; i++) {
         string e = std::to_string(i * 20);
-        patch2.add(PatchElement(Triple(e, e, e, &dict), false));
+        patch2.add_unsorted(PatchElement(Triple(e, e, e, &dict), false));
     }
+    patch2.sort();
     ASSERT_EQ(true, patchTree->append(patch2, 1)) << "Appending a patch failed at an iteration";
 
     PatchSorted patch3(&dict);
     for(int i = 0; i < 1000; i++) {
         string e = std::to_string(i * 3);
-        patch3.add(PatchElement(Triple("b" + e, "b" + e, "b" + e, &dict), false));
+        patch3.add_unsorted(PatchElement(Triple("b" + e, "b" + e, "b" + e, &dict), false));
     }
+    patch3.sort();
     ASSERT_EQ(true, patchTree->append(patch3, 2)) << "Appending a patch failed at an iteration";
 
     for(int i = 0; i < 1000; i++) {
@@ -180,7 +188,7 @@ TEST_F(PatchTreeTest, IteratorOrder) {
     // s z o -
     // a p o +
     // s a o +
-    patchTree->append_unsafe(patch, 0);
+    patchTree->append(patch, 0);
 
     PatchTreeKey iteratorKey = Triple("a", "a", "a", &dict);
     PatchTreeIterator it = patchTree->iterator(&iteratorKey); // Iterate starting from the given triple.
@@ -230,21 +238,21 @@ TEST_F(PatchTreeTest, PatchIterator) {
     patch1.add(PatchElement(Triple("a", "p", "o", &dict), true));
     patch1.add(PatchElement(Triple("s", "z", "o", &dict), false));
     patch1.add(PatchElement(Triple("s", "a", "o", &dict), true));
-    patchTree->append_unsafe(patch1, 1);
+    patchTree->append(patch1, 1);
 
     PatchSorted patch2(&dict);
     patch2.add(PatchElement(Triple("q", "p", "o", &dict), false));
     patch2.add(PatchElement(Triple("g", "p", "o", &dict), true));
     patch2.add(PatchElement(Triple("s", "z", "o", &dict), false));
     patch2.add(PatchElement(Triple("s", "a", "o", &dict), true));
-    patchTree->append_unsafe(patch2, 2);
+    patchTree->append(patch2, 2);
 
     PatchSorted patch3(&dict);
     patch3.add(PatchElement(Triple("g", "p", "o", &dict), false));
     patch3.add(PatchElement(Triple("a", "p", "o", &dict), false));
     patch3.add(PatchElement(Triple("h", "z", "o", &dict), false));
     patch3.add(PatchElement(Triple("l", "a", "o", &dict), true));
-    patchTree->append_unsafe(patch3, 3);
+    patchTree->append(patch3, 3);
 
     PatchTreeKey iteratorKey = Triple("s", "a", "o", &dict);
     PatchTreeIterator it = patchTree->iterator(&iteratorKey, 2, false); // Iterate over all elements of patch 2 starting from "s a o."
@@ -352,7 +360,7 @@ TEST_F(PatchTreeTest, ReconstructPatchSimple1) {
     PatchSorted patch1(&dict);
     patch1.add(PatchElement(Triple("g", "p", "o", &dict), false));
     patch1.add(PatchElement(Triple("a", "p", "o", &dict), true));
-    patchTree->append_unsafe(patch1, 1);
+    patchTree->append(patch1, 1);
 
     PatchSorted* patch2_copy = patchTree->reconstruct_patch(1);
     ASSERT_EQ("a p o. (+)\n"
@@ -364,7 +372,7 @@ TEST_F(PatchTreeTest, ReconstructPatchSimple2) {
     PatchSorted patch1(&dict);
     patch1.add(PatchElement(Triple("g", "p", "o", &dict), false));
     patch1.add(PatchElement(Triple("a", "p", "o", &dict), true));
-    patchTree->append_unsafe(patch1, 1);
+    patchTree->append(patch1, 1);
 
     PatchSorted* patch2_copy = patchTree->reconstruct_patch(2);
     ASSERT_EQ("a p o. (+)\n"
@@ -376,12 +384,12 @@ TEST_F(PatchTreeTest, ReconstructPatchSimple3) {
     PatchSorted patch1(&dict);
     patch1.add(PatchElement(Triple("g", "p", "o", &dict), false));
     patch1.add(PatchElement(Triple("a", "p", "o", &dict), true));
-    patchTree->append_unsafe(patch1, 1);
+    patchTree->append(patch1, 1);
 
     PatchSorted patch2(&dict);
     patch2.add(PatchElement(Triple("q", "p", "o", &dict), false));
     patch2.add(PatchElement(Triple("g", "p", "o", &dict), true));
-    patchTree->append_unsafe(patch2, 2);
+    patchTree->append(patch2, 2);
 
     PatchSorted* patch2_copy = patchTree->reconstruct_patch(2);
     ASSERT_EQ("a p o. (+)\n"
@@ -394,12 +402,12 @@ TEST_F(PatchTreeTest, ReconstructPatchSimple4) {
     PatchSorted patch1(&dict);
     patch1.add(PatchElement(Triple("g", "p", "o", &dict), true));
     patch1.add(PatchElement(Triple("a", "p", "o", &dict), true));
-    patchTree->append_unsafe(patch1, 1);
+    patchTree->append(patch1, 1);
 
     PatchSorted patch2(&dict);
     patch2.add(PatchElement(Triple("q", "p", "o", &dict), false));
     patch2.add(PatchElement(Triple("g", "p", "o", &dict), false));
-    patchTree->append_unsafe(patch2, 2);
+    patchTree->append(patch2, 2);
 
     PatchSorted* patch2_copy = patchTree->reconstruct_patch(2);
     ASSERT_EQ("a p o. (+)\n"
@@ -412,17 +420,17 @@ TEST_F(PatchTreeTest, ReconstructPatchSimple5) {
     PatchSorted patch1(&dict);
     patch1.add(PatchElement(Triple("g", "p", "o", &dict), true));
     patch1.add(PatchElement(Triple("a", "p", "o", &dict), true));
-    patchTree->append_unsafe(patch1, 1);
+    patchTree->append(patch1, 1);
 
     PatchSorted patch2(&dict);
     patch2.add(PatchElement(Triple("q", "p", "o", &dict), false));
     patch2.add(PatchElement(Triple("g", "p", "o", &dict), false));
-    patchTree->append_unsafe(patch2, 2);
+    patchTree->append(patch2, 2);
 
     PatchSorted patch3(&dict);
     patch3.add(PatchElement(Triple("g", "p", "o", &dict), true));
     patch3.add(PatchElement(Triple("a", "p", "o", &dict), false));
-    patchTree->append_unsafe(patch3, 3);
+    patchTree->append(patch3, 3);
 
     PatchSorted* patch2_copy = patchTree->reconstruct_patch(2);
     ASSERT_EQ("a p o. (+)\n"
@@ -435,17 +443,17 @@ TEST_F(PatchTreeTest, ReconstructPatchSimple6) {
     PatchSorted patch1(&dict);
     patch1.add(PatchElement(Triple("g", "p", "o", &dict), false));
     patch1.add(PatchElement(Triple("a", "p", "o", &dict), true));
-    patchTree->append_unsafe(patch1, 1);
+    patchTree->append(patch1, 1);
 
     PatchSorted patch2(&dict);
     patch2.add(PatchElement(Triple("q", "p", "o", &dict), false));
     patch2.add(PatchElement(Triple("g", "p", "o", &dict), true));
-    patchTree->append_unsafe(patch2, 2);
+    patchTree->append(patch2, 2);
 
     PatchSorted patch3(&dict);
     patch3.add(PatchElement(Triple("g", "p", "o", &dict), false));
     patch3.add(PatchElement(Triple("a", "p", "o", &dict), false));
-    patchTree->append_unsafe(patch3, 3);
+    patchTree->append(patch3, 3);
 
     PatchSorted* patch2_copy = patchTree->reconstruct_patch(2);
     ASSERT_EQ("a p o. (+)\n"
@@ -460,21 +468,21 @@ TEST_F(PatchTreeTest, ReconstructPatchSingle) {
     patch1.add(PatchElement(Triple("a", "p", "o", &dict), true));
     patch1.add(PatchElement(Triple("s", "z", "o", &dict), false));
     patch1.add(PatchElement(Triple("s", "a", "o", &dict), true));
-    patchTree->append_unsafe(patch1, 1);
+    patchTree->append(patch1, 1);
 
     PatchSorted patch2(&dict);
     patch2.add(PatchElement(Triple("q", "p", "o", &dict), false));
     patch2.add(PatchElement(Triple("g", "p", "o", &dict), true));
     patch2.add(PatchElement(Triple("s", "z", "o", &dict), false));
     patch2.add(PatchElement(Triple("s", "a", "o", &dict), true));
-    patchTree->append_unsafe(patch2, 2);
+    patchTree->append(patch2, 2);
 
     PatchSorted patch3(&dict);
     patch3.add(PatchElement(Triple("g", "p", "o", &dict), false));
     patch3.add(PatchElement(Triple("a", "p", "o", &dict), false));
     patch3.add(PatchElement(Triple("h", "z", "o", &dict), false));
     patch3.add(PatchElement(Triple("l", "a", "o", &dict), true));
-    patchTree->append_unsafe(patch3, 3);
+    patchTree->append(patch3, 3);
 
     PatchSorted* patch2_copy = patchTree->reconstruct_patch(2);
     ASSERT_EQ("a p o. (+)\n"
@@ -489,19 +497,19 @@ TEST_F(PatchTreeTest, ReconstructPatchComposite) {
     PatchSorted patch1(&dict);
     patch1.add(PatchElement(Triple("g", "p", "o", &dict), false));
     patch1.add(PatchElement(Triple("a", "p", "o", &dict), true));
-    patchTree->append_unsafe(patch1, 1);
+    patchTree->append(patch1, 1);
 
     PatchSorted patch2(&dict);
     patch2.add(PatchElement(Triple("s", "z", "o", &dict), false));
     patch2.add(PatchElement(Triple("s", "a", "o", &dict), true));
-    patchTree->append_unsafe(patch2, 1);
+    patchTree->append(patch2, 1);
 
     PatchSorted patch3(&dict);
     patch3.add(PatchElement(Triple("g", "p", "o", &dict), false));
     patch3.add(PatchElement(Triple("a", "p", "o", &dict), false));
     patch3.add(PatchElement(Triple("h", "z", "o", &dict), false));
     patch3.add(PatchElement(Triple("l", "a", "o", &dict), true));
-    patchTree->append_unsafe(patch3, 2);
+    patchTree->append(patch3, 2);
 
     PatchSorted* patch2_copy = patchTree->reconstruct_patch(1);
     ASSERT_EQ("a p o. (+)\n"
@@ -576,28 +584,38 @@ TEST_F(PatchTreeTest, ReconstructPatchComposite2) {
 }
 
 TEST_F(PatchTreeTest, RelativePatchPositions) {
+    PatchElementIteratorVector* itin;
+
     PatchSorted patch1(&dict);
     patch1.add(PatchElement(Triple("g", "p", "o", &dict), false));
     patch1.add(PatchElement(Triple("a", "p", "o", &dict), false));
-    patchTree->append_unsafe(patch1, 1);
+    itin = new PatchElementIteratorVector(&patch1.get_vector());
+    patchTree->append_unsafe(itin, 1);
+    delete itin;
 
     PatchSorted patch2(&dict);
     patch2.add(PatchElement(Triple("s", "z", "o", &dict), false));
     patch2.add(PatchElement(Triple("a", "b", "c", &dict), true));
     patch2.add(PatchElement(Triple("s", "a", "o", &dict), false));
-    patchTree->append_unsafe(patch2, 1);
+    itin = new PatchElementIteratorVector(&patch2.get_vector());
+    patchTree->append_unsafe(itin, 1);
+    delete itin;
 
     PatchSorted patch3(&dict);
     patch3.add(PatchElement(Triple("g", "p", "o", &dict), false));
     patch3.add(PatchElement(Triple("a", "p", "o", &dict), false));
     patch3.add(PatchElement(Triple("h", "z", "o", &dict), false));
     patch3.add(PatchElement(Triple("l", "a", "o", &dict), true));
-    patchTree->append_unsafe(patch3, 2);
+    itin = new PatchElementIteratorVector(&patch3.get_vector());
+    patchTree->append_unsafe(itin, 2);
+    delete itin;
 
     PatchSorted patch4(&dict);
     patch4.add(PatchElement(Triple("h", "p", "o", &dict), false));
     patch4.add(PatchElement(Triple("s", "z", "o", &dict), false));
-    patchTree->append_unsafe(patch4, 4);
+    itin = new PatchElementIteratorVector(&patch4.get_vector());
+    patchTree->append_unsafe(itin, 4);
+    delete itin;
 
     PatchTreeIterator it = patchTree->iterator(1, false); // Iterate over all elements of patch 1
     PatchTreeKey key;
@@ -663,7 +681,7 @@ TEST_F(PatchTreeTest, RelativePatchPositions) {
     PatchSorted patch5(&dict);
     patch5.add(PatchElement(Triple("a", "a", "a", &dict), false));
     patch5.add(PatchElement(Triple("z", "z", "z", &dict), false));
-    patchTree->append_unsafe(patch5, 1);
+    patchTree->append(patch5, 1);
 
     PatchTreeIterator it2 = patchTree->iterator(1, false); // Iterate over all elements of patch 1 again
 
@@ -754,11 +772,11 @@ TEST_F(PatchTreeTest, RelativePatchPositions2) {
     patch1.add(PatchElement(Triple("a", "b", "c", &dict), true));
     patch1.add(PatchElement(Triple("a", "a", "a", &dict), false));
     patch1.add(PatchElement(Triple("z", "z", "z", &dict), false));
-    patchTree->append_unsafe(patch1, 1);
+    patchTree->append(patch1, 1);
 
     PatchSorted patch2(&dict);
     patch2.add(PatchElement(Triple("a", "b", "c", &dict), false));
-    patchTree->append_unsafe(patch2, 2);
+    patchTree->append(patch2, 2);
 
     PatchTreeIterator it1 = patchTree->iterator(1, false); // Iterate over all elements of patch 1
     PatchTreeKey key;
@@ -1416,14 +1434,14 @@ TEST_F(PatchTreeTest, Metadata) {
 
     PatchSorted patch1(&dict);
     patch1.add(PatchElement(Triple("s1", "p1", "o1", &dict), true));
-    patchTree->append_unsafe(patch1, 0);
+    patchTree->append(patch1, 0);
 
     ASSERT_EQ(0, patchTree->get_min_patch_id()) << "Min patch id is incorrect";
     ASSERT_EQ(0, patchTree->get_max_patch_id()) << "Max patch id is incorrect";
 
     PatchSorted patch2(&dict);
     patch2.add(PatchElement(Triple("s1", "p1", "o1", &dict), true));
-    patchTree->append_unsafe(patch2, 1);
+    patchTree->append(patch2, 1);
 
     ASSERT_EQ(0, patchTree->get_min_patch_id()) << "Min patch id is incorrect";
     ASSERT_EQ(1, patchTree->get_max_patch_id()) << "Max patch id is incorrect";
@@ -1458,7 +1476,7 @@ TEST_F(PatchTreeTest, DeletionValue) {
     // Patch 2
     // a a a -
     // a p o +
-    // g p o +
+    // g p o + (L)
     // s a o - (L)
     // s z o -
 

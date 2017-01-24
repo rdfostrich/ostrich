@@ -5,7 +5,7 @@
 PatchBuilder::PatchBuilder(Controller* controller) : controller(controller), patch_id(-1) {
     dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
     if (dict != NULL) {
-        patch = new PatchUnsorted;
+        patch = new PatchSorted(dict);
     } else {
         patch = NULL;
     }
@@ -25,6 +25,7 @@ void PatchBuilder::commit(ProgressListener* progressListener) {
         controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
         delete it;
     } else {
+        patch->sort();
         controller->append(*patch, patch_id, dict, progressListener);
         delete patch;
     }
@@ -33,7 +34,7 @@ void PatchBuilder::commit(ProgressListener* progressListener) {
 PatchBuilder *PatchBuilder::triple(const TripleString& triple_const, bool addition) {
     if (patch != NULL) {
         TripleString& triple = const_cast<TripleString&>(triple_const);
-        patch->add(PatchElement(Triple(triple.getSubject(), triple.getPredicate(), triple.getObject(), dict), addition));
+        patch->add_unsorted(PatchElement(Triple(triple.getSubject(), triple.getPredicate(), triple.getObject(), dict), addition));
     } else {
         triples.push_back(triple_const);
     }

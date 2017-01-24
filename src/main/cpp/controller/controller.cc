@@ -247,9 +247,17 @@ TripleVersionsIterator* Controller::get_version(const Triple &triple_pattern, in
     return (new TripleVersionsIterator(triple_pattern, snapshot_it, patchTree))->offset(offset);
 }
 
-bool Controller::append(const PatchIndexed& patch, int patch_id, DictionaryManager* dict, bool check_uniqueness, ProgressListener* progressListener) {
+bool Controller::append(PatchElementIterator* patch_it, int patch_id, DictionaryManager* dict, bool check_uniqueness, ProgressListener* progressListener) {
     // TODO: this will require some changes when we implement automatic snapshot creation.
-    return get_patch_tree_manager()->append(patch, patch_id, dict, check_uniqueness, progressListener);
+    return get_patch_tree_manager()->append(patch_it, patch_id, dict, check_uniqueness, progressListener);
+}
+
+bool Controller::append(const PatchSorted& patch, int patch_id, DictionaryManager *dict, bool check_uniqueness,
+                        ProgressListener *progressListener) {
+    PatchElementIteratorVector* it = new PatchElementIteratorVector(&patch.get_vector());
+    bool ret = append(it, patch_id, dict, check_uniqueness, progressListener);
+    delete it;
+    return ret;
 }
 
 PatchTreeManager* Controller::get_patch_tree_manager() const {

@@ -7,6 +7,7 @@
 #include "patch.h"
 #include "../dictionary/dictionary_manager.h"
 #include "patch_tree_key_comparator.h"
+#include "patch_tree_addition_value.h"
 
 using namespace std;
 using namespace kyotocabinet;
@@ -33,6 +34,10 @@ public:
     TreeDB* getDefaultAdditionsTree();
     TreeDB* getDeletionsTree();
     void insertAddition(PatchSorted* patch, int patch_id, ProgressListener* progressListener = NULL);
+    void insertAdditionSingle(const PatchTreeKey* key, const PatchTreeAdditionValue* value);
+    void insertAdditionSingle(const PatchTreeKey* key, int patch_id, bool local_change, bool ignore_existing);
+    void insertDeletionSingle(const PatchTreeKey* key, const PatchTreeDeletionValue* value);
+    void insertDeletionSingle(const PatchTreeKey* key, const PatchPositions& patch_positions, int patch_id, bool local_change, bool ignore_existing);
     /**
      * @return The comparator for this patch tree in SPO order.
      */

@@ -103,31 +103,29 @@ inline PatchPosition contains_and_increment_position(unordered_map<long, PatchPo
     return pos;
 }
 
-PatchPositions PatchSorted::positions(const PatchElement& element,
+PatchPositions Patch::positions(const Triple& triple,
                                  unordered_map<long, PatchPosition>& sp_,
                                  unordered_map<long, PatchPosition>& s_o,
                                  unordered_map<long, PatchPosition>& s__,
                                  unordered_map<long, PatchPosition>& _po,
                                  unordered_map<long, PatchPosition>& _p_,
                                  unordered_map<long, PatchPosition>& __o,
-                                 PatchPosition& ___) const {
+                                 PatchPosition& ___) {
     PatchPositions positions = PatchPositions();
-    if(!element.is_addition() && !element.is_local_change()) {
-        long hsp_ = element.get_triple().get_subject() | (element.get_triple().get_predicate() << 16);
-        long hs_o = element.get_triple().get_subject() | (element.get_triple().get_object() << 16);
-        long hs__ = element.get_triple().get_subject();
-        long h_po = element.get_triple().get_predicate() | (element.get_triple().get_object() << 16);
-        long h_p_ = element.get_triple().get_predicate();
-        long h__o = element.get_triple().get_object();
+    long hsp_ = triple.get_subject() | (triple.get_predicate() << 16);
+    long hs_o = triple.get_subject() | (triple.get_object() << 16);
+    long hs__ = triple.get_subject();
+    long h_po = triple.get_predicate() | (triple.get_object() << 16);
+    long h_p_ = triple.get_predicate();
+    long h__o = triple.get_object();
 
-        positions.sp_ = contains_and_increment_position(sp_, hsp_);
-        positions.s_o = contains_and_increment_position(s_o, hs_o);
-        positions.s__ = contains_and_increment_position(s__, hs__);
-        positions._po = contains_and_increment_position(_po, h_po);
-        positions._p_ = contains_and_increment_position(_p_, h_p_);
-        positions.__o = contains_and_increment_position(__o, h__o);
-        positions.___ = ___++;
-    }
+    positions.sp_ = contains_and_increment_position(sp_, hsp_);
+    positions.s_o = contains_and_increment_position(s_o, hs_o);
+    positions.s__ = contains_and_increment_position(s__, hs__);
+    positions._po = contains_and_increment_position(_po, h_po);
+    positions._p_ = contains_and_increment_position(_p_, h_p_);
+    positions.__o = contains_and_increment_position(__o, h__o);
+    positions.___ = ___++;
     return positions;
 }
 
@@ -180,6 +178,10 @@ long PatchSorted::index_of_triple(const Triple& triple) const {
         return std::distance(elements.begin(), findIt2);
     }
     return -1;
+}
+
+PatchElementIterator *PatchSorted::element_iterator() {
+    return nullptr;
 }
 
 void PatchUnsorted::add(const PatchElement &element) {
