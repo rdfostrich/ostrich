@@ -86,25 +86,17 @@ TreeDB* TripleStore::getDeletionsTree() {
     return index_spo_deletions;
 }
 
-void TripleStore::insertAddition(PatchSorted* patch, int patch_id, ProgressListener* progressListener) {
-    for(int i = 0; i < patch->get_size(); i++) {
-        PatchElement patchElement = patch->get(i);
-        if (i % 10000 == 0) {
-            NOTIFYLVL(progressListener, "Triple insertion", i);
-        }
-        if(patchElement.is_addition()) {
-            insertAdditionSingle(&patchElement.get_triple(), patch_id, patchElement.is_local_change(), false);
-        }
-    }
-}
-
-void TripleStore::insertAdditionSingle(const PatchTreeKey* key, const PatchTreeAdditionValue* value) {
+void TripleStore::insertAdditionSingle(const PatchTreeKey* key, const PatchTreeAdditionValue* value, DB::Cursor* cursor) {
     size_t key_size, value_size;
     const char *raw_key = key->serialize(&key_size);
     const char *raw_value = value->serialize(&value_size);
 
     // TODO: parallelize?
-    index_spo->set(raw_key, key_size, raw_value, value_size);
+    if (cursor != NULL) {
+        cursor->set_value(raw_value, value_size, false);
+    } else {
+        index_spo->set(raw_key, key_size, raw_value, value_size);
+    }
     index_sop->set(raw_key, key_size, raw_value, value_size);
     index_pso->set(raw_key, key_size, raw_value, value_size);
     index_pos->set(raw_key, key_size, raw_value, value_size);
@@ -114,14 +106,14 @@ void TripleStore::insertAdditionSingle(const PatchTreeKey* key, const PatchTreeA
     free((char*) raw_value);
 }
 
-void TripleStore::insertAdditionSingle(const PatchTreeKey* key, int patch_id, bool local_change, bool ignore_existing) {
+void TripleStore::insertAdditionSingle(const PatchTreeKey* key, int patch_id, bool local_change, bool ignore_existing, DB::Cursor* cursor) {
     // Look up the value for the given triple key in the tree.
     size_t key_size, value_size;
     const char *raw_key = key->serialize(&key_size);
     PatchTreeAdditionValue value;
     if (!ignore_existing) {
         // We assume that are indexes are sane, we only check one of them
-        const char *raw_value = index_spo->get(raw_key, key_size, &value_size);
+        const char *raw_value = cursor == NULL ? index_spo->get(raw_key, key_size, &value_size) : cursor->get_value(&value_size, false);
         if (raw_value) {
             value.deserialize(raw_value, value_size);
         }
@@ -134,23 +126,27 @@ void TripleStore::insertAdditionSingle(const PatchTreeKey* key, int patch_id, bo
     insertAdditionSingle(key, &value);
 }
 
-void TripleStore::insertDeletionSingle(const PatchTreeKey* key, const PatchTreeDeletionValue* value) {
+void TripleStore::insertDeletionSingle(const PatchTreeKey* key, const PatchTreeDeletionValue* value, DB::Cursor* cursor) {
     size_t key_size, value_size;
     const char *raw_key = key->serialize(&key_size);
     const char *raw_value = value->serialize(&value_size);
 
-    index_spo_deletions->set(raw_key, key_size, raw_value, value_size);
+    if (cursor != NULL) {
+        cursor->set_value(raw_value, value_size, false);
+    } else {
+        index_spo_deletions->set(raw_key, key_size, raw_value, value_size);
+    }
 
     free((char*) raw_key);
     free((char*) raw_value);
 }
 
-void TripleStore::insertDeletionSingle(const PatchTreeKey* key, const PatchPositions& patch_positions, int patch_id, bool local_change, bool ignore_existing) {
+void TripleStore::insertDeletionSingle(const PatchTreeKey* key, const PatchPositions& patch_positions, int patch_id, bool local_change, bool ignore_existing, DB::Cursor* cursor) {
     size_t key_size, value_size;
     const char *raw_key = key->serialize(&key_size);
     PatchTreeDeletionValue deletion_value;
     if (!ignore_existing) {
-        const char *raw_value = index_spo_deletions->get(raw_key, key_size, &value_size);
+        const char *raw_value = cursor == NULL ? index_spo_deletions->get(raw_key, key_size, &value_size) : cursor->get_value(&value_size, false);
         if (raw_value) {
             deletion_value.deserialize(raw_value, value_size);
         }

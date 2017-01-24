@@ -33,11 +33,10 @@ public:
     TreeDB* getTree(Triple triple_pattern);
     TreeDB* getDefaultAdditionsTree();
     TreeDB* getDeletionsTree();
-    void insertAddition(PatchSorted* patch, int patch_id, ProgressListener* progressListener = NULL);
-    void insertAdditionSingle(const PatchTreeKey* key, const PatchTreeAdditionValue* value);
-    void insertAdditionSingle(const PatchTreeKey* key, int patch_id, bool local_change, bool ignore_existing);
-    void insertDeletionSingle(const PatchTreeKey* key, const PatchTreeDeletionValue* value);
-    void insertDeletionSingle(const PatchTreeKey* key, const PatchPositions& patch_positions, int patch_id, bool local_change, bool ignore_existing);
+    void insertAdditionSingle(const PatchTreeKey* key, const PatchTreeAdditionValue* value, DB::Cursor* cursor = NULL);
+    void insertAdditionSingle(const PatchTreeKey* key, int patch_id, bool local_change, bool ignore_existing, DB::Cursor* cursor = NULL);
+    void insertDeletionSingle(const PatchTreeKey* key, const PatchTreeDeletionValue* value, DB::Cursor* cursor = NULL);
+    void insertDeletionSingle(const PatchTreeKey* key, const PatchPositions& patch_positions, int patch_id, bool local_change, bool ignore_existing, DB::Cursor* cursor = NULL);
     /**
      * @return The comparator for this patch tree in SPO order.
      */

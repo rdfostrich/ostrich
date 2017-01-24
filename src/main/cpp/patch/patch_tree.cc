@@ -62,7 +62,7 @@ void PatchTree::append_unsafe(PatchElementIterator *patch_it, int patch_id, Prog
             i++;
         }
         if (should_step_deletions) {
-            kbp = cursor_deletions->get(&ksp, &vbp, &vsp, true);
+            kbp = cursor_deletions->get(&ksp, &vbp, &vsp, false);
             have_deletions_ended = kbp == NULL;
             if (!have_deletions_ended) {
                 deletion_value.deserialize(vbp, vsp);
@@ -72,7 +72,7 @@ void PatchTree::append_unsafe(PatchElementIterator *patch_it, int patch_id, Prog
             }
         }
         if (should_step_additions) {
-            kbp = cursor_additions->get(&ksp, &vbp, &vsp, true);
+            kbp = cursor_additions->get(&ksp, &vbp, &vsp, false);
             have_additions_ended = kbp == NULL;
             if (!have_additions_ended) {
                 addition_value.deserialize(vbp, vsp);
@@ -118,10 +118,9 @@ void PatchTree::append_unsafe(PatchElementIterator *patch_it, int patch_id, Prog
                                                  PatchPositions() : Patch::positions(deletion_key, sp_, s_o, s__, _po, _p_, __o, ___);
                 long patch_value_index;
                 if ((patch_value_index = deletion_value.get_patchvalue_index(patch_id)) < 0
-                    || deletion_value.get_patch(patch_value_index).get_patch_positions() !=
-                       patch_positions) { // Don't re-insert when already present for this patch id, except when patch positions have changed
+                    || deletion_value.get_patch(patch_value_index).get_patch_positions() != patch_positions) { // Don't re-insert when already present for this patch id, except when patch positions have changed
                     deletion_value.add(PatchTreeDeletionValueElement(patch_id, patch_positions));
-                    tripleStore->insertDeletionSingle(&deletion_key, &deletion_value);
+                    tripleStore->insertDeletionSingle(&deletion_key, &deletion_value, cursor_deletions);
                 }
             }
         } else if (p_gt_a && a_lt_d) { // A < P && A < D
@@ -134,7 +133,7 @@ void PatchTree::append_unsafe(PatchElementIterator *patch_it, int patch_id, Prog
             if (addition_value.get_patch_id_at(0) <= patch_id // Skip this addition if our current patch id lies before the first patch id for A
                 && addition_value.get_patchvalue_index(patch_id) < 0) { // Don't re-insert when already present for this patch id
                 addition_value.add(patch_id);
-                tripleStore->insertAdditionSingle(&addition_key, &addition_value);
+                tripleStore->insertAdditionSingle(&addition_key, &addition_value, cursor_additions);
             }
         } else if (p_lt_a && p_lt_d) { // P < A && P < D
             // P++
@@ -163,7 +162,10 @@ void PatchTree::append_unsafe(PatchElementIterator *patch_it, int patch_id, Prog
                 bool was_local_change = deletion_value.is_local_change(patch_id);
                 PatchPositions patch_positions = was_local_change ?
                                                  PatchPositions() : Patch::positions(patch_element.get_triple(), sp_, s_o, s__, _po, _p_, __o, ___);
-                tripleStore->insertDeletionSingle(&patch_element.get_triple(), patch_positions, patch_id, was_local_change, false); // Make sure to maintain any previous patch values!
+                PatchTreeDeletionValueElement element = PatchTreeDeletionValueElement(patch_id, patch_positions);
+                if (was_local_change) element.set_local_change();
+                deletion_value.add(element);
+                tripleStore->insertDeletionSingle(&deletion_key, &deletion_value, cursor_deletions);
             }
         } else if (p_eq_a && p_lt_d) { // P = A && P < D
             // local change P, A
@@ -177,7 +179,9 @@ void PatchTree::append_unsafe(PatchElementIterator *patch_it, int patch_id, Prog
             } else {
                 // Carry over previous addition value
                 bool was_local_change = addition_value.is_local_change(patch_id);
-                tripleStore->insertAdditionSingle(&patch_element.get_triple(), patch_id, was_local_change, false); // Make sure to maintain any previous patch values!
+                addition_value.add(patch_id);
+                if (was_local_change) addition_value.set_local_change(patch_id);
+                tripleStore->insertAdditionSingle(&addition_key, &addition_value);
             }
         } else { // (D = A) < P   or   P = A = D
 
@@ -204,14 +208,14 @@ void PatchTree::append_unsafe(PatchElementIterator *patch_it, int patch_id, Prog
             if (add_addition) {
                 addition_value.add(patch_id);
                 if (is_local_change) addition_value.set_local_change(patch_id);
-                tripleStore->insertAdditionSingle(&addition_key, &addition_value);
+                tripleStore->insertAdditionSingle(&addition_key, &addition_value, cursor_additions);
             } else if (add_deletion) {
                 PatchPositions patch_positions = is_local_change ?
                                                  PatchPositions() : Patch::positions(patch_element.get_triple(), sp_, s_o, s__, _po, _p_, __o, ___);
                 PatchTreeDeletionValueElement deletion_value_element(patch_id, patch_positions);
                 if (is_local_change) deletion_value_element.set_local_change();
                 deletion_value.add(deletion_value_element);
-                tripleStore->insertDeletionSingle(&deletion_key, &deletion_value);
+                tripleStore->insertDeletionSingle(&deletion_key, &deletion_value, cursor_deletions);
             } else {
                 cerr << "comp_deletion: " << comp_deletion << endl;
                 cerr << "comp_addition: " << comp_addition << endl;
@@ -230,12 +234,21 @@ void PatchTree::append_unsafe(PatchElementIterator *patch_it, int patch_id, Prog
         if (should_step_additions && have_additions_ended) {
             should_step_additions = false;
         }
+        if (should_step_deletions) {
+            cursor_deletions->step();
+        }
+        if (should_step_additions) {
+            cursor_additions->step();
+        }
     }
 
     NOTIFYMSG(progressListener, "\nFinished patch insertion\n");
     if (patch_id > max_patch_id) {
         max_patch_id = patch_id;
     }
+
+    delete cursor_deletions;
+    delete cursor_additions;
 }
 
 bool PatchTree::append(PatchElementIterator* patch_it, int patch_id, ProgressListener* progressListener) {
