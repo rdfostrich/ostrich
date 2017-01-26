@@ -51,6 +51,53 @@ void PatchTree::deinit_temp_insertion_trees(HashDB &sp_, HashDB &s_o, HashDB &s_
     std::remove(".additions.__o.tmp");
 }
 
+/*
+ * --- START OF COMPARISON MACROS  ---
+ * Convenience macro's and inline functions to improve readability of triple component comparison
+ * This will ensure lazy calculation of potentially expensive comparisons.
+ */
+
+inline int comp_addition(bool& done_flag, TripleStore* tripleStore, PatchElement& patch_element, PatchTreeKey& deletion_key, PatchTreeKey& addition_key) {
+    done_flag = true;
+    return tripleStore->get_spo_comparator()->compare(patch_element.get_triple(), addition_key);
+}
+
+inline int comp_deletion(bool& done_flag, TripleStore* tripleStore, PatchElement& patch_element, PatchTreeKey& deletion_key, PatchTreeKey& addition_key) {
+    done_flag = true;
+    return tripleStore->get_spo_comparator()->compare(patch_element.get_triple(), deletion_key);
+}
+
+inline int comp_deletion_addition(bool& done_flag, TripleStore* tripleStore, PatchElement& patch_element, PatchTreeKey& deletion_key, PatchTreeKey& addition_key) {
+    done_flag = true;
+    return tripleStore->get_spo_comparator()->compare(deletion_key, addition_key);
+}
+
+#define PINS_COMP_PARAMS_DEF TripleStore* tripleStore, PatchElement& patch_element, PatchTreeKey& deletion_key, PatchTreeKey& addition_key, bool has_patch_ended, bool& has_comp_deletion_addition, int& comp_deletion_addition_v, bool have_deletions_ended, bool& has_comp_deletion, int& comp_deletion_v, bool have_additions_ended, bool& has_comp_addition, int& comp_addition_v
+#define COMP_DELETION (!has_comp_deletion ? (comp_deletion_v = comp_deletion(has_comp_deletion, tripleStore, patch_element, deletion_key, addition_key)) : comp_deletion_v)
+#define COMP_ADDITION (!has_comp_addition ? (comp_addition_v = comp_addition(has_comp_addition, tripleStore, patch_element, deletion_key, addition_key)) : comp_addition_v)
+#define COMP_DELETION_ADDITION (!has_comp_deletion_addition ? (comp_deletion_addition_v = comp_deletion_addition(has_comp_deletion_addition, tripleStore, patch_element, deletion_key, addition_key)) : comp_deletion_addition_v)
+inline bool p_lt_d(PINS_COMP_PARAMS_DEF) { return !has_patch_ended && (have_deletions_ended      || COMP_DELETION          < 0); }
+inline bool p_lt_a(PINS_COMP_PARAMS_DEF) { return !has_patch_ended && (have_additions_ended      || COMP_ADDITION          < 0); }
+inline bool p_eq_d(PINS_COMP_PARAMS_DEF) { return !has_patch_ended && !have_deletions_ended      && COMP_DELETION          == 0; }
+inline bool p_eq_a(PINS_COMP_PARAMS_DEF) { return !has_patch_ended && !have_additions_ended      && COMP_ADDITION          == 0; }
+inline bool p_gt_d(PINS_COMP_PARAMS_DEF) { return !have_deletions_ended && (has_patch_ended      || COMP_DELETION          > 0); }
+inline bool p_gt_a(PINS_COMP_PARAMS_DEF) { return !have_additions_ended && (has_patch_ended      || COMP_ADDITION          > 0); }
+inline bool d_lt_a(PINS_COMP_PARAMS_DEF) { return !have_deletions_ended && (have_additions_ended || COMP_DELETION_ADDITION < 0); }
+inline bool a_lt_d(PINS_COMP_PARAMS_DEF) { return !have_additions_ended && (have_deletions_ended || COMP_DELETION_ADDITION > 0); }
+#define PINS_COMP_PARAMS tripleStore, patch_element, deletion_key, addition_key, has_patch_ended, has_comp_deletion_addition, comp_deletion_addition_v, have_deletions_ended, has_comp_deletion, comp_deletion_v, have_additions_ended, has_comp_addition, comp_addition_v
+#define P_LT_D p_lt_d(PINS_COMP_PARAMS)
+#define P_LT_A p_lt_a(PINS_COMP_PARAMS)
+#define P_EQ_D p_eq_d(PINS_COMP_PARAMS)
+#define P_EQ_A p_eq_a(PINS_COMP_PARAMS)
+#define P_GT_D p_gt_d(PINS_COMP_PARAMS)
+#define P_GT_A p_gt_a(PINS_COMP_PARAMS)
+#define D_LT_A d_lt_a(PINS_COMP_PARAMS)
+#define A_LT_D a_lt_d(PINS_COMP_PARAMS)
+
+/*
+ * --- END OF COMPARISON MACROS  ---
+ */
+
 void PatchTree::append_unsafe(PatchElementIterator* patch_it_original, int patch_id, ProgressListener *progressListener) {
     PatchElementIteratorBuffered* patch_it = new PatchElementIteratorBuffered(patch_it_original, PATCH_INSERT_BUFFER_SIZE);
 
@@ -126,22 +173,11 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it_original, int patch
         // A: current addition triple
 
         // Advance the iterator with the smallest current triple.
-        // TODO: make calc lazy for efficiency
-        int comp_addition = tripleStore->get_spo_comparator()->compare(patch_element.get_triple(), addition_key);
-        int comp_deletion = tripleStore->get_spo_comparator()->compare(patch_element.get_triple(), deletion_key);
-        int comp_deletion_addition = tripleStore->get_spo_comparator()->compare(deletion_key, addition_key);
-        // Convenience values for readability
-        bool p_lt_d = !has_patch_ended && (have_deletions_ended || comp_deletion < 0);
-        bool p_lt_a = !has_patch_ended && (have_additions_ended || comp_addition < 0);
-        bool p_eq_d = !has_patch_ended && !have_deletions_ended && comp_deletion == 0;
-        bool p_eq_a = !has_patch_ended && !have_additions_ended && comp_addition == 0;
-        bool p_gt_d = !have_deletions_ended && (has_patch_ended || comp_deletion > 0);
-        bool p_gt_a = !have_additions_ended && (has_patch_ended || comp_addition > 0);
-        bool d_lt_a = !have_deletions_ended && (have_additions_ended || comp_deletion_addition < 0);
-        bool a_lt_d = !have_additions_ended && (have_deletions_ended || comp_deletion_addition > 0);
-        bool d_eq_a = !have_deletions_ended && !have_additions_ended && comp_deletion_addition == 0;
-
-        if (p_gt_d && d_lt_a) { // D < P && D < A
+        bool has_comp_deletion_addition = false;
+        bool has_comp_deletion = false;
+        bool has_comp_addition = false;
+        int comp_deletion_addition_v, comp_deletion_v, comp_addition_v;
+        if (P_GT_D && D_LT_A) { // D < P && D < A
             // D++
             should_step_patch = false;
             should_step_deletions = true;
@@ -158,7 +194,7 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it_original, int patch
                     tripleStore->insertDeletionSingle(&deletion_key, &deletion_value, cursor_deletions);
                 }
             }
-        } else if (p_gt_a && a_lt_d) { // A < P && A < D
+        } else if (P_GT_A && A_LT_D) { // A < P && A < D
             // A++
             should_step_patch = false;
             should_step_deletions = false;
@@ -170,7 +206,7 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it_original, int patch
                 addition_value.add(patch_id);
                 tripleStore->insertAdditionSingle(&addition_key, &addition_value, cursor_additions);
             }
-        } else if (p_lt_a && p_lt_d) { // P < A && P < D
+        } else if (P_LT_A && P_LT_D) { // P < A && P < D
             // P++
             should_step_patch = true;
             should_step_deletions = false;
@@ -183,7 +219,7 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it_original, int patch
                 PatchPositions patch_positions = Patch::positions(patch_element.get_triple(), sp_, s_o, s__, _po, _p_, __o, ___);
                 tripleStore->insertDeletionSingle(&patch_element.get_triple(), patch_positions, patch_id, false, true);
             }
-        } else if (p_eq_d && p_lt_a) { // P = D && P < A
+        } else if (P_EQ_D && P_LT_A) { // P = D && P < A
             // local change P, D
             should_step_patch = true;
             should_step_deletions = true;
@@ -202,7 +238,7 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it_original, int patch
                 deletion_value.add(element);
                 tripleStore->insertDeletionSingle(&deletion_key, &deletion_value, cursor_deletions);
             }
-        } else if (p_eq_a && p_lt_d) { // P = A && P < D
+        } else if (P_EQ_A && P_LT_D) { // P = A && P < D
             // local change P, A
             should_step_patch = true;
             should_step_deletions = false;
@@ -219,9 +255,8 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it_original, int patch
                 tripleStore->insertAdditionSingle(&addition_key, &addition_value);
             }
         } else { // (D = A) < P   or   P = A = D
-
             // carry over local change if < P, or invert existing local change if = P
-            should_step_patch = !p_gt_d;
+            should_step_patch = !P_GT_D;
             should_step_deletions = true;
             should_step_additions = true;
 
@@ -252,8 +287,8 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it_original, int patch
                 deletion_value.add(deletion_value_element);
                 tripleStore->insertDeletionSingle(&deletion_key, &deletion_value, cursor_deletions);
             } else {
-                cerr << "comp_deletion: " << comp_deletion << endl;
-                cerr << "comp_addition: " << comp_addition << endl;
+                cerr << "comp_deletion: " << COMP_DELETION << endl;
+                cerr << "comp_addition: " << COMP_ADDITION << endl;
                 cerr << "triple patch: " << patch_element.get_triple().to_string() << endl;
                 cerr << "triple deletion: " << deletion_key.to_string() << endl;
                 cerr << "triple addition: " << addition_key.to_string() << endl;
