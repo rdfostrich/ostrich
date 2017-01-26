@@ -21,6 +21,7 @@ class DictionaryManager : public ModifiableDictionary {
   const unsigned int bitmask;
   int snapshotId;
 
+  std::mutex action_mutex;
 public:
   DictionaryManager(string basePath, int snapshotId, Dictionary *hdtDict, PlainDictionary *patchDict);
   DictionaryManager(string basePath, int snapshotId, Dictionary *hdtDict);

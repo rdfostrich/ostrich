@@ -12,7 +12,7 @@ protected:
     PatchTreeManager* patchTreeManager;
     DictionaryManager dict;
 
-    PatchTreeManagerTest() : patchTreeManager(), dict(DictionaryManager(TESTPATH, 0)) {}
+    PatchTreeManagerTest() : patchTreeManager(), dict(TESTPATH, 0) {}
 
     virtual void SetUp() {
         patchTreeManager = new PatchTreeManager(TESTPATH);

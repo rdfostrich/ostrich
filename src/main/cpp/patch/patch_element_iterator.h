@@ -1,13 +1,13 @@
 #ifndef TPFPATCH_STORE_PATCH_ELEMENT_ITERATOR_H
 #define TPFPATCH_STORE_PATCH_ELEMENT_ITERATOR_H
 
-
+#include <thread>
 #include "patch_element.h"
 
 class PatchElementIterator {
 public:
     PatchElementIterator();
-    ~PatchElementIterator();
+    virtual ~PatchElementIterator() = 0;
     virtual bool next(PatchElement* element) = 0;
     virtual void goToStart() = 0;
 };
@@ -54,6 +54,12 @@ protected:
     std::queue<PatchElement> buffer;
     unsigned long buffer_size;
     bool ended;
+    std::condition_variable buffer_trigger_fill;
+    std::condition_variable buffer_trigger_nonempty;
+    bool shutdown_thread = false;
+    std::mutex lock_thread_fill;
+    std::mutex lock_thread_nonempty;
+    std::thread thread;
 protected:
     void fill_buffer();
 public:

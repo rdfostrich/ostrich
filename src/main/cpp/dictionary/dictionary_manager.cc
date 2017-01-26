@@ -73,6 +73,7 @@ void DictionaryManager::save() {
 
 std::string DictionaryManager::idToString(unsigned int id,
                                           TripleComponentRole position) {
+  unique_lock<mutex> lock(action_mutex);
   if (id == 0) return "";
 
   // Check whether id is from HDT or not (MSB is not set)
@@ -86,6 +87,7 @@ std::string DictionaryManager::idToString(unsigned int id,
 //TODO: make sure 0 is reserved for variables
 unsigned int DictionaryManager::stringToId(std::string &str,
                                            TripleComponentRole position) {
+  unique_lock<mutex> lock(action_mutex);
   // if string is empty, it's a variable, and thus, a zero
   if (str.empty()) return 0;
 
@@ -107,6 +109,7 @@ unsigned int DictionaryManager::stringToId(std::string &str,
 
 unsigned int DictionaryManager::insert(std::string &str,
                                        TripleComponentRole position) {
+  unique_lock<mutex> lock(action_mutex);
 
   if (str.empty()) return 0;
 

@@ -52,7 +52,7 @@ void PatchTree::deinit_temp_insertion_trees(HashDB &sp_, HashDB &s_o, HashDB &s_
 }
 
 void PatchTree::append_unsafe(PatchElementIterator* patch_it_original, int patch_id, ProgressListener *progressListener) {
-    PatchElementIterator* patch_it = new PatchElementIteratorBuffered(patch_it_original, 100); // TODO: test buffer size
+    PatchElementIteratorBuffered* patch_it = new PatchElementIteratorBuffered(patch_it_original, PATCH_INSERT_BUFFER_SIZE);
 
     const char *kbp, *vbp;
     size_t ksp, vsp;
@@ -286,6 +286,8 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it_original, int patch
     delete cursor_additions;
 
     deinit_temp_insertion_trees(sp_, s_o, s__, _po, _p_, __o);
+
+    delete patch_it;
 }
 
 bool PatchTree::append(PatchElementIterator* patch_it, int patch_id, ProgressListener* progressListener) {
