@@ -13,7 +13,7 @@ PatchElementIteratorTripleStrings::~PatchElementIteratorTripleStrings() {
 
 bool PatchElementIteratorTripleStrings::next(PatchElement* element) {
     if (it->hasNext()) {
-        TripleString *tripleString = it->next();
+        TripleString* tripleString = it->next();
         element->set_triple(
                 Triple(tripleString->getSubject(), tripleString->getPredicate(), tripleString->getObject(), dict));
         element->set_addition(additions);
@@ -75,4 +75,45 @@ bool PatchElementIteratorVector::next(PatchElement* element) {
 
 void PatchElementIteratorVector::goToStart() {
     it = elements->begin();
+}
+
+PatchElementIteratorBuffered::PatchElementIteratorBuffered(PatchElementIterator* it, unsigned long buffer_size)
+        : it(it), buffer_size(buffer_size), ended(false) {
+    fill_buffer();
+}
+
+bool PatchElementIteratorBuffered::next(PatchElement* element) {
+    if (buffer.size() > 0) {
+        PatchElement& buffer_element = buffer.front();
+        element->set_triple(buffer_element.get_triple());
+        element->set_addition(buffer_element.is_addition());
+        buffer.pop();
+        if (!ended && buffer.size() == 0) { // TODO: if multithreading buffer.size() < buffer_size / 2
+            fill_buffer();
+        }
+        return true;
+    }
+    return false;
+}
+
+void PatchElementIteratorBuffered::goToStart() {
+    std::queue<PatchElement> empty;
+    std::swap(buffer, empty);
+}
+
+void PatchElementIteratorBuffered::fill_buffer() {
+    // TODO: different thread?
+    for (unsigned long to_fill = buffer_size - buffer.size(); to_fill > 0; to_fill--) {
+        PatchElement element(Triple(0, 0, 0), false);
+        if (it->next(&element)) {
+            buffer.push(element);
+        } else {
+            ended = true;
+            break;
+        }
+    }
+}
+
+PatchElementIteratorBuffered::~PatchElementIteratorBuffered() {
+    delete it;
 }

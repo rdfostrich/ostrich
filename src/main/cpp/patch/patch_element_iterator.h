@@ -48,4 +48,19 @@ public:
     void goToStart();
 };
 
+class PatchElementIteratorBuffered : public PatchElementIterator {
+protected:
+    PatchElementIterator* it;
+    std::queue<PatchElement> buffer;
+    unsigned long buffer_size;
+    bool ended;
+protected:
+    void fill_buffer();
+public:
+    PatchElementIteratorBuffered(PatchElementIterator* it, unsigned long buffer_size);
+    ~PatchElementIteratorBuffered();
+    bool next(PatchElement* element);
+    void goToStart();
+};
+
 #endif //TPFPATCH_STORE_PATCH_ELEMENT_ITERATOR_H

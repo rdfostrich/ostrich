@@ -51,7 +51,9 @@ void PatchTree::deinit_temp_insertion_trees(HashDB &sp_, HashDB &s_o, HashDB &s_
     std::remove(".additions.__o.tmp");
 }
 
-void PatchTree::append_unsafe(PatchElementIterator *patch_it, int patch_id, ProgressListener *progressListener) {
+void PatchTree::append_unsafe(PatchElementIterator* patch_it_original, int patch_id, ProgressListener *progressListener) {
+    PatchElementIterator* patch_it = new PatchElementIteratorBuffered(patch_it_original, 100); // TODO: test buffer size
+
     const char *kbp, *vbp;
     size_t ksp, vsp;
     PatchTreeDeletionValue deletion_value;
