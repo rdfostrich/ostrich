@@ -19,6 +19,38 @@ PatchTree::~PatchTree() {
     delete tripleStore;
 }
 
+void PatchTree::init_temp_insertion_trees(HashDB &sp_, HashDB &s_o, HashDB &s__, HashDB &_po, HashDB &_p_, HashDB &__o) {
+    std::remove(".additions.sp_.tmp");
+    std::remove(".additions.s_o.tmp");
+    std::remove(".additions.s__.tmp");
+    std::remove(".additions._po.tmp");
+    std::remove(".additions._p_.tmp");
+    std::remove(".additions.__o.tmp");
+
+    sp_.open(".additions.sp_.tmp", HashDB::OWRITER | HashDB::OCREATE);
+    s_o.open(".additions.s_o.tmp", HashDB::OWRITER | HashDB::OCREATE);
+    s__.open(".additions.s__.tmp", HashDB::OWRITER | HashDB::OCREATE);
+    _po.open(".additions._po.tmp", HashDB::OWRITER | HashDB::OCREATE);
+    _p_.open(".additions._p_.tmp", HashDB::OWRITER | HashDB::OCREATE);
+    __o.open(".additions.__o.tmp", HashDB::OWRITER | HashDB::OCREATE);
+}
+
+void PatchTree::deinit_temp_insertion_trees(HashDB &sp_, HashDB &s_o, HashDB &s__, HashDB &_po, HashDB &_p_, HashDB &__o) {
+    sp_.close();
+    s_o.close();
+    s__.close();
+    _po.close();
+    _p_.close();
+    __o.close();
+
+    std::remove(".additions.sp_.tmp");
+    std::remove(".additions.s_o.tmp");
+    std::remove(".additions.s__.tmp");
+    std::remove(".additions._po.tmp");
+    std::remove(".additions._p_.tmp");
+    std::remove(".additions.__o.tmp");
+}
+
 void PatchTree::append_unsafe(PatchElementIterator *patch_it, int patch_id, ProgressListener *progressListener) {
     const char *kbp, *vbp;
     size_t ksp, vsp;
@@ -36,15 +68,16 @@ void PatchTree::append_unsafe(PatchElementIterator *patch_it, int patch_id, Prog
     cursor_deletions->jump();
     cursor_additions->jump();
 
-    // TODO: use KC hashmaps?
     // Counters for all possible patch positions
-    unordered_map<long, PatchPosition> sp_;
-    unordered_map<long, PatchPosition> s_o;
-    unordered_map<long, PatchPosition> s__;
-    unordered_map<long, PatchPosition> _po;
-    unordered_map<long, PatchPosition> _p_;
-    unordered_map<long, PatchPosition> __o;
+    // We use KC hashmaps to store the potentially large amounts of triple patterns to avoid running out of memory.
+    HashDB sp_;
+    HashDB s_o;
+    HashDB s__;
+    HashDB _po;
+    HashDB _p_;
+    HashDB __o;
     PatchPosition ___ = 0;
+    init_temp_insertion_trees(sp_, s_o, s__, _po, _p_, __o);
 
     bool should_step_patch = true;
     bool should_step_deletions = true;
@@ -249,6 +282,8 @@ void PatchTree::append_unsafe(PatchElementIterator *patch_it, int patch_id, Prog
 
     delete cursor_deletions;
     delete cursor_additions;
+
+    deinit_temp_insertion_trees(sp_, s_o, s__, _po, _p_, __o);
 }
 
 bool PatchTree::append(PatchElementIterator* patch_it, int patch_id, ProgressListener* progressListener) {

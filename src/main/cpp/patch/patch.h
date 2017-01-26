@@ -73,12 +73,12 @@ public:
      * @return The relative positions for all derived triple patterns.
      */
     static PatchPositions positions(const Triple& element,
-                                    unordered_map<long, PatchPosition>& sp_,
-                                    unordered_map<long, PatchPosition>& s_o,
-                                    unordered_map<long, PatchPosition>& s__,
-                                    unordered_map<long, PatchPosition>& _po,
-                                    unordered_map<long, PatchPosition>& _p_,
-                                    unordered_map<long, PatchPosition>& __o,
+                                    HashDB& sp_,
+                                    HashDB& s_o,
+                                    HashDB& s__,
+                                    HashDB& _po,
+                                    HashDB& _p_,
+                                    HashDB& __o,
                                     PatchPosition& ___);
 };
 

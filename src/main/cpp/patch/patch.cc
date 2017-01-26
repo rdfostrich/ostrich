@@ -93,24 +93,35 @@ PatchIterator* PatchSorted::iterator() const {
     return new PatchIteratorVector(elements.cbegin(), elements.cend());
 }
 
-inline PatchPosition contains_and_increment_position(unordered_map<long, PatchPosition>& m, long hash) {
-    std::unordered_map<long, PatchPosition>::const_iterator it = m.find(hash);
+inline PatchPosition contains_and_increment_position(HashDB& m, long hash) {
+    size_t _;
+    char raw_key[sizeof(long)];
+    char* raw_value;
+    memcpy(raw_key, &hash, sizeof(long));
+
+    raw_value = m.get(raw_key, sizeof(long), &_);
     PatchPosition pos = 0;
-    if (it != m.end()) {
-        pos = it->second;
+    if (raw_value != NULL) {
+        memcpy(&pos, raw_value, sizeof(PatchPosition));
+    } else {
+        raw_value = (char*) malloc(sizeof(long));
     }
-    m[hash] = pos + 1;
-    return pos;
+    pos++;
+    memcpy(raw_value, &pos, sizeof(PatchPosition));
+    m.set(raw_key, sizeof(long), raw_value, sizeof(PatchPosition));
+
+    delete raw_value;
+    return pos - 1;
 }
 
 PatchPositions Patch::positions(const Triple& triple,
-                                 unordered_map<long, PatchPosition>& sp_,
-                                 unordered_map<long, PatchPosition>& s_o,
-                                 unordered_map<long, PatchPosition>& s__,
-                                 unordered_map<long, PatchPosition>& _po,
-                                 unordered_map<long, PatchPosition>& _p_,
-                                 unordered_map<long, PatchPosition>& __o,
-                                 PatchPosition& ___) {
+                                HashDB& sp_,
+                                HashDB& s_o,
+                                HashDB& s__,
+                                HashDB& _po,
+                                HashDB& _p_,
+                                HashDB& __o,
+                                PatchPosition& ___) {
     PatchPositions positions = PatchPositions();
     long hsp_ = triple.get_subject() | (triple.get_predicate() << 16);
     long hs_o = triple.get_subject() | (triple.get_object() << 16);

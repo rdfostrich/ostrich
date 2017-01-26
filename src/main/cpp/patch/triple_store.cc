@@ -91,7 +91,6 @@ void TripleStore::insertAdditionSingle(const PatchTreeKey* key, const PatchTreeA
     const char *raw_key = key->serialize(&key_size);
     const char *raw_value = value->serialize(&value_size);
 
-    // TODO: parallelize?
     if (cursor != NULL) {
         cursor->set_value(raw_value, value_size, false);
     } else {
@@ -116,6 +115,7 @@ void TripleStore::insertAdditionSingle(const PatchTreeKey* key, int patch_id, bo
         const char *raw_value = cursor == NULL ? index_spo->get(raw_key, key_size, &value_size) : cursor->get_value(&value_size, false);
         if (raw_value) {
             value.deserialize(raw_value, value_size);
+            free((char*) raw_value);
         }
     }
     value.add(patch_id);
@@ -149,6 +149,7 @@ void TripleStore::insertDeletionSingle(const PatchTreeKey* key, const PatchPosit
         const char *raw_value = cursor == NULL ? index_spo_deletions->get(raw_key, key_size, &value_size) : cursor->get_value(&value_size, false);
         if (raw_value) {
             deletion_value.deserialize(raw_value, value_size);
+            free((char*) raw_value);
         }
     }
     PatchTreeDeletionValueElement element = PatchTreeDeletionValueElement(patch_id, patch_positions);

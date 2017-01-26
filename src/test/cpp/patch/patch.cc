@@ -249,12 +249,18 @@ TEST_F(PatchElementsTest, Positions) {
     // s z o -
 
     // Calculate positions
-    unordered_map<long, PatchPosition> sp_;
-    unordered_map<long, PatchPosition> s_o;
-    unordered_map<long, PatchPosition> s__;
-    unordered_map<long, PatchPosition> _po;
-    unordered_map<long, PatchPosition> _p_;
-    unordered_map<long, PatchPosition> __o;
+    HashDB sp_;
+    HashDB s_o;
+    HashDB s__;
+    HashDB _po;
+    HashDB _p_;
+    HashDB __o;
+    sp_.open(".additions.sp_.tmp", HashDB::OWRITER | HashDB::OCREATE);
+    s_o.open(".additions.s_o.tmp", HashDB::OWRITER | HashDB::OCREATE);
+    s__.open(".additions.s__.tmp", HashDB::OWRITER | HashDB::OCREATE);
+    _po.open(".additions._po.tmp", HashDB::OWRITER | HashDB::OCREATE);
+    _p_.open(".additions._p_.tmp", HashDB::OWRITER | HashDB::OCREATE);
+    __o.open(".additions.__o.tmp", HashDB::OWRITER | HashDB::OCREATE);
     PatchPosition ___ = 0;
 
     // Simulate patch-position calculation
@@ -297,6 +303,20 @@ TEST_F(PatchElementsTest, Positions) {
     ASSERT_EQ(0, pos_2._p_) << "Found position is wrong";
     ASSERT_EQ(0, pos_2.__o) << "Found position is wrong";
     ASSERT_EQ(0, pos_2.___) << "Found position is wrong";
+
+    sp_.close();
+    s_o.close();
+    s__.close();
+    _po.close();
+    _p_.close();
+    __o.close();
+
+    std::remove(".additions.sp_.tmp");
+    std::remove(".additions.s_o.tmp");
+    std::remove(".additions.s__.tmp");
+    std::remove(".additions._po.tmp");
+    std::remove(".additions._p_.tmp");
+    std::remove(".additions.__o.tmp");
 }
 
 TEST_F(PatchElementsTest, PositionPattern) {
