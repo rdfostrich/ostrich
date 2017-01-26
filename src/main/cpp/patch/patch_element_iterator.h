@@ -2,6 +2,8 @@
 #define TPFPATCH_STORE_PATCH_ELEMENT_ITERATOR_H
 
 #include <thread>
+#include <mutex>
+#include <condition_variable>
 #include "patch_element.h"
 
 class PatchElementIterator {

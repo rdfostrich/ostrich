@@ -8,6 +8,7 @@
 #include <dictionary/PlainDictionary.hpp>
 #include <HDTVocabulary.hpp>
 #include <Triples.hpp>
+#include <mutex>
 
 using namespace std;
 using namespace hdt;
