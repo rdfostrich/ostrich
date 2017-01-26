@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.3)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -stdlib=libc++ -Wno-deprecated")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated")
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include("ext/hunter/HunterGate.cmake")
@@ -103,6 +103,11 @@ if (Kyoto-FOUND)
     add_definitions(-DHAVE_KYOTO)
 endif()
 
+# Add pthreads
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+target_link_libraries(${PROJECT_NAME_STR} Threads::Threads)
+
 # Add zlib
 hunter_add_package(ZLIB)
 find_package(ZLIB CONFIG REQUIRED)
@@ -154,5 +159,6 @@ target_link_libraries(${PROJECT_TEST_NAME} ${KYOTO_SHARED_LIBRARY})
 target_link_libraries(${PROJECT_TEST_NAME} ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(${PROJECT_TEST_NAME} ${ZLIB_LIBRARIES})
 target_link_libraries(${PROJECT_TEST_NAME} Boost::iostreams)
+target_link_libraries(${PROJECT_TEST_NAME} Threads::Threads)
 
 add_test(test1 ${PROJECT_TEST_NAME})
