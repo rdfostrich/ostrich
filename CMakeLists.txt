@@ -54,6 +54,7 @@ set(COMMON_FILES
         src/main/cpp/evaluate/evaluator.cc src/main/cpp/evaluate/evaluator.h
         src/main/cpp/simpleprogresslistener.cc src/main/cpp/simpleprogresslistener.h
         src/main/cpp/controller/patch_builder.cc src/main/cpp/controller/patch_builder.h
+        src/main/cpp/controller/patch_builder_streaming.cc src/main/cpp/controller/patch_builder_streaming.h
         src/main/cpp/controller/triple_delta_iterator.cc src/main/cpp/controller/triple_delta_iterator.h
         src/main/cpp/controller/triple_versions_iterator.cc src/main/cpp/controller/triple_versions_iterator.h
         src/main/cpp/patch/patch_element_iterator.cc src/main/cpp/patch/patch_element_iterator.h)

@@ -1,6 +1,7 @@
 #include <util/StopWatch.hpp>
 #include "controller.h"
 #include "snapshot_patch_iterator_triple_id.h"
+#include "patch_builder_streaming.h"
 
 Controller::Controller(string basePath, int8_t kc_opts) : patchTreeManager(new PatchTreeManager(basePath, kc_opts)), snapshotManager(new SnapshotManager(basePath)) {}
 
@@ -330,6 +331,10 @@ void Controller::cleanup(string basePath, Controller* controller) {
     }
 }
 
-PatchBuilder* Controller::new_patch() {
+PatchBuilder* Controller::new_patch_bulk() {
     return new PatchBuilder(this);
+}
+
+PatchBuilderStreaming *Controller::new_patch_stream() {
+    return new PatchBuilderStreaming(this);
 }

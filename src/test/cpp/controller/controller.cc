@@ -73,17 +73,35 @@ TEST_F(ControllerTest, GetEdge) {
 }
 
 TEST_F(ControllerTest, PatchBuilder) {
-    controller->new_patch()
+    controller->new_patch_bulk()
             ->addition(TripleString("a", "a", "a"))
             ->addition(TripleString("b", "b", "b"))
             ->addition(TripleString("c", "c", "c"))
             ->commit();
 
-    controller->new_patch()
+    controller->new_patch_bulk()
             ->deletion(TripleString("a", "a", "a"))
             ->addition(TripleString("d", "d", "d"))
             ->deletion(TripleString("c", "c", "c"))
             ->commit();
+
+    DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
+    ASSERT_EQ(3, controller->get_version_materialized_count(Triple("", "", "", dict), 0)) << "Count is incorrect";
+    ASSERT_EQ(2, controller->get_version_materialized_count(Triple("", "", "", dict), 1)) << "Count is incorrect";
+}
+
+TEST_F(ControllerTest, PatchBuilderStreaming) {
+    controller->new_patch_stream()
+            ->addition(TripleString("a", "a", "a"))
+            ->addition(TripleString("b", "b", "b"))
+            ->addition(TripleString("c", "c", "c"))
+            ->close();
+
+    controller->new_patch_stream()
+            ->deletion(TripleString("a", "a", "a"))
+            ->addition(TripleString("d", "d", "d"))
+            ->deletion(TripleString("c", "c", "c"))
+            ->close();
 
     DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
     ASSERT_EQ(3, controller->get_version_materialized_count(Triple("", "", "", dict), 0)) << "Count is incorrect";
@@ -680,17 +698,17 @@ TEST_F(ControllerTest, EdgeCaseVersionMaterialized1) {
 }
 
 TEST_F(ControllerTest, GetDeltaMaterializedSnapshotPatch) {
-    controller->new_patch()
+    controller->new_patch_bulk()
             ->addition(TripleString("<a>", "<a>", "<a>"))
             ->addition(TripleString("<a>", "<a>", "<b>"))
             ->addition(TripleString("<a>", "<a>", "<c>"))
             ->commit();
 
-    controller->new_patch()
+    controller->new_patch_bulk()
             ->deletion(TripleString("<a>", "<a>", "<b>"))
             ->commit();
 
-    controller->new_patch()
+    controller->new_patch_bulk()
             ->addition(TripleString("<a>", "<a>", "<d>"))
             ->commit();
 
@@ -769,21 +787,21 @@ TEST_F(ControllerTest, GetDeltaMaterializedSnapshotPatch) {
 }
 
 TEST_F(ControllerTest, GetDeltaMaterializedPatchPatch) {
-    controller->new_patch()
+    controller->new_patch_bulk()
             ->addition(TripleString("<a>", "<a>", "<a>"))
             ->addition(TripleString("<a>", "<a>", "<b>"))
             ->addition(TripleString("<a>", "<a>", "<c>"))
             ->commit();
 
-    controller->new_patch()
+    controller->new_patch_bulk()
             ->deletion(TripleString("<a>", "<a>", "<b>"))
             ->commit();
 
-    controller->new_patch()
+    controller->new_patch_bulk()
             ->addition(TripleString("<a>", "<a>", "<d>"))
             ->commit();
 
-    controller->new_patch()
+    controller->new_patch_bulk()
             ->addition(TripleString("<a>", "<a>", "<e>"))
             ->deletion(TripleString("<a>", "<a>", "<a>"))
             ->commit();
@@ -896,17 +914,17 @@ TEST_F(ControllerTest, GetDeltaMaterializedPatchPatch) {
 }
 
 TEST_F(ControllerTest, GetVersion) {
-    controller->new_patch()
+    controller->new_patch_bulk()
             ->addition(TripleString("<a>", "<a>", "<a>"))
             ->addition(TripleString("<a>", "<a>", "<b>"))
             ->addition(TripleString("<a>", "<a>", "<c>"))
             ->commit();
 
-    controller->new_patch()
+    controller->new_patch_bulk()
             ->deletion(TripleString("<a>", "<a>", "<b>"))
             ->commit();
 
-    controller->new_patch()
+    controller->new_patch_bulk()
             ->addition(TripleString("<a>", "<a>", "<d>"))
             ->commit();
 

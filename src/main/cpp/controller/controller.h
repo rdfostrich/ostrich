@@ -5,6 +5,7 @@
 #include "../snapshot/snapshot_manager.h"
 #include "../patch/patch_tree_manager.h"
 #include "patch_builder.h"
+#include "patch_builder_streaming.h"
 #include "triple_delta_iterator.h"
 #include "triple_versions_iterator.h"
 
@@ -83,9 +84,13 @@ public:
      */
     int get_max_patch_id();
     /**
-     * @return a new patch builder.
+     * @return a new bulk patch builder.
      */
-    PatchBuilder* new_patch();
+    PatchBuilder* new_patch_bulk();
+    /**
+     * @return a new streaming patch builder.
+     */
+    PatchBuilderStreaming* new_patch_stream();
     /**
      * Removes all the files that were created by the controller.
      */
