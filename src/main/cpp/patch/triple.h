@@ -70,9 +70,9 @@ public:
      * @param size The size of the byte array
      */
     void deserialize(const char* data, size_t size);
-    void set_subject(int subject);
-    void set_predicate(int predicate);
-    void set_object(int object);
+    void set_subject(unsigned int subject);
+    void set_predicate(unsigned int predicate);
+    void set_object(unsigned int object);
 
     bool operator == (const Triple& rhs) const;
 

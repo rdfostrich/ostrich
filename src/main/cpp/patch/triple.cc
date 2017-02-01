@@ -65,15 +65,15 @@ void Triple::deserialize(const char* data, size_t size) {
   memcpy(&object, &data[sizeof(subject) + sizeof(predicate)],  sizeof(object));
 }
 
-void Triple::set_subject(int subject) {
+void Triple::set_subject(unsigned int subject) {
     this->subject = subject;
 }
 
-void Triple::set_predicate(int predicate) {
+void Triple::set_predicate(unsigned int predicate) {
     this->predicate = predicate;
 }
 
-void Triple::set_object(int object) {
+void Triple::set_object(unsigned int object) {
     this->object = object;
 }
 
