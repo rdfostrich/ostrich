@@ -11,14 +11,14 @@ using namespace hdt;
 SnapshotManager::SnapshotManager(string basePath) : basePath(basePath), loaded_snapshots(detect_snapshots()), loaded_dictionaries(std::map<int, DictionaryManager*>()) {}
 
 SnapshotManager::~SnapshotManager() {
-    /*std::map<int, HDT*>::iterator it1 = loaded_snapshots.begin();
+    std::map<int, HDT*>::iterator it1 = loaded_snapshots.begin();
     while(it1 != loaded_snapshots.end()) {
         HDT* hdt = it1->second;
         if(hdt != NULL) {
-            delete hdt; // TODO: Crashes somewhere internally in HDT...
+            delete hdt;
         }
         it1++;
-    }*/
+    }
     std::map<int, DictionaryManager*>::iterator it2 = loaded_dictionaries.begin();
     while(it2 != loaded_dictionaries.end()) {
         DictionaryManager* dict = it2->second;
@@ -52,7 +52,7 @@ int SnapshotManager::get_latest_snapshot(int patch_id) {
 HDT* SnapshotManager::load_snapshot(int snapshot_id) {
     // TODO: We might want to look into unloading snapshots if they aren't used for a while. (using splay-tree/queue?)
     string fileName = basePath + SNAPSHOT_FILENAME_BASE(snapshot_id);
-    loaded_snapshots[snapshot_id] = hdt::HDTManager::loadHDT(fileName.c_str());
+    loaded_snapshots[snapshot_id] = hdt::HDTManager::mapIndexedHDT(fileName.c_str());
 
     // load dictionary as well
     DictionaryManager* dict = new DictionaryManager(basePath, snapshot_id, loaded_snapshots[snapshot_id]->getDictionary());
@@ -83,6 +83,7 @@ HDT* SnapshotManager::create_snapshot(int snapshot_id, IteratorTripleString* tri
     BasicHDT* basicHdt = new BasicHDT();
     basicHdt->loadFromTriples(triples, base_uri, listener);
     basicHdt->saveToHDT((basePath + SNAPSHOT_FILENAME_BASE(snapshot_id)).c_str());
+    delete basicHdt;
     return load_snapshot(snapshot_id);
 }
 
@@ -90,6 +91,7 @@ HDT* SnapshotManager::create_snapshot(int snapshot_id, string triples_file, stri
     BasicHDT* basicHdt = new BasicHDT();
     basicHdt->loadFromRDF(triples_file.c_str(), base_uri, notation);
     basicHdt->saveToHDT((basePath + SNAPSHOT_FILENAME_BASE(snapshot_id)).c_str());
+    delete basicHdt;
     return load_snapshot(snapshot_id);
 }
 
