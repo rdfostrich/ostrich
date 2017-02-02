@@ -7,6 +7,7 @@ TripleVersions::TripleVersions() : triple(new Triple()), versions(new vector<int
 
 TripleVersions::~TripleVersions() {
     delete triple;
+    delete versions;
 }
 
 
@@ -21,6 +22,11 @@ vector<int>* TripleVersions::get_versions() {
 
 TripleVersionsIterator::TripleVersionsIterator(Triple triple_pattern, IteratorTripleID* snapshot_it, PatchTree* patchTree)
         : triple_pattern(triple_pattern), snapshot_it(snapshot_it), patchTree(patchTree), addition_it(NULL) {}
+
+TripleVersionsIterator::~TripleVersionsIterator() {
+    if (snapshot_it != NULL) delete snapshot_it;
+    if (addition_it != NULL) delete addition_it;
+}
 
 inline void TripleVersionsIterator::eraseDeletedVersions(std::vector<int>* versions, Triple* currentTriple, int initial_version) {
     PatchTreeDeletionValue* deletion = patchTree->get_deletion_value(*currentTriple);

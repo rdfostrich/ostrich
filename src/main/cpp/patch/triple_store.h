@@ -23,6 +23,10 @@ private:
     //TreeDB index_ops; // We don't need this one if we maintain our s,p,o order priorites
     DictionaryManager* dict;
     PatchTreeKeyComparator* spo_comparator;
+    PatchTreeKeyComparator* sop_comparator;
+    PatchTreeKeyComparator* pso_comparator;
+    PatchTreeKeyComparator* pos_comparator;
+    PatchTreeKeyComparator* osp_comparator;
     PatchElementComparator* element_comparator;
 protected:
     void open(TreeDB* db, string name);

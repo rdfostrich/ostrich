@@ -1,6 +1,8 @@
 #include <Triples.hpp>
 #include "triple_iterator.h"
 
+TripleIterator::~TripleIterator() {}
+
 EmptyTripleIterator::EmptyTripleIterator() {}
 
 bool EmptyTripleIterator::next(Triple *triple) {

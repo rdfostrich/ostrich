@@ -60,7 +60,6 @@ void Evaluator::populate_controller_with_version(int patch_id, string path, Prog
             string filename = string(ent->d_name);
             string full_path = path + k_path_separator + filename;
             if (filename != "." && filename != "..") {
-                int count = 0;
                 bool additions = std::regex_match(filename, base_match, regex_additions);
                 bool deletions = std::regex_match(filename, base_match, regex_deletions);
                 NOTIFYMSG(progressListener, ("FILE: " + full_path + "\n").c_str());
@@ -80,21 +79,23 @@ void Evaluator::populate_controller_with_version(int patch_id, string path, Prog
     if (first) {
         NOTIFYMSG(progressListener, "\nCreating snapshot...\n");
         std::cout.setstate(std::ios_base::failbit); // Disable cout info from HDT
-        HDT* hdt = controller->get_snapshot_manager()->create_snapshot(0, it_snapshot, BASEURI, new SimpleProgressListener());
+        HDT* hdt = controller->get_snapshot_manager()->create_snapshot(0, it_snapshot, BASEURI, progressListener);
         std::cout.clear();
         added = hdt->getTriples()->getNumberOfElements();
-        delete it_snapshot;
+
     } else {
         NOTIFYMSG(progressListener, "\nAppending patch...\n");
         controller->append(it_patch, patch_id, dict, false, progressListener);
         added = it_patch->getPassed();
-        delete it_patch;
     }
     long long duration = st.stopReal() / 1000;
     if (duration == 0) duration = 1; // Avoid division by 0
     long long rate = added / duration;
     std::ifstream::pos_type accsize = patchstore_size(controller);
     cout << patch_id << "," << added << "," << duration << "," << rate << "," << accsize << endl;
+
+    delete it_snapshot;
+    delete it_patch;
 }
 
 std::ifstream::pos_type Evaluator::patchstore_size(Controller* controller) {
@@ -145,6 +146,7 @@ long long Evaluator::measure_lookup_version_materialized(Triple triple_pattern, 
         Triple t;
         long count = 0;
         while((limit == -2 || limit-- > 0) && ti->next(&t)) { count++; };
+        delete ti;
         //cout << "Results: " << count << endl; // TODO
         //cout << "b: " << (st2.stopReal()) << endl;st2.reset(); // TODO
         total += st.stopReal();
@@ -161,6 +163,7 @@ long long Evaluator::measure_lookup_delta_materialized(Triple triple_pattern, in
         TripleDelta t;
         long count = 0;
         while ((limit == -2 || limit-- > 0) && ti->next(&t)) { count++; };
+        delete ti;
         total += st.stopReal();
     }
     return total / replications;
@@ -174,6 +177,7 @@ long long Evaluator::measure_lookup_version(Triple triple_pattern, int offset, i
         TripleVersions t;
         long count = 0;
         while((limit == -2 || limit-- > 0) && ti->next(&t)) { count++; };
+        delete ti;
         total += st.stopReal();
     }
     return total / replications;

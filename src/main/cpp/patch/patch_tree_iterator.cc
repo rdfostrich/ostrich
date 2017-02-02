@@ -14,8 +14,8 @@ PatchTreeIterator::PatchTreeIterator(DB::Cursor* cursor_deletions, DB::Cursor* c
           temp_key_deletion(new PatchTreeKey()), temp_key_addition(new PatchTreeKey()) {}
 
 PatchTreeIterator::~PatchTreeIterator() {
-    delete cursor_deletions;
-    delete cursor_additions;
+    if (cursor_deletions != NULL) delete cursor_deletions;
+    if (cursor_additions != NULL) delete cursor_additions;
     delete temp_key_deletion;
     delete temp_key_addition;
 }

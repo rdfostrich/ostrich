@@ -20,6 +20,8 @@ void TripleDelta::set_addition(bool addition) {
     this->addition = addition;
 }
 
+TripleDeltaIterator::~TripleDeltaIterator() {}
+
 TripleDeltaIterator* TripleDeltaIterator::offset(int offset) {
     TripleDelta td;
     while(offset-- > 0 && next(&td));

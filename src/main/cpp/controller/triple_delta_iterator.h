@@ -21,6 +21,7 @@ public:
 // Iterator for triples annotated with addition/deletion.
 class TripleDeltaIterator {
 public:
+    virtual ~TripleDeltaIterator() = 0;
     virtual bool next(TripleDelta* triple) = 0;
     size_t get_count();
     TripleDeltaIterator* offset(int offset);

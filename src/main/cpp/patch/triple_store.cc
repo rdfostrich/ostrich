@@ -18,10 +18,10 @@ TripleStore::TripleStore(string base_file_name, DictionaryManager* dict, int8_t 
     // Set the triple comparators
     index_spo_deletions->tune_comparator(spo_comparator = new PatchTreeKeyComparator(comp_s, comp_p, comp_o, dict));
     index_spo->tune_comparator(spo_comparator);
-    index_sop->tune_comparator(new PatchTreeKeyComparator(comp_s, comp_o, comp_p, dict));
-    index_pso->tune_comparator(new PatchTreeKeyComparator(comp_p, comp_s, comp_o, dict));
-    index_pos->tune_comparator(new PatchTreeKeyComparator(comp_p, comp_o, comp_s, dict));
-    index_osp->tune_comparator(new PatchTreeKeyComparator(comp_o, comp_s, comp_p, dict));
+    index_sop->tune_comparator(sop_comparator = new PatchTreeKeyComparator(comp_s, comp_o, comp_p, dict));
+    index_pso->tune_comparator(pso_comparator = new PatchTreeKeyComparator(comp_p, comp_s, comp_o, dict));
+    index_pos->tune_comparator(pos_comparator = new PatchTreeKeyComparator(comp_p, comp_o, comp_s, dict));
+    index_osp->tune_comparator(osp_comparator = new PatchTreeKeyComparator(comp_o, comp_s, comp_p, dict));
     element_comparator = new PatchElementComparator(spo_comparator);
 
     index_spo_deletions->tune_options(kc_opts);
@@ -48,6 +48,13 @@ TripleStore::~TripleStore() {
     close(index_pso, "pso");
     close(index_pos, "pos");
     close(index_osp, "osp");
+
+    delete spo_comparator;
+    delete sop_comparator;
+    delete pso_comparator;
+    delete pos_comparator;
+    delete osp_comparator;
+    delete element_comparator;
 }
 
 void TripleStore::open(TreeDB* db, string name) {
@@ -107,16 +114,17 @@ void TripleStore::insertAdditionSingle(const PatchTreeKey* key, const PatchTreeA
 
 void TripleStore::insertAdditionSingle(const PatchTreeKey* key, int patch_id, bool local_change, bool ignore_existing, DB::Cursor* cursor) {
     // Look up the value for the given triple key in the tree.
-    size_t key_size, value_size;
-    const char *raw_key = key->serialize(&key_size);
     PatchTreeAdditionValue value;
     if (!ignore_existing) {
         // We assume that are indexes are sane, we only check one of them
+        size_t key_size, value_size;
+        const char *raw_key = key->serialize(&key_size);
         const char *raw_value = cursor == NULL ? index_spo->get(raw_key, key_size, &value_size) : cursor->get_value(&value_size, false);
         if (raw_value) {
             value.deserialize(raw_value, value_size);
             free((char*) raw_value);
         }
+        free((char*) raw_key);
     }
     value.add(patch_id);
     if (local_change) {
@@ -142,15 +150,16 @@ void TripleStore::insertDeletionSingle(const PatchTreeKey* key, const PatchTreeD
 }
 
 void TripleStore::insertDeletionSingle(const PatchTreeKey* key, const PatchPositions& patch_positions, int patch_id, bool local_change, bool ignore_existing, DB::Cursor* cursor) {
-    size_t key_size, value_size;
-    const char *raw_key = key->serialize(&key_size);
     PatchTreeDeletionValue deletion_value;
     if (!ignore_existing) {
+        size_t key_size, value_size;
+        const char *raw_key = key->serialize(&key_size);
         const char *raw_value = cursor == NULL ? index_spo_deletions->get(raw_key, key_size, &value_size) : cursor->get_value(&value_size, false);
         if (raw_value) {
             deletion_value.deserialize(raw_value, value_size);
             free((char*) raw_value);
         }
+        free((char*) raw_key);
     }
     PatchTreeDeletionValueElement element = PatchTreeDeletionValueElement(patch_id, patch_positions);
     if (local_change) {

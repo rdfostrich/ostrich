@@ -26,6 +26,7 @@ protected:
     inline void eraseDeletedVersions(std::vector<int>* versions, Triple* currentTriple, int initial_version);
 public:
     TripleVersionsIterator(Triple triple_pattern, IteratorTripleID* snapshot_it, PatchTree* patchTree);
+    ~TripleVersionsIterator();
     bool next(TripleVersions* triple_versions);
     size_t get_count();
     TripleVersionsIterator* offset(int offset);

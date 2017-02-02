@@ -11,6 +11,14 @@ using namespace hdt;
 SnapshotManager::SnapshotManager(string basePath) : basePath(basePath), loaded_snapshots(detect_snapshots()), loaded_dictionaries(std::map<int, DictionaryManager*>()) {}
 
 SnapshotManager::~SnapshotManager() {
+    /*std::map<int, HDT*>::iterator it1 = loaded_snapshots.begin();
+    while(it1 != loaded_snapshots.end()) {
+        HDT* hdt = it1->second;
+        if(hdt != NULL) {
+            delete hdt; // TODO: Crashes somewhere internally in HDT...
+        }
+        it1++;
+    }*/
     std::map<int, DictionaryManager*>::iterator it2 = loaded_dictionaries.begin();
     while(it2 != loaded_dictionaries.end()) {
         DictionaryManager* dict = it2->second;

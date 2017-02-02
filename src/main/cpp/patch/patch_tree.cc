@@ -143,6 +143,7 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it_original, int patch
             has_patch_ended = !patch_it->next(&patch_element);
             i++;
         }
+
         if (should_step_deletions) {
             kbp = cursor_deletions->get(&ksp, &vbp, &vsp, false);
             have_deletions_ended = kbp == NULL;
@@ -526,9 +527,11 @@ PatchTreeDeletionValue* PatchTree::get_deletion_value(const Triple &triple) cons
     size_t ksp, vsp;
     const char* kbp = triple.serialize(&ksp);
     const char* vbp = tripleStore->getDeletionsTree()->get(kbp, ksp, &vsp);
+    free((char*) kbp);
     if (vbp != NULL) {
         PatchTreeDeletionValue* value = new PatchTreeDeletionValue();
         value->deserialize(vbp, vsp);
+        free((char*) vbp);
         return value;
     }
     return NULL;
@@ -580,6 +583,7 @@ PatchTreeTripleIterator* PatchTree::addition_iterator_from(long offset, int patc
     size_t size;
     const char* data = triple_pattern.serialize(&size);
     cursor->jump(data, size);
+    free((char*) data);
     PatchTreeIterator* it = new PatchTreeIterator(NULL, cursor, get_spo_comparator());
     it->set_patch_filter(patch_id, true);
     it->set_triple_pattern_filter(triple_pattern);
@@ -596,6 +600,7 @@ PatchTreeIterator* PatchTree::addition_iterator(const Triple &triple_pattern) co
     size_t size;
     const char* data = triple_pattern.serialize(&size);
     cursor->jump(data, size);
+    free((char*) data);
     PatchTreeIterator* it = new PatchTreeIterator(NULL, cursor, get_spo_comparator());
     it->set_triple_pattern_filter(triple_pattern);
     return it;
@@ -615,9 +620,11 @@ PatchTreeAdditionValue* PatchTree::get_addition_value(const Triple &triple) cons
     size_t ksp, vsp;
     const char* kbp = triple.serialize(&ksp);
     const char* vbp = tripleStore->getDefaultAdditionsTree()->get(kbp, ksp, &vsp);
+    free((char*) kbp);
     if (vbp != NULL) {
         PatchTreeAdditionValue* value = new PatchTreeAdditionValue();
         value->deserialize(vbp, vsp);
+        free((char*) vbp);
         return value;
     }
     return NULL;

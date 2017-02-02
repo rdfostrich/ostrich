@@ -16,6 +16,9 @@ SnapshotPatchIteratorTripleID::SnapshotPatchIteratorTripleID(
 
 SnapshotPatchIteratorTripleID::~SnapshotPatchIteratorTripleID() {
     delete last_deleted_triple;
+    if (snapshot_it != NULL) delete snapshot_it;
+    if (deletion_it != NULL) delete deletion_it;
+    if (addition_it != NULL) delete addition_it;
 }
 
 bool SnapshotPatchIteratorTripleID::next(Triple* triple) {
@@ -23,7 +26,9 @@ bool SnapshotPatchIteratorTripleID::next(Triple* triple) {
         if (snapshot_it != NULL && snapshot_it->hasNext()) { // Emit triples from snapshot - deletions
             // Find snapshot triple
             TripleID* snapshot_triple = snapshot_it->next();
-            *triple = Triple(snapshot_triple->getSubject(), snapshot_triple->getPredicate(), snapshot_triple->getObject());
+            triple->set_subject(snapshot_triple->getSubject());
+            triple->set_predicate(snapshot_triple->getPredicate());
+            triple->set_object(snapshot_triple->getObject());
 
             // Start iterating over deletions.
             // If we find a match, we know that we DON'T have to emit this snapshot triple.
@@ -64,11 +69,12 @@ bool SnapshotPatchIteratorTripleID::next(Triple* triple) {
                 return true;
             }
         } else { // Emit additions
+            if (snapshot_it != NULL) delete snapshot_it;
             snapshot_it = NULL;
-            *triple = Triple();
             if(addition_it->next(triple)) {
                 return true;
             } else {
+                if (addition_it != NULL) delete addition_it;
                 addition_it = NULL;
             }
         }

@@ -43,7 +43,9 @@ int main(int argc, char *argv[]) {
     }
 
     Evaluator evaluator;
-    evaluator.init("./", argv[1], stoi(argv[2]), stoi(argv[3]), new SimpleProgressListener());
+    SimpleProgressListener* listener = new SimpleProgressListener();
+    evaluator.init("./", argv[1], stoi(argv[2]), stoi(argv[3]), listener);
+    delete listener;
 
     if (argc >= 6) {
         test_lookups_for_queries(evaluator, ((std::string) argv[4]), stoi(argv[5]));

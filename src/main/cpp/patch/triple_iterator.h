@@ -7,6 +7,7 @@
 
 class TripleIterator {
 public:
+    virtual ~TripleIterator() = 0;
     virtual bool next(Triple* triple) = 0;
 };
 

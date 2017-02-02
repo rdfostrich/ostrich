@@ -66,7 +66,7 @@ TripleIterator* Controller::get_version_materialized(const Triple &triple_patter
     if(patchTree == NULL) {
         return new SnapshotTripleIterator(snapshot_it);
     }
-    PositionedTripleIterator* deletion_it;
+    PositionedTripleIterator* deletion_it = NULL;
     long added_offset = 0;
     bool check_offseted_deletions = true;
 
@@ -112,8 +112,11 @@ TripleIterator* Controller::get_version_materialized(const Triple &triple_patter
                 // TODO: it may be more efficient to just reuse the current deletion_it and offset in there.
                 //       But probably not always.
                 delete deletion_it;
+                deletion_it = NULL;
             }
         } else {
+            if (snapshot_it != NULL) delete snapshot_it;
+            if (deletion_it != NULL) delete deletion_it;
             snapshot_it = NULL;
             deletion_it = NULL;
             check_offseted_deletions = false;
@@ -128,6 +131,7 @@ TripleIterator* Controller::get_version_materialized(const Triple &triple_patter
             tmp_it->next();
             snapshot_count++;
         }
+        delete tmp_it;
     }
 
     // TODO: as an optimization, we should construct this iterator in a lazy manner?
