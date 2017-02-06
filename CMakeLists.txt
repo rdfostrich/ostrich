@@ -24,10 +24,13 @@ file(GLOB_RECURSE HDT_FILES
 set(PROJECT_NAME_STR tpfpatch_store)
 project(${PROJECT_NAME_STR})
 
-set(SOURCE_FILES
+set(SOURCE_FILE_MAIN
         #src/main/cpp/test.cc
         #src/test/cpp/performance.cc
         src/test/cpp/bear.cc
+)
+set(SOURCE_FILE_QUERY
+        src/main/cpp/query.cc
 )
 set(COMMON_FILES
         src/main/cpp/controller/controller.cc src/main/cpp/controller/controller.h
@@ -73,7 +76,15 @@ set(TEST_FILES
         src/test/cpp/dictionary/dictionary_manager.cc
         src/test/cpp/snapshot/snapshot_manager.cc)
 
-add_executable(${PROJECT_NAME_STR} ${HDT_FILES} ${COMMON_FILES} ${SOURCE_FILES})
+add_executable(${PROJECT_NAME_STR} ${HDT_FILES} ${COMMON_FILES} ${SOURCE_FILE_MAIN})
+add_executable(${PROJECT_NAME_STR}-query ${HDT_FILES} ${COMMON_FILES} ${SOURCE_FILE_QUERY})
+
+target_link_libraries(${PROJECT_NAME_STR}-query ${LIBSTDCXX})
+target_link_libraries(${PROJECT_NAME_STR}-query ${KYOTO_SHARED_LIBRARY})
+target_link_libraries(${PROJECT_NAME_STR}-query ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(${PROJECT_NAME_STR}-query ${ZLIB_LIBRARIES})
+target_link_libraries(${PROJECT_NAME_STR}-query Boost::iostreams)
+target_link_libraries(${PROJECT_NAME_STR}-query Threads::Threads)
 
 # Add Kyoto Cabinet
 find_library(KYOTO_SHARED_LIBRARY kyotocabinet PATHS ${KC_ROOT}/lib)

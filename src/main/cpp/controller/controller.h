@@ -14,7 +14,7 @@ private:
     PatchTreeManager* patchTreeManager;
     SnapshotManager* snapshotManager;
 public:
-    Controller(string basePath, int8_t kc_opts = 0);
+    Controller(string basePath, int8_t kc_opts = 0, bool readonly = false);
     ~Controller();
     /**
      * Get an iterator for all triples matching the given triple pattern with a certain offset

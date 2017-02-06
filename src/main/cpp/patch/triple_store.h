@@ -29,10 +29,10 @@ private:
     PatchTreeKeyComparator* osp_comparator;
     PatchElementComparator* element_comparator;
 protected:
-    void open(TreeDB* db, string name);
+    void open(TreeDB* db, string name, bool readonly);
     void close(TreeDB* db, string name);
 public:
-    TripleStore(string base_file_name, DictionaryManager* dict, int8_t kc_opts = 0);
+    TripleStore(string base_file_name, DictionaryManager* dict, int8_t kc_opts = 0, bool readonly = false);
     ~TripleStore();
     TreeDB* getTree(Triple triple_pattern);
     TreeDB* getDefaultAdditionsTree();

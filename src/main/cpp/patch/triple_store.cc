@@ -6,7 +6,7 @@
 using namespace std;
 using namespace kyotocabinet;
 
-TripleStore::TripleStore(string base_file_name, DictionaryManager* dict, int8_t kc_opts) : dict(dict) {
+TripleStore::TripleStore(string base_file_name, DictionaryManager* dict, int8_t kc_opts, bool readonly) : dict(dict) {
     // Construct trees
     index_spo_deletions = new TreeDB();
     index_spo = new TreeDB();
@@ -32,12 +32,12 @@ TripleStore::TripleStore(string base_file_name, DictionaryManager* dict, int8_t 
     index_osp->tune_options(kc_opts);
 
     // Open the databases
-    open(index_spo_deletions, base_file_name + "_spo_deletions");
-    open(index_spo, base_file_name + "_spo");
-    open(index_sop, base_file_name + "_sop");
-    open(index_pso, base_file_name + "_pso");
-    open(index_pos, base_file_name + "_pos");
-    open(index_osp, base_file_name + "_osp");
+    open(index_spo_deletions, base_file_name + "_spo_deletions", readonly);
+    open(index_spo, base_file_name + "_spo", readonly);
+    open(index_sop, base_file_name + "_sop", readonly);
+    open(index_pso, base_file_name + "_pso", readonly);
+    open(index_pos, base_file_name + "_pos", readonly);
+    open(index_osp, base_file_name + "_osp", readonly);
 }
 
 TripleStore::~TripleStore() {
@@ -57,8 +57,8 @@ TripleStore::~TripleStore() {
     delete element_comparator;
 }
 
-void TripleStore::open(TreeDB* db, string name) {
-    if (!db->open(name, HashDB::OWRITER | HashDB::OCREATE)) {
+void TripleStore::open(TreeDB* db, string name, bool readonly) {
+    if (!db->open(name, readonly ? HashDB::OREADER : (HashDB::OWRITER | HashDB::OCREATE))) {
         cerr << "open " << name << " error: " << db->error().name() << endl;
     }
 }

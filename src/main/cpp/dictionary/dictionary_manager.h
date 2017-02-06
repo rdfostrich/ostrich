@@ -21,12 +21,13 @@ class DictionaryManager : public ModifiableDictionary {
 
   const unsigned int bitmask;
   int snapshotId;
+  bool readonly;
 
   std::mutex action_mutex;
 public:
-  DictionaryManager(string basePath, int snapshotId, Dictionary *hdtDict, PlainDictionary *patchDict);
-  DictionaryManager(string basePath, int snapshotId, Dictionary *hdtDict);
-  DictionaryManager(string basePath, int snapshotId);
+  DictionaryManager(string basePath, int snapshotId, Dictionary *hdtDict, PlainDictionary *patchDict, bool readonly = false);
+  DictionaryManager(string basePath, int snapshotId, Dictionary *hdtDict, bool readonly = false);
+  DictionaryManager(string basePath, int snapshotId, bool readonly = false);
   ~DictionaryManager();
 
   /**

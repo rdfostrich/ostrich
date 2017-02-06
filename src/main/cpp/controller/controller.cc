@@ -3,7 +3,7 @@
 #include "snapshot_patch_iterator_triple_id.h"
 #include "patch_builder_streaming.h"
 
-Controller::Controller(string basePath, int8_t kc_opts) : patchTreeManager(new PatchTreeManager(basePath, kc_opts)), snapshotManager(new SnapshotManager(basePath)) {}
+Controller::Controller(string basePath, int8_t kc_opts, bool readonly) : patchTreeManager(new PatchTreeManager(basePath, kc_opts, readonly)), snapshotManager(new SnapshotManager(basePath, readonly)) {}
 
 Controller::~Controller() {
     delete patchTreeManager;
@@ -278,6 +278,7 @@ DictionaryManager *Controller::get_dictionary_manager(int patch_id) const {
     if(snapshot_id < 0) {
         throw std::invalid_argument("No snapshot has been created yet.");
     }
+    get_snapshot_manager()->load_snapshot(snapshot_id);
     return get_snapshot_manager()->get_dictionary_manager(snapshot_id);
 }
 

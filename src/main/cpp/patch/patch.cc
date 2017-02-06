@@ -97,11 +97,13 @@ inline PatchPosition contains_and_increment_position(HashDB& m, long hash) {
     size_t _;
     char raw_key[sizeof(long)];
     char* raw_value;
+    bool was_present = false;
     memcpy(raw_key, &hash, sizeof(long));
 
     raw_value = m.get(raw_key, sizeof(long), &_);
     PatchPosition pos = 0;
     if (raw_value != NULL) {
+        was_present = true;
         memcpy(&pos, raw_value, sizeof(PatchPosition));
     } else {
         raw_value = (char*) malloc(sizeof(long));
@@ -110,7 +112,11 @@ inline PatchPosition contains_and_increment_position(HashDB& m, long hash) {
     memcpy(raw_value, &pos, sizeof(PatchPosition));
     m.set(raw_key, sizeof(long), raw_value, sizeof(PatchPosition));
 
-    free(raw_value);
+    if (was_present) {
+        delete[] raw_value;
+    } else {
+        free(raw_value);
+    }
     return pos - 1;
 }
 

@@ -15,20 +15,20 @@
 using namespace std;
 using namespace hdt;
 
-DictionaryManager::DictionaryManager(string basePath, int snapshotId, Dictionary *hdtDict, PlainDictionary *patchDict)
-    : basePath(basePath), snapshotId(snapshotId), hdtDict(hdtDict), patchDict(patchDict), bitmask(2147483648) {
+DictionaryManager::DictionaryManager(string basePath, int snapshotId, Dictionary *hdtDict, PlainDictionary *patchDict, bool readonly)
+    : basePath(basePath), snapshotId(snapshotId), hdtDict(hdtDict), patchDict(patchDict), bitmask(2147483648), readonly(readonly) {
   load();
 };
 
-DictionaryManager::DictionaryManager(string basePath, int snapshotId, Dictionary *hdtDict)
-    : basePath(basePath), snapshotId(snapshotId), hdtDict(hdtDict), bitmask(2147483648) {
+DictionaryManager::DictionaryManager(string basePath, int snapshotId, Dictionary *hdtDict, bool readonly)
+    : basePath(basePath), snapshotId(snapshotId), hdtDict(hdtDict), bitmask(2147483648), readonly(readonly) {
   // Create additional dictionary
   patchDict = new PlainDictionary();
   load();
 };
 
-DictionaryManager::DictionaryManager(string basePath, int snapshotId)
-        : basePath(basePath), snapshotId(snapshotId), bitmask(2147483648) {
+DictionaryManager::DictionaryManager(string basePath, int snapshotId, bool readonly)
+        : basePath(basePath), snapshotId(snapshotId), bitmask(2147483648), readonly(readonly) {
   // Create two empty default dictionaries dictionary,
   hdtDict = new PlainDictionary();
   patchDict = new PlainDictionary();
@@ -36,7 +36,9 @@ DictionaryManager::DictionaryManager(string basePath, int snapshotId)
 };
 
 DictionaryManager::~DictionaryManager() {
-  save();
+  if (!readonly) {
+    save();
+  }
   delete patchDict;
 }
 

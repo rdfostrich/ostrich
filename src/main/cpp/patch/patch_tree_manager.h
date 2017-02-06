@@ -12,8 +12,9 @@ private:
     std::map<int, PatchTree*> loaded_patches;
     // Options for KC trees
     int8_t kc_opts;
+    bool readonly;
 public:
-    PatchTreeManager(string basePath, int8_t kc_opts = 0);
+    PatchTreeManager(string basePath, int8_t kc_opts = 0, bool readonly = false);
     ~PatchTreeManager();
     /**
      * Add the given patch to a patch tree.

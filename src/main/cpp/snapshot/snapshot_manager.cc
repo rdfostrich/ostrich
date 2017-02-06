@@ -8,7 +8,7 @@
 
 using namespace hdt;
 
-SnapshotManager::SnapshotManager(string basePath) : basePath(basePath), loaded_snapshots(detect_snapshots()), loaded_dictionaries(std::map<int, DictionaryManager*>()) {}
+SnapshotManager::SnapshotManager(string basePath, bool readonly) : basePath(basePath), readonly(readonly), loaded_snapshots(detect_snapshots()), loaded_dictionaries(std::map<int, DictionaryManager*>()) {}
 
 SnapshotManager::~SnapshotManager() {
     std::map<int, HDT*>::iterator it1 = loaded_snapshots.begin();

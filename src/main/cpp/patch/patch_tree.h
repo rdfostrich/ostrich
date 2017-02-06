@@ -38,7 +38,7 @@ protected:
     void init_temp_insertion_trees(HashDB& sp_, HashDB& s_o, HashDB& s__, HashDB& _po, HashDB& _p_, HashDB& __o);
     void deinit_temp_insertion_trees(HashDB& sp_, HashDB& s_o, HashDB& s__, HashDB& _po, HashDB& _p_, HashDB& __o);
 public:
-    PatchTree(string basePath, int min_patch_id, DictionaryManager* dict, int8_t kc_opts = 0);
+    PatchTree(string basePath, int min_patch_id, DictionaryManager* dict, int8_t kc_opts = 0, bool readonly = false);
     ~PatchTree();
     /**
      * Append the given patch elements to the tree with given patch id.
