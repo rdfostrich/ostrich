@@ -122,7 +122,7 @@ void TripleStore::insertAdditionSingle(const PatchTreeKey* key, int patch_id, bo
         const char *raw_value = cursor == NULL ? index_spo->get(raw_key, key_size, &value_size) : cursor->get_value(&value_size, false);
         if (raw_value) {
             value.deserialize(raw_value, value_size);
-            free((char*) raw_value);
+            delete[] raw_value;
         }
         free((char*) raw_key);
     }
@@ -157,7 +157,7 @@ void TripleStore::insertDeletionSingle(const PatchTreeKey* key, const PatchPosit
         const char *raw_value = cursor == NULL ? index_spo_deletions->get(raw_key, key_size, &value_size) : cursor->get_value(&value_size, false);
         if (raw_value) {
             deletion_value.deserialize(raw_value, value_size);
-            free((char*) raw_value);
+            delete[] raw_value;
         }
         free((char*) raw_key);
     }

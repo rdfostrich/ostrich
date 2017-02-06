@@ -150,8 +150,7 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it_original, int patch
             if (!have_deletions_ended) {
                 deletion_value.deserialize(vbp, vsp);
                 deletion_key.deserialize(kbp, ksp);
-                free((char*) kbp);
-                //free((char*) vbp);
+                delete[] kbp;
             }
         }
         if (should_step_additions) {
@@ -160,8 +159,7 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it_original, int patch
             if (!have_additions_ended) {
                 addition_value.deserialize(vbp, vsp);
                 addition_key.deserialize(kbp, ksp);
-                free((char*) kbp);
-                //free((char*) vbp);
+                delete[] kbp;
             }
         }
 
@@ -363,6 +361,7 @@ bool PatchTree::contains_addition(const PatchElement& patch_element, int patch_i
     size_t key_size, value_size;
     const char* raw_key = key.serialize(&key_size);
     const char* raw_value = tripleStore->getDefaultAdditionsTree()->get(raw_key, key_size, &value_size);
+    free((char*) raw_key);
 
     // First, we check if the key is present
     bool ret = raw_value != NULL;
@@ -370,10 +369,9 @@ bool PatchTree::contains_addition(const PatchElement& patch_element, int patch_i
         // After that, we have to deserialize the value and check if it exists for the given patch.
         PatchTreeAdditionValue value;
         value.deserialize(raw_value, value_size);
+        delete[] raw_value;
         ret = value.is_patch_id(patch_id);
     }
-    free((char*) raw_key);
-    free((char*) raw_value);
     return ret;
 }
 
@@ -382,6 +380,7 @@ bool PatchTree::contains_deletion(const PatchElement& patch_element, int patch_i
     size_t key_size, value_size;
     const char* raw_key = key.serialize(&key_size);
     const char* raw_value = tripleStore->getDeletionsTree()->get(raw_key, key_size, &value_size);
+    free((char*) raw_key);
 
     // First, we check if the key is present
     bool ret = raw_value != NULL;
@@ -389,11 +388,10 @@ bool PatchTree::contains_deletion(const PatchElement& patch_element, int patch_i
         // After that, we have to deserialize the value and check if it exists for the given patch.
         PatchTreeDeletionValue value;
         value.deserialize(raw_value, value_size);
+        delete[] raw_value;
         long i = value.get_patchvalue_index(patch_id);
         ret = i >= 0;
     }
-    free((char*) raw_key);
-    free((char*) raw_value);
     return ret;
 }
 
@@ -531,7 +529,7 @@ PatchTreeDeletionValue* PatchTree::get_deletion_value(const Triple &triple) cons
     if (vbp != NULL) {
         PatchTreeDeletionValue* value = new PatchTreeDeletionValue();
         value->deserialize(vbp, vsp);
-        free((char*) vbp);
+        delete[] vbp;
         return value;
     }
     return NULL;
@@ -548,7 +546,7 @@ PatchTreeDeletionValue* PatchTree::get_deletion_value_after(const Triple& triple
     const char *vbp;
     kbp = cursor->get(&ksp, &vbp, &vsp);
     if (vbp == NULL) {
-        free((char*) kbp);
+        delete[] kbp;
         return NULL;
     }
 
@@ -556,13 +554,13 @@ PatchTreeDeletionValue* PatchTree::get_deletion_value_after(const Triple& triple
     Triple triple;
     triple.deserialize(kbp, ksp);
     if (!Triple::pattern_match_triple(triple, triple_pattern)) {
-        free((char*) kbp);
+        delete[] kbp;
         return NULL;
     }
 
     PatchTreeDeletionValue* deletion_value = new PatchTreeDeletionValue();
     deletion_value->deserialize(vbp, vsp);
-    free((char*) kbp);
+    delete[] kbp;
     return deletion_value;
 }
 
@@ -624,7 +622,7 @@ PatchTreeAdditionValue* PatchTree::get_addition_value(const Triple &triple) cons
     if (vbp != NULL) {
         PatchTreeAdditionValue* value = new PatchTreeAdditionValue();
         value->deserialize(vbp, vsp);
-        free((char*) vbp);
+        delete[] vbp;
         return value;
     }
     return NULL;
