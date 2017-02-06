@@ -87,13 +87,13 @@ bool PatchElementIteratorBuffered::next(PatchElement* element) {
     // Wait for fill-buffer thread if the buffer is empty at the moment
     {
         std::unique_lock<std::mutex> l(lock_thread_nonempty);
-        if (!ended && buffer.size() < 1) {
+        while (!ended && buffer.size() < 1) {
             buffer_trigger_nonempty.wait(l);
         }
     }
     if (!ended || buffer.size() > 0) {
         // Get first element from buffer
-        PatchElement buffer_element = buffer.front();
+        PatchElement& buffer_element = buffer.front();
         buffer.pop();
         // If the inner iterator hasn't ended yet, and our buffer is half-empty, notify the fill-buffer thread.
         if (!ended && buffer.size() < buffer_size / 2) {
