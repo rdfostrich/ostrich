@@ -93,7 +93,7 @@ bool PatchElementIteratorBuffered::next(PatchElement* element) {
     }
     if (!ended || buffer.size() > 0) {
         // Get first element from buffer
-        PatchElement& buffer_element = buffer.front();
+        PatchElement buffer_element = buffer.front();
         buffer.pop();
         // If the inner iterator hasn't ended yet, and our buffer is half-empty, notify the fill-buffer thread.
         if (!ended && buffer.size() < buffer_size / 2) {

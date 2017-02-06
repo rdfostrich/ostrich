@@ -110,7 +110,7 @@ inline PatchPosition contains_and_increment_position(HashDB& m, long hash) {
     memcpy(raw_value, &pos, sizeof(PatchPosition));
     m.set(raw_key, sizeof(long), raw_value, sizeof(PatchPosition));
 
-    delete raw_value;
+    free(raw_value);
     return pos - 1;
 }
 
