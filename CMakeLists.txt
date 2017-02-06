@@ -77,14 +77,6 @@ set(TEST_FILES
         src/test/cpp/snapshot/snapshot_manager.cc)
 
 add_executable(${PROJECT_NAME_STR} ${HDT_FILES} ${COMMON_FILES} ${SOURCE_FILE_MAIN})
-add_executable(${PROJECT_NAME_STR}-query ${HDT_FILES} ${COMMON_FILES} ${SOURCE_FILE_QUERY})
-
-target_link_libraries(${PROJECT_NAME_STR}-query ${LIBSTDCXX})
-target_link_libraries(${PROJECT_NAME_STR}-query ${KYOTO_SHARED_LIBRARY})
-target_link_libraries(${PROJECT_NAME_STR}-query ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(${PROJECT_NAME_STR}-query ${ZLIB_LIBRARIES})
-target_link_libraries(${PROJECT_NAME_STR}-query Boost::iostreams)
-target_link_libraries(${PROJECT_NAME_STR}-query Threads::Threads)
 
 # Add Kyoto Cabinet
 find_library(KYOTO_SHARED_LIBRARY kyotocabinet PATHS ${KC_ROOT}/lib)
@@ -134,6 +126,15 @@ target_link_libraries(${PROJECT_NAME_STR} Boost::iostreams Boost::regex)
 # 3rdparty Libraries
 set(EXT_PROJECTS_DIR ${PROJECT_SOURCE_DIR}/ext)
 #include(CMakeLists-External.txt)
+
+# Add query executable
+add_executable(${PROJECT_NAME_STR}-query ${HDT_FILES} ${COMMON_FILES} ${SOURCE_FILE_QUERY})
+target_link_libraries(${PROJECT_NAME_STR}-query ${LIBSTDCXX})
+target_link_libraries(${PROJECT_NAME_STR}-query ${KYOTO_SHARED_LIBRARY})
+target_link_libraries(${PROJECT_NAME_STR}-query ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(${PROJECT_NAME_STR}-query ${ZLIB_LIBRARIES})
+target_link_libraries(${PROJECT_NAME_STR}-query Boost::iostreams)
+target_link_libraries(${PROJECT_NAME_STR}-query Threads::Threads)
 
 # Add gtest
 add_subdirectory(${EXT_PROJECTS_DIR}/gtest)
