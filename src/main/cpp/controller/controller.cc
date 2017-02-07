@@ -2,8 +2,14 @@
 #include "controller.h"
 #include "snapshot_patch_iterator_triple_id.h"
 #include "patch_builder_streaming.h"
+#include <sys/stat.h>
 
-Controller::Controller(string basePath, int8_t kc_opts, bool readonly) : patchTreeManager(new PatchTreeManager(basePath, kc_opts, readonly)), snapshotManager(new SnapshotManager(basePath, readonly)) {}
+Controller::Controller(string basePath, int8_t kc_opts, bool readonly) : patchTreeManager(new PatchTreeManager(basePath, kc_opts, readonly)), snapshotManager(new SnapshotManager(basePath, readonly)) {
+    struct stat sb;
+    if (!(stat(basePath.c_str(), &sb) == 0 && S_ISDIR(sb.st_mode))) {
+        throw std::invalid_argument("The provided path '" + basePath + "' is not a valid directory.");
+    }
+}
 
 Controller::~Controller() {
     delete patchTreeManager;
