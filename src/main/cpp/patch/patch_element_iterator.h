@@ -28,11 +28,13 @@ public:
 
 class PatchElementIteratorCombined : public PatchElementIterator {
 protected:
-    int pos;
     std::vector<PatchElementIterator*> iterators;
     long passed;
+    PatchTreeKeyComparator comparator;
+    std::vector<bool> iterators_buffer_valid;
+    std::vector<PatchElement*> iterators_buffer;
 public:
-    PatchElementIteratorCombined();
+    PatchElementIteratorCombined(PatchTreeKeyComparator comparator);
     ~PatchElementIteratorCombined();
     bool next(PatchElement* element);
     void appendIterator(PatchElementIterator* it);

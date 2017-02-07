@@ -26,23 +26,41 @@ void PatchElementIteratorTripleStrings::goToStart() {
     it->goToStart();
 }
 
-PatchElementIteratorCombined::PatchElementIteratorCombined() : pos(0), iterators(), passed(0) {}
+PatchElementIteratorCombined::PatchElementIteratorCombined(PatchTreeKeyComparator comparator) : iterators(), passed(0), comparator(comparator) {}
 
 PatchElementIteratorCombined::~PatchElementIteratorCombined() {
     for (int i = 0; i < iterators.size(); i++) {
         delete iterators[i];
+        delete iterators_buffer[i];
     }
 }
 
-bool PatchElementIteratorCombined::next(PatchElement *element) {
-    while (!(iterators[pos]->next(element) && ++passed)) {
-        if (++pos == iterators.size()) break;
+bool PatchElementIteratorCombined::next(PatchElement* element) {
+    int chosen_it = -1;
+    for (int i = 0; i < iterators.size(); i++) {
+        if (!iterators_buffer_valid[i]) {
+            iterators_buffer_valid[i] = iterators[i]->next(iterators_buffer[i]);
+            passed++;
+        }
+
+        if (iterators_buffer_valid[i]) {
+            if (chosen_it < 0 || comparator.compare(iterators_buffer[i]->get_triple(), iterators_buffer[chosen_it]->get_triple()) < 0) {
+                chosen_it = i;
+            }
+        }
     }
-    return pos < iterators.size();
+    if (chosen_it >= 0) {
+        iterators_buffer_valid[chosen_it] = false;
+        std::swap(*element, *(iterators_buffer[chosen_it]));
+        return true;
+    }
+    return false;
 }
 
 void PatchElementIteratorCombined::appendIterator(PatchElementIterator *it) {
     iterators.push_back(it);
+    iterators_buffer.push_back(new PatchElement());
+    iterators_buffer_valid.push_back(false);
 }
 
 long PatchElementIteratorCombined::getPassed() {
@@ -50,13 +68,9 @@ long PatchElementIteratorCombined::getPassed() {
 }
 
 void PatchElementIteratorCombined::goToStart() {
-    while (pos >= 0) {
-        if (pos < iterators.size()) {
-            iterators[pos]->goToStart();
-        }
-        pos--;
+    for (int i = 0; i < iterators.size(); i++) {
+        iterators[i]->goToStart();
     }
-    pos++;
 }
 
 PatchElementIteratorVector::PatchElementIteratorVector(const std::vector<PatchElement>* elements) : elements(elements) {

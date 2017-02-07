@@ -51,11 +51,12 @@ public:
 
     /**
      * Add the given patch to a patch tree.
-     * @param patch_it The patch iterator with elements to add.
+     * @param patch_it The patch iterator with sorted elements to add.
      * @param patch_id The id of the patch to add.
      * @param check_uniqueness If triple uniqueness for the given patch id must be checked, will slow down insertion if true, which is the default behaviour.
      * @param progressListener an optional progress listener.
      * @return If the append succeeded.
+     * @note The patch iterator MUST provide triples sorted by SPO.
      */
     bool append(PatchElementIterator* patch_it, int patch_id, DictionaryManager* dict, bool check_uniqueness = true, ProgressListener* progressListener = NULL);
     /**

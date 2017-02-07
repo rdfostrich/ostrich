@@ -34,7 +34,7 @@ void Evaluator::populate_controller_with_version(int patch_id, string path, Prog
     DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
     bool first = patch_id == 0;
     CombinedTripleIterator* it_snapshot = new CombinedTripleIterator();
-    PatchElementIteratorCombined* it_patch = new PatchElementIteratorCombined();
+    PatchElementIteratorCombined* it_patch = new PatchElementIteratorCombined(PatchTreeKeyComparator(comp_s, comp_p, comp_o, dict));
 
     if (controller->get_max_patch_id() >= patch_id) {
         if (first) {
