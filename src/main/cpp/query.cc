@@ -37,8 +37,8 @@ int main(int argc, char** argv) {
     DictionaryManager* dict = controller.get_dictionary_manager(patch_id);
     Triple triple_pattern(s, p, o, dict);
 
-    size_t count = controller.get_version_materialized_count(triple_pattern, patch_id, true);
-    cerr << "Estimated count: " << count << endl;
+    std::pair<size_t, ResultEstimationType> count = controller.get_version_materialized_count(triple_pattern, patch_id, true);
+    cerr << "Count: " << count.first << (count.second == EXACT ? "" : " (estimate)") << endl;
 
     TripleIterator* it = controller.get_version_materialized(triple_pattern, offset, patch_id);
     Triple triple(0, 0, 0);
