@@ -36,7 +36,7 @@ PatchElementIteratorCombined::~PatchElementIteratorCombined() {
 
 bool PatchElementIteratorCombined::next(PatchElement *element) {
     while (!(iterators[pos]->next(element) && ++passed)) {
-        pos++;
+        if (++pos == iterators.size()) break;
     }
     return pos < iterators.size();
 }
@@ -116,7 +116,7 @@ void PatchElementIteratorBuffered::goToStart() {
 }
 
 void PatchElementIteratorBuffered::fill_buffer() {
-    PatchElement element(Triple(0, 0, 0), false);
+    PatchElement element;
     while (!shutdown_thread) {
         while (buffer.size() < buffer_size) {
             // Get inner iterator element, and add it to the buffer.

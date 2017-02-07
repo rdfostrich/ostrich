@@ -11,6 +11,7 @@ protected:
     bool addition;
     bool local_change;
 public:
+    PatchElement();
     PatchElement(const Triple& triple, bool addition);
     PatchElement(const Triple& triple, bool addition, bool local_change);
     /**
