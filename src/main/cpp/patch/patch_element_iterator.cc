@@ -122,7 +122,7 @@ void PatchElementIteratorBuffered::fill_buffer() {
             // Get inner iterator element, and add it to the buffer.
             if (it->next(&element)) {
                 lock_thread_nonempty.lock();
-                buffer.push(element);
+                buffer.emplace(element.get_triple(), element.is_addition());
                 lock_thread_nonempty.unlock();
                 // Notify the other thread to tell that the buffer is not empty.
                 buffer_trigger_nonempty.notify_all();
