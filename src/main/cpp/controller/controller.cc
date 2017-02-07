@@ -11,13 +11,13 @@ Controller::~Controller() {
 }
 
 size_t Controller::get_version_materialized_count_estimated(const Triple& triple_pattern, int patch_id) const {
-    return get_version_materialized_count(triple_pattern, patch_id, true);
+    return get_version_materialized_count(triple_pattern, patch_id, true).first;
 }
 
-size_t Controller::get_version_materialized_count(const Triple& triple_pattern, int patch_id, bool allowEstimates) const {
+std::pair<size_t, ResultEstimationType> Controller::get_version_materialized_count(const Triple& triple_pattern, int patch_id, bool allowEstimates) const {
     int snapshot_id = get_snapshot_manager()->get_latest_snapshot(patch_id);
     if(snapshot_id < 0) {
-        return 0;
+        return std::make_pair(0, EXACT);
     }
 
     HDT* snapshot = get_snapshot_manager()->get_snapshot(snapshot_id);
@@ -31,18 +31,18 @@ size_t Controller::get_version_materialized_count(const Triple& triple_pattern, 
         }
     }
     if(snapshot_id == patch_id) {
-        return snapshot_count;
+        return std::make_pair(snapshot_count, snapshot_it->numResultEstimation());
     }
 
     DictionaryManager *dict = get_snapshot_manager()->get_dictionary_manager(snapshot_id);
     PatchTree* patchTree = get_patch_tree_manager()->get_patch_tree(patch_id, dict);
     if(patchTree == NULL) {
-        return snapshot_count;
+        return std::make_pair(snapshot_count, snapshot_it->numResultEstimation());
     }
 
     std::pair<PatchPosition, Triple> deletion_count_data = patchTree->deletion_count_until(triple_pattern, patch_id);
     size_t addition_count = patchTree->addition_count(patch_id, triple_pattern);
-    return snapshot_count - deletion_count_data.first + addition_count;
+    return std::make_pair(snapshot_count - deletion_count_data.first + addition_count, snapshot_it->numResultEstimation());
 }
 
 TripleIterator* Controller::get_version_materialized(const Triple &triple_pattern, int offset, int patch_id) const {
@@ -140,12 +140,12 @@ TripleIterator* Controller::get_version_materialized(const Triple &triple_patter
     return new SnapshotPatchIteratorTripleID(snapshot_it, deletion_it, addition_it, patchTree->get_spo_comparator());
 }
 
-size_t Controller::get_delta_materialized_count(const Triple &triple_pattern, int patch_id_start, int patch_id_end, bool allowEstimates) const {
-    return get_delta_materialized(triple_pattern, 0, patch_id_start, patch_id_end)->get_count();
+std::pair<size_t, ResultEstimationType> Controller::get_delta_materialized_count(const Triple &triple_pattern, int patch_id_start, int patch_id_end, bool allowEstimates) const {
+    return std::make_pair(get_delta_materialized(triple_pattern, 0, patch_id_start, patch_id_end)->get_count(), EXACT);
 }
 
 size_t Controller::get_delta_materialized_count_estimated(const Triple &triple_pattern, int patch_id_start, int patch_id_end) const {
-    return get_delta_materialized_count(triple_pattern, patch_id_start, patch_id_end, true);
+    return get_delta_materialized_count(triple_pattern, patch_id_start, patch_id_end, true).second;
 }
 
 TripleDeltaIterator* Controller::get_delta_materialized(const Triple &triple_pattern, int offset, int patch_id_start,
@@ -210,12 +210,12 @@ TripleDeltaIterator* Controller::get_delta_materialized(const Triple &triple_pat
     return nullptr;
 }
 
-size_t Controller::get_version_count(const Triple &triple_pattern, bool allowEstimates) const {
-    return get_version(triple_pattern, 0)->get_count();
+std::pair<size_t, ResultEstimationType> Controller::get_version_count(const Triple &triple_pattern, bool allowEstimates) const {
+    return std::make_pair(get_version(triple_pattern, 0)->get_count(), EXACT);
 }
 
 size_t Controller::get_version_count_estimated(const Triple &triple_pattern) const {
-    return get_version_count(triple_pattern, true);
+    return get_version_count(triple_pattern, true).second;
 }
 
 TripleVersionsIterator* Controller::get_version(const Triple &triple_pattern, int offset) const {

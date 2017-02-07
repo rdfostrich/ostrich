@@ -24,7 +24,7 @@ public:
      * @param patch_id The patch id for which triples should be returned.
      */
     TripleIterator* get_version_materialized(const Triple &triple_pattern, int offset, int patch_id) const;
-    size_t get_version_materialized_count(const Triple& triple_pattern, int patch_id, bool allowEstimates = false) const;
+    std::pair<size_t, ResultEstimationType> get_version_materialized_count(const Triple& triple_pattern, int patch_id, bool allowEstimates = false) const;
     size_t get_version_materialized_count_estimated(const Triple& triple_pattern, int patch_id) const;
     /**
      * Get an addition/deletion iterator for all triples matching the given triple pattern with a certain offset
@@ -35,7 +35,7 @@ public:
      * @param patch_id The patch id for which triples should be returned.
      */
     TripleDeltaIterator* get_delta_materialized(const Triple &triple_pattern, int offset, int patch_id_start, int patch_id_end) const;
-    size_t get_delta_materialized_count(const Triple& triple_pattern, int patch_id_start, int patch_id_end, bool allowEstimates = false) const;
+    std::pair<size_t, ResultEstimationType> get_delta_materialized_count(const Triple& triple_pattern, int patch_id_start, int patch_id_end, bool allowEstimates = false) const;
     size_t get_delta_materialized_count_estimated(const Triple& triple_pattern, int patch_id_start, int patch_id_end) const;
     /**
      * Get an iterator for all triples matching the given triple pattern with a certain offset
@@ -46,7 +46,7 @@ public:
      * @param patch_id The patch id for which triples should be returned.
      */
     TripleVersionsIterator* get_version(const Triple &triple_pattern, int offset) const;
-    size_t get_version_count(const Triple& triple_pattern, bool allowEstimates = false) const;
+    std::pair<size_t, ResultEstimationType> get_version_count(const Triple& triple_pattern, bool allowEstimates = false) const;
     size_t get_version_count_estimated(const Triple& triple_pattern) const;
 
     /**

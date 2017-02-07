@@ -86,8 +86,8 @@ TEST_F(ControllerTest, PatchBuilder) {
             ->commit();
 
     DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
-    ASSERT_EQ(3, controller->get_version_materialized_count(Triple("", "", "", dict), 0)) << "Count is incorrect";
-    ASSERT_EQ(2, controller->get_version_materialized_count(Triple("", "", "", dict), 1)) << "Count is incorrect";
+    ASSERT_EQ(3, controller->get_version_materialized_count(Triple("", "", "", dict), 0).first) << "Count is incorrect";
+    ASSERT_EQ(2, controller->get_version_materialized_count(Triple("", "", "", dict), 1).first) << "Count is incorrect";
 }
 
 TEST_F(ControllerTest, PatchBuilderStreaming) {
@@ -104,8 +104,8 @@ TEST_F(ControllerTest, PatchBuilderStreaming) {
             ->close();
 
     DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
-    ASSERT_EQ(3, controller->get_version_materialized_count(Triple("", "", "", dict), 0)) << "Count is incorrect";
-    ASSERT_EQ(2, controller->get_version_materialized_count(Triple("", "", "", dict), 1)) << "Count is incorrect";
+    ASSERT_EQ(3, controller->get_version_materialized_count(Triple("", "", "", dict), 0).first) << "Count is incorrect";
+    ASSERT_EQ(2, controller->get_version_materialized_count(Triple("", "", "", dict), 1).first) << "Count is incorrect";
 }
 
 TEST_F(ControllerTest, GetVersionMaterializedSimple) {
@@ -136,7 +136,7 @@ TEST_F(ControllerTest, GetVersionMaterializedSimple) {
     Triple t;
 
     // Request version 0 (snapshot)
-    ASSERT_EQ(3, controller->get_version_materialized_count(Triple("", "", "", dict), 0)) << "Count is incorrect";
+    ASSERT_EQ(3, controller->get_version_materialized_count(Triple("", "", "", dict), 0).first) << "Count is incorrect";
     TripleIterator* it0 = controller->get_version_materialized(Triple("", "", "", dict), 0, 0);
 
     ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
@@ -151,7 +151,7 @@ TEST_F(ControllerTest, GetVersionMaterializedSimple) {
     ASSERT_EQ(false, it0->next(&t)) << "Iterator should be finished";
 
     // Request version 1 (patch)
-    ASSERT_EQ(2, controller->get_version_materialized_count(Triple("", "", "", dict), 1)) << "Count is incorrect";
+    ASSERT_EQ(2, controller->get_version_materialized_count(Triple("", "", "", dict), 1).first) << "Count is incorrect";
     TripleIterator* it1 = controller->get_version_materialized(Triple("", "", "", dict), 0, 1);
 
     ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
@@ -163,7 +163,7 @@ TEST_F(ControllerTest, GetVersionMaterializedSimple) {
     ASSERT_EQ(false, it1->next(&t)) << "Iterator should be finished";
 
     // Request version 1 (patch) at offset 1
-    ASSERT_EQ(2, controller->get_version_materialized_count(Triple("", "", "", dict), 1)) << "Count is incorrect";
+    ASSERT_EQ(2, controller->get_version_materialized_count(Triple("", "", "", dict), 1).first) << "Count is incorrect";
     TripleIterator* it2 = controller->get_version_materialized(Triple("", "", "", dict), 1, 1);
 
     ASSERT_EQ(true, it2->next(&t)) << "Iterator has a no next value";
@@ -172,7 +172,7 @@ TEST_F(ControllerTest, GetVersionMaterializedSimple) {
     ASSERT_EQ(false, it2->next(&t)) << "Iterator should be finished";
 
     // Request version 0 (snapshot) for ? ? <c>
-    ASSERT_EQ(1, controller->get_version_materialized_count(Triple("", "", "<c>", dict), 0)) << "Count is incorrect";
+    ASSERT_EQ(1, controller->get_version_materialized_count(Triple("", "", "<c>", dict), 0).first) << "Count is incorrect";
     TripleIterator* it3 = controller->get_version_materialized(Triple("", "", "<c>", dict), 0, 0);
 
     ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
@@ -181,7 +181,7 @@ TEST_F(ControllerTest, GetVersionMaterializedSimple) {
     ASSERT_EQ(false, it3->next(&t)) << "Iterator should be finished";
 
     // Request version 1 (patch) for ? ? <c>
-    ASSERT_EQ(1, controller->get_version_materialized_count(Triple("", "", "<c>", dict), 1)) << "Count is incorrect";
+    ASSERT_EQ(1, controller->get_version_materialized_count(Triple("", "", "<c>", dict), 1).first) << "Count is incorrect";
     TripleIterator* it4 = controller->get_version_materialized(Triple("", "", "<c>", dict), 0, 1);
 
     ASSERT_EQ(true, it4->next(&t)) << "Iterator has a no next value";
@@ -252,7 +252,7 @@ TEST_F(ControllerTest, GetVersionMaterializedComplex1) {
     Triple t;
 
     // Request version 0 (snapshot)
-    ASSERT_EQ(4, controller->get_version_materialized_count(Triple("", "", "", dict), 0)) << "Count is incorrect";
+    ASSERT_EQ(4, controller->get_version_materialized_count(Triple("", "", "", dict), 0).first) << "Count is incorrect";
     TripleIterator* it0 = controller->get_version_materialized(Triple("", "", "", dict), 0, 0);
 
     ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
@@ -270,7 +270,7 @@ TEST_F(ControllerTest, GetVersionMaterializedComplex1) {
     ASSERT_EQ(false, it0->next(&t)) << "Iterator should be finished";
 
     // Request version 1 (patch)
-    ASSERT_EQ(4, controller->get_version_materialized_count(Triple("", "", "", dict), 1)) << "Count is incorrect";
+    ASSERT_EQ(4, controller->get_version_materialized_count(Triple("", "", "", dict), 1).first) << "Count is incorrect";
     TripleIterator* it1 = controller->get_version_materialized(Triple("", "", "", dict), 0, 1);
 
     ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
@@ -326,7 +326,7 @@ TEST_F(ControllerTest, GetVersionMaterializedComplex1) {
     ASSERT_EQ(false, it5->next(&t)) << "Iterator should be finished";
 
     // Request version 2 (patch)
-    ASSERT_EQ(3, controller->get_version_materialized_count(Triple("", "", "", dict), 2)) << "Count is incorrect";
+    ASSERT_EQ(3, controller->get_version_materialized_count(Triple("", "", "", dict), 2).first) << "Count is incorrect";
     TripleIterator* it6 = controller->get_version_materialized(Triple("", "", "", dict), 0, 2);
 
     ASSERT_EQ(true, it6->next(&t)) << "Iterator has a no next value";
@@ -427,7 +427,7 @@ TEST_F(ControllerTest, GetVersionMaterializedComplex2) {
     Triple t;
 
     // Request version 0 (snapshot)
-    ASSERT_EQ(4, controller->get_version_materialized_count(Triple("", "", "o", dict), 0)) << "Count is incorrect";
+    ASSERT_EQ(4, controller->get_version_materialized_count(Triple("", "", "o", dict), 0).first) << "Count is incorrect";
     TripleIterator* it0 = controller->get_version_materialized(Triple("", "", "o", dict), 0, 0);
 
     ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
@@ -445,7 +445,7 @@ TEST_F(ControllerTest, GetVersionMaterializedComplex2) {
     ASSERT_EQ(false, it0->next(&t)) << "Iterator should be finished";
 
     // Request version 1 (patch)
-    ASSERT_EQ(4, controller->get_version_materialized_count(Triple("", "", "o", dict), 1)) << "Count is incorrect";
+    ASSERT_EQ(4, controller->get_version_materialized_count(Triple("", "", "o", dict), 1).first) << "Count is incorrect";
     TripleIterator* it1 = controller->get_version_materialized(Triple("", "", "o", dict), 0, 1);
 
     ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
@@ -501,7 +501,7 @@ TEST_F(ControllerTest, GetVersionMaterializedComplex2) {
     ASSERT_EQ(false, it5->next(&t)) << "Iterator should be finished";
 
     // Request version 2 (patch)
-    ASSERT_EQ(3, controller->get_version_materialized_count(Triple("", "", "o", dict), 2)) << "Count is incorrect";
+    ASSERT_EQ(3, controller->get_version_materialized_count(Triple("", "", "o", dict), 2).first) << "Count is incorrect";
     TripleIterator* it6 = controller->get_version_materialized(Triple("", "", "o", dict), 0, 2);
 
     ASSERT_EQ(true, it6->next(&t)) << "Iterator has a no next value";
@@ -596,7 +596,7 @@ TEST_F(ControllerTest, GetVersionMaterializedComplex3) {
     Triple t;
 
     // Request version 0 (snapshot)
-    ASSERT_EQ(1, controller->get_version_materialized_count(Triple("s", "", "", dict), 0)) << "Count is incorrect";
+    ASSERT_EQ(1, controller->get_version_materialized_count(Triple("s", "", "", dict), 0).first) << "Count is incorrect";
     TripleIterator* it0 = controller->get_version_materialized(Triple("s", "", "", dict), 0, 0);
 
     ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
@@ -605,7 +605,7 @@ TEST_F(ControllerTest, GetVersionMaterializedComplex3) {
     ASSERT_EQ(false, it0->next(&t)) << "Iterator should be finished";
 
     // Request version 1 (patch)
-    ASSERT_EQ(1, controller->get_version_materialized_count(Triple("s", "", "", dict), 1)) << "Count is incorrect";
+    ASSERT_EQ(1, controller->get_version_materialized_count(Triple("s", "", "", dict), 1).first) << "Count is incorrect";
     TripleIterator* it1 = controller->get_version_materialized(Triple("s", "", "", dict), 0, 1);
 
     ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
@@ -619,7 +619,7 @@ TEST_F(ControllerTest, GetVersionMaterializedComplex3) {
     ASSERT_EQ(false, it2->next(&t)) << "Iterator should be finished";
 
     // Request version 2 (patch)
-    ASSERT_EQ(1, controller->get_version_materialized_count(Triple("s", "", "", dict), 2)) << "Count is incorrect";
+    ASSERT_EQ(1, controller->get_version_materialized_count(Triple("s", "", "", dict), 2).first) << "Count is incorrect";
     TripleIterator* it6 = controller->get_version_materialized(Triple("s", "", "", dict), 0, 2);
 
     ASSERT_EQ(true, it6->next(&t)) << "Iterator has a no next value";
@@ -731,7 +731,7 @@ TEST_F(ControllerTest, GetDeltaMaterializedSnapshotPatch) {
     TripleDelta t;
 
     // Request between versions 0 and 1 for ? ? ?
-    ASSERT_EQ(1, controller->get_delta_materialized_count(Triple("", "", "", dict), 0, 1)) << "Count is incorrect";
+    ASSERT_EQ(1, controller->get_delta_materialized_count(Triple("", "", "", dict), 0, 1).first) << "Count is incorrect";
     TripleDeltaIterator* it0 = controller->get_delta_materialized(Triple("", "", "", dict), 0, 0, 1);
 
     ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
@@ -742,7 +742,7 @@ TEST_F(ControllerTest, GetDeltaMaterializedSnapshotPatch) {
 
 
     // Request between versions 0 and 1 for <a> ? ?
-    ASSERT_EQ(1, controller->get_delta_materialized_count(Triple("<a>", "", "", dict), 0, 1)) << "Count is incorrect";
+    ASSERT_EQ(1, controller->get_delta_materialized_count(Triple("<a>", "", "", dict), 0, 1).first) << "Count is incorrect";
     TripleDeltaIterator* it1 = controller->get_delta_materialized(Triple("<a>", "", "", dict), 0, 0, 1);
 
     ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
@@ -752,13 +752,13 @@ TEST_F(ControllerTest, GetDeltaMaterializedSnapshotPatch) {
     ASSERT_EQ(false, it1->next(&t)) << "Iterator should be finished";
 
     // Request between versions 0 and 1 for ? ? <d>
-    ASSERT_EQ(0, controller->get_delta_materialized_count(Triple("", "", "<d>", dict), 0, 1)) << "Count is incorrect";
+    ASSERT_EQ(0, controller->get_delta_materialized_count(Triple("", "", "<d>", dict), 0, 1).first) << "Count is incorrect";
     TripleDeltaIterator* it2 = controller->get_delta_materialized(Triple("", "", "<d>", dict), 0, 0, 1);
 
     ASSERT_EQ(false, it2->next(&t)) << "Iterator should be finished";
 
     // Request between versions 0 and 2 for <a> ? ?
-    ASSERT_EQ(2, controller->get_delta_materialized_count(Triple("<a>", "", "", dict), 0, 2)) << "Count is incorrect";
+    ASSERT_EQ(2, controller->get_delta_materialized_count(Triple("<a>", "", "", dict), 0, 2).first) << "Count is incorrect";
     TripleDeltaIterator* it3 = controller->get_delta_materialized(Triple("<a>", "", "", dict), 0, 0, 2);
 
     ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
@@ -830,7 +830,7 @@ TEST_F(ControllerTest, GetDeltaMaterializedPatchPatch) {
     TripleDelta t;
 
     // Request between versions 1 and 2 for ? ? ?
-    ASSERT_EQ(1, controller->get_delta_materialized_count(Triple("", "", "", dict), 1, 2)) << "Count is incorrect";
+    ASSERT_EQ(1, controller->get_delta_materialized_count(Triple("", "", "", dict), 1, 2).first) << "Count is incorrect";
     TripleDeltaIterator* it0 = controller->get_delta_materialized(Triple("", "", "", dict), 0, 1, 2);
 
     ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
@@ -840,7 +840,7 @@ TEST_F(ControllerTest, GetDeltaMaterializedPatchPatch) {
     ASSERT_EQ(false, it0->next(&t)) << "Iterator should be finished";
 
     // Request between versions 2 and 3 for ? ? ?
-    ASSERT_EQ(2, controller->get_delta_materialized_count(Triple("", "", "", dict), 2, 3)) << "Count is incorrect";
+    ASSERT_EQ(2, controller->get_delta_materialized_count(Triple("", "", "", dict), 2, 3).first) << "Count is incorrect";
     TripleDeltaIterator* it1 = controller->get_delta_materialized(Triple("", "", "", dict), 0, 2, 3);
 
     ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
@@ -868,7 +868,7 @@ TEST_F(ControllerTest, GetDeltaMaterializedPatchPatch) {
     ASSERT_EQ(false, it1_c->next(&t)) << "Iterator should be finished";
 
     // Request between versions 1 and 3 for ? ? ?
-    ASSERT_EQ(3, controller->get_delta_materialized_count(Triple("", "", "", dict), 1, 3)) << "Count is incorrect";
+    ASSERT_EQ(3, controller->get_delta_materialized_count(Triple("", "", "", dict), 1, 3).first) << "Count is incorrect";
     TripleDeltaIterator* it2 = controller->get_delta_materialized(Triple("", "", "", dict), 0, 1, 3);
 
     ASSERT_EQ(true, it2->next(&t)) << "Iterator has a no next value";
@@ -958,7 +958,7 @@ TEST_F(ControllerTest, GetVersion) {
     v_2.push_back(2);
 
     // Request versions for ? ? ?
-    ASSERT_EQ(4, controller->get_version_count(Triple("", "", "", dict))) << "Count is incorrect";
+    ASSERT_EQ(4, controller->get_version_count(Triple("", "", "", dict)).first) << "Count is incorrect";
     TripleVersionsIterator* it0 = controller->get_version(Triple("", "", "", dict), 0);
 
     ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
@@ -1024,7 +1024,7 @@ TEST_F(ControllerTest, GetVersion) {
     ASSERT_EQ(false, it4->next(&t)) << "Iterator should be finished";
 
     // Request versions for <a> ? ?
-    ASSERT_EQ(4, controller->get_version_count(Triple("<a>", "", "", dict))) << "Count is incorrect";
+    ASSERT_EQ(4, controller->get_version_count(Triple("<a>", "", "", dict)).first) << "Count is incorrect";
     TripleVersionsIterator* it5 = controller->get_version(Triple("", "", "", dict), 0);
 
     ASSERT_EQ(true, it5->next(&t)) << "Iterator has a no next value";
@@ -1090,7 +1090,7 @@ TEST_F(ControllerTest, GetVersion) {
     ASSERT_EQ(false, it9->next(&t)) << "Iterator should be finished";
 
     // Request versions for ? ? <a>
-    ASSERT_EQ(1, controller->get_version_count(Triple("", "", "<a>", dict))) << "Count is incorrect";
+    ASSERT_EQ(1, controller->get_version_count(Triple("", "", "<a>", dict)).first) << "Count is incorrect";
     TripleVersionsIterator* it10 = controller->get_version(Triple("", "", "<a>", dict), 0);
 
     ASSERT_EQ(true, it10->next(&t)) << "Iterator has a no next value";
@@ -1105,7 +1105,7 @@ TEST_F(ControllerTest, GetVersion) {
     ASSERT_EQ(false, it11->next(&t)) << "Iterator should be finished";
 
     // Request versions for ? ? <b>
-    ASSERT_EQ(1, controller->get_version_count(Triple("", "", "<b>", dict))) << "Count is incorrect";
+    ASSERT_EQ(1, controller->get_version_count(Triple("", "", "<b>", dict)).first) << "Count is incorrect";
     TripleVersionsIterator* it12 = controller->get_version(Triple("", "", "<b>", dict), 0);
 
     ASSERT_EQ(true, it12->next(&t)) << "Iterator has a no next value";
@@ -1120,7 +1120,7 @@ TEST_F(ControllerTest, GetVersion) {
     ASSERT_EQ(false, it13->next(&t)) << "Iterator should be finished";
 
     // Request versions for ? ? <c>
-    ASSERT_EQ(1, controller->get_version_count(Triple("", "", "<c>", dict))) << "Count is incorrect";
+    ASSERT_EQ(1, controller->get_version_count(Triple("", "", "<c>", dict)).first) << "Count is incorrect";
     TripleVersionsIterator* it14 = controller->get_version(Triple("", "", "<c>", dict), 0);
 
     ASSERT_EQ(true, it14->next(&t)) << "Iterator has a no next value";
@@ -1135,7 +1135,7 @@ TEST_F(ControllerTest, GetVersion) {
     ASSERT_EQ(false, it15->next(&t)) << "Iterator should be finished";
 
     // Request versions for ? ? <d>
-    ASSERT_EQ(1, controller->get_version_count(Triple("", "", "<d>", dict))) << "Count is incorrect";
+    ASSERT_EQ(1, controller->get_version_count(Triple("", "", "<d>", dict)).first) << "Count is incorrect";
     TripleVersionsIterator* it16 = controller->get_version(Triple("", "", "<d>", dict), 0);
 
     ASSERT_EQ(true, it16->next(&t)) << "Iterator has a no next value";
