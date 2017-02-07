@@ -126,22 +126,22 @@ std::map<int, HDT*> SnapshotManager::get_snapshots() {
 IteratorTripleID* SnapshotManager::search_with_offset(HDT *hdt, const Triple& triple_pattern, long offset) {
     TripleID tripleId(triple_pattern.get_subject(), triple_pattern.get_predicate(), triple_pattern.get_object());
 
-    // The following step is needed to make sure that we are not using any triple component id's that are not available
-    // in the HDT dict. Otherwise, HDT simply crashes.
-    // This does not seem to cause any problems anymore, so let's disable it for now, performance++ !
-    //TripleString tripleString;
-    //hdt->getDictionary()->tripleIDtoTripleString(tripleId, tripleString);
-    //hdt->getDictionary()->tripleStringtoTripleID(tripleString, tripleId);
-
-    IteratorTripleID* it = hdt->getTriples()->search(tripleId);
-    if(it->canGoTo()) {
-        try {
-            it->goTo(offset);
-            offset = 0;
-        } catch (char const* error) {}
+    try {
+        IteratorTripleID* it = hdt->getTriples()->search(tripleId);
+        if(it->canGoTo()) {
+            try {
+                it->goTo(offset);
+                offset = 0;
+            } catch (char const* error) {}
+        }
+        while(offset-- > 0 && it->hasNext()) it->next();
+        return it;
+    } catch (char const* e) {
+        // HDT will crash when we are not using any triple component id's that are not available
+        // in the HDT dict.
+        // In that case, HDT will not contain any triples for the given pattern, so we return an empty iterator.
+        return new IteratorTripleID();
     }
-    while(offset-- > 0 && it->hasNext()) it->next();
-    return it;
 }
 
 DictionaryManager* SnapshotManager::get_dictionary_manager(int snapshot_id) {
