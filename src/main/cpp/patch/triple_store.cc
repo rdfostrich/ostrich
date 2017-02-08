@@ -58,7 +58,11 @@ TripleStore::~TripleStore() {
 }
 
 void TripleStore::open(TreeDB* db, string name, bool readonly) {
-    if (!db->open(name, readonly ? HashDB::OREADER : (HashDB::OWRITER | HashDB::OCREATE))) {
+    db->tune_map(1LL << 30);
+    //db->tune_buckets(1LL * 1000 * 1000);
+    db->tune_page_cache(1LL << 25);
+    db->tune_defrag(8);
+    if (!db->open(name, readonly ? TreeDB::OREADER : (TreeDB::OWRITER | TreeDB::OCREATE))) {
         cerr << "open " << name << " error: " << db->error().name() << endl;
     }
 }
@@ -110,6 +114,16 @@ void TripleStore::insertAdditionSingle(const PatchTreeKey* key, const PatchTreeA
 
     free((char*) raw_key);
     free((char*) raw_value);
+
+    // Flush db to disk
+    if (++flush_counter_additions > FLUSH_TRIPLES_COUNT) {
+        index_spo->synchronize();
+        index_sop->synchronize();
+        index_pso->synchronize();
+        index_pos->synchronize();
+        index_osp->synchronize();
+        flush_counter_additions = 0;
+    }
 }
 
 void TripleStore::insertAdditionSingle(const PatchTreeKey* key, int patch_id, bool local_change, bool ignore_existing, DB::Cursor* cursor) {
@@ -147,6 +161,12 @@ void TripleStore::insertDeletionSingle(const PatchTreeKey* key, const PatchTreeD
 
     free((char*) raw_key);
     free((char*) raw_value);
+
+    // Flush db to disk
+    if (++flush_counter_deletions > FLUSH_TRIPLES_COUNT) {
+        index_spo_deletions->synchronize();
+        flush_counter_deletions = 0;
+    }
 }
 
 void TripleStore::insertDeletionSingle(const PatchTreeKey* key, const PatchPositions& patch_positions, int patch_id, bool local_change, bool ignore_existing, DB::Cursor* cursor) {

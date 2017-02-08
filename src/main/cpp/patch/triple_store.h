@@ -12,6 +12,9 @@
 using namespace std;
 using namespace kyotocabinet;
 
+// The amount of triples after which the store should be flushed to disk, to avoid memory issues
+#define FLUSH_TRIPLES_COUNT 500000
+
 class TripleStore {
 private:
     TreeDB* index_spo_deletions;
@@ -28,6 +31,8 @@ private:
     PatchTreeKeyComparator* pos_comparator;
     PatchTreeKeyComparator* osp_comparator;
     PatchElementComparator* element_comparator;
+    int flush_counter_additions = 0;
+    int flush_counter_deletions = 0;
 protected:
     void open(TreeDB* db, string name, bool readonly);
     void close(TreeDB* db, string name);

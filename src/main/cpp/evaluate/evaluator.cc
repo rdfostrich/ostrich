@@ -9,7 +9,7 @@
 #include "../simpleprogresslistener.h"
 
 void Evaluator::init(string basePath, string patchesBasePatch, int startIndex, int endIndex, ProgressListener* progressListener) {
-    controller = new Controller(basePath, HashDB::TCOMPRESS);
+    controller = new Controller(basePath, TreeDB::TCOMPRESS);
 
     cout << "---INSERTION START---" << endl;
     cout << "version,added,durationms,rate,accsize" << endl;

@@ -10,6 +10,9 @@
 #include "patch_element_comparator.h"
 #include "patch_element_iterator.h"
 
+// The amount of triples after which the patch positions should be flushed to disk, to avoid memory issues
+#define FLUSH_POSITIONS_COUNT 500000
+
 class PatchIterator { // TODO: rm me? or merge with PatchElementIterator?
 public:
     virtual ~PatchIterator(){};

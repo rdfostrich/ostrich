@@ -20,7 +20,7 @@ int main(int argc, char** argv) {
     }
 
     // Load the store
-    Controller controller("./", HashDB::TCOMPRESS, true);
+    Controller controller("./", TreeDB::TCOMPRESS, true);
 
     // Get query parameters
     std::string s(argv[2]);

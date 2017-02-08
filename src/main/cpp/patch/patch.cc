@@ -143,6 +143,17 @@ PatchPositions Patch::positions(const Triple& triple,
     positions._p_ = contains_and_increment_position(_p_, h_p_);
     positions.__o = contains_and_increment_position(__o, h__o);
     positions.___ = ___++;
+
+    // Flush db to disk
+    if (!(___ % FLUSH_POSITIONS_COUNT)) {
+        sp_.synchronize();
+        s_o.synchronize();
+        s__.synchronize();
+        _po.synchronize();
+        _p_.synchronize();
+        __o.synchronize();
+    }
+
     return positions;
 }
 
