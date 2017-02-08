@@ -12,7 +12,7 @@ using namespace std;
 using namespace kyotocabinet;
 
 int main() {
-  Controller controller;
+  //Controller controller;
 
   // Build a snapshot
   /*std::vector<TripleString> triples;
@@ -95,7 +95,7 @@ int main() {
   // Delete dict file
   std::remove(PATCHDICT_FILENAME_BASE(0).c_str());*/
 
-  DictionaryManager* dict = new DictionaryManager(0);
+  /*DictionaryManager* dict = new DictionaryManager(0);
   Triple triple("a", "a", "a", dict);
 
   cout << triple.get_subject(*dict) << endl;
@@ -103,7 +103,7 @@ int main() {
   cout << triple.get_object(*dict) << endl;
 
   delete dict;
-  DictionaryManager::cleanup(0);
+  DictionaryManager::cleanup(0);*/
 
 
   /*SnapshotManager snapshotManager;
