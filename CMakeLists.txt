@@ -25,7 +25,6 @@ set(PROJECT_NAME_STR tpfpatch_store)
 project(${PROJECT_NAME_STR})
 
 set(SOURCE_FILE_MAIN
-        #src/main/cpp/test.cc
         #src/test/cpp/performance.cc
         src/test/cpp/bear.cc
 )
