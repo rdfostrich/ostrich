@@ -274,6 +274,21 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it_original, int patch
                 add_deletion = !add_deletion;
             }
 
+            if (D_LT_A || A_LT_D) { // TODO: only needed for sanity checking, remove me after debugging
+                cerr << "largest_patch_id_addition: " << largest_patch_id_addition << endl;
+                cerr << "largest_patch_id_deletion: " << largest_patch_id_deletion << endl;
+                cerr << "is_local_change: " << is_local_change << endl;
+                cerr << "should_step_patch: " << should_step_patch << endl;
+                cerr << "comp_deletion: " << COMP_DELETION << endl;
+                cerr << "comp_addition: " << COMP_ADDITION << endl;
+                cerr << "comp_d_lt_a: " << D_LT_A << endl;
+                cerr << "comp_a_lt_d: " << A_LT_D << endl;
+                cerr << "triple patch: " << patch_element.get_triple().to_string() << endl;
+                cerr << "triple deletion: " << deletion_key.to_string() << endl;
+                cerr << "triple addition: " << addition_key.to_string() << endl;
+                throw std::invalid_argument("D is not equal to A.");
+            }
+
             if (add_addition) {
                 addition_value.add(patch_id);
                 if (is_local_change) addition_value.set_local_change(patch_id);
