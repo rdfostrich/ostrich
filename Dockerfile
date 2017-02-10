@@ -24,21 +24,26 @@ RUN apt-get install -y libserd-dev
 RUN curl -sSL https://cmake.org/files/v3.5/cmake-3.5.2-Linux-x86_64.tar.gz | tar -xzC /opt
 ENV PATH /opt/cmake-3.5.2-Linux-x86_64/bin/:$PATH
 
+# Install GDB for debugging
+RUN apt-get install -y gdb
+
 # Copy sources
 COPY deps /opt/patchstore/deps
 COPY ext /opt/patchstore/ext
 COPY src /opt/patchstore/src
 COPY CMakeLists.txt /opt/patchstore/CMakeLists.txt
+COPY run.sh /opt/patchstore/run.sh
+COPY run-debug.sh /opt/patchstore/run-debug.sh
 
 # Enable optional dependencies in Makefile
 RUN cd /opt/patchstore/deps/hdt/hdt-lib && sed -i "s/#KYOTO_SUPPORT=true/KYOTO_SUPPORT=true/" Makefile
 
 RUN mkdir /opt/patchstore/build
-RUN cd /opt/patchstore/build && cmake ..
+RUN cd /opt/patchstore/build && cmake .. -Wno-deprecated
 RUN cd /opt/patchstore/build && make
 
 WORKDIR /var/evalrun
 
 # Default command
-ENTRYPOINT ["/opt/patchstore/build/tpfpatch_store"]
+ENTRYPOINT ["/opt/patchstore/run.sh"]
 CMD ["/var/patches", "1", "58", "/var/queries"]
