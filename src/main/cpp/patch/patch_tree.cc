@@ -139,6 +139,7 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it_original, int patch
         if (i % 10000 == 0) {
             NOTIFYLVL(progressListener, "Triple insertion", i);
         }
+
         if (should_step_patch) {
             has_patch_ended = !patch_it->next(&patch_element);
             i++;
@@ -274,7 +275,8 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it_original, int patch
                 add_deletion = !add_deletion;
             }
 
-            if (D_LT_A || A_LT_D) { // TODO: only needed for sanity checking, remove me after debugging
+            /*
+            if (COMP_DELETION || COMP_ADDITION) { // TODO: only needed for sanity checking, remove me after debugging
                 cerr << "largest_patch_id_addition: " << largest_patch_id_addition << endl;
                 cerr << "largest_patch_id_deletion: " << largest_patch_id_deletion << endl;
                 cerr << "is_local_change: " << is_local_change << endl;
@@ -287,7 +289,7 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it_original, int patch
                 cerr << "triple deletion: " << deletion_key.to_string() << endl;
                 cerr << "triple addition: " << addition_key.to_string() << endl;
                 throw std::invalid_argument("D is not equal to A.");
-            }
+            }*/
 
             if (add_addition) {
                 addition_value.add(patch_id);
