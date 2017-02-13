@@ -30,6 +30,7 @@ set(SOURCE_FILE_MAIN
 )
 set(SOURCE_FILE_QUERY_VERSION_MATERIALIZED src/main/cpp/query_version_materialized.cc)
 set(SOURCE_FILE_QUERY_DELTA_MATERIALIZED src/main/cpp/query_delta_materialized.cc)
+set(SOURCE_FILE_QUERY_VERSION src/main/cpp/query_version.cc)
 set(COMMON_FILES
         src/main/cpp/controller/controller.cc src/main/cpp/controller/controller.h
         src/main/cpp/patch/triple.cc src/main/cpp/patch/triple.h
@@ -142,6 +143,15 @@ target_link_libraries(${PROJECT_NAME_STR}-query-delta-materialized ${CMAKE_THREA
 target_link_libraries(${PROJECT_NAME_STR}-query-delta-materialized ${ZLIB_LIBRARIES})
 target_link_libraries(${PROJECT_NAME_STR}-query-delta-materialized Boost::iostreams)
 target_link_libraries(${PROJECT_NAME_STR}-query-delta-materialized Threads::Threads)
+
+# Add query version executable
+add_executable(${PROJECT_NAME_STR}-query-version ${HDT_FILES} ${COMMON_FILES} ${SOURCE_FILE_QUERY_VERSION})
+target_link_libraries(${PROJECT_NAME_STR}-query-version ${LIBSTDCXX})
+target_link_libraries(${PROJECT_NAME_STR}-query-version ${KYOTO_SHARED_LIBRARY})
+target_link_libraries(${PROJECT_NAME_STR}-query-version ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(${PROJECT_NAME_STR}-query-version ${ZLIB_LIBRARIES})
+target_link_libraries(${PROJECT_NAME_STR}-query-version Boost::iostreams)
+target_link_libraries(${PROJECT_NAME_STR}-query-version Threads::Threads)
 
 # Add gtest
 add_subdirectory(${EXT_PROJECTS_DIR}/gtest)
