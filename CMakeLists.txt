@@ -29,6 +29,7 @@ set(SOURCE_FILE_MAIN
         src/test/cpp/bear.cc
 )
 set(SOURCE_FILE_QUERY_VERSION_MATERIALIZED src/main/cpp/query_version_materialized.cc)
+set(SOURCE_FILE_QUERY_DELTA_MATERIALIZED src/main/cpp/query_delta_materialized.cc)
 set(COMMON_FILES
         src/main/cpp/controller/controller.cc src/main/cpp/controller/controller.h
         src/main/cpp/patch/triple.cc src/main/cpp/patch/triple.h
@@ -124,7 +125,7 @@ target_link_libraries(${PROJECT_NAME_STR} Boost::iostreams Boost::regex)
 set(EXT_PROJECTS_DIR ${PROJECT_SOURCE_DIR}/ext)
 #include(CMakeLists-External.txt)
 
-# Add query executable
+# Add query version materialized executable
 add_executable(${PROJECT_NAME_STR}-query-version-materialized ${HDT_FILES} ${COMMON_FILES} ${SOURCE_FILE_QUERY_VERSION_MATERIALIZED})
 target_link_libraries(${PROJECT_NAME_STR}-query-version-materialized ${LIBSTDCXX})
 target_link_libraries(${PROJECT_NAME_STR}-query-version-materialized ${KYOTO_SHARED_LIBRARY})
@@ -132,6 +133,15 @@ target_link_libraries(${PROJECT_NAME_STR}-query-version-materialized ${CMAKE_THR
 target_link_libraries(${PROJECT_NAME_STR}-query-version-materialized ${ZLIB_LIBRARIES})
 target_link_libraries(${PROJECT_NAME_STR}-query-version-materialized Boost::iostreams)
 target_link_libraries(${PROJECT_NAME_STR}-query-version-materialized Threads::Threads)
+
+# Add query delta materialized executable
+add_executable(${PROJECT_NAME_STR}-query-delta-materialized ${HDT_FILES} ${COMMON_FILES} ${SOURCE_FILE_QUERY_DELTA_MATERIALIZED})
+target_link_libraries(${PROJECT_NAME_STR}-query-delta-materialized ${LIBSTDCXX})
+target_link_libraries(${PROJECT_NAME_STR}-query-delta-materialized ${KYOTO_SHARED_LIBRARY})
+target_link_libraries(${PROJECT_NAME_STR}-query-delta-materialized ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(${PROJECT_NAME_STR}-query-delta-materialized ${ZLIB_LIBRARIES})
+target_link_libraries(${PROJECT_NAME_STR}-query-delta-materialized Boost::iostreams)
+target_link_libraries(${PROJECT_NAME_STR}-query-delta-materialized Threads::Threads)
 
 # Add gtest
 add_subdirectory(${EXT_PROJECTS_DIR}/gtest)
