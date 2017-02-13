@@ -184,6 +184,7 @@ TripleDeltaIterator* Controller::get_delta_materialized(const Triple &triple_pat
             }
             PatchTreeIterator* patchTreeIterator = patchTree->iterator(&triple_pattern);
             patchTreeIterator->set_patch_filter(patch_id_end, true);
+            patchTreeIterator->set_filter_local_changes(true);
             patchTreeIterator->set_early_break(false);
             return (new ForwardPatchTripleDeltaIterator(patchTreeIterator))->offset(offset);
         } else {
