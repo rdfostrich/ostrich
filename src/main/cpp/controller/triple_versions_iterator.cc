@@ -4,6 +4,7 @@
 
 TripleVersions::TripleVersions() : triple(new Triple()), versions(new vector<int>()) {}
 
+TripleVersions::TripleVersions(Triple* triple, std::vector<int>* versions) : triple(triple), versions(versions) {}
 
 TripleVersions::~TripleVersions() {
     delete triple;

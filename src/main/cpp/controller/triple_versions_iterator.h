@@ -12,6 +12,7 @@ protected:
     std::vector<int>* versions;
 public:
     TripleVersions();
+    TripleVersions(Triple* triple, std::vector<int>* versions);
     ~TripleVersions();
     Triple* get_triple();
     std::vector<int>* get_versions();
