@@ -84,7 +84,7 @@ PatchTree* PatchTreeManager::get_patch_tree(int patch_id_start, DictionaryManage
     }
     PatchTree* patchtree = it->second;
     if(patchtree == NULL) {
-        return load_patch_tree(patch_id_start, dict);
+        return load_patch_tree(it->first, dict);
     }
     return it->second;
 }
