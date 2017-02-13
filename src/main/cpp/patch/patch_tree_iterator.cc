@@ -139,12 +139,15 @@ bool PatchTreeIterator::next_addition(PatchTreeKey* key, PatchTreeAdditionValue*
 
         key->deserialize(kbp, ksp);
         if (is_triple_pattern_filter && !Triple::pattern_match_triple(*key, triple_pattern_filter)) {
-            // We stop iterating here, because due to the fact that we are always using a triple pattern tree
-            // in which our triple patterns will match continuous series of triples, and we will always start
-            // iterating on a match, there won't be any matches anymore hereafter.
             delete[] kbp;
-
-            return false;
+            if (can_early_break) {
+                // We stop iterating here, because due to the fact that we are always using a triple pattern tree
+                // in which our triple patterns will match continuous series of triples, and we will always start
+                // iterating on a match, there won't be any matches anymore hereafter.
+                return false;
+            } else {
+                continue;
+            }
         }
 
         if(is_patch_id_filter) {
@@ -262,4 +265,8 @@ DB::Cursor *PatchTreeIterator::getDeletionCursor() {
 
 DB::Cursor *PatchTreeIterator::getAdditionCursor() {
     return this->cursor_additions;
+}
+
+void PatchTreeIterator::set_early_break(bool can_early_break) {
+    this->can_early_break = can_early_break;
 }

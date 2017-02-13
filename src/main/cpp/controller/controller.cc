@@ -184,6 +184,7 @@ TripleDeltaIterator* Controller::get_delta_materialized(const Triple &triple_pat
             }
             PatchTreeIterator* patchTreeIterator = patchTree->iterator(&triple_pattern);
             patchTreeIterator->set_patch_filter(patch_id_end, true);
+            patchTreeIterator->set_early_break(false);
             return (new ForwardPatchTripleDeltaIterator(patchTreeIterator))->offset(offset);
         } else {
             // TODO: implement this when multiple snapshots are supported
@@ -207,6 +208,7 @@ TripleDeltaIterator* Controller::get_delta_materialized(const Triple &triple_pat
                 throw std::invalid_argument("Could not find the given end patch id");
             }
             PatchTreeIterator* patchTreeIterator = patchTree->iterator(&triple_pattern);
+            patchTreeIterator->set_early_break(false);
             return (new FowardDiffPatchTripleDeltaIterator(patchTreeIterator, patch_id_start, patch_id_end))->offset(offset);
         } else {
             // TODO: implement this when multiple snapshots are supported

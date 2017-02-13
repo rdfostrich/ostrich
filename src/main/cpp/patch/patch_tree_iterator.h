@@ -30,6 +30,8 @@ private:
     bool has_temp_key_addition;
     PatchTreeKey* temp_key_deletion;
     PatchTreeKey* temp_key_addition;
+
+    bool can_early_break = true;
 public:
     PatchTreeIterator(DB::Cursor* cursor_deletions, DB::Cursor* cursor_additions, PatchTreeKeyComparator* comparator);
     ~PatchTreeIterator();
@@ -53,6 +55,10 @@ public:
      * Indicate that this iterator should ignore local changes.
      */
     void set_filter_local_changes(bool filter_local_changes);
+    /**
+     * If the iterator can break early if a non-matching triple was found.
+     */
+    void set_early_break(bool can_early_break);
     /**
      * @return The patch id filter.
      */
