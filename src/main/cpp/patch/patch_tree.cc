@@ -508,6 +508,7 @@ std::pair<PatchPosition, Triple> PatchTree::deletion_count(const Triple &triple_
     PatchTreeIterator patchTreeIterator(cursor_deletions, NULL, get_spo_comparator());
     patchTreeIterator.set_patch_filter(patch_id, true);
     patchTreeIterator.set_triple_pattern_filter(triple_pattern_match);
+    patchTreeIterator.set_filter_local_changes(true);
     if (!hasJumped || force_reverse) patchTreeIterator.set_reverse(true);
 
     PatchTreeKey key;
