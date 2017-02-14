@@ -12,13 +12,13 @@ protected:
     bool local_change;
 public:
     PatchElement();
-    PatchElement(const Triple& triple, bool addition);
-    PatchElement(const Triple& triple, bool addition, bool local_change);
+    PatchElement(const Triple triple, bool addition);
+    PatchElement(const Triple triple, bool addition, bool local_change);
     /**
      * Set the triple
      * @param triple The new triple
      */
-    void set_triple(const Triple& triple);
+    void set_triple(const Triple triple);
     /**
      * Get the triple
      * @return The triple

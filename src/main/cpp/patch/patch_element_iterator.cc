@@ -108,13 +108,13 @@ bool PatchElementIteratorBuffered::next(PatchElement* element) {
     if (!ended || buffer.size() > 0) {
         // Get first element from buffer
         PatchElement& buffer_element = buffer.front();
+        element->set_triple(buffer_element.get_triple());
+        element->set_addition(buffer_element.is_addition());
         buffer.pop();
         // If the inner iterator hasn't ended yet, and our buffer is half-empty, notify the fill-buffer thread.
         if (!ended && buffer.size() < buffer_size / 2) {
             buffer_trigger_fill.notify_all();
         }
-        element->set_triple(buffer_element.get_triple());
-        element->set_addition(buffer_element.is_addition());
         return true;
     }
     return false;
