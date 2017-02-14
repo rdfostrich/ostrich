@@ -35,9 +35,9 @@ int32_t PatchTreeKeyComparator::compare(const PatchTreeKey& element1, const Patc
 
 comp comp_s = [] (const PatchTreeKey& e1, const PatchTreeKey& e2, DictionaryManager& dict) {
     unsigned int max_id = (unsigned int) -1;
-    if (e1.get_predicate() == max_id && e2.get_predicate() == max_id) return 0;
-    if (e1.get_predicate() == max_id) return 1;
-    if (e2.get_predicate() == max_id) return -1;
+    if (e1.get_subject() == max_id && e2.get_subject() == max_id) return 0;
+    if (e1.get_subject() == max_id) return 1;
+    if (e2.get_subject() == max_id) return -1;
     // If MSB is not set, id is HDT
     if (!(e1.get_subject() & 2147483648) && !(e2.get_subject() & 2147483648)) {
         return dict.compareComponent(e1.get_subject(), e2.get_subject(), SUBJECT);
@@ -48,9 +48,9 @@ comp comp_s = [] (const PatchTreeKey& e1, const PatchTreeKey& e2, DictionaryMana
 
 comp comp_p = [] (const PatchTreeKey& e1, const PatchTreeKey& e2, DictionaryManager& dict) {
     unsigned int max_id = (unsigned int) -1;
-    if (e1.get_subject() == max_id && e2.get_subject() == max_id) return 0;
-    if (e1.get_subject() == max_id) return 1;
-    if (e2.get_subject() == max_id) return -1;
+    if (e1.get_predicate() == max_id && e2.get_predicate() == max_id) return 0;
+    if (e1.get_predicate() == max_id) return 1;
+    if (e2.get_predicate() == max_id) return -1;
     // If MSB is not set, id is HDT
     if (!(e1.get_predicate() & 2147483648) && !(e2.get_predicate() & 2147483648)) {
         return dict.compareComponent(e1.get_predicate(), e2.get_predicate(), PREDICATE);
