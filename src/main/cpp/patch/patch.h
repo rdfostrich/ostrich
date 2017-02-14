@@ -11,7 +11,9 @@
 #include "patch_element_iterator.h"
 
 // The amount of triples after which the patch positions should be flushed to disk, to avoid memory issues
+#ifndef FLUSH_POSITIONS_COUNT
 #define FLUSH_POSITIONS_COUNT 500000
+#endif
 
 class PatchIterator { // TODO: rm me? or merge with PatchElementIterator?
 public:

@@ -15,7 +15,10 @@
 #define PATCHTREE_FILENAME_BASE(id) ("patchtree_" + std::to_string(id) + ".kct")
 #define PATCHTREE_FILENAME(id,suffix) (PATCHTREE_FILENAME_BASE(id) + "_" + suffix)
 #define METADATA_FILENAME_BASE(id) ("meta_" + std::to_string(id) + ".dat")
+// The size of the triple parser buffer during patch insertion.
+#ifndef PATCH_INSERT_BUFFER_SIZE
 #define PATCH_INSERT_BUFFER_SIZE 100
+#endif
 
 using namespace std;
 using namespace kyotocabinet;

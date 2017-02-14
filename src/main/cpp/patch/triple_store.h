@@ -13,7 +13,17 @@ using namespace std;
 using namespace kyotocabinet;
 
 // The amount of triples after which the store should be flushed to disk, to avoid memory issues
+#ifndef FLUSH_TRIPLES_COUNT
 #define FLUSH_TRIPLES_COUNT 500000
+#endif
+// The KC memory map size per tree (128MB)
+#ifndef KC_MEMORY_MAP_SIZE
+#define KC_MEMORY_MAP_SIZE (1LL << 27)
+#endif
+// The KC page cache size per tree (32MB)
+#ifndef KC_PAGE_CACHE_SIZE
+#define KC_PAGE_CACHE_SIZE (1LL << 25)
+#endif
 
 class TripleStore {
 private:

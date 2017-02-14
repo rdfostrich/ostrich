@@ -58,9 +58,9 @@ TripleStore::~TripleStore() {
 }
 
 void TripleStore::open(TreeDB* db, string name, bool readonly) {
-    db->tune_map(1LL << 30);
+    db->tune_map(KC_MEMORY_MAP_SIZE);
     //db->tune_buckets(1LL * 1000 * 1000);
-    db->tune_page_cache(1LL << 25);
+    db->tune_page_cache(KC_PAGE_CACHE_SIZE);
     db->tune_defrag(8);
     if (!db->open(name, readonly ? TreeDB::OREADER : (TreeDB::OWRITER | TreeDB::OCREATE))) {
         cerr << "open " << name << " error: " << db->error().name() << endl;
