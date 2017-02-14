@@ -107,7 +107,7 @@ bool PatchElementIteratorBuffered::next(PatchElement* element) {
     }
     if (!ended || buffer.size() > 0) {
         // Get first element from buffer
-        PatchElement& buffer_element = buffer.front();
+        PatchElement buffer_element = buffer.front();
         element->set_triple(buffer_element.get_triple());
         element->set_addition(buffer_element.is_addition());
         buffer.pop();
@@ -136,7 +136,7 @@ void PatchElementIteratorBuffered::fill_buffer() {
             // Get inner iterator element, and add it to the buffer.
             if (it->next(&element)) {
                 lock_thread_nonempty.lock();
-                buffer.emplace(element.get_triple(), element.is_addition());
+                buffer.emplace(Triple(element.get_triple()), element.is_addition());
                 lock_thread_nonempty.unlock();
                 // Notify the other thread to tell that the buffer is not empty.
                 buffer_trigger_nonempty.notify_all();
