@@ -7,3 +7,12 @@ main:
   script:
     - docker build -t ostrich .
     - docker run --rm --entrypoint /opt/patchstore/build/tpfpatch_store_test ostrich
+doc:
+  before_script:
+    - apt-get update
+    - apt-get install -y doxygen
+  script:
+    - doxygen
+  artifacts:
+    paths:
+      - doc
