@@ -98,8 +98,9 @@ inline bool a_lt_d(PINS_COMP_PARAMS_DEF) { return !have_additions_ended && (have
  * --- END OF COMPARISON MACROS  ---
  */
 
-void PatchTree::append_unsafe(PatchElementIterator* patch_it_original, int patch_id, ProgressListener *progressListener) {
-    PatchElementIteratorBuffered* patch_it = new PatchElementIteratorBuffered(patch_it_original, PATCH_INSERT_BUFFER_SIZE);
+void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, ProgressListener *progressListener) {
+    // TODO: enable this for improved efficiency, and after it has been fixed...
+    //PatchElementIteratorBuffered* patch_it = new PatchElementIteratorBuffered(patch_it_original, PATCH_INSERT_BUFFER_SIZE);
 
     const char *kbp, *vbp;
     size_t ksp, vsp;
@@ -344,7 +345,7 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it_original, int patch
 
     deinit_temp_insertion_trees(sp_, s_o, s__, _po, _p_, __o);
 
-    delete patch_it;
+    //delete patch_it;
 }
 
 bool PatchTree::append(PatchElementIterator* patch_it, int patch_id, ProgressListener* progressListener) {
