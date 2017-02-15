@@ -887,13 +887,13 @@ TEST_F(PatchTreeTest, DeletionCount) {
     // s a o +
     // s z o -
 
-    ASSERT_EQ(2, patchTree->deletion_count_until(Triple("", "", "", &dict), 1).first) << "Deletion count is incorrect";
-    ASSERT_EQ(1, patchTree->deletion_count_until(Triple("s", "", "", &dict), 1).first) << "Deletion count is incorrect";
-    ASSERT_EQ(0, patchTree->deletion_count_until(Triple("s", "a", "", &dict), 1).first) << "Deletion count is incorrect";
-    ASSERT_EQ(2, patchTree->deletion_count_until(Triple("", "", "o", &dict), 1).first) << "Deletion count is incorrect";
-    ASSERT_EQ(1, patchTree->deletion_count_until(Triple("", "p", "o", &dict), 1).first) << "Deletion count is incorrect";
-    ASSERT_EQ(1, patchTree->deletion_count_until(Triple("", "p", "", &dict), 1).first) << "Deletion count is incorrect";
-    ASSERT_EQ(1, patchTree->deletion_count_until(Triple("g", "p", "", &dict), 1).first) << "Deletion count is incorrect";
+    ASSERT_EQ(2, patchTree->deletion_count(Triple("", "", "", &dict), 1).first) << "Deletion count is incorrect";
+    ASSERT_EQ(1, patchTree->deletion_count(Triple("s", "", "", &dict), 1).first) << "Deletion count is incorrect";
+    ASSERT_EQ(0, patchTree->deletion_count(Triple("s", "a", "", &dict), 1).first) << "Deletion count is incorrect";
+    ASSERT_EQ(2, patchTree->deletion_count(Triple("", "", "o", &dict), 1).first) << "Deletion count is incorrect";
+    ASSERT_EQ(1, patchTree->deletion_count(Triple("", "p", "o", &dict), 1).first) << "Deletion count is incorrect";
+    ASSERT_EQ(1, patchTree->deletion_count(Triple("", "p", "", &dict), 1).first) << "Deletion count is incorrect";
+    ASSERT_EQ(1, patchTree->deletion_count(Triple("g", "p", "", &dict), 1).first) << "Deletion count is incorrect";
 
     // Patch 2
     // a p o +/-
@@ -903,7 +903,7 @@ TEST_F(PatchTreeTest, DeletionCount) {
     // s a o +
     // s z o -
 
-    ASSERT_EQ(3, patchTree->deletion_count_until(Triple("", "", "", &dict), 2).first) << "Deletion count is incorrect";
+    ASSERT_EQ(3, patchTree->deletion_count(Triple("", "", "", &dict), 2).first) << "Deletion count is incorrect";
 
     // Patch 4
     // a p o +/-
@@ -914,7 +914,7 @@ TEST_F(PatchTreeTest, DeletionCount) {
     // s a o +
     // s z o -/-
 
-    ASSERT_EQ(4, patchTree->deletion_count_until(Triple("", "", "", &dict), 4).first) << "Deletion count is incorrect";
+    ASSERT_EQ(4, patchTree->deletion_count(Triple("", "", "", &dict), 4).first) << "Deletion count is incorrect";
 }
 
 TEST_F(PatchTreeTest, DeletionIterator) {
