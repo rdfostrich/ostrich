@@ -26,9 +26,9 @@ protected:
     std::ifstream::pos_type patchstore_size(Controller* controller);
     std::ifstream::pos_type filesize(string file);
     IteratorTripleString* get_from_file(string file);
-    long long measure_lookup_version_materialized(Triple triple_pattern, int offset, int patch_id, int limit, int replications);
-    long long measure_lookup_delta_materialized(Triple triple_pattern, int offset, int patch_id_start, int patch_id_end, int limit, int replications);
-    long long measure_lookup_version(Triple triple_pattern, int offset, int limit, int replications);
+    long long measure_lookup_version_materialized(Triple triple_pattern, int offset, int patch_id, int limit, int replications, int& result_count);
+    long long measure_lookup_delta_materialized(Triple triple_pattern, int offset, int patch_id_start, int patch_id_end, int limit, int replications, int& result_count);
+    long long measure_lookup_version(Triple triple_pattern, int offset, int limit, int replications, int& result_count);
 };
 
 
