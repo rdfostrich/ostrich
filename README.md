@@ -51,7 +51,7 @@ CSV-formatted insert data will be emitted: `version,added,durationms,rate,accsiz
 
 Load changesets AND query with triple patterns from the given file on separate lines, with the given number of replications.
 ```bash
-build/tpfpatch_store path_to_patch_directory patch_id_start patch_id_end patch_to_queries/queries.txt nr_replications
+build/tpfpatch_store path_to_patch_directory patch_id_start patch_id_end patch_to_queries/queries.txt s|p|o nr_replications
 ```
 CSV-formatted query data will be emitted (time in microseconds) for all versions for the three query types: `patch,offset,lookup-mus-1,lookup-mus-50,lookup-mus-100,lookup-mus-inf`.
 
@@ -90,12 +90,12 @@ docker run --rm -it -v path_to_patch_directory:/var/patches ostrich /var/patches
 
 Load changesets AND query with triple patterns from the given file on separate lines, with the given number of replications.
 ```bash
-docker run --rm -it -v path_to_patch_directory:/var/patches -v patch_to_queries:/var/queries ostrich /var/patches patch_id_start patch_id_end /var/queries/queries.txt nr_replications
+docker run --rm -it -v path_to_patch_directory:/var/patches -v patch_to_queries:/var/queries ostrich /var/patches patch_id_start patch_id_end /var/queries/queries.txt s|p|o nr_replications
 ```
 
 Enable debug mode:
 ```bash
-docker run --rm -it -v path_to_patch_directory:/var/patches -v patch_to_queries:/var/queries -v path_to_crash_dir:/crash --privileged=true ostrich --debug /var/patches patch_id_start patch_id_end /var/queries/queries.txt nr_replications
+docker run --rm -it -v path_to_patch_directory:/var/patches -v patch_to_queries:/var/queries -v path_to_crash_dir:/crash --privileged=true ostrich --debug /var/patches patch_id_start patch_id_end /var/queries/queries.txt s|p|o nr_replications
 ```
 
 ## Compiler variables

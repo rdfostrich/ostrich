@@ -24,21 +24,27 @@ vector<string> split(string data, string token) {
     return output;
 }
 
-void test_lookups_for_queries(Evaluator& evaluator, string queriesFilePath, int replications) {
+void test_lookups_for_queries(Evaluator& evaluator, string queriesFilePath, TripleComponentRole queryType, int replications) {
     std::ifstream queriesFile(queriesFilePath);
     std::string line;
     cout << "---QUERIES START: " << queriesFilePath << "---" << endl;
     while (std::getline(queriesFile, line)) {
         vector<string> line_split = split(line, " ");
         std::string element = line_split[0];
-        evaluator.test_lookup(element, "", "", replications);
+        std::string s("");
+        std::string p("");
+        std::string o("");
+        if (queryType == SUBJECT)   s = element;
+        if (queryType == PREDICATE) p = element;
+        if (queryType == OBJECT)    o = element;
+        evaluator.test_lookup(s, p, o, replications);
     }
     cout << "---QUERIES END---" << endl;
 }
 
 int main(int argc, char *argv[]) {
     if (argc < 4) {
-        cerr << "Usage: " << argv[0] << " path_to_patches start_index end_index [path_to_queries_file replications]" << endl;
+        cerr << "Usage: " << argv[0] << " path_to_patches start_index end_index [path_to_queries_file s|p|o replications]" << endl;
         exit(1);
     }
 
@@ -47,8 +53,17 @@ int main(int argc, char *argv[]) {
     evaluator.init("./", argv[1], stoi(argv[2]), stoi(argv[3]), listener);
     delete listener;
 
-    if (argc >= 6) {
-        test_lookups_for_queries(evaluator, ((std::string) argv[4]), stoi(argv[5]));
+    if (argc >= 7) {
+        TripleComponentRole queryType;
+        std::string type(argv[5]);
+        if      (type == "s") queryType = SUBJECT;
+        else if (type == "p") queryType = PREDICATE;
+        else if (type == "o") queryType = OBJECT;
+        else {
+            cerr << "Please provide a query type of s|p|o instead of " << type << endl;
+            exit(1);
+        }
+        test_lookups_for_queries(evaluator, ((std::string) argv[4]), queryType, stoi(argv[6]));
     }
 
     evaluator.cleanup_controller();
