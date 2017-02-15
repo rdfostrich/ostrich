@@ -31,6 +31,9 @@ void test_lookups_for_queries(Evaluator& evaluator, string queriesFilePath, Trip
     while (std::getline(queriesFile, line)) {
         vector<string> line_split = split(line, " ");
         std::string element = line_split[0];
+        if (element.at(0) == '<') {
+            element = element.substr(1, element.size() - 1);
+        }
         std::string s("");
         std::string p("");
         std::string o("");
