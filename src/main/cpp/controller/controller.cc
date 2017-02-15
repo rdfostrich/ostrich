@@ -88,8 +88,6 @@ TripleIterator* Controller::get_version_materialized(const Triple &triple_patter
             // Determine the first triple in the original snapshot and use it as offset for the deletion iterator
             TripleID *tripleId = snapshot_it->next();
             Triple firstTriple(tripleId->getSubject(), tripleId->getPredicate(), tripleId->getObject());
-            // TODO: statement below causes memory issue, can't delete a TripleID
-            //delete tripleId;
             deletion_it = patchTree->deletion_iterator_from(firstTriple, patch_id, triple_pattern);
 
             // Calculate a new offset, taking into account deletions.

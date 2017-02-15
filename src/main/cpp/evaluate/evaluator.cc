@@ -139,16 +139,12 @@ long long Evaluator::measure_lookup_version_materialized(Triple triple_pattern, 
     long long total = 0;
     for (int i = 0; i < replications; i++) {
         StopWatch st;
-        //StopWatch st2;
         TripleIterator* ti = controller->get_version_materialized(triple_pattern, offset, patch_id);
-        //cout << "A: " << (st2.stopReal()) << endl;st2.reset(); // TODO
         // Dummy loop over iterator
         Triple t;
         long count = 0;
         while((limit == -2 || limit-- > 0) && ti->next(&t)) { count++; };
         delete ti;
-        //cout << "Results: " << count << endl; // TODO
-        //cout << "b: " << (st2.stopReal()) << endl;st2.reset(); // TODO
         total += st.stopReal();
     }
     return total / replications;
@@ -228,5 +224,5 @@ void Evaluator::test_lookup(string s, string p, string o, int replications) {
 
 void Evaluator::cleanup_controller() {
     //Controller::cleanup(controller);
-    delete controller; // TODO
+    delete controller;
 }

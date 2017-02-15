@@ -276,8 +276,9 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, Prog
                 add_deletion = !add_deletion;
             }
 
+            // Sanity check, disabled for efficiency
             /*
-            if (COMP_DELETION || COMP_ADDITION) { // TODO: only needed for sanity checking, remove me after debugging
+            if (COMP_DELETION || COMP_ADDITION) {
                 cerr << "largest_patch_id_addition: " << largest_patch_id_addition << endl;
                 cerr << "largest_patch_id_deletion: " << largest_patch_id_deletion << endl;
                 cerr << "is_local_change: " << is_local_change << endl;

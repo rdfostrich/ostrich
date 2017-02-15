@@ -52,8 +52,6 @@ bool TripleVersionsIterator::next(TripleVersions* triple_versions) {
         currentTriple->set_subject(tripleId->getSubject());
         currentTriple->set_predicate(tripleId->getPredicate());
         currentTriple->set_object(tripleId->getObject());
-        // TODO: statement below causes memory issue, can't delete a TripleID
-        //delete tripleId;
         eraseDeletedVersions(triple_versions->get_versions(), currentTriple, 0);
         return true;
     }
