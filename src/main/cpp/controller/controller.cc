@@ -96,12 +96,7 @@ TripleIterator* Controller::get_version_materialized(const Triple &triple_patter
             if (deletion_it->next(&first_deletion_triple, true)) {
                 snapshot_offset = first_deletion_triple.position;
             } else {
-                if(deletion_count_data.first == 0) {
-                    snapshot_offset = 0;
-                } else {
-                    bool is_smaller_than_first = patchTree->get_spo_comparator()->compare(firstTriple, deletion_count_data.second) < 0;
-                    snapshot_offset = is_smaller_than_first ? 0 : deletion_count_data.first;
-                }
+                snapshot_offset = deletion_count_data.first;
             }
             long previous_added_offset = added_offset;
             added_offset = snapshot_offset;
