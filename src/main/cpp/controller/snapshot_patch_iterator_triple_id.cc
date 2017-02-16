@@ -1,11 +1,15 @@
 #include <Triples.hpp>
 #include "snapshot_patch_iterator_triple_id.h"
+#include "../snapshot/snapshot_manager.h"
 
-SnapshotPatchIteratorTripleID::SnapshotPatchIteratorTripleID(
-        IteratorTripleID* snapshot_it, PositionedTripleIterator* deletion_it,
-        PatchTreeTripleIterator* addition_it, PatchTreeKeyComparator* spo_comparator)
-        : snapshot_it(snapshot_it), deletion_it(deletion_it),
-          addition_it(addition_it), spo_comparator(spo_comparator) {
+SnapshotPatchIteratorTripleID::SnapshotPatchIteratorTripleID(IteratorTripleID* snapshot_it,
+                                                             PositionedTripleIterator* deletion_it,
+                                                             PatchTreeKeyComparator* spo_comparator, HDT* snapshot,
+                                                             const Triple& triple_pattern, PatchTree* patchTree,
+                                                             int patch_id, int offset, PatchPosition deletion_count)
+        : snapshot_it(snapshot_it), deletion_it(deletion_it), addition_it(NULL), spo_comparator(spo_comparator),
+          snapshot(snapshot), triple_pattern(triple_pattern), patchTree(patchTree), patch_id(patch_id), offset(offset),
+          deletion_count(deletion_count) {
     if (deletion_it != NULL) {
         // Reset the filter, because from here on we only need to know if a triple is in the tree or not.
         // So we don't need the filter, because this will introduce unnecessary (possibly huge for specific triple patterns) overhead.
@@ -69,8 +73,27 @@ bool SnapshotPatchIteratorTripleID::next(Triple* triple) {
                 return true;
             }
         } else { // Emit additions
-            if (snapshot_it != NULL) delete snapshot_it;
-            snapshot_it = NULL;
+            if (snapshot_it != NULL) {
+                // Calculate the offset for our addition iterator.
+                long snapshot_count = snapshot_it->numResultEstimation() == EXACT ? snapshot_it->estimatedNumResults() : -1;
+                if (snapshot_count == -1) {
+                    snapshot_count = 0;
+                    IteratorTripleID *tmp_it = SnapshotManager::search_with_offset(snapshot, triple_pattern, 0);
+                    while (tmp_it->hasNext()) {
+                        tmp_it->next();
+                        snapshot_count++;
+                    }
+                    delete tmp_it;
+                }
+
+                // Delete snapshot iterator
+                delete snapshot_it;
+                snapshot_it = NULL;
+
+                // Create addition iterator with the correct offset
+                long addition_offset = offset - snapshot_count + deletion_count;
+                addition_it = patchTree->addition_iterator_from(addition_offset, patch_id, triple_pattern);
+            }
             if(addition_it->next(triple)) {
                 return true;
             } else {
