@@ -26,22 +26,25 @@ protected:
         while(itP != patches.end()) {
             int id = itP->first;
             std::remove((TESTPATH + PATCHTREE_FILENAME(id, "spo_deletions")).c_str());
-            std::remove((TESTPATH + PATCHTREE_FILENAME(id, "spo")).c_str());
-            std::remove((TESTPATH + PATCHTREE_FILENAME(id, "pos")).c_str());
-            std::remove((TESTPATH + PATCHTREE_FILENAME(id, "pso")).c_str());
-            std::remove((TESTPATH + PATCHTREE_FILENAME(id, "sop")).c_str());
-            std::remove((TESTPATH + PATCHTREE_FILENAME(id, "osp")).c_str());
+            std::remove((TESTPATH + PATCHTREE_FILENAME(id, "pos_deletions")).c_str());
+            std::remove((TESTPATH + PATCHTREE_FILENAME(id, "pso_deletions")).c_str());
+            std::remove((TESTPATH + PATCHTREE_FILENAME(id, "sop_deletions")).c_str());
+            std::remove((TESTPATH + PATCHTREE_FILENAME(id, "osp_deletions")).c_str());
+            std::remove((TESTPATH + PATCHTREE_FILENAME(id, "spo_additions")).c_str());
+            std::remove((TESTPATH + PATCHTREE_FILENAME(id, "pos_additions")).c_str());
+            std::remove((TESTPATH + PATCHTREE_FILENAME(id, "pso_additions")).c_str());
+            std::remove((TESTPATH + PATCHTREE_FILENAME(id, "sop_additions")).c_str());
+            std::remove((TESTPATH + PATCHTREE_FILENAME(id, "osp_additions")).c_str());
             patchMetadataToDelete.push_back(id);
             itP++;
         }
         delete patchTreeManager;
 
-        DictionaryManager::cleanup(TESTPATH, 0);
-
         // Delete metadata files
         std::list<int>::iterator it2;
         for(it2=patchMetadataToDelete.begin(); it2!=patchMetadataToDelete.end(); ++it2) {
             std::remove((TESTPATH + METADATA_FILENAME_BASE(*it2)).c_str());
+            DictionaryManager::cleanup(TESTPATH, *it2);
         }
     }
 };

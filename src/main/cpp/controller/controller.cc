@@ -280,11 +280,15 @@ void Controller::cleanup(string basePath, Controller* controller) {
     while(itP != patches.end()) {
         int id = itP->first;
         std::remove((basePath + PATCHTREE_FILENAME(id, "spo_deletions")).c_str());
-        std::remove((basePath + PATCHTREE_FILENAME(id, "spo")).c_str());
-        std::remove((basePath + PATCHTREE_FILENAME(id, "pos")).c_str());
-        std::remove((basePath + PATCHTREE_FILENAME(id, "pso")).c_str());
-        std::remove((basePath + PATCHTREE_FILENAME(id, "sop")).c_str());
-        std::remove((basePath + PATCHTREE_FILENAME(id, "osp")).c_str());
+        std::remove((basePath + PATCHTREE_FILENAME(id, "pos_deletions")).c_str());
+        std::remove((basePath + PATCHTREE_FILENAME(id, "pso_deletions")).c_str());
+        std::remove((basePath + PATCHTREE_FILENAME(id, "sop_deletions")).c_str());
+        std::remove((basePath + PATCHTREE_FILENAME(id, "osp_deletions")).c_str());
+        std::remove((basePath + PATCHTREE_FILENAME(id, "spo_additions")).c_str());
+        std::remove((basePath + PATCHTREE_FILENAME(id, "pos_additions")).c_str());
+        std::remove((basePath + PATCHTREE_FILENAME(id, "pso_additions")).c_str());
+        std::remove((basePath + PATCHTREE_FILENAME(id, "sop_additions")).c_str());
+        std::remove((basePath + PATCHTREE_FILENAME(id, "osp_additions")).c_str());
         patchMetadataToDelete.push_back(id);
         itP++;
     }

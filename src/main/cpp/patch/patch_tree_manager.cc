@@ -40,7 +40,7 @@ bool PatchTreeManager::append(const PatchSorted &patch, int patch_id, Dictionary
 }
 
 std::map<int, PatchTree*> PatchTreeManager::detect_patch_trees() const {
-    std::regex r("patchtree_([0-9]*).kct_spo");
+    std::regex r("patchtree_([0-9]*).kct_spo_deletions");
     std::smatch base_match;
     std::map<int, PatchTree*> trees = std::map<int, PatchTree*>();
     DIR *dir;

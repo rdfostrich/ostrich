@@ -25,11 +25,15 @@ protected:
     virtual void TearDown() {
         delete patchTree;
         std::remove((TESTPATH + PATCHTREE_FILENAME(0, "spo_deletions")).c_str());
-        std::remove((TESTPATH + PATCHTREE_FILENAME(0, "spo")).c_str());
-        std::remove((TESTPATH + PATCHTREE_FILENAME(0, "pos")).c_str());
-        std::remove((TESTPATH + PATCHTREE_FILENAME(0, "pso")).c_str());
-        std::remove((TESTPATH + PATCHTREE_FILENAME(0, "sop")).c_str());
-        std::remove((TESTPATH + PATCHTREE_FILENAME(0, "osp")).c_str());
+        std::remove((TESTPATH + PATCHTREE_FILENAME(0, "pos_deletions")).c_str());
+        std::remove((TESTPATH + PATCHTREE_FILENAME(0, "pso_deletions")).c_str());
+        std::remove((TESTPATH + PATCHTREE_FILENAME(0, "sop_deletions")).c_str());
+        std::remove((TESTPATH + PATCHTREE_FILENAME(0, "osp_deletions")).c_str());
+        std::remove((TESTPATH + PATCHTREE_FILENAME(0, "spo_additions")).c_str());
+        std::remove((TESTPATH + PATCHTREE_FILENAME(0, "pos_additions")).c_str());
+        std::remove((TESTPATH + PATCHTREE_FILENAME(0, "pso_additions")).c_str());
+        std::remove((TESTPATH + PATCHTREE_FILENAME(0, "sop_additions")).c_str());
+        std::remove((TESTPATH + PATCHTREE_FILENAME(0, "osp_additions")).c_str());
         std::remove((TESTPATH + METADATA_FILENAME_BASE(0)).c_str());
 
         DictionaryManager::cleanup(TESTPATH, 0);

@@ -28,11 +28,15 @@ using namespace kyotocabinet;
 class TripleStore {
 private:
     TreeDB* index_spo_deletions;
-    TreeDB* index_spo;
-    TreeDB* index_sop;
-    TreeDB* index_pso;
-    TreeDB* index_pos;
-    TreeDB* index_osp;
+    TreeDB* index_sop_deletions;
+    TreeDB* index_pso_deletions;
+    TreeDB* index_pos_deletions;
+    TreeDB* index_osp_deletions;
+    TreeDB* index_spo_additions;
+    TreeDB* index_sop_additions;
+    TreeDB* index_pso_additions;
+    TreeDB* index_pos_additions;
+    TreeDB* index_osp_additions;
     //TreeDB index_ops; // We don't need this one if we maintain our s,p,o order priorites
     DictionaryManager* dict;
     PatchTreeKeyComparator* spo_comparator;
@@ -49,9 +53,10 @@ protected:
 public:
     TripleStore(string base_file_name, DictionaryManager* dict, int8_t kc_opts = 0, bool readonly = false);
     ~TripleStore();
-    TreeDB* getTree(Triple triple_pattern);
+    TreeDB* getAdditionsTree(Triple triple_pattern);
     TreeDB* getDefaultAdditionsTree();
-    TreeDB* getDeletionsTree();
+    TreeDB* getDeletionsTree(Triple triple_pattern);
+    TreeDB* getDefaultDeletionsTree();
     void insertAdditionSingle(const PatchTreeKey* key, const PatchTreeAdditionValue* value, DB::Cursor* cursor = NULL);
     void insertAdditionSingle(const PatchTreeKey* key, int patch_id, bool local_change, bool ignore_existing, DB::Cursor* cursor = NULL);
     void insertDeletionSingle(const PatchTreeKey* key, const PatchTreeDeletionValue* value, DB::Cursor* cursor = NULL);

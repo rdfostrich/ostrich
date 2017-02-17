@@ -112,7 +112,7 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, Prog
     // Loop over SPO deletion and addition trees
     // We do this together to be able to efficiently determine the local change flags
     NOTIFYMSG(progressListener, "Inserting into deletion and addition trees...\n");
-    DB::Cursor* cursor_deletions = tripleStore->getDeletionsTree()->cursor();
+    DB::Cursor* cursor_deletions = tripleStore->getDefaultDeletionsTree()->cursor();
     DB::Cursor* cursor_additions = tripleStore->getDefaultAdditionsTree()->cursor();
 
     cursor_deletions->jump();
@@ -404,7 +404,7 @@ bool PatchTree::contains_deletion(const PatchElement& patch_element, int patch_i
     PatchTreeKey key = patch_element.get_triple();
     size_t key_size, value_size;
     const char* raw_key = key.serialize(&key_size);
-    const char* raw_value = tripleStore->getDeletionsTree()->get(raw_key, key_size, &value_size);
+    const char* raw_value = tripleStore->getDefaultDeletionsTree()->get(raw_key, key_size, &value_size);
     free((char*) raw_key);
 
     // First, we check if the key is present
@@ -446,7 +446,7 @@ PatchSorted* PatchTree::reconstruct_patch(int patch_id, bool ignore_local_change
 }
 
 PatchTreeIterator PatchTree::iterator(PatchTreeKey* key) const {
-    DB::Cursor* cursor_deletions = tripleStore->getDeletionsTree()->cursor();
+    DB::Cursor* cursor_deletions = tripleStore->getDefaultDeletionsTree()->cursor();
     DB::Cursor* cursor_additions = tripleStore->getDefaultAdditionsTree()->cursor();
     size_t size;
     const char* data = key->serialize(&size);
@@ -458,7 +458,7 @@ PatchTreeIterator PatchTree::iterator(PatchTreeKey* key) const {
 }
 
 PatchTreeIterator PatchTree::iterator(int patch_id, bool exact) const {
-    DB::Cursor* cursor_deletions = tripleStore->getDeletionsTree()->cursor();
+    DB::Cursor* cursor_deletions = tripleStore->getDefaultDeletionsTree()->cursor();
     DB::Cursor* cursor_additions = tripleStore->getDefaultAdditionsTree()->cursor();
     cursor_deletions->jump();
     cursor_additions->jump();
@@ -468,7 +468,7 @@ PatchTreeIterator PatchTree::iterator(int patch_id, bool exact) const {
 }
 
 PatchTreeIterator PatchTree::iterator(PatchTreeKey *key, int patch_id, bool exact) const {
-    DB::Cursor* cursor_deletions = tripleStore->getDeletionsTree()->cursor();
+    DB::Cursor* cursor_deletions = tripleStore->getDefaultDeletionsTree()->cursor();
     DB::Cursor* cursor_additions = tripleStore->getDefaultAdditionsTree()->cursor();
     size_t size;
     const char* data = key->serialize(&size);
@@ -481,8 +481,8 @@ PatchTreeIterator PatchTree::iterator(PatchTreeKey *key, int patch_id, bool exac
 }
 
 PatchTreeIterator* PatchTree::iterator(const Triple *triple_pattern) const {
-    DB::Cursor* cursor_deletions = tripleStore->getDeletionsTree()->cursor();
-    DB::Cursor* cursor_additions = tripleStore->getDefaultAdditionsTree()->cursor();
+    DB::Cursor* cursor_deletions = tripleStore->getDeletionsTree(*triple_pattern)->cursor();
+    DB::Cursor* cursor_additions = tripleStore->getAdditionsTree(*triple_pattern)->cursor();
     size_t size;
     const char* data = triple_pattern->serialize(&size);
     cursor_deletions->jump(data, size);
@@ -500,7 +500,7 @@ std::pair<PatchPosition, Triple> PatchTree::deletion_count(const Triple &triple_
             triple_pattern.get_predicate() == 0 ? max_id : triple_pattern.get_predicate(),
             triple_pattern.get_object() == 0 ? max_id : triple_pattern.get_object()
     );
-    DB::Cursor* cursor_deletions = tripleStore->getDeletionsTree()->cursor();
+    DB::Cursor* cursor_deletions = tripleStore->getDeletionsTree(triple_pattern)->cursor();
 
     // Try jumping backwards to the position where the triple_pattern matches
     size_t size;
@@ -528,7 +528,7 @@ std::pair<PatchPosition, Triple> PatchTree::deletion_count(const Triple &triple_
 }
 
 PositionedTripleIterator* PatchTree::deletion_iterator_from(const Triple& offset, int patch_id, const Triple& triple_pattern) const {
-    DB::Cursor* cursor_deletions = tripleStore->getDeletionsTree()->cursor();
+    DB::Cursor* cursor_deletions = tripleStore->getDefaultDeletionsTree()->cursor();
     size_t size;
     const char* data = offset.serialize(&size);
     cursor_deletions->jump(data, size);
@@ -543,7 +543,7 @@ PositionedTripleIterator* PatchTree::deletion_iterator_from(const Triple& offset
 PatchTreeDeletionValue* PatchTree::get_deletion_value(const Triple &triple) const {
     size_t ksp, vsp;
     const char* kbp = triple.serialize(&ksp);
-    const char* vbp = tripleStore->getDeletionsTree()->get(kbp, ksp, &vsp);
+    const char* vbp = tripleStore->getDefaultDeletionsTree()->get(kbp, ksp, &vsp);
     free((char*) kbp);
     if (vbp != NULL) {
         PatchTreeDeletionValue* value = new PatchTreeDeletionValue();
@@ -557,7 +557,7 @@ PatchTreeDeletionValue* PatchTree::get_deletion_value(const Triple &triple) cons
 PatchTreeDeletionValue* PatchTree::get_deletion_value_after(const Triple& triple_pattern) const {
     size_t ksp, vsp;
     const char *kbp = triple_pattern.serialize(&ksp);
-    DB::Cursor* cursor = tripleStore->getDeletionsTree()->cursor();
+    DB::Cursor* cursor = tripleStore->getDeletionsTree(triple_pattern)->cursor();
     if (!cursor->jump(kbp, ksp)) {
         free((char*) kbp);
         return NULL;
@@ -596,7 +596,7 @@ PatchPositions PatchTree::get_deletion_patch_positions(const Triple& triple, int
 }
 
 PatchTreeTripleIterator* PatchTree::addition_iterator_from(long offset, int patch_id, const Triple& triple_pattern) const {
-    DB::Cursor* cursor = tripleStore->getTree(triple_pattern)->cursor();
+    DB::Cursor* cursor = tripleStore->getAdditionsTree(triple_pattern)->cursor();
     size_t size;
     const char* data = triple_pattern.serialize(&size);
     cursor->jump(data, size);
@@ -613,7 +613,7 @@ PatchTreeTripleIterator* PatchTree::addition_iterator_from(long offset, int patc
 }
 
 PatchTreeIterator* PatchTree::addition_iterator(const Triple &triple_pattern) const {
-    DB::Cursor* cursor = tripleStore->getTree(triple_pattern)->cursor();
+    DB::Cursor* cursor = tripleStore->getAdditionsTree(triple_pattern)->cursor();
     size_t size;
     const char* data = triple_pattern.serialize(&size);
     cursor->jump(data, size);
