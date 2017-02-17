@@ -64,6 +64,7 @@ bool PatchTreeIterator::is_reverse() const {
 }
 
 bool PatchTreeIterator::next_deletion(PatchTreeKey* key, PatchTreeDeletionValue* value, bool silent_step) {
+    // TODO: abstract code
     if(!is_deletion_tree()) {
         throw std::invalid_argument("Tried to call PatchTreeIterator::next_deletion(PatchTreeKey* key, PatchTreeDeletionValue* value) on non-deletion tree.");
     }
@@ -80,35 +81,38 @@ bool PatchTreeIterator::next_deletion(PatchTreeKey* key, PatchTreeDeletionValue*
         if (!kbp) return false;
         value->deserialize(vbp, vsp);
 
-        if(is_patch_id_filter) {
+        key->deserialize(kbp, ksp);
+        delete[] kbp;
+        if (is_triple_pattern_filter && !Triple::pattern_match_triple(*key, triple_pattern_filter)) {
+            if (can_early_break) {
+                // We stop iterating here, because due to the fact that we are always using a triple pattern tree
+                // in which our triple patterns will match continuous series of triples, and we will always start
+                // iterating on a match, there won't be any matches anymore hereafter.
+                return false;
+            }
+            filter_valid = false;
+        } else {
+            filter_valid = true;
+        }
+
+        if(filter_valid && is_patch_id_filter) {
             if(is_patch_id_filter_exact) {
                 long element = value->get_patchvalue_index(patch_id_filter);
                 filter_valid = element >= 0;
             } else {
-                bool done = false;
-                for(long i = value->get_size() - 1; i >= 0 && !done; i--) {
+                filter_valid = false;
+                for(long i = value->get_size() - 1; i >= 0 && !filter_valid; i--) {
                     PatchTreeDeletionValueElement element = value->get_patch(i);
                     if(element.get_patch_id() <= patch_id_filter) {
-                        done = true;
                         filter_valid = true;
                     }
                 }
             }
-        } else {
-            filter_valid = true;
         }
 
         if(filter_valid && is_filter_local_changes) {
             filter_valid = !value->is_local_change(patch_id_filter);
         }
-
-        if(filter_valid) {
-            key->deserialize(kbp, ksp); // Small optimization to only deserialize the key when needed.
-            filter_valid = !is_triple_pattern_filter || Triple::pattern_match_triple(*key, triple_pattern_filter);
-        }
-
-        delete[] kbp;
-        //delete[] vbp; // Apparently kyoto cabinet does not require the values to be deleted
 
         if(!silent_step || !filter_valid) {
             reverse ? cursor_deletions->step_back() : cursor_deletions->step();
@@ -138,8 +142,8 @@ bool PatchTreeIterator::next_addition(PatchTreeKey* key, PatchTreeAdditionValue*
         value->deserialize(vbp, vsp);
 
         key->deserialize(kbp, ksp);
+        delete[] kbp;
         if (is_triple_pattern_filter && !Triple::pattern_match_triple(*key, triple_pattern_filter)) {
-            delete[] kbp;
             if (can_early_break) {
                 // We stop iterating here, because due to the fact that we are always using a triple pattern tree
                 // in which our triple patterns will match continuous series of triples, and we will always start
@@ -170,9 +174,6 @@ bool PatchTreeIterator::next_addition(PatchTreeKey* key, PatchTreeAdditionValue*
         if(filter_valid && is_filter_local_changes) {
             filter_valid = !value->is_local_change(patch_id_filter);
         }
-
-        delete[] kbp;
-        //delete[] vbp; // Apparently kyoto cabinet does not require the values to be deleted
     }
     return true;
 }
