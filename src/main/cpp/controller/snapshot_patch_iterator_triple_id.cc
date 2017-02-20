@@ -47,6 +47,7 @@ bool SnapshotPatchIteratorTripleID::next(Triple* triple) {
             size_t size;
             const char* data = triple->serialize(&size);
             deletion_it->getPatchTreeIterator()->getDeletionCursor()->jump(data, size);
+            deletion_it->getPatchTreeIterator()->set_triple_pattern_filter(*triple); // Only match a single triple to force early-breaking
             free((void *) data);
 
             while (found_triple_before_snapshot_triple) {

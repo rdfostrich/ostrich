@@ -88,6 +88,7 @@ TripleIterator* Controller::get_version_materialized(const Triple &triple_patter
             TripleID *tripleId = snapshot_it->next();
             Triple firstTriple(tripleId->getSubject(), tripleId->getPredicate(), tripleId->getObject());
             deletion_it = patchTree->deletion_iterator_from(firstTriple, patch_id, triple_pattern);
+            deletion_it->getPatchTreeIterator()->set_early_break(true);
 
             // Calculate a new offset, taking into account deletions.
             PositionedTriple first_deletion_triple;
