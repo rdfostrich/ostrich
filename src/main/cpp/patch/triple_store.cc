@@ -33,6 +33,10 @@ TripleStore::TripleStore(string base_file_name, DictionaryManager* dict, int8_t 
     element_comparator = new PatchElementComparator(spo_comparator);
 
     index_spo_deletions->tune_options(kc_opts);
+    index_sop_deletions->tune_options(kc_opts);
+    index_pso_deletions->tune_options(kc_opts);
+    index_pos_deletions->tune_options(kc_opts);
+    index_osp_deletions->tune_options(kc_opts);
     index_spo_additions->tune_options(kc_opts);
     index_sop_additions->tune_options(kc_opts);
     index_pso_additions->tune_options(kc_opts);
