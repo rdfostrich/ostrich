@@ -259,7 +259,7 @@ DictionaryManager *Controller::get_dictionary_manager(int patch_id) const {
     if(snapshot_id < 0) {
         throw std::invalid_argument("No snapshot has been created yet.");
     }
-    get_snapshot_manager()->load_snapshot(snapshot_id);
+    get_snapshot_manager()->get_snapshot(snapshot_id); // Force a snapshot load
     return get_snapshot_manager()->get_dictionary_manager(snapshot_id);
 }
 
