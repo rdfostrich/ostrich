@@ -32,7 +32,7 @@ void test_lookups_for_queries(Evaluator& evaluator, string queriesFilePath, Trip
         vector<string> line_split = split(line, " ");
         std::string element = line_split[0];
         if (element.at(0) == '<') {
-            element = element.substr(1, element.size() - 1);
+            element = element.substr(1, element.size() - 2);
         }
         std::string s("");
         std::string p("");
