@@ -43,7 +43,7 @@ template <class DV>
 ForwardPatchTripleDeltaIterator<DV>::ForwardPatchTripleDeltaIterator(PatchTree* patchTree, const Triple &triple_pattern, int patch_id_end) : it(patchTree->iterator<DV>(&triple_pattern)) {
     it->set_patch_filter(patch_id_end, true);
     it->set_filter_local_changes(true);
-    it->set_early_break(false);
+    it->set_early_break(true);
     value = new PatchTreeValueBase<DV>();
 }
 
