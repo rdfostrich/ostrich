@@ -139,7 +139,8 @@ public:
      * @param triple_pattern The triple pattern to filter by
      * @return The iterator that will loop over the tree for the given patch.
      */
-    PatchTreeIterator* iterator(const Triple* triple_pattern) const;
+    template <class DV>
+    PatchTreeIteratorBase<DV>* iterator(const Triple* triple_pattern) const;
     /**
      * Get the number of deletions for the given triple pattern.
      * @param triple_pattern The triple pattern to match by.

@@ -483,7 +483,8 @@ PatchTreeIterator PatchTree::iterator(PatchTreeKey *key, int patch_id, bool exac
     return patchTreeIterator;
 }
 
-PatchTreeIterator* PatchTree::iterator(const Triple *triple_pattern) const {
+template <class DV>
+PatchTreeIteratorBase<DV>* PatchTree::iterator(const Triple *triple_pattern) const {
     DB::Cursor* cursor_deletions = tripleStore->getDeletionsTree(*triple_pattern)->cursor();
     DB::Cursor* cursor_additions = tripleStore->getAdditionsTree(*triple_pattern)->cursor();
     size_t size;
@@ -491,7 +492,7 @@ PatchTreeIterator* PatchTree::iterator(const Triple *triple_pattern) const {
     cursor_deletions->jump(data, size);
     cursor_additions->jump(data, size);
     free((char*) data);
-    PatchTreeIterator* patchTreeIterator = new PatchTreeIterator(cursor_deletions, cursor_additions, get_spo_comparator());
+    PatchTreeIteratorBase<DV>* patchTreeIterator = new PatchTreeIteratorBase<DV>(cursor_deletions, cursor_additions, get_spo_comparator());
     patchTreeIterator->set_triple_pattern_filter(*triple_pattern);
     return patchTreeIterator;
 }
@@ -721,5 +722,7 @@ void PatchTree::read_metadata() {
 }
 
 // Explicit specialization is required
-template PatchTreeDeletionValueBase<PatchTreeDeletionValueElement>* PatchTree::get_deletion_value_after(const Triple& triple_pattern) const;
-template PatchTreeDeletionValueBase<PatchTreeDeletionValueElementBase>* PatchTree::get_deletion_value_after(const Triple& triple_pattern) const;
+template PatchTreeDeletionValue* PatchTree::get_deletion_value_after(const Triple& triple_pattern) const;
+template PatchTreeDeletionValueReduced* PatchTree::get_deletion_value_after(const Triple& triple_pattern) const;
+template PatchTreeIteratorBase<PatchTreeDeletionValue>* PatchTree::iterator(const Triple* triple_pattern) const;
+template PatchTreeIteratorBase<PatchTreeDeletionValueReduced>* PatchTree::iterator(const Triple* triple_pattern) const;

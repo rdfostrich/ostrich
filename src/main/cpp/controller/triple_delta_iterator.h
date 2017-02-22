@@ -3,6 +3,7 @@
 
 #include "../patch/triple.h"
 #include "../patch/patch_tree_iterator.h"
+#include "../patch/patch_tree.h"
 
 // Triple annotated with addition/deletion.
 class TripleDelta {
@@ -28,23 +29,25 @@ public:
 };
 
 // Triple delta iterator where elements from a single patch are emitted.
+template <class DV>
 class ForwardPatchTripleDeltaIterator : public TripleDeltaIterator {
 protected:
-    PatchTreeIterator* it;
-    PatchTreeValue* value;
+    PatchTreeIteratorBase<DV>* it;
+    PatchTreeValueBase<DV>* value;
 public:
-    ForwardPatchTripleDeltaIterator(PatchTreeIterator* it);
+    ForwardPatchTripleDeltaIterator(PatchTree* patchTree, const Triple &triple_pattern, int patch_id_end);
     ~ForwardPatchTripleDeltaIterator();
     bool next(TripleDelta* triple);
 };
 
 // Triple delta iterator where elements only differences between two patches are emitted.
-class FowardDiffPatchTripleDeltaIterator : public ForwardPatchTripleDeltaIterator {
+template <class DV>
+class FowardDiffPatchTripleDeltaIterator : public ForwardPatchTripleDeltaIterator<DV> {
 protected:
     int patch_id_start;
     int patch_id_end;
 public:
-    FowardDiffPatchTripleDeltaIterator(PatchTreeIterator* it, int patch_id_start, int patch_id_end);
+    FowardDiffPatchTripleDeltaIterator(PatchTree* patchTree, const Triple &triple_pattern, int patch_id_start, int patch_id_end);
     bool next(TripleDelta* triple);
 };
 

@@ -39,31 +39,46 @@ bool EmptyTripleDeltaIterator::next(TripleDelta *triple) {
     return false;
 }
 
-ForwardPatchTripleDeltaIterator::ForwardPatchTripleDeltaIterator(PatchTreeIterator* it) : it(it) {
-    value = new PatchTreeValue();
+template <class DV>
+ForwardPatchTripleDeltaIterator<DV>::ForwardPatchTripleDeltaIterator(PatchTree* patchTree, const Triple &triple_pattern, int patch_id_end) : it(patchTree->iterator<DV>(&triple_pattern)) {
+    it->set_patch_filter(patch_id_end, true);
+    it->set_filter_local_changes(true);
+    it->set_early_break(false);
+    value = new PatchTreeValueBase<DV>();
 }
 
-ForwardPatchTripleDeltaIterator::~ForwardPatchTripleDeltaIterator() {
+template <class DV>
+ForwardPatchTripleDeltaIterator<DV>::~ForwardPatchTripleDeltaIterator() {
     delete it;
     delete value;
 }
 
-bool ForwardPatchTripleDeltaIterator::next(TripleDelta* triple) {
+template <class DV>
+bool ForwardPatchTripleDeltaIterator<DV>::next(TripleDelta* triple) {
     bool ret = it->next(triple->get_triple(), value);
     triple->set_addition(value->is_addition(it->get_patch_id_filter(), true));
     return ret;
 }
 
-FowardDiffPatchTripleDeltaIterator::FowardDiffPatchTripleDeltaIterator(PatchTreeIterator *it, int patch_id_start,
-                                                                       int patch_id_end)
-        : ForwardPatchTripleDeltaIterator(it), patch_id_start(patch_id_start), patch_id_end(patch_id_end) {}
+template <class DV>
+FowardDiffPatchTripleDeltaIterator<DV>::FowardDiffPatchTripleDeltaIterator(PatchTree* patchTree, const Triple &triple_pattern, int patch_id_start, int patch_id_end)
+        : ForwardPatchTripleDeltaIterator<DV>(patchTree, triple_pattern, patch_id_end), patch_id_start(patch_id_start), patch_id_end(patch_id_end) {
+    this->it->reset_patch_filter();
+    this->it->set_filter_local_changes(false);
+}
 
-bool FowardDiffPatchTripleDeltaIterator::next(TripleDelta *triple) {
+template <class DV>
+bool FowardDiffPatchTripleDeltaIterator<DV>::next(TripleDelta *triple) {
     bool valid;
-    while ((valid = it->next(triple->get_triple(), value))
-                    && value->is_delta_type_equal(patch_id_start, patch_id_end)) {}
+    while ((valid = this->it->next(triple->get_triple(), this->value))
+                    && this->value->is_delta_type_equal(patch_id_start, patch_id_end)) {}
     if (valid) {
-        triple->set_addition(value->is_addition(patch_id_end, true));
+        triple->set_addition(this->value->is_addition(patch_id_end, true));
     }
     return valid;
 }
+
+template class ForwardPatchTripleDeltaIterator<PatchTreeDeletionValue>;
+template class ForwardPatchTripleDeltaIterator<PatchTreeDeletionValueReduced>;
+template class FowardDiffPatchTripleDeltaIterator<PatchTreeDeletionValue>;
+template class FowardDiffPatchTripleDeltaIterator<PatchTreeDeletionValueReduced>;

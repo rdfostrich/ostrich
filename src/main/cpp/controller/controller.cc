@@ -155,11 +155,11 @@ TripleDeltaIterator* Controller::get_delta_materialized(const Triple &triple_pat
             if(patchTree == NULL) {
                 throw std::invalid_argument("Could not find the given end patch id");
             }
-            PatchTreeIterator* patchTreeIterator = patchTree->iterator(&triple_pattern);
-            patchTreeIterator->set_patch_filter(patch_id_end, true);
-            patchTreeIterator->set_filter_local_changes(true);
-            patchTreeIterator->set_early_break(false);
-            return (new ForwardPatchTripleDeltaIterator(patchTreeIterator))->offset(offset);
+            if (TripleStore::is_default_tree(triple_pattern)) {
+                return (new ForwardPatchTripleDeltaIterator<PatchTreeDeletionValue>(patchTree, triple_pattern, patch_id_end))->offset(offset);
+            } else {
+                return (new ForwardPatchTripleDeltaIterator<PatchTreeDeletionValueReduced>(patchTree, triple_pattern, patch_id_end))->offset(offset);
+            }
         } else {
             // TODO: implement this when multiple snapshots are supported
             throw std::invalid_argument("Multiple snapshots are not supported.");
@@ -181,9 +181,11 @@ TripleDeltaIterator* Controller::get_delta_materialized(const Triple &triple_pat
             if(patchTree == NULL) {
                 throw std::invalid_argument("Could not find the given end patch id");
             }
-            PatchTreeIterator* patchTreeIterator = patchTree->iterator(&triple_pattern);
-            patchTreeIterator->set_early_break(false);
-            return (new FowardDiffPatchTripleDeltaIterator(patchTreeIterator, patch_id_start, patch_id_end))->offset(offset);
+            if (TripleStore::is_default_tree(triple_pattern)) {
+                return (new FowardDiffPatchTripleDeltaIterator<PatchTreeDeletionValue>(patchTree, triple_pattern, patch_id_start, patch_id_end))->offset(offset);
+            } else {
+                return (new FowardDiffPatchTripleDeltaIterator<PatchTreeDeletionValueReduced>(patchTree, triple_pattern, patch_id_start, patch_id_end))->offset(offset);
+            }
         } else {
             // TODO: implement this when multiple snapshots are supported
             throw std::invalid_argument("Multiple snapshots are not supported.");

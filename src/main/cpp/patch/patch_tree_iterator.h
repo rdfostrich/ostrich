@@ -44,6 +44,10 @@ public:
      */
     void set_patch_filter(int patch_id, bool exact);
     /**
+     * Disable the existing patch filter
+     */
+    void reset_patch_filter();
+    /**
      * Set the triple pattern to filter by
      * @param triple_pattern The triple pattern that will match all results from this iterator.
      */

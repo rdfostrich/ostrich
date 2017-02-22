@@ -66,6 +66,6 @@ public:
 };
 
 typedef PatchTreeValueBase<PatchTreeDeletionValue> PatchTreeValue;
-typedef PatchTreeValueBase<PatchTreeDeletionValueReduced> PatchTreeValueBaseReduced;
+typedef PatchTreeValueBase<PatchTreeDeletionValueReduced> PatchTreeValueReduced;
 
 #endif //TPFPATCH_STORE_PATCH_TREE_VALUE_H

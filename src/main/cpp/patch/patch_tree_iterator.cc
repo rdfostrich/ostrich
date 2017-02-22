@@ -30,6 +30,11 @@ void PatchTreeIteratorBase<DV>::set_patch_filter(int patch_id, bool exact) {
 }
 
 template <class DV>
+void PatchTreeIteratorBase<DV>::reset_patch_filter() {
+    this->is_patch_id_filter = false;
+}
+
+template <class DV>
 void PatchTreeIteratorBase<DV>::set_triple_pattern_filter(Triple triple_pattern) {
     // Don't do the filtering if we have ? ? ?,
     // this filter then won't have any effect and will only make looping slower.
