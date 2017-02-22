@@ -4,7 +4,8 @@
 
 #include "patch_tree_iterator.h"
 
-PatchTreeIterator::PatchTreeIterator(DB::Cursor* cursor_deletions, DB::Cursor* cursor_additions, PatchTreeKeyComparator* comparator)
+template <class DV>
+PatchTreeIteratorBase<DV>::PatchTreeIteratorBase(DB::Cursor* cursor_deletions, DB::Cursor* cursor_additions, PatchTreeKeyComparator* comparator)
         : cursor_deletions(cursor_deletions), cursor_additions(cursor_additions), comparator(comparator),
           is_patch_id_filter(false),
           is_patch_id_filter_exact(false), patch_id_filter(-1),
@@ -13,20 +14,23 @@ PatchTreeIterator::PatchTreeIterator(DB::Cursor* cursor_deletions, DB::Cursor* c
           has_temp_key_deletion(false), has_temp_key_addition(false),
           temp_key_deletion(new PatchTreeKey()), temp_key_addition(new PatchTreeKey()) {}
 
-PatchTreeIterator::~PatchTreeIterator() {
+template <class DV>
+PatchTreeIteratorBase<DV>::~PatchTreeIteratorBase() {
     if (cursor_deletions != NULL) delete cursor_deletions;
     if (cursor_additions != NULL) delete cursor_additions;
     delete temp_key_deletion;
     delete temp_key_addition;
 }
 
-void PatchTreeIterator::set_patch_filter(int patch_id, bool exact) {
+template <class DV>
+void PatchTreeIteratorBase<DV>::set_patch_filter(int patch_id, bool exact) {
     this->is_patch_id_filter = true;
     this->is_patch_id_filter_exact = exact;
     this->patch_id_filter = patch_id;
 }
 
-void PatchTreeIterator::set_triple_pattern_filter(Triple triple_pattern) {
+template <class DV>
+void PatchTreeIteratorBase<DV>::set_triple_pattern_filter(Triple triple_pattern) {
     // Don't do the filtering if we have ? ? ?,
     // this filter then won't have any effect and will only make looping slower.
     if(!Triple::is_all_matching_pattern(triple_pattern)) {
@@ -35,38 +39,46 @@ void PatchTreeIterator::set_triple_pattern_filter(Triple triple_pattern) {
     }
 }
 
-void PatchTreeIterator::reset_triple_pattern_filter() {
+template <class DV>
+void PatchTreeIteratorBase<DV>::reset_triple_pattern_filter() {
     this->is_triple_pattern_filter = false;
 }
 
-void PatchTreeIterator::set_filter_local_changes(bool filter_local_changes) {
+template <class DV>
+void PatchTreeIteratorBase<DV>::set_filter_local_changes(bool filter_local_changes) {
     this->is_filter_local_changes = filter_local_changes;
 }
 
-int PatchTreeIterator::get_patch_id_filter() {
+template <class DV>
+int PatchTreeIteratorBase<DV>::get_patch_id_filter() {
     return this->patch_id_filter;
 }
 
-bool PatchTreeIterator::is_deletion_tree() const {
+template <class DV>
+bool PatchTreeIteratorBase<DV>::is_deletion_tree() const {
     return cursor_deletions != NULL;
 }
 
-bool PatchTreeIterator::is_addition_tree() const {
+template <class DV>
+bool PatchTreeIteratorBase<DV>::is_addition_tree() const {
     return cursor_additions != NULL;
 }
 
-void PatchTreeIterator::set_reverse(bool reverse) {
+template <class DV>
+void PatchTreeIteratorBase<DV>::set_reverse(bool reverse) {
     this->reverse = reverse;
 }
 
-bool PatchTreeIterator::is_reverse() const {
+template <class DV>
+bool PatchTreeIteratorBase<DV>::is_reverse() const {
     return this->reverse;
 }
 
-bool PatchTreeIterator::next_deletion(PatchTreeKey* key, PatchTreeDeletionValue* value, bool silent_step) {
+template <class DV>
+bool PatchTreeIteratorBase<DV>::next_deletion(PatchTreeKey* key, DV* value, bool silent_step) {
     // TODO: abstract code
     if(!is_deletion_tree()) {
-        throw std::invalid_argument("Tried to call PatchTreeIterator::next_deletion(PatchTreeKey* key, PatchTreeDeletionValue* value) on non-deletion tree.");
+        throw std::invalid_argument("Tried to call PatchTreeIteratorBase<DV>::next_deletion(PatchTreeKey* key, PatchTreeDeletionValue* value) on non-deletion tree.");
     }
     bool filter_valid = false;
     const char* kbp;
@@ -102,7 +114,7 @@ bool PatchTreeIterator::next_deletion(PatchTreeKey* key, PatchTreeDeletionValue*
             } else {
                 filter_valid = false;
                 for(long i = value->get_size() - 1; i >= 0 && !filter_valid; i--) {
-                    PatchTreeDeletionValueElement element = value->get_patch(i);
+                    PatchTreeDeletionValueElementBase element = value->get_patch(i);
                     if(element.get_patch_id() <= patch_id_filter) {
                         filter_valid = true;
                     }
@@ -121,9 +133,10 @@ bool PatchTreeIterator::next_deletion(PatchTreeKey* key, PatchTreeDeletionValue*
     return true;
 }
 
-bool PatchTreeIterator::next_addition(PatchTreeKey* key, PatchTreeAdditionValue* value) {
+template <class DV>
+bool PatchTreeIteratorBase<DV>::next_addition(PatchTreeKey* key, PatchTreeAdditionValue* value) {
     if(!is_addition_tree()) {
-        throw std::invalid_argument("Tried to call PatchTreeIterator::next_addition(PatchTreeKey* key, PatchTreeAdditionValue* value) on a non-addition tree.");
+        throw std::invalid_argument("Tried to call PatchTreeIteratorBase<DV>::next_addition(PatchTreeKey* key, PatchTreeAdditionValue* value) on a non-addition tree.");
     }
     bool filter_valid = false;
     const char* kbp;
@@ -178,7 +191,8 @@ bool PatchTreeIterator::next_addition(PatchTreeKey* key, PatchTreeAdditionValue*
     return true;
 }
 
-bool PatchTreeIterator::next(PatchTreeKey* key, PatchTreeValue* value) {
+template <class DV>
+bool PatchTreeIteratorBase<DV>::next(PatchTreeKey* key, PatchTreeValueBase<DV>* value) {
     value->set_deletion(false);
     value->set_addition(false);
 
@@ -260,14 +274,20 @@ bool PatchTreeIterator::next(PatchTreeKey* key, PatchTreeValue* value) {
     return true;
 }
 
-DB::Cursor *PatchTreeIterator::getDeletionCursor() {
+template <class DV>
+DB::Cursor *PatchTreeIteratorBase<DV>::getDeletionCursor() {
     return this->cursor_deletions;
 }
 
-DB::Cursor *PatchTreeIterator::getAdditionCursor() {
+template <class DV>
+DB::Cursor *PatchTreeIteratorBase<DV>::getAdditionCursor() {
     return this->cursor_additions;
 }
 
-void PatchTreeIterator::set_early_break(bool can_early_break) {
+template <class DV>
+void PatchTreeIteratorBase<DV>::set_early_break(bool can_early_break) {
     this->can_early_break = can_early_break;
 }
+
+template class PatchTreeIteratorBase<PatchTreeDeletionValue>;
+template class PatchTreeIteratorBase<PatchTreeDeletionValueReduced>;

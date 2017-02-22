@@ -192,7 +192,8 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, Prog
                 if ((patch_value_index = deletion_value.get_patchvalue_index(patch_id)) < 0
                     || deletion_value.get_patch(patch_value_index).get_patch_positions() != patch_positions) { // Don't re-insert when already present for this patch id, except when patch positions have changed
                     deletion_value.add(PatchTreeDeletionValueElement(patch_id, patch_positions));
-                    tripleStore->insertDeletionSingle(&deletion_key, &deletion_value, cursor_deletions);
+                    PatchTreeDeletionValueReduced deletion_value_reduced = deletion_value.to_reduced();
+                    tripleStore->insertDeletionSingle(&deletion_key, &deletion_value, &deletion_value_reduced, cursor_deletions);
                 }
             }
         } else if (P_GT_A && A_LT_D) { // A < P && A < D
@@ -237,7 +238,8 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, Prog
                 PatchTreeDeletionValueElement element = PatchTreeDeletionValueElement(patch_id, patch_positions);
                 if (was_local_change) element.set_local_change();
                 deletion_value.add(element);
-                tripleStore->insertDeletionSingle(&deletion_key, &deletion_value, cursor_deletions);
+                PatchTreeDeletionValueReduced deletion_value_reduced = deletion_value.to_reduced();
+                tripleStore->insertDeletionSingle(&deletion_key, &deletion_value, &deletion_value_reduced, cursor_deletions);
             }
         } else if (P_EQ_A && P_LT_D) { // P = A && P < D
             // local change P, A
@@ -303,7 +305,8 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, Prog
                 PatchTreeDeletionValueElement deletion_value_element(patch_id, patch_positions);
                 if (is_local_change) deletion_value_element.set_local_change();
                 deletion_value.add(deletion_value_element);
-                tripleStore->insertDeletionSingle(&deletion_key, &deletion_value, cursor_deletions);
+                PatchTreeDeletionValueReduced deletion_value_reduced = deletion_value.to_reduced();
+                tripleStore->insertDeletionSingle(&deletion_key, &deletion_value, &deletion_value_reduced, cursor_deletions);
             } else {
                 cerr << "largest_patch_id_addition: " << largest_patch_id_addition << endl;
                 cerr << "largest_patch_id_deletion: " << largest_patch_id_deletion << endl;
@@ -493,7 +496,8 @@ PatchTreeIterator* PatchTree::iterator(const Triple *triple_pattern) const {
     return patchTreeIterator;
 }
 
-std::pair<PatchPosition, Triple> PatchTree::deletion_count(const Triple &triple_pattern, int patch_id) const {
+template <class DV>
+std::pair<DV*, Triple> PatchTree::last_deletion_value(const Triple &triple_pattern, int patch_id) const {
     unsigned int max_id = (unsigned int) -1;
     Triple triple_pattern_jump(
             triple_pattern.get_subject() == 0 ? max_id : triple_pattern.get_subject(),
@@ -508,23 +512,51 @@ std::pair<PatchPosition, Triple> PatchTree::deletion_count(const Triple &triple_
     bool hasJumped = cursor_deletions->jump_back(data, size);
     if (!hasJumped) {
         // A failure to jump means that there is no triple in the tree that matches the pattern, so we return count 0.
-        return std::make_pair((PatchPosition) 0, Triple());
+        return std::make_pair((DV*) NULL, Triple());
 
     }
     free((char*) data);
 
-    PatchTreeIterator patchTreeIterator(cursor_deletions, NULL, get_spo_comparator());
+    PatchTreeIteratorBase<DV> patchTreeIterator(cursor_deletions, NULL, get_spo_comparator());
     patchTreeIterator.set_patch_filter(patch_id, true);
     patchTreeIterator.set_triple_pattern_filter(triple_pattern);
     patchTreeIterator.set_filter_local_changes(true);
     patchTreeIterator.set_reverse(true); // Because we start _after_ the last matching triple because of the jump_back.
 
     PatchTreeKey key;
-    PatchTreeDeletionValue value;
-    if(patchTreeIterator.next_deletion(&key, &value, true)) {
-        return std::make_pair(value.get(patch_id).get_patch_positions().get_by_pattern(triple_pattern) + 1, key);
+    DV* value = new DV();
+    if(patchTreeIterator.next_deletion(&key, value, true)) {
+        return std::make_pair(value, key);
     }
-    return std::make_pair((PatchPosition) 0, Triple());
+    delete value;
+    return std::make_pair((DV*) NULL, Triple());
+}
+
+std::pair<PatchPosition, Triple> PatchTree::deletion_count(const Triple &triple_pattern, int patch_id) const {
+    PatchPosition patch_position;
+    Triple triple;
+    if (TripleStore::is_default_tree(triple_pattern)) {
+        // If we are using the SPO-tree, patch positions are stored in there,
+        // so we can immediately retrieve those and return them.
+        std::pair<PatchTreeDeletionValue*, Triple> value = last_deletion_value<PatchTreeDeletionValue>(triple_pattern, patch_id);
+        if (value.first == NULL) {
+            return std::make_pair((PatchPosition) 0, Triple());
+        }
+        patch_position = value.first->get(patch_id).get_patch_positions().get_by_pattern(triple_pattern) + 1;
+        delete value.first;
+        triple = value.second;
+    } else {
+        // If we are using a non-SPO-tree, we still know the exact last triple,
+        // so we take that triple, and search for it in the SPO-tree, and retrieve the value there, which will be fast.
+        std::pair<PatchTreeDeletionValueReduced*, Triple> value = last_deletion_value<PatchTreeDeletionValueReduced>(triple_pattern, patch_id);
+        if (value.first == NULL) {
+            return std::make_pair((PatchPosition) 0, Triple());
+        }
+        delete value.first;
+        patch_position = get_deletion_value(value.second)->get(patch_id).get_patch_positions().get_by_pattern(triple_pattern) + 1;
+        triple = value.second;
+    }
+    return std::make_pair(patch_position, triple);
 }
 
 PositionedTripleIterator* PatchTree::deletion_iterator_from(const Triple& offset, int patch_id, const Triple& triple_pattern) const {
@@ -555,7 +587,8 @@ PatchTreeDeletionValue* PatchTree::get_deletion_value(const Triple &triple) cons
     return NULL;
 }
 
-PatchTreeDeletionValue* PatchTree::get_deletion_value_after(const Triple& triple_pattern) const {
+template <class DV>
+PatchTreeDeletionValueBase<DV>* PatchTree::get_deletion_value_after(const Triple& triple_pattern) const {
     size_t ksp, vsp;
     const char *kbp = triple_pattern.serialize(&ksp);
     DB::Cursor* cursor = tripleStore->getDeletionsTree(triple_pattern)->cursor();
@@ -578,7 +611,12 @@ PatchTreeDeletionValue* PatchTree::get_deletion_value_after(const Triple& triple
         return NULL;
     }
 
-    PatchTreeDeletionValue* deletion_value = new PatchTreeDeletionValue();
+    PatchTreeDeletionValueBase<DV>* deletion_value = NULL;
+    if (TripleStore::is_default_tree(triple_pattern)) {
+        deletion_value = reinterpret_cast<PatchTreeDeletionValueBase<DV>*>(new PatchTreeDeletionValue());
+    } else {
+        deletion_value = reinterpret_cast<PatchTreeDeletionValueBase<DV>*>(new PatchTreeDeletionValueReduced());
+    }
     deletion_value->deserialize(vbp, vsp);
     delete[] kbp;
     return deletion_value;
@@ -681,3 +719,7 @@ void PatchTree::read_metadata() {
         metadata_file.close();
     }
 }
+
+// Explicit specialization is required
+template PatchTreeDeletionValueBase<PatchTreeDeletionValueElement>* PatchTree::get_deletion_value_after(const Triple& triple_pattern) const;
+template PatchTreeDeletionValueBase<PatchTreeDeletionValueElementBase>* PatchTree::get_deletion_value_after(const Triple& triple_pattern) const;

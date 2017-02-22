@@ -5,15 +5,16 @@
 #include "patch_tree_addition_value.h"
 #include "patch_tree_deletion_value.h"
 
-class PatchTreeValue {
+template <class DV>
+class PatchTreeValueBase {
 protected:
     PatchTreeAdditionValue* addition;
-    PatchTreeDeletionValue* deletion;
+    DV* deletion;
     bool has_addition;
     bool has_deletion;
 public:
-    PatchTreeValue();
-    ~PatchTreeValue();
+    PatchTreeValueBase();
+    ~PatchTreeValueBase();
 
     /**
      * if this value is exactly defined for the given patch id.
@@ -45,7 +46,7 @@ public:
      */
     bool is_deletion(int patch_id, bool exact) const;
     PatchTreeAdditionValue* get_addition() const;
-    PatchTreeDeletionValue* get_deletion() const;
+    DV* get_deletion() const;
     void set_addition(bool has_addition);
     void set_deletion(bool has_deletion);
     /**
@@ -64,5 +65,7 @@ public:
     bool is_delta_type_equal(int patch_id_start, int patch_id_end);
 };
 
+typedef PatchTreeValueBase<PatchTreeDeletionValue> PatchTreeValue;
+typedef PatchTreeValueBase<PatchTreeDeletionValueReduced> PatchTreeValueBaseReduced;
 
 #endif //TPFPATCH_STORE_PATCH_TREE_VALUE_H

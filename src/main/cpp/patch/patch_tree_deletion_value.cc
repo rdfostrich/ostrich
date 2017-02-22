@@ -6,7 +6,7 @@
 
 using namespace std;
 
-int PatchTreeDeletionValueElement::get_patch_id() const {
+int PatchTreeDeletionValueElementBase::get_patch_id() const {
     return patch_id;
 }
 
@@ -14,19 +14,28 @@ const PatchPositions& PatchTreeDeletionValueElement::get_patch_positions() const
     return patch_positions;
 }
 
-void PatchTreeDeletionValueElement::set_local_change() {
+string PatchTreeDeletionValueElement::to_string() const {
+    return PatchTreeDeletionValueElementBase::to_string() + ":" + get_patch_positions().to_string();
+}
+
+void PatchTreeDeletionValueElementBase::set_local_change() {
     local_change = true; // TODO: Can we instead just set all patch positions to -1 to save some storage space?
 }
 
-bool PatchTreeDeletionValueElement::is_local_change() const {
+bool PatchTreeDeletionValueElementBase::is_local_change() const {
     return local_change;
 }
 
+string PatchTreeDeletionValueElementBase::to_string() const {
+    return std::to_string(get_patch_id());
+}
 
-PatchTreeDeletionValue::PatchTreeDeletionValue() {}
+template <class T>
+PatchTreeDeletionValueBase<T>::PatchTreeDeletionValueBase() {}
 
-void PatchTreeDeletionValue::add(const PatchTreeDeletionValueElement& element) {
-    std::vector<PatchTreeDeletionValueElement>::iterator itToInsert = std::lower_bound(
+template <class T>
+void PatchTreeDeletionValueBase<T>::add(const T& element) {
+    typename std::vector<T>::iterator itToInsert = std::lower_bound(
             elements.begin(), elements.end(), element);
     // Overwrite existing element if patch id already present, otherwise insert new element.
     if(itToInsert != elements.end() && itToInsert->get_patch_id() == element.get_patch_id()) {
@@ -36,9 +45,10 @@ void PatchTreeDeletionValue::add(const PatchTreeDeletionValueElement& element) {
     }
 }
 
-long PatchTreeDeletionValue::get_patchvalue_index(int patch_id) const {
-    PatchTreeDeletionValueElement item(patch_id, PatchPositions());
-    std::vector<PatchTreeDeletionValueElement>::const_iterator findIt = std::lower_bound(elements.begin(), elements.end(), item);
+template <class T>
+long PatchTreeDeletionValueBase<T>::get_patchvalue_index(int patch_id) const {
+    T item(patch_id);
+    typename std::vector<T>::const_iterator findIt = std::lower_bound(elements.begin(), elements.end(), item);
     if (findIt != elements.end() && findIt->get_patch_id() == patch_id) {
         return std::distance(elements.begin(), findIt);
     } else {
@@ -46,15 +56,18 @@ long PatchTreeDeletionValue::get_patchvalue_index(int patch_id) const {
     }
 }
 
-long PatchTreeDeletionValue::get_size() const {
+template <class T>
+long PatchTreeDeletionValueBase<T>::get_size() const {
     return elements.size();
 }
 
-const PatchTreeDeletionValueElement& PatchTreeDeletionValue::get_patch(long element) const {
+template <class T>
+const T& PatchTreeDeletionValueBase<T>::get_patch(long element) const {
     return elements[element];
 }
 
-const PatchTreeDeletionValueElement& PatchTreeDeletionValue::get(int patch_id) const {
+template <class T>
+const T& PatchTreeDeletionValueBase<T>::get(int patch_id) const {
     long index = get_patchvalue_index(patch_id);
     if(index < 0 || index >= elements.size()) {
         return get_patch(elements.size() - 1);
@@ -64,10 +77,11 @@ const PatchTreeDeletionValueElement& PatchTreeDeletionValue::get(int patch_id) c
     return get_patch(index);
 }
 
-bool PatchTreeDeletionValue::is_local_change(int patch_id) const {
+template <class T>
+bool PatchTreeDeletionValueBase<T>::is_local_change(int patch_id) const {
     if (get_size() == 0) return false;
-    PatchTreeDeletionValueElement item(patch_id, PatchPositions());
-    std::vector<PatchTreeDeletionValueElement>::const_iterator findIt = std::lower_bound(elements.begin(), elements.end(), item);
+    T item(patch_id);
+    typename std::vector<T>::const_iterator findIt = std::lower_bound(elements.begin(), elements.end(), item);
     if(findIt < elements.begin()) {
         throw std::runtime_error("Tried to retrieve a patch_id that was too low. (PatchTreeDeletionValue::is_local_change),"
                                          "tried to find " + std::to_string(patch_id) + " in " + this->to_string());
@@ -76,31 +90,37 @@ bool PatchTreeDeletionValue::is_local_change(int patch_id) const {
     return findIt->is_local_change();
 }
 
-string PatchTreeDeletionValue::to_string() const {
+template <class T>
+string PatchTreeDeletionValueBase<T>::to_string() const {
     string ret = "{";
     bool separator = false;
     for(int i = 0; i < elements.size(); i++) {
         if(separator) ret += ",";
         separator = true;
-        ret += std::to_string(elements[i].get_patch_id()) + ":" + elements[i].get_patch_positions().to_string();
+        ret += elements[i].to_string();
     }
     ret += "}";
     return ret;
 }
 
-const char* PatchTreeDeletionValue::serialize(size_t* size) const {
-    *size = elements.size() * sizeof(PatchTreeDeletionValueElement);
+template <class T>
+const char* PatchTreeDeletionValueBase<T>::serialize(size_t* size) const {
+    *size = elements.size() * sizeof(T);
     char* bytes = (char *) malloc(*size);
     for(int i = 0; i < elements.size(); i++) {
-        std::memcpy(&bytes[i * sizeof(PatchTreeDeletionValueElement)], &elements[i], sizeof(PatchTreeDeletionValueElement));
+        std::memcpy(&bytes[i * sizeof(T)], &elements[i], sizeof(T));
     }
     return bytes;
 }
 
-void PatchTreeDeletionValue::deserialize(const char* data, size_t size) {
-    size_t count = size / sizeof(PatchTreeDeletionValueElement);
+template <class T>
+void PatchTreeDeletionValueBase<T>::deserialize(const char* data, size_t size) {
+    size_t count = size / sizeof(T);
     elements.resize(count);
     for(int i = 0; i < count; i++) {
-        std::memcpy(&elements.data()[i], &data[i * sizeof(PatchTreeDeletionValueElement)], sizeof(PatchTreeDeletionValueElement));
+        std::memcpy(&elements.data()[i], &data[i * sizeof(T)], sizeof(T));
     }
 }
+
+template class PatchTreeDeletionValueBase<PatchTreeDeletionValueElement>;
+template class PatchTreeDeletionValueBase<PatchTreeDeletionValueElementBase>;

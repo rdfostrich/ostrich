@@ -59,7 +59,7 @@ public:
     TreeDB* getDefaultDeletionsTree();
     void insertAdditionSingle(const PatchTreeKey* key, const PatchTreeAdditionValue* value, DB::Cursor* cursor = NULL);
     void insertAdditionSingle(const PatchTreeKey* key, int patch_id, bool local_change, bool ignore_existing, DB::Cursor* cursor = NULL);
-    void insertDeletionSingle(const PatchTreeKey* key, const PatchTreeDeletionValue* value, DB::Cursor* cursor = NULL);
+    void insertDeletionSingle(const PatchTreeKey* key, const PatchTreeDeletionValue* value, const PatchTreeDeletionValueReduced* value_reduced, DB::Cursor* cursor = NULL);
     void insertDeletionSingle(const PatchTreeKey* key, const PatchPositions& patch_positions, int patch_id, bool local_change, bool ignore_existing, DB::Cursor* cursor = NULL);
     /**
      * @return The comparator for this patch tree in SPO order.
@@ -73,6 +73,16 @@ public:
      * @return The dictionary manager.
      */
     DictionaryManager* get_dict_manager() const;
+    /**
+     * @param triple_pattern A triple pattern
+     * @return If the given triple pattern applies to a default addition or deletions tree, i.e., if it is using SPO order.
+     */
+    static inline bool is_default_tree(const Triple& triple_pattern) {
+        bool s = triple_pattern.get_subject() > 0;
+        bool p = triple_pattern.get_predicate() > 0;
+        bool o = triple_pattern.get_object() > 0;
+        return (s && p) || (!p && !o);
+    }
 };
 
 

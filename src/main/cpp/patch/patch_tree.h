@@ -40,6 +40,8 @@ protected:
     void reconstruct_to_patch(Patch* patch, int patch_id, bool ignore_local_changes = false) const;
     void init_temp_insertion_trees(HashDB& sp_, HashDB& s_o, HashDB& s__, HashDB& _po, HashDB& _p_, HashDB& __o);
     void deinit_temp_insertion_trees(HashDB& sp_, HashDB& s_o, HashDB& s__, HashDB& _po, HashDB& _p_, HashDB& __o);
+    template <class DV>
+    std::pair<DV*, Triple> last_deletion_value(const Triple &triple_pattern, int patch_id) const;
 public:
     PatchTree(string basePath, int min_patch_id, DictionaryManager* dict, int8_t kc_opts = 0, bool readonly = false);
     ~PatchTree();
@@ -168,7 +170,8 @@ public:
      * @param triple_pattern The triple pattern to lookup
      * @return The deletion value for the given triple pattern, or null.
      */
-    PatchTreeDeletionValue* get_deletion_value_after(const Triple& triple_pattern) const;
+    template <class DV>
+    PatchTreeDeletionValueBase<DV>* get_deletion_value_after(const Triple& triple_pattern) const;
     /**
      * Calculate the patch positions for the current triple for the current patch id.
      * @param triple The triple to calculate the patch positions for.

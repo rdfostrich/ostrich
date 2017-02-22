@@ -891,13 +891,13 @@ TEST_F(PatchTreeTest, DeletionCount) {
     // s a o +
     // s z o -
 
-    ASSERT_EQ(2, patchTree->deletion_count(Triple("", "", "", &dict), 1).first) << "Deletion count is incorrect";
-    ASSERT_EQ(1, patchTree->deletion_count(Triple("s", "", "", &dict), 1).first) << "Deletion count is incorrect";
-    ASSERT_EQ(0, patchTree->deletion_count(Triple("s", "a", "", &dict), 1).first) << "Deletion count is incorrect";
-    ASSERT_EQ(2, patchTree->deletion_count(Triple("", "", "o", &dict), 1).first) << "Deletion count is incorrect";
-    ASSERT_EQ(1, patchTree->deletion_count(Triple("", "p", "o", &dict), 1).first) << "Deletion count is incorrect";
-    ASSERT_EQ(1, patchTree->deletion_count(Triple("", "p", "", &dict), 1).first) << "Deletion count is incorrect";
-    ASSERT_EQ(1, patchTree->deletion_count(Triple("g", "p", "", &dict), 1).first) << "Deletion count is incorrect";
+    ASSERT_EQ((PatchPosition) 2, patchTree->deletion_count(Triple("", "", "", &dict), 1).first) << "Deletion count is incorrect";
+    ASSERT_EQ((PatchPosition) 1, patchTree->deletion_count(Triple("s", "", "", &dict), 1).first) << "Deletion count is incorrect";
+    ASSERT_EQ((PatchPosition) 0, patchTree->deletion_count(Triple("s", "a", "", &dict), 1).first) << "Deletion count is incorrect";
+    ASSERT_EQ((PatchPosition) 2, patchTree->deletion_count(Triple("", "", "o", &dict), 1).first) << "Deletion count is incorrect";
+    ASSERT_EQ((PatchPosition) 1, patchTree->deletion_count(Triple("", "p", "o", &dict), 1).first) << "Deletion count is incorrect";
+    ASSERT_EQ((PatchPosition) 1, patchTree->deletion_count(Triple("", "p", "", &dict), 1).first) << "Deletion count is incorrect";
+    ASSERT_EQ((PatchPosition) 1, patchTree->deletion_count(Triple("g", "p", "", &dict), 1).first) << "Deletion count is incorrect";
 
     // Patch 2
     // a p o +/-
@@ -1523,22 +1523,22 @@ TEST_F(PatchTreeTest, DeletionValueAfter) {
     // 3 3 3 -
     // 9 9 9 -
 
-    ASSERT_NE((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after(Triple(1, 1, 1))) << "Deletion value must not be null";
-    ASSERT_NE((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after(Triple(3, 3, 3))) << "Deletion value must not be null";
-    ASSERT_NE((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after(Triple(9, 9, 9))) << "Deletion value must not be null";
+    ASSERT_NE((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after<PatchTreeDeletionValueElement>(Triple(1, 1, 1))) << "Deletion value must not be null";
+    ASSERT_NE((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after<PatchTreeDeletionValueElement>(Triple(3, 3, 3))) << "Deletion value must not be null";
+    ASSERT_NE((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after<PatchTreeDeletionValueElement>(Triple(9, 9, 9))) << "Deletion value must not be null";
 
-    ASSERT_EQ((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after(Triple(2, 2, 2))) << "Addition value must be null";
-    ASSERT_EQ((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after(Triple(2, 3, 1))) << "Local deletion value must be null";
+    ASSERT_EQ((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after<PatchTreeDeletionValueElement>(Triple(2, 2, 2))) << "Addition value must be null";
+    ASSERT_EQ((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after<PatchTreeDeletionValueElement>(Triple(2, 3, 1))) << "Local deletion value must be null";
 
-    ASSERT_EQ((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after(Triple(8, 8, 8))) << "Deletion value must be null";
-    ASSERT_EQ((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after(Triple(3, 2, 1))) << "Deletion value must be null";
-    ASSERT_EQ((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after(Triple(1, 2, 2))) << "Deletion value must be null";
+    ASSERT_EQ((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after<PatchTreeDeletionValueElement>(Triple(8, 8, 8))) << "Deletion value must be null";
+    ASSERT_EQ((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after<PatchTreeDeletionValueElement>(Triple(3, 2, 1))) << "Deletion value must be null";
+    ASSERT_EQ((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after<PatchTreeDeletionValueElement>(Triple(1, 2, 2))) << "Deletion value must be null";
 
-    ASSERT_NE((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after(Triple(1, 1, 0))) << "Deletion value must not be null";
-    ASSERT_NE((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after(Triple(1, 0, 0))) << "Deletion value must not be null";
-    ASSERT_NE((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after(Triple(0, 0, 0))) << "Deletion value must not be null";
-    ASSERT_NE((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after(Triple(9, 9, 0))) << "Deletion value must not be null";
-    ASSERT_NE((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after(Triple(9, 0, 0))) << "Deletion value must not be null";
+    ASSERT_NE((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after<PatchTreeDeletionValueElement>(Triple(1, 1, 0))) << "Deletion value must not be null";
+    ASSERT_NE((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after<PatchTreeDeletionValueElement>(Triple(1, 0, 0))) << "Deletion value must not be null";
+    ASSERT_NE((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after<PatchTreeDeletionValueElement>(Triple(0, 0, 0))) << "Deletion value must not be null";
+    ASSERT_NE((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after<PatchTreeDeletionValueElement>(Triple(9, 9, 0))) << "Deletion value must not be null";
+    ASSERT_NE((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after<PatchTreeDeletionValueElement>(Triple(9, 0, 0))) << "Deletion value must not be null";
 }
 
 TEST_F(PatchTreeTest, GetDeletionPatchPositions) {

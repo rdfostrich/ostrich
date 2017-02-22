@@ -9,7 +9,8 @@
 using namespace std;
 using namespace kyotocabinet;
 
-class PatchTreeIterator {
+template <class DV>
+class PatchTreeIteratorBase {
 private:
     DB::Cursor* cursor_deletions;
     DB::Cursor* cursor_additions;
@@ -33,8 +34,8 @@ private:
 
     bool can_early_break = true;
 public:
-    PatchTreeIterator(DB::Cursor* cursor_deletions, DB::Cursor* cursor_additions, PatchTreeKeyComparator* comparator);
-    ~PatchTreeIterator();
+    PatchTreeIteratorBase(DB::Cursor* cursor_deletions, DB::Cursor* cursor_additions, PatchTreeKeyComparator* comparator);
+    ~PatchTreeIteratorBase();
     /**
      * Set the patch id to filter by
      * @param patch_id The patch id to filter by
@@ -88,7 +89,7 @@ public:
      * @param silent_step If the cursor doesn't need to be moved.
      * @return If this next element exists, otherwise the key and value will be invalid and should be ignored.
      */
-    bool next_deletion(PatchTreeKey* key, PatchTreeDeletionValue* value, bool silent_step = false);
+    bool next_deletion(PatchTreeKey* key, DV* value, bool silent_step = false);
     /**
      * Point to the next addition element
      * Can only be called if iterating over an addition tree.
@@ -104,7 +105,7 @@ public:
      * @param value The value the iterator is currently pointing at.
      * @return If this next element exists, otherwise the key and value will be invalid and should be ignored.
      */
-    bool next(PatchTreeKey* key, PatchTreeValue* value);
+    bool next(PatchTreeKey* key, PatchTreeValueBase<DV>* value);
     /**
      * @return The internal deletion cursor, nullable.
      */
@@ -115,5 +116,7 @@ public:
     DB::Cursor* getAdditionCursor();
 };
 
+typedef PatchTreeIteratorBase<PatchTreeDeletionValue> PatchTreeIterator;
+typedef PatchTreeIteratorBase<PatchTreeDeletionValueReduced> PatchTreeIteratorReduced;
 
 #endif //TPFPATCH_STORE_PATCH_TREE_ITERATOR_H

@@ -65,14 +65,12 @@ typedef struct PatchPositions {
 
 // A PatchTreeDeletionValueElement contains a patch id, a relative patch position and
 // an indication whether or not this is an addition or deletion.
-class PatchTreeDeletionValueElement {
+class PatchTreeDeletionValueElementBase {
 protected:
     int patch_id;
-    PatchPositions patch_positions;
     bool local_change;
 public:
     int get_patch_id() const;
-    const PatchPositions& get_patch_positions() const;
     /**
      * Mark this patch element as being a local change.
      */
@@ -84,26 +82,49 @@ public:
      * @return If it is a local change.
      */
     bool is_local_change() const;
-    PatchTreeDeletionValueElement() : patch_id(-1), patch_positions(PatchPositions()), local_change(false) {} // Required for vector#resize
+    /**
+     * @return The string representation.
+     */
+    string to_string() const;
+    PatchTreeDeletionValueElementBase() : patch_id(-1), local_change(false) {} // Required for vector#resize
+    PatchTreeDeletionValueElementBase(int patch_id) :
+            patch_id(patch_id), local_change(false) {}
+    bool operator < (const PatchTreeDeletionValueElementBase &rhs) const { return patch_id < rhs.patch_id; }
+};
+
+// A PatchTreeDeletionValueElement contains a patch id, a relative patch position and
+// an indication whether or not this is an addition or deletion.
+class PatchTreeDeletionValueElement : public PatchTreeDeletionValueElementBase {
+protected:
+    PatchPositions patch_positions;
+public:
+    const PatchPositions& get_patch_positions() const;
+    /**
+     * @return The string representation.
+     */
+    string to_string() const;
+    PatchTreeDeletionValueElement() : patch_positions(PatchPositions()) {} // Required for vector#resize
     PatchTreeDeletionValueElement(int patch_id, PatchPositions patch_positions) :
-            patch_id(patch_id), patch_positions(patch_positions), local_change(false) {}
-    bool operator < (const PatchTreeDeletionValueElement &rhs) const { return patch_id < rhs.patch_id; }
+            PatchTreeDeletionValueElementBase(patch_id), patch_positions(patch_positions) {}
+    PatchTreeDeletionValueElement(int patch_id) :
+            PatchTreeDeletionValueElementBase(patch_id), patch_positions(PatchPositions()) {}
 };
 
 // A PatchTreeDeletionValue in a PatchTree is a sorted list of PatchTreeValueElements
 // It contains the information corresponding to one triple in the patch tree.
 // It can be seen as a mapping from patch id to the pair of relative patch
 // position and element type (addition or deletion).
-class PatchTreeDeletionValue {
+template <class T>
+class PatchTreeDeletionValueBase {
 protected:
-    std::vector<PatchTreeDeletionValueElement> elements;
+    std::vector<T> elements;
 public:
-    PatchTreeDeletionValue();
+    PatchTreeDeletionValueBase();
     /**
      * Add the given element.
      * @param element The value element to add
      */
-    void add(const PatchTreeDeletionValueElement& element);
+    void add(const T& element);
     /**
      * Get the index of the given patch in this value list.
      * @param patch_id The id of the patch to find
@@ -119,12 +140,12 @@ public:
      * @param element The element index in this value list. This can be the result of get_patchvalue_index().
      * @return The patch.
      */
-    const PatchTreeDeletionValueElement& get_patch(long element) const;
+    const T& get_patch(long element) const;
     /**
      * @param patch_id The patch id
      * @return The patch.
      */
-    const PatchTreeDeletionValueElement& get(int patch_id) const;
+    const T& get(int patch_id) const;
     /**
      * Check if this element is an element (-) relative to the given patch itself,
      * For example in the series [t1+ t1- t1+], the element at index 1 is a local change,
@@ -148,7 +169,16 @@ public:
      * @param size The size of the byte array
      */
     void deserialize(const char* data, size_t size);
+    inline PatchTreeDeletionValueBase<PatchTreeDeletionValueElementBase> to_reduced() {
+        PatchTreeDeletionValueBase<PatchTreeDeletionValueElementBase> reduced;
+        for (long i = 0; i < get_size(); i++) {
+            reduced.add(PatchTreeDeletionValueElementBase(get_patch(i).get_patch_id()));
+        }
+        return reduced;
+    }
 };
 
+typedef PatchTreeDeletionValueBase<PatchTreeDeletionValueElement> PatchTreeDeletionValue;
+typedef PatchTreeDeletionValueBase<PatchTreeDeletionValueElementBase> PatchTreeDeletionValueReduced;
 
 #endif //TPFPATCH_STORE_PATCH_TREE_DELETION_VALUE_H

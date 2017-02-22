@@ -183,20 +183,21 @@ void TripleStore::insertAdditionSingle(const PatchTreeKey* key, int patch_id, bo
     insertAdditionSingle(key, &value);
 }
 
-void TripleStore::insertDeletionSingle(const PatchTreeKey* key, const PatchTreeDeletionValue* value, DB::Cursor* cursor) {
-    size_t key_size, value_size;
+void TripleStore::insertDeletionSingle(const PatchTreeKey* key, const PatchTreeDeletionValue* value, const PatchTreeDeletionValueReduced* value_reduced, DB::Cursor* cursor) {
+    size_t key_size, value_size, value_reduced_size;
     const char *raw_key = key->serialize(&key_size);
     const char *raw_value = value->serialize(&value_size);
+    const char *raw_value_reduced = value_reduced->serialize(&value_reduced_size);
 
     if (cursor != NULL) {
         cursor->set_value(raw_value, value_size, false);
     } else {
         index_spo_deletions->set(raw_key, key_size, raw_value, value_size);
     }
-    index_sop_deletions->set(raw_key, key_size, raw_value, value_size);
-    index_pso_deletions->set(raw_key, key_size, raw_value, value_size);
-    index_pos_deletions->set(raw_key, key_size, raw_value, value_size);
-    index_osp_deletions->set(raw_key, key_size, raw_value, value_size);
+    index_sop_deletions->set(raw_key, key_size, raw_value_reduced, value_reduced_size);
+    index_pso_deletions->set(raw_key, key_size, raw_value_reduced, value_reduced_size);
+    index_pos_deletions->set(raw_key, key_size, raw_value_reduced, value_reduced_size);
+    index_osp_deletions->set(raw_key, key_size, raw_value_reduced, value_reduced_size);
 
     free((char*) raw_key);
     free((char*) raw_value);
@@ -230,7 +231,9 @@ void TripleStore::insertDeletionSingle(const PatchTreeKey* key, const PatchPosit
     }
     deletion_value.add(element);
 
-    insertDeletionSingle(key, &deletion_value);
+    // Convert our full deletion value to a reduced one
+    PatchTreeDeletionValueReduced deletion_value_reduced = deletion_value.to_reduced();
+    insertDeletionSingle(key, &deletion_value, &deletion_value_reduced);
 }
 
 PatchTreeKeyComparator *TripleStore::get_spo_comparator() const {
