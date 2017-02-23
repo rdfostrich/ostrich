@@ -89,6 +89,8 @@ public:
     PatchTreeDeletionValueElementBase() : patch_id(-1), local_change(false) {} // Required for vector#resize
     PatchTreeDeletionValueElementBase(int patch_id) :
             patch_id(patch_id), local_change(false) {}
+    PatchTreeDeletionValueElementBase(int patch_id, bool local_change) :
+            patch_id(patch_id), local_change(local_change) {}
     bool operator < (const PatchTreeDeletionValueElementBase &rhs) const { return patch_id < rhs.patch_id; }
 };
 
@@ -172,7 +174,8 @@ public:
     inline PatchTreeDeletionValueBase<PatchTreeDeletionValueElementBase> to_reduced() {
         PatchTreeDeletionValueBase<PatchTreeDeletionValueElementBase> reduced;
         for (long i = 0; i < get_size(); i++) {
-            reduced.add(PatchTreeDeletionValueElementBase(get_patch(i).get_patch_id()));
+            T patch_element = get_patch(i);
+            reduced.add(PatchTreeDeletionValueElementBase(patch_element.get_patch_id(), patch_element.is_local_change()));
         }
         return reduced;
     }
