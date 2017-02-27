@@ -106,15 +106,20 @@ std::ifstream::pos_type Evaluator::patchstore_size(Controller* controller) {
     while(itP != patches.end()) {
         int id = itP->first;
         size += filesize(PATCHTREE_FILENAME(id, "spo_deletions"));
-        size += filesize(PATCHTREE_FILENAME(id, "spo"));
-        size += filesize(PATCHTREE_FILENAME(id, "pos"));
-        size += filesize(PATCHTREE_FILENAME(id, "pso"));
-        size += filesize(PATCHTREE_FILENAME(id, "sop"));
-        size += filesize(PATCHTREE_FILENAME(id, "osp"));
+        size += filesize(PATCHTREE_FILENAME(id, "pos_deletions"));
+        size += filesize(PATCHTREE_FILENAME(id, "pso_deletions"));
+        size += filesize(PATCHTREE_FILENAME(id, "sop_deletions"));
+        size += filesize(PATCHTREE_FILENAME(id, "osp_deletions"));
+        size += filesize(PATCHTREE_FILENAME(id, "spo_additions"));
+        size += filesize(PATCHTREE_FILENAME(id, "pos_additions"));
+        size += filesize(PATCHTREE_FILENAME(id, "pso_additions"));
+        size += filesize(PATCHTREE_FILENAME(id, "sop_additions"));
+        size += filesize(PATCHTREE_FILENAME(id, "osp_additions"));
         itP++;
     }
 
     std::map<int, HDT*> snapshots = controller->get_snapshot_manager()->get_snapshots();
+    controller->get_snapshot_manager()->get_dictionary_manager(0)->save();
     std::map<int, HDT*>::iterator itS = snapshots.begin();
     while(itS != snapshots.end()) {
         int id = itS->first;

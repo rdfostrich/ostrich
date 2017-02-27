@@ -108,9 +108,9 @@ public:
     unsigned int getMapping();
 
     void getSuggestions(const char *base, TripleComponentRole role, std::vector<string> &out, int maxResults);
+    void save();
 protected:
     void load();
-    void save();
 };
 
 class DictManagerIterator : public IteratorUCharString {
