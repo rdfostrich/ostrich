@@ -308,7 +308,9 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, Prog
                 PatchTreeDeletionValueReduced deletion_value_reduced = deletion_value.to_reduced();
                 tripleStore->insertDeletionSingle(&deletion_key, &deletion_value, &deletion_value_reduced, cursor_deletions);
             } else {
-                cerr << "largest_patch_id_addition: " << largest_patch_id_addition << endl;
+                // TODO: enable me after fixing https://git.datasciencelab.ugent.be/linked-data-fragments/Patch-Store/issues/5
+                // TODO: Temporarily disabled for reducing logging output
+                /*cerr << "largest_patch_id_addition: " << largest_patch_id_addition << endl;
                 cerr << "largest_patch_id_deletion: " << largest_patch_id_deletion << endl;
                 cerr << "is_local_change: " << is_local_change << endl;
                 cerr << "should_step_patch: " << should_step_patch << endl;
@@ -320,7 +322,7 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, Prog
                 cerr << "triple deletion: " << deletion_key.to_string() << endl;
                 cerr << "triple addition: " << addition_key.to_string() << endl;
                 throw std::invalid_argument(
-                        "The store contains a locally changed addition and deletion for the same triple in the same patch id.");
+                        "The store contains a locally changed addition and deletion for the same triple in the same patch id.");*/
             }
         }
 
