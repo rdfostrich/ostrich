@@ -195,11 +195,31 @@ TripleDeltaIterator* Controller::get_delta_materialized(const Triple &triple_pat
 }
 
 std::pair<size_t, ResultEstimationType> Controller::get_version_count(const Triple &triple_pattern, bool allowEstimates) const {
-    return std::make_pair(get_version(triple_pattern, 0)->get_count(), EXACT);
+    // TODO: this will require some changes when we support multiple snapshots.
+    // Find the snapshot an count its elements
+    HDT* snapshot = get_snapshot_manager()->get_snapshot(0);
+    IteratorTripleID* snapshot_it = SnapshotManager::search_with_offset(snapshot, triple_pattern, 0);
+    size_t count = snapshot_it->estimatedNumResults();
+    if (!allowEstimates && snapshot_it->numResultEstimation() != EXACT) {
+        count = 0;
+        while (snapshot_it->hasNext()) {
+            snapshot_it->next();
+            count++;
+        }
+    }
+
+    // Count the additions for all versions
+    DictionaryManager *dict = get_snapshot_manager()->get_dictionary_manager(0);
+    PatchTree* patchTree = get_patch_tree_manager()->get_patch_tree(0, dict);
+    int max_patch_id = get_patch_tree_manager()->get_max_patch_id(dict);
+    for (int i = 1; i <= max_patch_id; i++) {
+        count += patchTree->addition_count(i, triple_pattern);
+    }
+    return std::make_pair(count, allowEstimates ? snapshot_it->numResultEstimation() : EXACT);
 }
 
 size_t Controller::get_version_count_estimated(const Triple &triple_pattern) const {
-    return get_version_count(triple_pattern, true).second;
+    return get_version_count(triple_pattern, true).first;
 }
 
 TripleVersionsIterator* Controller::get_version(const Triple &triple_pattern, int offset) const {
