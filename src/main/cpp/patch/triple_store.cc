@@ -330,7 +330,7 @@ long TripleStore::flush_addition_counts() {
     long added = 0;
     while (cursor->step()) {
         const char* vbp;
-        const char* kbp = cursor->get(&ksp, &vbp, &vsp, true);
+        const char* kbp = cursor->get(&ksp, &vbp, &vsp, false);
         memcpy(&count, vbp, sizeof(PatchPosition));
         if (count >= MIN_ADDITION_COUNT) {
             count_additions->set(kbp, ksp, vbp, vsp);
@@ -340,5 +340,6 @@ long TripleStore::flush_addition_counts() {
     delete cursor;
     count_additions->synchronize();
     temp_count_additions->clear();
+
     return added;
 }

@@ -207,8 +207,9 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, Prog
                 && addition_value.get_patchvalue_index(patch_id) < 0) { // Don't re-insert when already present for this patch id
                 addition_value.add(patch_id);
                 tripleStore->insertAdditionSingle(&addition_key, &addition_value, cursor_additions);
-                if (!addition_value.is_local_change(patch_id)) tripleStore->increment_addition_counts(patch_id, addition_key);
             }
+            if (!addition_value.is_local_change(patch_id)) tripleStore->increment_addition_counts(patch_id, addition_key);
+            if (!addition_value.is_local_change(addition_value.get_patch_id_at(0))) tripleStore->increment_addition_counts(0, addition_key);
         } else if (P_LT_A && P_LT_D) { // P < A && P < D
             // P++
             should_step_patch = true;
@@ -218,6 +219,7 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, Prog
             // Insert triple from the patch in either addition or deletion tree
             if (patch_element.is_addition()) {
                 tripleStore->insertAdditionSingle(&patch_element.get_triple(), patch_id, false, true);
+                tripleStore->increment_addition_counts(0, patch_element.get_triple());
             } else {
                 PatchPositions patch_positions = Patch::positions(patch_element.get_triple(), sp_, s_o, s__, _po, _p_, __o, ___);
                 tripleStore->insertDeletionSingle(&patch_element.get_triple(), patch_positions, patch_id, false, true);
@@ -259,6 +261,7 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, Prog
                 tripleStore->insertAdditionSingle(&addition_key, &addition_value);
                 if (!was_local_change) tripleStore->increment_addition_counts(patch_id, addition_key);
             }
+            if (!addition_value.is_local_change(addition_value.get_patch_id_at(0))) tripleStore->increment_addition_counts(0, addition_key);
         } else { // (D = A) < P   or   P = A = D
             // carry over local change if < P, or invert existing local change if = P
             should_step_patch = !P_GT_D;
@@ -297,6 +300,7 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, Prog
                 throw std::invalid_argument("D is not equal to A.");
             }*/
 
+            if (!addition_value.is_local_change(addition_value.get_patch_id_at(0))) tripleStore->increment_addition_counts(0, addition_key);
             if (add_addition) {
                 addition_value.add(patch_id);
                 if (is_local_change) addition_value.set_local_change(patch_id);
@@ -676,7 +680,12 @@ PatchPosition PatchTree::addition_count(int patch_id, const Triple& triple_patte
     PatchPosition count = tripleStore->get_addition_count(patch_id, triple_pattern);
     if (!count) {
         // This means that the count was too low to be stored in the count db, so we count manually.
-        PatchTreeTripleIterator* it = addition_iterator_from(0, patch_id, triple_pattern);
+        PatchTreeTripleIterator* it;
+        if (!patch_id) {
+            it = new PatchTreeTripleIterator(addition_iterator(triple_pattern), triple_pattern);
+        } else {
+            it = addition_iterator_from(0, patch_id, triple_pattern);
+        }
         Triple* triple = new Triple();
         while (it->next(triple)) count++;
         delete triple;

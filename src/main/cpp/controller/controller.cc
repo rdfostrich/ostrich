@@ -230,10 +230,7 @@ std::pair<size_t, ResultEstimationType> Controller::get_version_count(const Trip
     // Count the additions for all versions
     DictionaryManager *dict = get_snapshot_manager()->get_dictionary_manager(0);
     PatchTree* patchTree = get_patch_tree_manager()->get_patch_tree(0, dict);
-    int max_patch_id = get_patch_tree_manager()->get_max_patch_id(dict);
-    for (int i = 1; i <= max_patch_id; i++) {
-        count += patchTree->addition_count(i, triple_pattern);
-    }
+    count += patchTree->addition_count(0, triple_pattern);
     return std::make_pair(count, allowEstimates ? snapshot_it->numResultEstimation() : EXACT);
 }
 
