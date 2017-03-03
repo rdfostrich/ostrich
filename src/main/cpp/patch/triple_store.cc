@@ -43,7 +43,6 @@ TripleStore::TripleStore(string base_file_name, DictionaryManager* dict, int8_t 
     index_pso_additions->tune_options(kc_opts);
     index_pos_additions->tune_options(kc_opts);
     index_osp_additions->tune_options(kc_opts);
-    count_additions->tune_options(kc_opts);
 
     // Open the databases
     open(index_spo_deletions, base_file_name + "_spo_deletions", readonly);
