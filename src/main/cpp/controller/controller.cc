@@ -120,7 +120,26 @@ TripleIterator* Controller::get_version_materialized(const Triple &triple_patter
 }
 
 std::pair<size_t, ResultEstimationType> Controller::get_delta_materialized_count(const Triple &triple_pattern, int patch_id_start, int patch_id_end, bool allowEstimates) const {
-    return std::make_pair(get_delta_materialized(triple_pattern, 0, patch_id_start, patch_id_end)->get_count(), EXACT);
+    // TODO: this will require some changes when we support multiple snapshots.
+    if (patch_id_start == 0) {
+        DictionaryManager *dict = get_snapshot_manager()->get_dictionary_manager(0);
+        PatchTree* patchTree = get_patch_tree_manager()->get_patch_tree(0, dict);
+        size_t count = patchTree->deletion_count(triple_pattern, patch_id_end).first + patchTree->addition_count(patch_id_end, triple_pattern);
+        return std::make_pair(count, EXACT);
+    } else {
+        if (allowEstimates) {
+            DictionaryManager *dict = get_snapshot_manager()->get_dictionary_manager(0);
+            PatchTree* patchTree = get_patch_tree_manager()->get_patch_tree(0, dict);
+            size_t count_start = patchTree->deletion_count(triple_pattern, patch_id_start).first + patchTree->addition_count(patch_id_start, triple_pattern);
+            size_t count_end = patchTree->deletion_count(triple_pattern, patch_id_end).first + patchTree->addition_count(patch_id_end, triple_pattern);
+            // There may be an overlap between the delta-triples from start and end.
+            // This overlap is not easy to determine, so we ignore it when possible.
+            // The real count will never be higher this value, because we should subtract the overlap count.
+            return std::make_pair(count_start + count_end, UP_TO);
+        } else {
+            return std::make_pair(get_delta_materialized(triple_pattern, 0, patch_id_start, patch_id_end)->get_count(), EXACT);
+        }
+    }
 }
 
 size_t Controller::get_delta_materialized_count_estimated(const Triple &triple_pattern, int patch_id_start, int patch_id_end) const {

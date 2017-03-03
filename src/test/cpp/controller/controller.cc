@@ -830,7 +830,8 @@ TEST_F(ControllerTest, GetDeltaMaterializedPatchPatch) {
     TripleDelta t;
 
     // Request between versions 1 and 2 for ? ? ?
-    ASSERT_EQ(1, controller->get_delta_materialized_count(Triple("", "", "", dict), 1, 2).first) << "Count is incorrect";
+    ASSERT_EQ(3, controller->get_delta_materialized_count(Triple("", "", "", dict), 1, 2, true).first) << "Count is incorrect";
+    ASSERT_EQ(1, controller->get_delta_materialized_count(Triple("", "", "", dict), 1, 2, false).first) << "Count is incorrect";
     TripleDeltaIterator* it0 = controller->get_delta_materialized(Triple("", "", "", dict), 0, 1, 2);
 
     ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
