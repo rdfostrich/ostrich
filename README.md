@@ -109,4 +109,4 @@ docker run --rm -it -v path_to_patch_directory:/var/patches -v patch_to_queries:
 
 `KC_PAGE_CACHE_SIZE`: The KC page cache size per tree. (default `1LL << 25` = 32MB)
 
-`KC_PAGE_MAX_PURGE_ADDITION_COUNT_SIZE`: All triple addition counts below this value will be removed from the addition count db. (default `200`)
+`MIN_ADDITION_COUNT`: The minimum addition triple count so that it will be stored in the db. Changing this value only has effect during insertion time. Lookups are compatible with any value. (default `200`)

@@ -19,6 +19,7 @@ TripleStore::TripleStore(string base_file_name, DictionaryManager* dict, int8_t 
     index_pos_additions = new TreeDB();
     index_osp_additions = new TreeDB();
     count_additions = new HashDB();
+    temp_count_additions = readonly ? NULL : new HashDB();
 
     // Set the triple comparators
     index_spo_deletions->tune_comparator(spo_comparator = new PatchTreeKeyComparator(comp_s, comp_p, comp_o, dict));
@@ -58,6 +59,13 @@ TripleStore::TripleStore(string base_file_name, DictionaryManager* dict, int8_t 
     if (!count_additions->open(base_file_name + "_count_additions", (readonly ? HashDB::OREADER : (HashDB::OWRITER | HashDB::OCREATE)) | HashDB::ONOREPAIR)) {
         cerr << "Open addition count tree error: " << count_additions->error().name() << endl;
     }
+    if (temp_count_additions != NULL) {
+        if (!temp_count_additions->open(base_file_name + "_count_additions.tmp",
+                                        (readonly ? HashDB::OREADER : (HashDB::OWRITER | HashDB::OCREATE)) |
+                                        HashDB::ONOREPAIR)) {
+            cerr << "Open addition count tree error: " << temp_count_additions->error().name() << endl;
+        }
+    }
 }
 
 TripleStore::~TripleStore() {
@@ -77,6 +85,14 @@ TripleStore::~TripleStore() {
         cerr << "Close addition count tree error: " << count_additions->error().name() << endl;
     }
     delete count_additions;
+    if (temp_count_additions != NULL) {
+        string path = temp_count_additions->path();
+        if (!temp_count_additions->close()) {
+            cerr << "Close temp addition count tree error: " << temp_count_additions->error().name() << endl;
+        }
+        delete temp_count_additions;
+        std::remove(path.c_str());
+    }
 
     delete spo_comparator;
     delete sop_comparator;
@@ -275,7 +291,7 @@ void TripleStore::increment_addition_count(const TripleVersion& triple_version) 
     bool was_present = false;
     memcpy(raw_key, &triple_version, sizeof(TripleVersion));
 
-    raw_value = count_additions->get(raw_key, sizeof(TripleVersion), &_);
+    raw_value = temp_count_additions->get(raw_key, sizeof(TripleVersion), &_);
     PatchPosition pos = 0;
     if (raw_value != NULL) {
         was_present = true;
@@ -285,17 +301,12 @@ void TripleStore::increment_addition_count(const TripleVersion& triple_version) 
     }
     pos++;
     memcpy(raw_value, &pos, sizeof(PatchPosition));
-    count_additions->set(raw_key, sizeof(TripleVersion), raw_value, sizeof(PatchPosition));
+    temp_count_additions->set(raw_key, sizeof(TripleVersion), raw_value, sizeof(PatchPosition));
 
     if (was_present) {
         delete[] raw_value;
     } else {
         free(raw_value);
-    }
-
-    // Flush db to disk
-    if (!(pos % FLUSH_POSITIONS_COUNT)) {
-        count_additions->synchronize();
     }
 }
 
@@ -311,25 +322,23 @@ PatchPosition TripleStore::get_addition_count(const int patch_id, const Triple &
     return count;
 }
 
-double TripleStore::purge_addition_counts() {
-    size_t vsp;
+long TripleStore::flush_addition_counts() {
+    size_t ksp, vsp;
     PatchPosition count = 0;
-    HashDB::Cursor* cursor = count_additions->cursor();
+    HashDB::Cursor* cursor = temp_count_additions->cursor();
     cursor->jump();
-    double total = 0;
-    double removed = 0;
-    while (const char* vbp = cursor->get_value(&vsp, true)) {
+    long added = 0;
+    while (cursor->step()) {
+        const char* vbp;
+        const char* kbp = cursor->get(&ksp, &vbp, &vsp, true);
         memcpy(&count, vbp, sizeof(PatchPosition));
-        total++;
-        if (count < MAX_PURGE_ADDITION_COUNT) {
-            cursor->remove();
-            removed++;
-        } else {
-            cursor->step();
+        if (count >= MIN_ADDITION_COUNT) {
+            count_additions->set(kbp, ksp, vbp, vsp);
+            added++;
         }
     }
     delete cursor;
     count_additions->synchronize();
-    if (!total) total = 1;
-    return removed / total;
+    temp_count_additions->clear();
+    return added;
 }

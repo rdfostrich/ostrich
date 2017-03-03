@@ -344,9 +344,9 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, Prog
         }
     }
 
-    NOTIFYMSG(progressListener, "\nPurging addition counts...\n");
-    double purge_fraction = tripleStore->purge_addition_counts();
-    NOTIFYMSG(progressListener, ("\nRemoved " + std::to_string(purge_fraction * 100) + "% of the addition counts\n").c_str());
+    NOTIFYMSG(progressListener, "\nFlushing addition counts...\n");
+    long addition_counts = tripleStore->flush_addition_counts();
+    NOTIFYMSG(progressListener, ("\nSaved " + std::to_string(addition_counts) + " addition counts\n").c_str());
 
     NOTIFYMSG(progressListener, "\nFinished patch insertion\n");
     if (patch_id > max_patch_id) {
