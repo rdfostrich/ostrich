@@ -91,6 +91,20 @@ public:
     static bool is_all_matching_pattern(const Triple& triple_pattern);
 };
 
+class TripleVersion {
+protected:
+    int patch_id;
+    Triple triple;
+public:
+    TripleVersion(int patch_id, const Triple& triple);
+    /**
+     * Serialize this value to a byte array
+     * @param size This will contain the size of the returned byte array
+     * @return The byte array
+     */
+    const char* serialize(size_t* size) const;
+};
+
 namespace std {
     template <>
     struct hash<Triple> {

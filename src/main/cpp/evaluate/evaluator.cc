@@ -115,6 +115,7 @@ std::ifstream::pos_type Evaluator::patchstore_size(Controller* controller) {
         size += filesize(PATCHTREE_FILENAME(id, "pso_additions"));
         size += filesize(PATCHTREE_FILENAME(id, "sop_additions"));
         size += filesize(PATCHTREE_FILENAME(id, "osp_additions"));
+        size += filesize(PATCHTREE_FILENAME(id, "count_additions"));
         itP++;
     }
 

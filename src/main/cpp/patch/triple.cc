@@ -100,3 +100,13 @@ std::size_t std::hash<Triple>::operator()(const Triple& triple) const {
           ^ (triple.get_predicate() << 1)) >> 1)
           ^ (triple.get_object() << 1);
 }
+
+TripleVersion::TripleVersion(int patch_id, const Triple& triple) : patch_id(patch_id), triple(triple) {}
+
+const char *TripleVersion::serialize(size_t *size) const {
+    *size = sizeof(TripleVersion);
+    char* bytes = (char *) malloc(*size);
+    memcpy(bytes, (char*)&patch_id, sizeof(patch_id));
+    memcpy(&bytes[sizeof(patch_id)], (char*)&triple, sizeof(triple));
+    return bytes;
+}

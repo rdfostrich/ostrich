@@ -292,6 +292,7 @@ void Controller::cleanup(string basePath, Controller* controller) {
         std::remove((basePath + PATCHTREE_FILENAME(id, "pso_additions")).c_str());
         std::remove((basePath + PATCHTREE_FILENAME(id, "sop_additions")).c_str());
         std::remove((basePath + PATCHTREE_FILENAME(id, "osp_additions")).c_str());
+        std::remove((basePath + PATCHTREE_FILENAME(id, "count_additions")).c_str());
         patchMetadataToDelete.push_back(id);
         itP++;
     }

@@ -207,6 +207,7 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, Prog
                 && addition_value.get_patchvalue_index(patch_id) < 0) { // Don't re-insert when already present for this patch id
                 addition_value.add(patch_id);
                 tripleStore->insertAdditionSingle(&addition_key, &addition_value, cursor_additions);
+                if (!addition_value.is_local_change(patch_id)) tripleStore->increment_addition_counts(patch_id, addition_key);
             }
         } else if (P_LT_A && P_LT_D) { // P < A && P < D
             // P++
@@ -256,6 +257,7 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, Prog
                 addition_value.add(patch_id);
                 if (was_local_change) addition_value.set_local_change(patch_id);
                 tripleStore->insertAdditionSingle(&addition_key, &addition_value);
+                if (!was_local_change) tripleStore->increment_addition_counts(patch_id, addition_key);
             }
         } else { // (D = A) < P   or   P = A = D
             // carry over local change if < P, or invert existing local change if = P
@@ -299,6 +301,7 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, Prog
                 addition_value.add(patch_id);
                 if (is_local_change) addition_value.set_local_change(patch_id);
                 tripleStore->insertAdditionSingle(&addition_key, &addition_value, cursor_additions);
+                if (!is_local_change) tripleStore->increment_addition_counts(patch_id, addition_key);
             } else if (add_deletion) {
                 PatchPositions patch_positions = is_local_change ?
                                                  PatchPositions() : Patch::positions(patch_element.get_triple(), sp_, s_o, s__, _po, _p_, __o, ___);
@@ -340,6 +343,10 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, Prog
             cursor_additions->step();
         }
     }
+
+    NOTIFYMSG(progressListener, "\nPurging addition counts...\n");
+    double purge_fraction = tripleStore->purge_addition_counts();
+    NOTIFYMSG(progressListener, ("\nRemoved " + std::to_string(purge_fraction * 100) + "% of the addition counts\n").c_str());
 
     NOTIFYMSG(progressListener, "\nFinished patch insertion\n");
     if (patch_id > max_patch_id) {
@@ -665,13 +672,17 @@ PatchTreeIterator* PatchTree::addition_iterator(const Triple &triple_pattern) co
     return it;
 }
 
-size_t PatchTree::addition_count(int patch_id, const Triple& triple_pattern) const {
-    PatchTreeTripleIterator* it = addition_iterator_from(0, patch_id, triple_pattern);
-    size_t count = 0;
-    Triple* triple = new Triple();
-    while (it->next(triple)) count++;
-    delete triple;
-    delete it;
+PatchPosition PatchTree::addition_count(int patch_id, const Triple& triple_pattern) const {
+    PatchPosition count = tripleStore->get_addition_count(patch_id, triple_pattern);
+    if (!count) {
+        // This means that the count was too low to be stored in the count db, so we count manually.
+        PatchTreeTripleIterator* it = addition_iterator_from(0, patch_id, triple_pattern);
+        Triple* triple = new Triple();
+        while (it->next(triple)) count++;
+        delete triple;
+        delete it;
+        return count;
+    }
     return count;
 }
 

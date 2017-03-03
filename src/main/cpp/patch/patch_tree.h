@@ -207,7 +207,7 @@ public:
      * @param triple_pattern Only triples that match the given pattern will be returned in the iterator.
      * @return The iterator that will loop over the tree for the given patch.
      */
-    size_t addition_count(int patch_id, const Triple& triple_pattern) const;
+    PatchPosition addition_count(int patch_id, const Triple& triple_pattern) const;
 
     /**
      * @return The comparator for this patch tree in SPO order.

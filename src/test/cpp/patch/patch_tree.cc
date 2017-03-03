@@ -34,6 +34,7 @@ protected:
         std::remove((TESTPATH + PATCHTREE_FILENAME(0, "pso_additions")).c_str());
         std::remove((TESTPATH + PATCHTREE_FILENAME(0, "sop_additions")).c_str());
         std::remove((TESTPATH + PATCHTREE_FILENAME(0, "osp_additions")).c_str());
+        std::remove((TESTPATH + PATCHTREE_FILENAME(0, "count_additions")).c_str());
         std::remove((TESTPATH + METADATA_FILENAME_BASE(0)).c_str());
 
         DictionaryManager::cleanup(TESTPATH, 0);

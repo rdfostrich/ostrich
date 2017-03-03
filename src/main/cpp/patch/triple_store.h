@@ -24,6 +24,10 @@ using namespace kyotocabinet;
 #ifndef KC_PAGE_CACHE_SIZE
 #define KC_PAGE_CACHE_SIZE (1LL << 25)
 #endif
+// All triple addition counts below this value will be removed from the addition count db
+#ifndef MAX_PURGE_ADDITION_COUNT
+#define MAX_PURGE_ADDITION_COUNT 200
+#endif
 
 class TripleStore {
 private:
@@ -37,6 +41,7 @@ private:
     TreeDB* index_pso_additions;
     TreeDB* index_pos_additions;
     TreeDB* index_osp_additions;
+    HashDB* count_additions;
     //TreeDB index_ops; // We don't need this one if we maintain our s,p,o order priorites
     DictionaryManager* dict;
     PatchTreeKeyComparator* spo_comparator;
@@ -50,6 +55,7 @@ private:
 protected:
     void open(TreeDB* db, string name, bool readonly);
     void close(TreeDB* db, string name);
+    void increment_addition_count(const TripleVersion& triple_version);
 public:
     TripleStore(string base_file_name, DictionaryManager* dict, int8_t kc_opts = 0, bool readonly = false);
     ~TripleStore();
@@ -59,6 +65,9 @@ public:
     TreeDB* getDefaultDeletionsTree();
     void insertAdditionSingle(const PatchTreeKey* key, const PatchTreeAdditionValue* value, DB::Cursor* cursor = NULL);
     void insertAdditionSingle(const PatchTreeKey* key, int patch_id, bool local_change, bool ignore_existing, DB::Cursor* cursor = NULL);
+    void increment_addition_counts(const int patch_id, const Triple& triple);
+    PatchPosition get_addition_count(const int patch_id, const Triple& triple);
+    double purge_addition_counts();
     void insertDeletionSingle(const PatchTreeKey* key, const PatchTreeDeletionValue* value, const PatchTreeDeletionValueReduced* value_reduced, DB::Cursor* cursor = NULL);
     void insertDeletionSingle(const PatchTreeKey* key, const PatchPositions& patch_positions, int patch_id, bool local_change, bool ignore_existing, DB::Cursor* cursor = NULL);
     /**

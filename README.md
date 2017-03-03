@@ -108,3 +108,5 @@ docker run --rm -it -v path_to_patch_directory:/var/patches -v patch_to_queries:
 `KC_MEMORY_MAP_SIZE`: The KC memory map size per tree. (default `1LL << 27` = 128MB)
 
 `KC_PAGE_CACHE_SIZE`: The KC page cache size per tree. (default `1LL << 25` = 32MB)
+
+`KC_PAGE_MAX_PURGE_ADDITION_COUNT_SIZE`: All triple addition counts below this value will be removed from the addition count db. (default `200`)

@@ -18,6 +18,7 @@ TripleStore::TripleStore(string base_file_name, DictionaryManager* dict, int8_t 
     index_pso_additions = new TreeDB();
     index_pos_additions = new TreeDB();
     index_osp_additions = new TreeDB();
+    count_additions = new HashDB();
 
     // Set the triple comparators
     index_spo_deletions->tune_comparator(spo_comparator = new PatchTreeKeyComparator(comp_s, comp_p, comp_o, dict));
@@ -42,6 +43,7 @@ TripleStore::TripleStore(string base_file_name, DictionaryManager* dict, int8_t 
     index_pso_additions->tune_options(kc_opts);
     index_pos_additions->tune_options(kc_opts);
     index_osp_additions->tune_options(kc_opts);
+    count_additions->tune_options(kc_opts);
 
     // Open the databases
     open(index_spo_deletions, base_file_name + "_spo_deletions", readonly);
@@ -54,6 +56,9 @@ TripleStore::TripleStore(string base_file_name, DictionaryManager* dict, int8_t 
     open(index_pso_additions, base_file_name + "_pso_additions", readonly);
     open(index_pos_additions, base_file_name + "_pos_additions", readonly);
     open(index_osp_additions, base_file_name + "_osp_additions", readonly);
+    if (!count_additions->open(base_file_name + "_count_additions", (readonly ? HashDB::OREADER : (HashDB::OWRITER | HashDB::OCREATE)) | HashDB::ONOREPAIR)) {
+        cerr << "Open addition count tree error: " << count_additions->error().name() << endl;
+    }
 }
 
 TripleStore::~TripleStore() {
@@ -68,6 +73,11 @@ TripleStore::~TripleStore() {
     close(index_pso_additions, "pso_additions");
     close(index_pos_additions, "pos_additions");
     close(index_osp_additions, "osp_additions");
+
+    if (!count_additions->close()) {
+        cerr << "Close addition count tree error: " << count_additions->error().name() << endl;
+    }
+    delete count_additions;
 
     delete spo_comparator;
     delete sop_comparator;
@@ -181,6 +191,7 @@ void TripleStore::insertAdditionSingle(const PatchTreeKey* key, int patch_id, bo
     }
 
     insertAdditionSingle(key, &value);
+    if (!local_change) increment_addition_counts(patch_id, *key);
 }
 
 void TripleStore::insertDeletionSingle(const PatchTreeKey* key, const PatchTreeDeletionValue* value, const PatchTreeDeletionValueReduced* value_reduced, DB::Cursor* cursor) {
@@ -246,4 +257,80 @@ PatchElementComparator *TripleStore::get_element_comparator() const {
 
 DictionaryManager *TripleStore::get_dict_manager() const {
     return dict;
+}
+
+void TripleStore::increment_addition_counts(const int patch_id, const Triple &triple) {
+    increment_addition_count(TripleVersion(patch_id, Triple(triple.get_subject(), triple.get_predicate(), 0                  )));
+    increment_addition_count(TripleVersion(patch_id, Triple(triple.get_subject(), 0                     , 0                  )));
+    increment_addition_count(TripleVersion(patch_id, Triple(triple.get_subject(), 0                     , triple.get_object())));
+    increment_addition_count(TripleVersion(patch_id, Triple(0                   , triple.get_predicate(), 0                  )));
+    increment_addition_count(TripleVersion(patch_id, Triple(0                   , triple.get_predicate(), triple.get_object())));
+    increment_addition_count(TripleVersion(patch_id, Triple(0                   , 0                     , 0                  )));
+    increment_addition_count(TripleVersion(patch_id, Triple(0                   , 0                     , triple.get_object())));
+}
+
+void TripleStore::increment_addition_count(const TripleVersion& triple_version) {
+    size_t _;
+    char raw_key[sizeof(TripleVersion)];
+    char* raw_value;
+    bool was_present = false;
+    memcpy(raw_key, &triple_version, sizeof(TripleVersion));
+
+    raw_value = count_additions->get(raw_key, sizeof(TripleVersion), &_);
+    PatchPosition pos = 0;
+    if (raw_value != NULL) {
+        was_present = true;
+        memcpy(&pos, raw_value, sizeof(PatchPosition));
+    } else {
+        raw_value = (char*) malloc(sizeof(TripleVersion));
+    }
+    pos++;
+    memcpy(raw_value, &pos, sizeof(PatchPosition));
+    count_additions->set(raw_key, sizeof(TripleVersion), raw_value, sizeof(PatchPosition));
+
+    if (was_present) {
+        delete[] raw_value;
+    } else {
+        free(raw_value);
+    }
+
+    // Flush db to disk
+    if (!(pos % FLUSH_POSITIONS_COUNT)) {
+        count_additions->synchronize();
+    }
+}
+
+PatchPosition TripleStore::get_addition_count(const int patch_id, const Triple &triple) {
+    size_t ksp, vsp;
+    TripleVersion key(patch_id, triple);
+    const char* kbp = key.serialize(&ksp);
+    const char* vbp = count_additions->get(kbp, ksp, &vsp);
+    PatchPosition count = 0;
+    if (vbp != NULL) {
+        memcpy(&count, vbp, sizeof(PatchPosition));
+    }
+    return count;
+}
+
+double TripleStore::purge_addition_counts() {
+    size_t vsp;
+    PatchPosition count = 0;
+    HashDB::Cursor* cursor = count_additions->cursor();
+    cursor->jump();
+    double total = 0;
+    double removed = 0;
+    while (const char* vbp = cursor->get_value(&vsp, true)) {
+        memcpy(&count, vbp, sizeof(PatchPosition));
+        total++;
+        if (count < MAX_PURGE_ADDITION_COUNT) {
+            cursor->remove();
+            removed++;
+        } else {
+            cursor->step();
+        }
+    }
+    delete cursor;
+    count_additions->synchronize();
+    if (!total) total = 1;
+    return removed / total;
 }
