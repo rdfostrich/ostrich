@@ -144,41 +144,47 @@ IteratorTripleString* Evaluator::get_from_file(string file) {
 long long Evaluator::measure_lookup_version_materialized(Triple triple_pattern, int offset, int patch_id, int limit, int replications, int& result_count) {
     long long total = 0;
     for (int i = 0; i < replications; i++) {
+        int limit_l = limit;
         StopWatch st;
         TripleIterator* ti = controller->get_version_materialized(triple_pattern, offset, patch_id);
         // Dummy loop over iterator
         Triple t;
-        while((limit == -2 || limit-- > 0) && ti->next(&t)) { result_count++; };
+        while((limit_l == -2 || limit_l-- > 0) && ti->next(&t)) { result_count++; };
         delete ti;
         total += st.stopReal();
     }
+    result_count /= replications;
     return total / replications;
 }
 
 long long Evaluator::measure_lookup_delta_materialized(Triple triple_pattern, int offset, int patch_id_start, int patch_id_end, int limit, int replications, int& result_count) {
     long long total = 0;
     for (int i = 0; i < replications; i++) {
+        int limit_l = limit;
         StopWatch st;
         TripleDeltaIterator *ti = controller->get_delta_materialized(triple_pattern, offset, patch_id_start,
                                                                      patch_id_end);
         TripleDelta t;
-        while ((limit == -2 || limit-- > 0) && ti->next(&t)) { result_count++; };
+        while ((limit_l == -2 || limit_l-- > 0) && ti->next(&t)) { result_count++; };
         delete ti;
         total += st.stopReal();
     }
+    result_count /= replications;
     return total / replications;
 }
 
 long long Evaluator::measure_lookup_version(Triple triple_pattern, int offset, int limit, int replications, int& result_count) {
     long long total = 0;
     for (int i = 0; i < replications; i++) {
+        int limit_l = limit;
         StopWatch st;
         TripleVersionsIterator* ti = controller->get_version(triple_pattern, offset);
         TripleVersions t;
-        while((limit == -2 || limit-- > 0) && ti->next(&t)) { result_count++; };
+        while((limit_l == -2 || limit_l-- > 0) && ti->next(&t)) { result_count++; };
         delete ti;
         total += st.stopReal();
     }
+    result_count /= replications;
     return total / replications;
 }
 
