@@ -157,6 +157,16 @@ long long Evaluator::measure_lookup_version_materialized(Triple triple_pattern, 
     return total / replications;
 }
 
+long long Evaluator::measure_count_version_materialized(Triple triple_pattern, int patch_id, int replications) {
+    long long total = 0;
+    for (int i = 0; i < replications; i++) {
+        StopWatch st;
+        std::pair<size_t, ResultEstimationType> count = controller->get_version_materialized_count(triple_pattern, patch_id, true);
+        total += st.stopReal();
+    }
+    return total / replications;
+}
+
 long long Evaluator::measure_lookup_delta_materialized(Triple triple_pattern, int offset, int patch_id_start, int patch_id_end, int limit, int replications, int& result_count) {
     long long total = 0;
     for (int i = 0; i < replications; i++) {
@@ -170,6 +180,16 @@ long long Evaluator::measure_lookup_delta_materialized(Triple triple_pattern, in
         total += st.stopReal();
     }
     result_count /= replications;
+    return total / replications;
+}
+
+long long Evaluator::measure_count_delta_materialized(Triple triple_pattern, int patch_id_start, int patch_id_end, int replications) {
+    long long total = 0;
+    for (int i = 0; i < replications; i++) {
+        StopWatch st;
+        std::pair<size_t, ResultEstimationType> count = controller->get_delta_materialized_count(triple_pattern, patch_id_start, patch_id_end, true);
+        total += st.stopReal();
+    }
     return total / replications;
 }
 
@@ -188,29 +208,40 @@ long long Evaluator::measure_lookup_version(Triple triple_pattern, int offset, i
     return total / replications;
 }
 
+long long Evaluator::measure_count_version(Triple triple_pattern, int replications) {
+    long long total = 0;
+    for (int i = 0; i < replications; i++) {
+        StopWatch st;
+        std::pair<size_t, ResultEstimationType> count = controller->get_version_count(triple_pattern, true);
+        total += st.stopReal();
+    }
+    return total / replications;
+}
+
 void Evaluator::test_lookup(string s, string p, string o, int replications) {
     DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
     Triple triple_pattern(s, p, o, dict);
     cout << "---PATTERN START: " << triple_pattern.to_string(*dict) << endl;
 
     cout << "--- ---VERSION MATERIALIZED" << endl;
-    cout << "patch,offset,lookup-mus-1,lookup-mus-50,lookup-mus-100,lookup-mus-inf,results1,results50,results100,resultsinf" << endl;
+    cout << "patch,offset,count-ms,lookup-mus-1,lookup-mus-50,lookup-mus-100,lookup-mus-inf,results1,results50,results100,resultsinf" << endl;
     for(int i = 0; i < patch_count; i++) {
         for(int offset = 0; offset < 1000; offset+=500) {
             int result_count1 = 0;
             int result_count50 = 0;
             int result_count100 = 0;
             int result_countinf = 0;
+            long dcount = measure_count_version_materialized(triple_pattern, i, replications);
             long d1 = measure_lookup_version_materialized(triple_pattern, offset, i, 1, replications, result_count1);
             long d50 = measure_lookup_version_materialized(triple_pattern, offset, i, 50, replications, result_count50);
             long d100 = measure_lookup_version_materialized(triple_pattern, offset, i, 100, replications, result_count100);
             long dinf = measure_lookup_version_materialized(triple_pattern, offset, i, -2, replications, result_countinf);
-            cout << "" << i << "," << offset << "," << d1 << "," << d50 << "," << d100 << "," << dinf << "," << result_count1 << "," << result_count50 << "," << result_count100 << "," << result_countinf << endl;
+            cout << "" << i << "," << offset << "," << dcount << "," << d1 << "," << d50 << "," << d100 << "," << dinf << "," << result_count1 << "," << result_count50 << "," << result_count100 << "," << result_countinf << endl;
         }
     }
 
     cout << "--- ---DELTA MATERIALIZED" << endl;
-    cout << "patch_start,patch_end,offset,lookup-mus-1,lookup-mus-50,lookup-mus-100,lookup-mus-inf,results1,results50,results100,resultsinf" << endl;
+    cout << "patch_start,patch_end,offset,count-ms,lookup-mus-1,lookup-mus-50,lookup-mus-100,lookup-mus-inf,results1,results50,results100,resultsinf" << endl;
     for(int i = 0; i < patch_count; i++) {
         for(int j = 0; j < i; j+=i/2+1) {
             if (j > 0) j--;
@@ -219,27 +250,29 @@ void Evaluator::test_lookup(string s, string p, string o, int replications) {
                 int result_count50 = 0;
                 int result_count100 = 0;
                 int result_countinf = 0;
+                long dcount = measure_count_delta_materialized(triple_pattern, j, i, replications);
                 long d1 = measure_lookup_delta_materialized(triple_pattern, offset, j, i, 1, replications, result_count1);
                 long d50 = measure_lookup_delta_materialized(triple_pattern, offset, j, i, 50, replications, result_count50);
                 long d100 = measure_lookup_delta_materialized(triple_pattern, offset, j, i, 100, replications, result_count100);
                 long dinf = measure_lookup_delta_materialized(triple_pattern, offset, j, i, -2, replications, result_countinf);
-                cout << "" << j << "," << i << "," << offset << "," << d1 << "," << d50 << "," << d100 << "," << dinf << "," << result_count1 << "," << result_count50 << "," << result_count100 << "," << result_countinf << endl;
+                cout << "" << j << "," << i << "," << offset << "," << dcount << "," << d1 << "," << d50 << "," << d100 << "," << dinf << "," << result_count1 << "," << result_count50 << "," << result_count100 << "," << result_countinf << endl;
             }
         }
     }
 
     cout << "--- ---VERSION" << endl;
-    cout << "offset,lookup-mus-1,lookup-mus-50,lookup-mus-100,lookup-mus-inf,results1,results50,results100,resultsinf" << endl;
+    cout << "offset,count-ms,lookup-mus-1,lookup-mus-50,lookup-mus-100,lookup-mus-inf,results1,results50,results100,resultsinf" << endl;
     for(int offset = 0; offset < 1000; offset+=500) {
         int result_count1 = 0;
         int result_count50 = 0;
         int result_count100 = 0;
         int result_countinf = 0;
+        long dcount = measure_count_version(triple_pattern, replications);
         long d1 = measure_lookup_version(triple_pattern, offset, 1, replications, result_count1);
         long d50 = measure_lookup_version(triple_pattern, offset, 50, replications, result_count50);
         long d100 = measure_lookup_version(triple_pattern, offset, 100, replications, result_count100);
         long dinf = measure_lookup_version(triple_pattern, offset, -2, replications, result_countinf);
-        cout << "" << offset << "," << d1 << "," << d50 << "," << d100 << "," << dinf << "," << result_count1 << "," << result_count50 << "," << result_count100 << "," << result_countinf << endl;
+        cout << "" << offset << "," << dcount << "," << d1 << "," << d50 << "," << d100 << "," << dinf << "," << result_count1 << "," << result_count50 << "," << result_count100 << "," << result_countinf << endl;
     }
 }
 
