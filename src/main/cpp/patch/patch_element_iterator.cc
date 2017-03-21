@@ -163,3 +163,19 @@ PatchElementIteratorBuffered::~PatchElementIteratorBuffered() {
     buffer_trigger_fill.notify_all(); // Because the fill-buffer thread could still be waiting! (avoids deadlock)
     thread.join();
 }
+
+IteratorTripleStringVector::IteratorTripleStringVector(const std::vector<TripleString>* elements) : elements(elements) {
+    goToStart();
+}
+
+bool IteratorTripleStringVector::hasNext() {
+    return it != elements->end();
+}
+
+TripleString* IteratorTripleStringVector::next() {
+    return (TripleString*) &(*it++);
+}
+
+void IteratorTripleStringVector::goToStart() {
+    it = elements->begin();
+}

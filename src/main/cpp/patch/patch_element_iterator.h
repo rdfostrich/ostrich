@@ -73,4 +73,15 @@ public:
     void goToStart();
 };
 
+class IteratorTripleStringVector : public IteratorTripleString {
+protected:
+    const std::vector<TripleString>* elements;
+    std::vector<TripleString>::const_iterator it;
+public:
+    IteratorTripleStringVector(const std::vector<TripleString>* elements);
+    bool hasNext();
+    TripleString *next();
+    void goToStart();
+};
+
 #endif //TPFPATCH_STORE_PATCH_ELEMENT_ITERATOR_H
