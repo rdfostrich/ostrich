@@ -120,6 +120,7 @@ SUBDIRS.forEach((subDir) => {
                                 Object.keys(row).forEach((key) => {
                                     if (columsStaticIndex[type].indexOf(key) < 0) {
                                         row[key] /= countIndex[type];
+                                        row[key] /= 1000;
                                     }
                                 });                                
                                 writer.write(row);
@@ -128,12 +129,26 @@ SUBDIRS.forEach((subDir) => {
                             
                             writer = csvWriter();
                             writer.pipe(fs.createWriteStream(dir + subDir + '/_min_' + type + '.csv'));
-                            minIndex[type].forEach((row) => writer.write(row));
+                            minIndex[type].forEach((row) => {
+                                Object.keys(row).forEach((key) => {
+                                    if (columsStaticIndex[type].indexOf(key) < 0) {
+                                        row[key] /= 1000;
+                                    }
+                                });  
+                                writer.write(row)
+                            });
                             writer.end();
                             
                             writer = csvWriter();
                             writer.pipe(fs.createWriteStream(dir + subDir + '/_max_' + type + '.csv'));
-                            maxIndex[type].forEach((row) => writer.write(row));
+                            maxIndex[type].forEach((row) => {
+                                Object.keys(row).forEach((key) => {
+                                    if (columsStaticIndex[type].indexOf(key) < 0) {
+                                        row[key] /= 1000;
+                                    }
+                                });  
+                                writer.write(row)
+                            });
                             writer.end();
                         });
                     }
