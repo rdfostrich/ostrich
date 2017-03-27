@@ -36,39 +36,39 @@ Controller* setup_snapshot(int snapshot_size) {
 void populate_controller(Controller* controller, int additions, int deletions, int addition_deletions, int& patch_id) {
     DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
     if(additions > 0) {
-        Patch patch1(dict);
+        std::vector<PatchElement>* elements = new std::vector<PatchElement>();
         for (int i = 0; i < additions; i++) {
             string e = std::to_string(i * (patch_id + 1));
             //patch.add(PatchElement(Triple("a" + e, "a" + e, "a" + e), true));
-            patch1.add(PatchElement(Triple("b" + e, "b" + e, "b" + e, dict), true));
+            elements->push_back(PatchElement(Triple("b" + e, "b" + e, "b" + e, dict), true));
             //patch.add(PatchElement(Triple("c" + e, "c" + e, "c" + e), true));
         }
-        controller->append(patch1, patch_id++, dict);
+        controller->append(new PatchElementIteratorVector(elements), patch_id++, dict);
     }
 
     if(deletions > 0) {
-        Patch patch2(dict);
+        std::vector<PatchElement>* elements = new std::vector<PatchElement>();
         for (int i = 0; i < deletions; i++) {
             string e = std::to_string(i * 10 * (patch_id + 1));
-            patch2.add(PatchElement(Triple(e, e, e, dict), false));
+            elements->push_back(PatchElement(Triple(e, e, e, dict), false));
         }
-        controller->append(patch2, patch_id++, dict);
+        controller->append(new PatchElementIteratorVector(elements), patch_id++, dict);
     }
 
     if(addition_deletions > 0) {
-        Patch patch3(dict);
+        std::vector<PatchElement>* elements = new std::vector<PatchElement>();
         for (int i = 0; i < addition_deletions; i++) {
             string e = std::to_string(i * (patch_id + 1));
-            patch3.add(PatchElement(Triple("b" + e, "b" + e, "b" + e, dict), false));
+            elements->push_back(PatchElement(Triple("b" + e, "b" + e, "b" + e, dict), false));
         }
-        controller->append(patch3, patch_id++, dict);
+        controller->append(new PatchElementIteratorVector(elements), patch_id++, dict);
     }
 }
 
 long long test_insert_size(int snapshot_size, int additions, int deletions, int addition_deletions) {
-    StopWatch st;
     int patch_id = 1;
     Controller* controller = setup_snapshot(snapshot_size);
+    StopWatch st;
     populate_controller(controller, additions, deletions, addition_deletions, patch_id);
     long long duration = st.stopReal() / 1000;
     Controller::cleanup("./", controller);
@@ -144,9 +144,9 @@ int main() {
     Evaluator evaluator;
     evaluator.init("./", "/Users/rtaelman/nosync/patch-generator/dbpedia/patches", 2, 5, new SimpleProgressListener());
 
-    evaluator.test_lookup("", "", "");
-    evaluator.test_lookup("", "http://www.w3.org/2000/01/rdf-schema#label", "");
-    evaluator.test_lookup("http://dbpedia.org/resource/Aldabrensis", "", "");
+    evaluator.test_lookup("", "", "", 1);
+    evaluator.test_lookup("", "http://www.w3.org/2000/01/rdf-schema#label", "", 1);
+    evaluator.test_lookup("http://dbpedia.org/resource/Aldabrensis", "", "", 1);
 
     evaluator.cleanup_controller();
 }
@@ -154,7 +154,7 @@ int main() {
 int main_manual() {
     int duplicates = 1;
 
-    test_insert_size(1000, 10, 0, 0); // WARM-UP
+    //test_insert_size(1000, 10, 0, 0); // WARM-UP
 
     // Insert (increasing patch-size)
     /*cout << "triples,additions-ms,deletions-ms,addition-deletions-ms" << endl;
@@ -189,9 +189,9 @@ int main_manual() {
         cout << "" << i1 << "," << total_additions / duplicates << "," << total_deletions / duplicates<< "," << total_addition_deletions / duplicates << endl;
     }
     //}
-    Controller::cleanup(controller1);
-    Controller::cleanup(controller2);
-    Controller::cleanup(controller3);*/
+    Controller::cleanup(".", controller1);
+    Controller::cleanup(".", controller2);
+    Controller::cleanup(".", controller3);*/
 
     // Lookup version materialized
     // Increasing patch id
