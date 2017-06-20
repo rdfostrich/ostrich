@@ -21,10 +21,10 @@ file(GLOB_RECURSE HDT_FILES
 )
 
 # Build settings
-set(PROJECT_NAME_STR tpfpatch_store)
+set(PROJECT_NAME_STR ostrich)
 project(${PROJECT_NAME_STR})
 
-set(SOURCE_FILE_MAIN
+set(SOURCE_FILE_EVALUATE
         #src/test/cpp/performance.cc
         src/test/cpp/bear.cc
 )
@@ -76,7 +76,7 @@ set(TEST_FILES
         src/test/cpp/dictionary/dictionary_manager.cc
         src/test/cpp/snapshot/snapshot_manager.cc)
 
-add_executable(${PROJECT_NAME_STR} ${HDT_FILES} ${COMMON_FILES} ${SOURCE_FILE_MAIN})
+add_executable(${PROJECT_NAME_STR}-evaluate ${HDT_FILES} ${COMMON_FILES} ${SOURCE_FILE_EVALUATE})
 
 # Add Kyoto Cabinet
 find_library(KYOTO_SHARED_LIBRARY kyotocabinet PATHS ${KC_ROOT}/lib)
@@ -97,7 +97,7 @@ else (KYOTO_SHARED_LIBRARY MATCHES KYOTO_LIBRARY-NOTFOUND)
         # get the static version
         string(REGEX REPLACE "\\${CMAKE_SHARED_LIBRARY_SUFFIX}$" ".a" KYOTO_STATIC_LIBRARY ${KYOTO_SHARED_LIBRARY})
         message(STATUS "Kyoto Cabinet: ${KYOTO_STATIC_LIBRARY}" )
-        target_link_libraries(${PROJECT_NAME_STR} ${KYOTO_SHARED_LIBRARY})
+        target_link_libraries(${PROJECT_NAME_STR}-evaluate ${KYOTO_SHARED_LIBRARY})
         include_directories(${KYOTO_INCLUDE_DIR})
         add_definitions(-DHAS_KYOTO)
     endif (KYOTO_INCLUDE_DIR MATCHES KYOTO_INCLUDE_DIR-NOTFOUND)
@@ -110,18 +110,18 @@ endif()
 # Add pthreads
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
-target_link_libraries(${PROJECT_NAME_STR} Threads::Threads)
+target_link_libraries(${PROJECT_NAME_STR}-evaluate Threads::Threads)
 
 # Add zlib
 hunter_add_package(ZLIB)
 find_package(ZLIB CONFIG REQUIRED)
 include_directories(${ZLIB_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME_STR} ${ZLIB_LIBRARIES})
+target_link_libraries(${PROJECT_NAME_STR}-evaluate ${ZLIB_LIBRARIES})
 
 # Add Boost
 hunter_add_package(Boost COMPONENTS iostreams regex)
 find_package(Boost CONFIG REQUIRED COMPONENTS iostreams regex)
-target_link_libraries(${PROJECT_NAME_STR} Boost::iostreams Boost::regex)
+target_link_libraries(${PROJECT_NAME_STR}-evaluate Boost::iostreams Boost::regex)
 
 # 3rdparty Libraries
 set(EXT_PROJECTS_DIR ${PROJECT_SOURCE_DIR}/ext)

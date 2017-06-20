@@ -27,31 +27,31 @@ The OSTRICH dataset will always be loaded from the current directory.
 
 ### Tests
 ```bash
-build/tpfpatch_store_test
+build/ostrich_test
 ```
 
 ### Query
 ```bash
-build/tpfpatch_store-query-version-materialized patch_id s p o
-build/tpfpatch_store-query-delta-materialized patch_id_start patch_id_end s p o
-build/tpfpatch_store-query-version patch_id_start s p o
+build/ostrich-query-version-materialized patch_id s p o
+build/ostrich-query-delta-materialized patch_id_start patch_id_end s p o
+build/ostrich-query-version patch_id_start s p o
 ```
 
 ### Insert
 ```bash
-build/tpfpatch_store-insert [-v] patch_id [+|- file_1.nt [file_2.nt [...]]]*
+build/ostrich-insert [-v] patch_id [+|- file_1.nt [file_2.nt [...]]]*
 ```
 
 ### Evaluate
 Only load changesets from a path structured as `path_to_patch_directory/patch_id/main.nt.additions.txt` and `path_to_patch_directory/patch_id/main.nt.deletions.txt`.
 ```bash
-build/tpfpatch_store path_to_patch_directory patch_id_start patch_id_end
+build/ostrich-evaluate path_to_patch_directory patch_id_start patch_id_end
 ```
 CSV-formatted insert data will be emitted: `version,added,durationms,rate,accsize`.
 
 Load changesets AND query with triple patterns from the given file on separate lines, with the given number of replications.
 ```bash
-build/tpfpatch_store path_to_patch_directory patch_id_start patch_id_end patch_to_queries/queries.txt s|p|o nr_replications
+build/ostrich-evaluate path_to_patch_directory patch_id_start patch_id_end patch_to_queries/queries.txt s|p|o nr_replications
 ```
 CSV-formatted query data will be emitted (time in microseconds) for all versions for the three query types: `patch,offset,lookup-mus-1,lookup-mus-50,lookup-mus-100,lookup-mus-inf`.
 
@@ -66,19 +66,19 @@ docker build -t ostrich .
 
 ### Test
 ```bash
-docker run --rm -it --entrypoint /opt/patchstore/build/tpfpatch_store_test ostrich
+docker run --rm -it --entrypoint /opt/patchstore/build/ostrich_test ostrich
 ```
 
 ### Query
 ```bash
-docker run --rm -it --entrypoint /opt/patchstore/build/tpfpatch_store-query-version-materialized ostrich patch_id s p o
-docker run --rm -it --entrypoint /opt/patchstore/build/tpfpatch_store-delta-version-materialized ostrich patch_id_start patch_id_end s p o
-docker run --rm -it --entrypoint /opt/patchstore/build/tpfpatch_store-query-version ostrich s p o
+docker run --rm -it --entrypoint /opt/ostrich/build/ostrich-query-version-materialized ostrich patch_id s p o
+docker run --rm -it --entrypoint /opt/ostrich/build/ostrich-delta-version-materialized ostrich patch_id_start patch_id_end s p o
+docker run --rm -it --entrypoint /opt/ostrich/build/ostrich-query-version ostrich s p o
 ```
 
 ### Insert
 ```bash
-docker run --rm -it --entrypoint /opt/patchstore/build/tpfpatch_store-insert ostrich [-v] patch_id [+|- file_1.nt [file_2.nt [...]]]*
+docker run --rm -it --entrypoint /opt/ostrich/build/ostrich-insert ostrich [-v] patch_id [+|- file_1.nt [file_2.nt [...]]]*
 ```
 
 ### Evaluate

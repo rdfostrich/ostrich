@@ -2,7 +2,7 @@
 # Run ostrich
 if [ "$1" == "--debug" ]; then
     shift
-    /opt/patchstore/run-debug.sh $@
+    /opt/ostrich/run-debug.sh $@
 else
-    /opt/patchstore/build/tpfpatch_store $@
+    /opt/ostrich/build/ostrich-evaluate $@
 fi

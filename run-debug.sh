@@ -40,14 +40,14 @@ fi
 echo "Set: core_pattern=$core_pattern"
 
 # Run ostrich
-/opt/patchstore/build/tpfpatch_store $@
+/opt/ostrich/build/ostrich-evaluate $@
 
 # Restore core path
 echo "$core_pattern_orig" > /proc/sys/kernel/core_pattern
 
 # Make log file
 uname -a > "/crash/ostrich.log"
-echo /opt/patchstore/build/tpfpatch_store "$@"   >> "/crash/ostrich.log"
+echo /opt/ostrich/build/ostrich-evaluate "$@"   >> "/crash/ostrich.log"
 
 # Exit cleanly if there was no segfault crash
 cp /crash_tmp/* /crash
@@ -72,7 +72,7 @@ GDB Backtrace
 "
 echo "set logging on ${file_prefix}.gdb.txt
 set pagination off
-bt full" | gdb /opt/patchstore/build/tpfpatch_store "$core_file"
+bt full" | gdb /opt/ostrich/build/ostrich-evaluate "$core_file"
 echo "
 ***********************************************************************
 "
