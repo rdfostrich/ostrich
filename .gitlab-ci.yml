@@ -6,7 +6,7 @@ main:
     - shell
   script:
     - docker build -t ostrich .
-    - docker run --rm --entrypoint /opt/patchstore/build/tpfpatch_store_test ostrich
+    - docker run --rm --entrypoint /opt/ostrich/build/ostrich_test ostrich
 doc:
   before_script:
     - apt-get update
