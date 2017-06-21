@@ -7,12 +7,18 @@ let csvWriter = require('csv-write-stream');
 
 let dir = process.argv[2];
 let SUBDIRS = [
-    'objectLookup-queries-sel-10-e0.1.txt',
-    'objectLookup-queries-sel-100-e0.6.txt',
-    'predicateLookup-queries-sel-500-e0.6.txt',
-    'predicateLookup-queries-sel-1500-e0.6.txt',
-    'subjectLookup-queries-sel-10-e0.2.txt',
-    'subjectLookup-queries-sel-100-e0.1.txt',
+    'queries-o-queries-highCardinality.txt',
+    'queries-o-queries-lowCardinality.txt',
+    'queries-p-queries-highCardinality.txt',
+    'queries-p-queries-lowCardinality.txt',
+    'queries-po-queries-highCardinality.txt',
+    'queries-po-queries-lowCardinality.txt',
+    'queries-s-queries-highCardinality.txt',
+    'queries-s-queries-lowCardinality.txt',
+    'queries-so-queries-lowCardinality.txt',
+    'queries-sp-queries-highCardinality.txt',
+    'queries-sp-queries-lowCardinality.txt',
+    'queries-spo-queries.txt',
 ];
 
 let columnsStaticVm = [
