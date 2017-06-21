@@ -28,6 +28,9 @@ string remove_brackets(string element) {
     if (element.at(0) == '<') {
         return element.substr(1, element.size() - 2);
     }
+    if (element.at(0) == '?') {
+        return "";
+    }
     return element;
 }
 
