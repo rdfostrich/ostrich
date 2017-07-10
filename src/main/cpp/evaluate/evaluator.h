@@ -19,7 +19,7 @@ private:
     Controller* controller;
 public:
     void init(string basePath, string patchesBasePatch, int startIndex, int endIndex, ProgressListener* progressListener = NULL);
-    void test_lookup(string s, string p, string o, int replications);
+    void test_lookup(string s, string p, string o, int replications, int offset, int limit);
     void cleanup_controller();
 protected:
     void populate_controller_with_version(int patch_id, string path, ProgressListener* progressListener = NULL);

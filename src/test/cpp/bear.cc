@@ -44,7 +44,9 @@ void test_lookups_for_queries(Evaluator& evaluator, string queriesFilePath, int 
                 remove_brackets(line_split[0]),
                 remove_brackets(line_split[1]),
                 remove_brackets(line_split[2]),
-                replications
+                replications,
+                line_split.size() > 4 ? std::atoi(line_split[3].c_str()) : 0, // offset
+                line_split.size() > 4 ? std::atoi(line_split[4].c_str()) : -2 // limit
         );
     }
     cout << "---QUERIES END---" << endl;
