@@ -651,6 +651,11 @@ PatchTreeTripleIterator* PatchTree::addition_iterator_from(long offset, int patc
     // TODO: If this this ridiculous loop becomes too inefficient, make an offset map
     PatchTreeKey key;
     PatchTreeAdditionValue value;
+    PatchPosition count = tripleStore->get_addition_count(patch_id, triple_pattern);
+    if (count && count <= offset) {
+        // Invalidate the iterator if our offset was larger than the total count.
+        it->getAdditionCursor()->jump_back();
+    }
     while(offset-- > 0 && it->next_addition(&key, &value));
     return new PatchTreeTripleIterator(it, triple_pattern);
 }
