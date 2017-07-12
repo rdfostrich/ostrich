@@ -19,6 +19,8 @@ let SUBDIRS = [
     'queries-sp-queries-highCardinality.txt',
     'queries-sp-queries-lowCardinality.txt',
     'queries-spo-queries.txt',
+    'queries-p.txt',
+    'queries-po.txt'
 ];
 
 let columnsStaticVm = [
@@ -41,8 +43,13 @@ let columsStaticIndex = {
 
 SUBDIRS.forEach((subDir) => {
     fs.readdir(dir + subDir, (err, files) => {
-        if (err) throw err;
+        if (err) return;
         
+        let medianIndex = {
+            'vm': [],
+            'dm': [],
+            'vq': [],
+        };
         let averageIndex = {
             'vm': [],
             'dm': [],
@@ -76,6 +83,7 @@ SUBDIRS.forEach((subDir) => {
                 type = 'vq';
             }
             if (type) {
+            let medianData = medianIndex[type];
             let averageData = averageIndex[type];
             let minData = minIndex[type];
             let maxData = maxIndex[type];
@@ -88,10 +96,12 @@ SUBDIRS.forEach((subDir) => {
             fs.createReadStream(file)
                 .pipe(csvParser())
                 .on('data', (data) => {
+                    let medianRow = medianData[row];
                     let averageRow = averageData[row];
                     let minRow = minData[row];
                     let maxRow = maxData[row];
                     if (!averageRow) {
+                        medianRow = (medianData[row] = {});
                         averageRow = (averageData[row] = {});
                         minRow = (minData[row] = {});
                         maxRow = (maxData[row] = {});
@@ -99,10 +109,14 @@ SUBDIRS.forEach((subDir) => {
                     Object.keys(data).forEach((key) => {
                         let value = parseInt(data[key]);
                         if (columnsStatic.indexOf(key) >= 0) {
+                            medianRow[key] = value;
                             averageRow[key] = value;
                             minRow[key] = value;
                             maxRow[key] = value;
                         } else {
+                            if (!medianRow[key]) medianRow[key] = [];
+                            medianRow[key].push(value);
+                            
                             if (!averageRow[key]) averageRow[key] = 0;
                             averageRow[key] += value;
                             
@@ -129,6 +143,18 @@ SUBDIRS.forEach((subDir) => {
                                         row[key] /= 1000;
                                     }
                                 });                                
+                                writer.write(row);
+                            });
+                            writer.end();
+                            
+                            writer = csvWriter();
+                            writer.pipe(fs.createWriteStream(dir + subDir + '/_median_' + type + '.csv'));
+                            medianIndex[type].forEach((row) => {
+                                Object.keys(row).forEach((key) => {
+                                    if (columsStaticIndex[type].indexOf(key) < 0) {
+                                        row[key] = row[key].sort((a, b) => a - b)[Math.floor(row[key].length / 2)] / 1000;
+                                    }
+                                });
                                 writer.write(row);
                             });
                             writer.end();
