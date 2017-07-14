@@ -141,7 +141,7 @@ IteratorTripleString* Evaluator::get_from_file(string file) {
     return new RDFParserNtriples(file.c_str(), NTRIPLES);
 }
 
-long long Evaluator::measure_lookup_version_materialized(Triple triple_pattern, int offset, int patch_id, int limit, int replications, int& result_count) {
+long long Evaluator::measure_lookup_version_materialized(Dictionary& dict, Triple triple_pattern, int offset, int patch_id, int limit, int replications, int& result_count) {
     long long total = 0;
     for (int i = 0; i < replications; i++) {
         int limit_l = limit;
@@ -149,7 +149,12 @@ long long Evaluator::measure_lookup_version_materialized(Triple triple_pattern, 
         TripleIterator* ti = controller->get_version_materialized(triple_pattern, offset, patch_id);
         // Dummy loop over iterator
         Triple t;
-        while((limit_l == -2 || limit_l-- > 0) && ti->next(&t)) { result_count++; };
+        while((limit_l == -2 || limit_l-- > 0) && ti->next(&t)) {
+            t.get_subject(dict);
+            t.get_predicate(dict);
+            t.get_object(dict);
+            result_count++;
+        };
         delete ti;
         total += st.stopReal();
     }
@@ -167,7 +172,7 @@ long long Evaluator::measure_count_version_materialized(Triple triple_pattern, i
     return total / replications;
 }
 
-long long Evaluator::measure_lookup_delta_materialized(Triple triple_pattern, int offset, int patch_id_start, int patch_id_end, int limit, int replications, int& result_count) {
+long long Evaluator::measure_lookup_delta_materialized(Dictionary& dict, Triple triple_pattern, int offset, int patch_id_start, int patch_id_end, int limit, int replications, int& result_count) {
     long long total = 0;
     for (int i = 0; i < replications; i++) {
         int limit_l = limit;
@@ -175,7 +180,12 @@ long long Evaluator::measure_lookup_delta_materialized(Triple triple_pattern, in
         TripleDeltaIterator *ti = controller->get_delta_materialized(triple_pattern, offset, patch_id_start,
                                                                      patch_id_end);
         TripleDelta t;
-        while ((limit_l == -2 || limit_l-- > 0) && ti->next(&t)) { result_count++; };
+        while ((limit_l == -2 || limit_l-- > 0) && ti->next(&t)) {
+            t.get_triple()->get_subject(dict);
+            t.get_triple()->get_predicate(dict);
+            t.get_triple()->get_object(dict);
+            result_count++;
+        };
         delete ti;
         total += st.stopReal();
     }
@@ -193,14 +203,19 @@ long long Evaluator::measure_count_delta_materialized(Triple triple_pattern, int
     return total / replications;
 }
 
-long long Evaluator::measure_lookup_version(Triple triple_pattern, int offset, int limit, int replications, int& result_count) {
+long long Evaluator::measure_lookup_version(Dictionary& dict, Triple triple_pattern, int offset, int limit, int replications, int& result_count) {
     long long total = 0;
     for (int i = 0; i < replications; i++) {
         int limit_l = limit;
         StopWatch st;
         TripleVersionsIterator* ti = controller->get_version(triple_pattern, offset);
         TripleVersions t;
-        while((limit_l == -2 || limit_l-- > 0) && ti->next(&t)) { result_count++; };
+        while((limit_l == -2 || limit_l-- > 0) && ti->next(&t)) {
+            t.get_triple()->get_subject(dict);
+            t.get_triple()->get_predicate(dict);
+            t.get_triple()->get_object(dict);
+            result_count++;
+        };
         delete ti;
         total += st.stopReal();
     }
@@ -228,7 +243,7 @@ void Evaluator::test_lookup(string s, string p, string o, int replications, int 
     for(int i = 0; i < patch_count; i++) {
         int result_count1 = 0;
         long dcount = measure_count_version_materialized(triple_pattern, i, replications);
-        long d1 = measure_lookup_version_materialized(triple_pattern, offset, i, limit, replications, result_count1);
+        long d1 = measure_lookup_version_materialized(*dict, triple_pattern, offset, i, limit, replications, result_count1);
         cout << "" << i << "," << offset << "," << limit << "," << dcount << "," << d1 << "," << result_count1 << endl;
     }
 
@@ -239,7 +254,7 @@ void Evaluator::test_lookup(string s, string p, string o, int replications, int 
             if (j > 0) j--;
             int result_count1 = 0;
             long dcount = measure_count_delta_materialized(triple_pattern, j, i, replications);
-            long d1 = measure_lookup_delta_materialized(triple_pattern, offset, j, i, limit, replications, result_count1);
+            long d1 = measure_lookup_delta_materialized(*dict, triple_pattern, offset, j, i, limit, replications, result_count1);
             cout << "" << j << "," << i << "," << offset << "," << limit << "," << dcount << "," << d1 << "," << result_count1 << endl;
         }
     }
@@ -248,7 +263,7 @@ void Evaluator::test_lookup(string s, string p, string o, int replications, int 
     cout << "offset,limit,count-ms,lookup-mus,results" << endl;
     int result_count1 = 0;
     long dcount = measure_count_version(triple_pattern, replications);
-    long d1 = measure_lookup_version(triple_pattern, offset, limit, replications, result_count1);
+    long d1 = measure_lookup_version(*dict, triple_pattern, offset, limit, replications, result_count1);
     cout << "" << offset << "," << limit << "," << dcount << "," << d1 << "," << result_count1 << endl;
 }
 
