@@ -32,13 +32,9 @@ using namespace kyotocabinet;
 class TripleStore {
 private:
     TreeDB* index_spo_deletions;
-    TreeDB* index_sop_deletions;
-    TreeDB* index_pso_deletions;
     TreeDB* index_pos_deletions;
     TreeDB* index_osp_deletions;
     TreeDB* index_spo_additions;
-    TreeDB* index_sop_additions;
-    TreeDB* index_pso_additions;
     TreeDB* index_pos_additions;
     TreeDB* index_osp_additions;
     HashDB* count_additions;
@@ -46,8 +42,6 @@ private:
     //TreeDB index_ops; // We don't need this one if we maintain our s,p,o order priorites
     DictionaryManager* dict;
     PatchTreeKeyComparator* spo_comparator;
-    PatchTreeKeyComparator* sop_comparator;
-    PatchTreeKeyComparator* pso_comparator;
     PatchTreeKeyComparator* pos_comparator;
     PatchTreeKeyComparator* osp_comparator;
     PatchElementComparator* element_comparator;
