@@ -113,3 +113,9 @@ docker run --rm -it -v path_to_patch_directory:/var/patches -v patch_to_queries:
 `KC_PAGE_CACHE_SIZE`: The KC page cache size per tree. (default `1LL << 25` = 32MB)
 
 `MIN_ADDITION_COUNT`: The minimum addition triple count so that it will be stored in the db. Changing this value only has effect during insertion time. Lookups are compatible with any value. (default `200`)
+
+## License
+This software is written by [Ruben Taelman](http://rubensworks.net/) and colleagues.
+
+This code is copyrighted by [Ghent University – imec](http://idlab.ugent.be/)
+and released under the [MIT license](http://opensource.org/licenses/MIT).
