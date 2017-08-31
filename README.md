@@ -2,12 +2,13 @@
 _Offset-enabled TRIple store for CHangesets_
 
 A triple store that allows multiple dataset versions to be stored and queried.
-The store is delta-based, meaning that the overhead for storing multiple overlapping versions is reduced, when compared to full materialization.
-Version materialized, version and delta materialized queries can be performed over the different versions, with a focus on the performance of the first two.
-These queries support limits and offsets for any triple pattern.
+The store is a hybrid between snapshot, delta and timestamp-based storage,
+which provides a good trade-off between storage size and query time.
+Version materialized, version and delta materialized queries can be performed efficiently over the different versions.
+These queries support limits and offsets for any triple pattern, as results are returned as triple streams.
 
-Insertion is done by first inserting a dataset snapshot, which is encoded in HDT.
-After that, patches can be inserted, which contain additions and deletions based on the last patch or snapshot.
+Insertion is done by first inserting a dataset snapshot, which is encoded in [HDT](rdfhdt.org).
+After that, deltas can be inserted, which contain additions and deletions based on the last delta or snapshot.
 
 ## Building
 
@@ -42,6 +43,8 @@ build/ostrich-query-version patch_id_start s p o
 build/ostrich-insert [-v] patch_id [+|- file_1.nt [file_2.nt [...]]]*
 ```
 
+Input deltas must be sorted in SPO-order.
+
 ### Evaluate
 Only load changesets from a path structured as `path_to_patch_directory/patch_id/main.nt.additions.txt` and `path_to_patch_directory/patch_id/main.nt.deletions.txt`.
 ```bash
@@ -53,7 +56,7 @@ Load changesets AND query with triple patterns from the given file on separate l
 ```bash
 build/ostrich-evaluate path_to_patch_directory patch_id_start patch_id_end patch_to_queries/queries.txt s|p|o nr_replications
 ```
-CSV-formatted query data will be emitted (time in microseconds) for all versions for the three query types: `patch,offset,lookup-mus-1,lookup-mus-50,lookup-mus-100,lookup-mus-inf`.
+CSV-formatted query data will be emitted (time in microseconds) for all versions for the three query types: `patch,offset,limit,count-ms,lookup-mus,results`.
 
 ## Docker
 
