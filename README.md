@@ -2,6 +2,7 @@
 _Offset-enabled TRIple store for CHangesets_
 
 [![Build Status](https://travis-ci.org/rdfostrich/ostrich.svg?branch=master)](https://travis-ci.org/rdfostrich/ostrich)
+[![Docker Automated Build](https://img.shields.io/docker/automated/rdfostrich/ostrich.svg)](https://hub.docker.com/r/rdfostrich/ostrich/)
 [![DOI](https://zenodo.org/badge/97819866.svg)](https://zenodo.org/badge/latestdoi/97819866)
 
 A triple store that allows multiple dataset versions to be stored and queried.
@@ -68,6 +69,11 @@ Alternatively, OSTRICH can be built and run using Docker.
 ### Build
 ```bash
 docker build -t ostrich .
+```
+
+Instead of building the container yourself, you can use the pre-built image from [DockerHub](https://hub.docker.com/r/rdfostrich/ostrich/).
+```bash
+docker pull rdfostrich/ostrich
 ```
 
 ### Test
