@@ -1,6 +1,9 @@
 # OSTRICH
 _Offset-enabled TRIple store for CHangesets_
 
+[![Build Status](https://travis-ci.org/rdfostrich/ostrich.svg?branch=master)](https://travis-ci.org/rdfostrich/ostrich)
+[![DOI](https://zenodo.org/badge/97819866.svg)](https://zenodo.org/badge/latestdoi/97819866)
+
 A triple store that allows multiple dataset versions to be stored and queried.
 The store is a hybrid between snapshot, delta and timestamp-based storage,
 which provides a good trade-off between storage size and query time.
