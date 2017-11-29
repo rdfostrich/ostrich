@@ -76,6 +76,12 @@ TripleIterator* Controller::get_version_materialized(const Triple &triple_patter
     long added_offset = 0;
     bool check_offseted_deletions = true;
 
+    // Limit the patch id to the latest available patch id
+    int max_patch_id = patchTree->get_max_patch_id();
+    if (patch_id > max_patch_id) {
+        patch_id = max_patch_id;
+    }
+
     std::pair<PatchPosition, Triple> deletion_count_data = patchTree->deletion_count(triple_pattern, patch_id);
     // This loop continuously determines new snapshot iterators until it finds one that contains
     // no new deletions with respect to the snapshot iterator from last iteration.
