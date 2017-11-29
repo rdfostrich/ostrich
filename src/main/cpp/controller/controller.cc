@@ -230,7 +230,9 @@ std::pair<size_t, ResultEstimationType> Controller::get_version_count(const Trip
     // Count the additions for all versions
     DictionaryManager *dict = get_snapshot_manager()->get_dictionary_manager(0);
     PatchTree* patchTree = get_patch_tree_manager()->get_patch_tree(0, dict);
-    count += patchTree->addition_count(0, triple_pattern);
+    if (patchTree != NULL) {
+        count += patchTree->addition_count(0, triple_pattern);
+    }
     return std::make_pair(count, allowEstimates ? snapshot_it->numResultEstimation() : EXACT);
 }
 
@@ -245,10 +247,7 @@ TripleVersionsIterator* Controller::get_version(const Triple &triple_pattern, in
     HDT* snapshot = get_snapshot_manager()->get_snapshot(snapshot_id);
     IteratorTripleID* snapshot_it = SnapshotManager::search_with_offset(snapshot, triple_pattern, offset);
     DictionaryManager *dict = get_snapshot_manager()->get_dictionary_manager(snapshot_id);
-    PatchTree* patchTree = get_patch_tree_manager()->get_patch_tree(snapshot_id, dict);
-    if(patchTree == NULL) {
-        throw std::invalid_argument("Could not find the given end patch id");
-    }
+    PatchTree* patchTree = get_patch_tree_manager()->get_patch_tree(snapshot_id, dict); // Can be null, if only snapshot is available
 
     // Snapshots have already been offsetted, calculate the remaining offset.
     // After this, offset will only be >0 if we are past the snapshot elements and at the additions.

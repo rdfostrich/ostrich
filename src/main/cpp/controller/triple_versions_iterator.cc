@@ -30,16 +30,22 @@ TripleVersionsIterator::~TripleVersionsIterator() {
 }
 
 inline void TripleVersionsIterator::eraseDeletedVersions(std::vector<int>* versions, Triple* currentTriple, int initial_version) {
-    PatchTreeDeletionValue* deletion = patchTree->get_deletion_value(*currentTriple);
-    versions->clear();
-    versions->resize(patchTree->get_max_patch_id() + 1 - initial_version);
-    std::iota(versions->begin(), versions->end(), initial_version); // Fill up the vector with all versions from initial_version to max_patch_id
-    if (deletion != NULL) {
-        for (int v_del = 0; v_del < deletion->get_size(); v_del++) {
-            PatchTreeDeletionValueElement deletion_element = deletion->get_patch(v_del);
-            // Erase-remove idiom on sorted vector, and maintain order
-            auto pr = std::equal_range(versions->begin(), versions->end(), deletion_element.get_patch_id());
-            versions->erase(pr.first, pr.second);
+    if (patchTree == NULL) {
+        // If we only have a snapshot, return a single version annotation.
+        versions->clear();
+        versions->push_back(initial_version);
+    } else {
+        PatchTreeDeletionValue* deletion = patchTree->get_deletion_value(*currentTriple);
+        versions->clear();
+        versions->resize(patchTree->get_max_patch_id() + 1 - initial_version);
+        std::iota(versions->begin(), versions->end(), initial_version); // Fill up the vector with all versions from initial_version to max_patch_id
+        if (deletion != NULL) {
+            for (int v_del = 0; v_del < deletion->get_size(); v_del++) {
+                PatchTreeDeletionValueElement deletion_element = deletion->get_patch(v_del);
+                // Erase-remove idiom on sorted vector, and maintain order
+                auto pr = std::equal_range(versions->begin(), versions->end(), deletion_element.get_patch_id());
+                versions->erase(pr.first, pr.second);
+            }
         }
     }
 }
@@ -54,6 +60,11 @@ bool TripleVersionsIterator::next(TripleVersions* triple_versions) {
         currentTriple->set_object(tripleId->getObject());
         eraseDeletedVersions(triple_versions->get_versions(), currentTriple, 0);
         return true;
+    }
+
+    // If we only have a snapshot, don't query the unavailable patch tree.
+    if (patchTree == NULL) {
+        return false;
     }
 
     // When we get here, no snapshot elements are left, so emit additions here
