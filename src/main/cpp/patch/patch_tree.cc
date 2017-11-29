@@ -570,7 +570,7 @@ PositionedTripleIterator* PatchTree::deletion_iterator_from(const Triple& offset
     cursor_deletions->jump(data, size);
     free((char*) data);
     PatchTreeIterator* it = new PatchTreeIterator(cursor_deletions, NULL, get_spo_comparator());
-    if (patch_id >= 0) it->set_patch_filter(patch_id, false);
+    if (patch_id >= 0) it->set_patch_filter(patch_id, true);
     it->set_triple_pattern_filter(triple_pattern);
     it->set_filter_local_changes(true);
     it->set_early_break(false);
