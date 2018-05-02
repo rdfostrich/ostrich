@@ -102,7 +102,22 @@ TripleIterator* Controller::get_version_materialized(const Triple &triple_patter
             if (deletion_it->next(&first_deletion_triple, true)) {
                 snapshot_offset = first_deletion_triple.position;
             } else {
-                snapshot_offset = deletion_count_data.first;
+                // The exact snapshot triple could not be found as a deletion
+                if (patchTree->get_spo_comparator()->compare(firstTriple, deletion_count_data.second) < 0) {
+                    // If the snapshot triple is smaller than the largest deletion,
+                    // set the offset to zero, as all deletions will come *after* this triple.
+
+                    // Note that it should impossible that there would exist a deletion *before* this snapshot triple,
+                    // otherwise we would already have found this triple as a snapshot triple before.
+                    // If we would run into issues because of this after all, we could do a backwards step with
+                    // deletion_it and see if we find a triple matching the pattern, and use its position.
+
+                    snapshot_offset = 0;
+                } else {
+                    // If the snapshot triple is larger than the largest deletion,
+                    // set the offset to the total number of deletions.
+                    snapshot_offset = deletion_count_data.first;
+                }
             }
             long previous_added_offset = added_offset;
             added_offset = snapshot_offset;

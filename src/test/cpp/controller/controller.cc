@@ -697,6 +697,152 @@ TEST_F(ControllerTest, EdgeCaseVersionMaterialized1) {
     ASSERT_EQ("9 9 9.", t.to_string(*dict)) << "Element is incorrect";
 }
 
+TEST_F(ControllerTest, EdgeCaseVersionMaterialized2) {
+    /*
+     * This tests the case in which a deletion that does not match the queried triple pattern
+     * exists *before* all applicable deletions, and the first matching triple is just a snapshot triple.
+     */
+
+    // Build a snapshot
+    std::vector<TripleString> triples;
+    triples.push_back(TripleString("a", "a", "a"));
+    triples.push_back(TripleString("b", "b", "b"));
+    triples.push_back(TripleString("y", "a", "a"));
+    triples.push_back(TripleString("z", "a", "a"));
+    VectorTripleIterator* it = new VectorTripleIterator(triples);
+    controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
+    PatchTreeManager* patchTreeManager = controller->get_patch_tree_manager();
+    DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
+
+    PatchSorted patch1(dict);
+    patch1.add(PatchElement(Triple("b", "b", "b", dict), false));
+    patch1.add(PatchElement(Triple("y", "a", "a", dict), false));
+    patch1.add(PatchElement(Triple("z", "a", "a", dict), false));
+    patchTreeManager->append(patch1, 1, dict);
+
+    // --- filtered by a ? a
+
+    // Expected version 0:
+    // a a a
+    // y a a
+    // z a a
+
+    // Expected version 1:
+    // a a a
+
+    Triple t;
+
+    // Request version 0 (snapshot)
+    ASSERT_EQ(3, controller->get_version_materialized_count(Triple("", "a", "a", dict), 0).first) << "Count is incorrect";
+    TripleIterator* it0 = controller->get_version_materialized(Triple("", "a", "a", dict), 0, 0);
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("a a a.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("y a a.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("z a a.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(false, it0->next(&t)) << "Iterator has a no next value";
+
+    // Request version 1 (patch)
+    ASSERT_EQ(1, controller->get_version_materialized_count(Triple("", "a", "a", dict), 1).first) << "Count is incorrect";
+    TripleIterator* it1 = controller->get_version_materialized(Triple("", "a", "a", dict), 0, 1);
+
+    ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("a a a.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(false, it1->next(&t)) << "Iterator has a no next value";
+}
+
+TEST_F(ControllerTest, EdgeCaseVersionMaterialized3) {
+    /*
+     * Same as the previous case, but we start from an offset.
+     */
+
+    // Build a snapshot
+    std::vector<TripleString> triples;
+    triples.push_back(TripleString("a", "a", "a"));
+    triples.push_back(TripleString("b", "a", "a"));
+    triples.push_back(TripleString("c", "c", "c"));
+    triples.push_back(TripleString("d", "a", "a"));
+    triples.push_back(TripleString("y", "a", "a"));
+    triples.push_back(TripleString("z", "a", "a"));
+    VectorTripleIterator* it = new VectorTripleIterator(triples);
+    controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
+    PatchTreeManager* patchTreeManager = controller->get_patch_tree_manager();
+    DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
+
+    PatchSorted patch1(dict);
+    patch1.add(PatchElement(Triple("b", "a", "a", dict), false));
+    patch1.add(PatchElement(Triple("c", "c", "c", dict), false));
+    patch1.add(PatchElement(Triple("y", "a", "a", dict), false));
+    patch1.add(PatchElement(Triple("z", "a", "a", dict), false));
+    patchTreeManager->append(patch1, 1, dict);
+
+    // --- filtered by a ? a
+
+    // Expected version 0:
+    // a a a
+    // b a a
+    // d a a
+    // y a a
+    // z a a
+
+    // Expected version 1:
+    // a a a
+
+    Triple t;
+
+    // Request version 0 (snapshot)
+    ASSERT_EQ(5, controller->get_version_materialized_count(Triple("", "a", "a", dict), 0).first) << "Count is incorrect";
+    TripleIterator* it0 = controller->get_version_materialized(Triple("", "a", "a", dict), 0, 0);
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("a a a.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("b a a.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("d a a.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("y a a.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("z a a.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(false, it0->next(&t)) << "Iterator has a no next value";
+
+    // Request version 1 (patch)
+    ASSERT_EQ(2, controller->get_version_materialized_count(Triple("", "a", "a", dict), 1).first) << "Count is incorrect";
+    TripleIterator* it1 = controller->get_version_materialized(Triple("", "a", "a", dict), 0, 1);
+
+    ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("a a a.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("d a a.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(false, it1->next(&t)) << "Iterator has a no next value";
+
+    // Request version 1 (patch), offset 1
+    TripleIterator* it2 = controller->get_version_materialized(Triple("", "a", "a", dict), 1, 1);
+
+    ASSERT_EQ(true, it2->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("d a a.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(false, it2->next(&t)) << "Iterator has a no next value";
+
+    // Request version 1 (patch), offset 2
+    TripleIterator* it3 = controller->get_version_materialized(Triple("", "a", "a", dict), 2, 1);
+
+    ASSERT_EQ(false, it3->next(&t)) << "Iterator has a no next value";
+}
+
 TEST_F(ControllerTest, GetDeltaMaterializedSnapshotPatch) {
     controller->new_patch_bulk()
             ->addition(TripleString("<a>", "<a>", "<a>"))
