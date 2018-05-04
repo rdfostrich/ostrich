@@ -63,7 +63,6 @@ bool ForwardPatchTripleDeltaIterator<DV>::next(TripleDelta* triple) {
 template <class DV>
 FowardDiffPatchTripleDeltaIterator<DV>::FowardDiffPatchTripleDeltaIterator(PatchTree* patchTree, const Triple &triple_pattern, int patch_id_start, int patch_id_end)
         : ForwardPatchTripleDeltaIterator<DV>(patchTree, triple_pattern, patch_id_end), patch_id_start(patch_id_start), patch_id_end(patch_id_end) {
-    this->it->reset_patch_filter();
     this->it->set_filter_local_changes(false);
 }
 
