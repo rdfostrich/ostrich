@@ -86,8 +86,8 @@ bool PatchTreeValueBase<DV>::is_local_change(int patch_id) const {
 
 template <class DV>
 bool PatchTreeValueBase<DV>::is_delta_type_equal(int patch_id_start, int patch_id_end) {
-    return is_addition(patch_id_start, false) == is_addition(patch_id_end, false)
-           && is_deletion(patch_id_start, false) == is_deletion(patch_id_end, false);
+    return is_addition(patch_id_start, true) == is_addition(patch_id_end, true)
+           && is_deletion(patch_id_start, true) == is_deletion(patch_id_end, true);
 }
 
 template class PatchTreeValueBase<PatchTreeDeletionValue>;
