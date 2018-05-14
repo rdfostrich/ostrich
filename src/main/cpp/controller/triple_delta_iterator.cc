@@ -56,9 +56,15 @@ ForwardPatchTripleDeltaIterator<DV>::~ForwardPatchTripleDeltaIterator() {
 
 template <class DV>
 bool ForwardPatchTripleDeltaIterator<DV>::next(TripleDelta* triple) {
-    bool ret = it->next(triple->get_triple(), value);
-    triple->set_addition(value->is_addition(it->get_patch_id_filter(), true));
-    return ret;
+    bool valid, addition;
+    // This loop makes sure that if the triple is a deletion,
+    // and it was present in the snapshot, that it will be skipped.
+    while ((valid = this->it->next(triple->get_triple(), this->value))
+           && (!(addition = value->is_addition(it->get_patch_id_filter(), true)) && !value->exists_in_snapshot())) {}
+    if (valid) {
+        triple->set_addition(addition);
+    }
+    return valid;
 }
 
 template <class DV>
