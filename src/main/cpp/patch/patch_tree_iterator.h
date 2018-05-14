@@ -33,6 +33,7 @@ private:
     PatchTreeKey* temp_key_addition;
 
     bool can_early_break = true;
+    bool squash_equal_addition_deletion = false;
 public:
     PatchTreeIteratorBase(DB::Cursor* cursor_deletions, DB::Cursor* cursor_additions, PatchTreeKeyComparator* comparator);
     ~PatchTreeIteratorBase();
@@ -64,6 +65,11 @@ public:
      * If the iterator can break early if a non-matching triple was found.
      */
     void set_early_break(bool can_early_break);
+    /**
+     * If equal additions and deletion elements in the iterators should be combined in a single return element.
+     * Default is false.
+     */
+    void set_squash_equal_addition_deletion(bool squash_equal_addition_deletion);
     /**
      * @return The patch id filter.
      */

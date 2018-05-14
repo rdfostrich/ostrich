@@ -60,6 +60,30 @@ bool PatchTreeValueBase<DV>::is_deletion(int patch_id, bool exact) const {
 }
 
 template <class DV>
+bool PatchTreeValueBase<DV>::exists_in_snapshot() const {
+    // We can only know if this element exists in the snapshot
+    // if the first deletion comes before the first addition (or there is no later addition).
+    if (has_deletion) {
+        if (has_addition) {
+            return deletion->get_patch(0).get_patch_id() < addition->get_patch_id_at(0);
+        }
+        return true;
+    }
+    return false;
+}
+
+template <class DV>
+bool PatchTreeValueBase<DV>::is_present(int patch_id) const {
+    long addition = get_addition_patch_id(patch_id, true);
+    long deletion = get_deletion_patch_id(patch_id, true);
+    if (addition == -1 && deletion == -1) {
+        // In this case, the snapshot applies.
+        return exists_in_snapshot();
+    }
+    return deletion < addition; // otherwise addition > deletion (addition == deletion is not possible)
+}
+
+template <class DV>
 PatchTreeAdditionValue* PatchTreeValueBase<DV>::get_addition() const {
     return addition;
 }
@@ -86,8 +110,7 @@ bool PatchTreeValueBase<DV>::is_local_change(int patch_id) const {
 
 template <class DV>
 bool PatchTreeValueBase<DV>::is_delta_type_equal(int patch_id_start, int patch_id_end) {
-    return is_addition(patch_id_start, true) == is_addition(patch_id_end, true)
-           && is_deletion(patch_id_start, true) == is_deletion(patch_id_end, true);
+    return is_present(patch_id_start) == is_present(patch_id_end);
 }
 
 template class PatchTreeValueBase<PatchTreeDeletionValue>;

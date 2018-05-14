@@ -225,8 +225,10 @@ bool PatchTreeIteratorBase<DV>::next(PatchTreeKey* key, PatchTreeValueBase<DV>* 
     is_filter_local_changes = old_is_filter_local_changes;
 
     bool return_addition;
+    bool return_deletion;
     if (had_deletion != had_addition) {
         return_addition = had_addition;
+        return_deletion = !return_addition;
         has_temp_key_deletion = false;
         has_temp_key_addition = false;
     } else {
@@ -239,34 +241,43 @@ bool PatchTreeIteratorBase<DV>::next(PatchTreeKey* key, PatchTreeValueBase<DV>* 
             value->set_deletion(true);
             value->set_addition(true);
 
-            // Return largest patch id
-            long deletion_patch_id;
-            long addition_patch_id;
-            if (is_patch_id_filter) {
-                deletion_patch_id = value->get_deletion_patch_id(patch_id_filter, is_patch_id_filter_exact);
-                addition_patch_id = value->get_addition_patch_id(patch_id_filter, is_patch_id_filter_exact);
+            if (squash_equal_addition_deletion) {
+                return_addition = true;
+                return_deletion = true;
             } else {
-                deletion_patch_id = value->get_deletion()->get_patch(
-                        value->get_deletion()->get_size() - 1).get_patch_id();
-                addition_patch_id = value->get_addition()->get_patch_id_at(value->get_addition()->get_size() - 1);
+                // Return largest patch id
+                long deletion_patch_id;
+                long addition_patch_id;
+                if (is_patch_id_filter) {
+                    deletion_patch_id = value->get_deletion_patch_id(patch_id_filter, is_patch_id_filter_exact);
+                    addition_patch_id = value->get_addition_patch_id(patch_id_filter, is_patch_id_filter_exact);
+                } else {
+                    deletion_patch_id = value->get_deletion()->get_patch(
+                            value->get_deletion()->get_size() - 1).get_patch_id();
+                    addition_patch_id = value->get_addition()->get_patch_id_at(value->get_addition()->get_size() - 1);
+                }
+                return_addition = addition_patch_id > deletion_patch_id;
+                return_deletion = !return_addition;
             }
-            return_addition = addition_patch_id > deletion_patch_id;
+
             has_temp_key_deletion = false;
             has_temp_key_addition = false;
         } else if (comparison > 0) {
             return_addition = true;
+            return_deletion = false;
             has_temp_key_deletion = true;
             has_temp_key_addition = false;
         } else {
             return_addition = false;
+            return_deletion = true;
             has_temp_key_deletion = false;
             has_temp_key_addition = true;
         }
     }
 
     // Correctly mark our return value.
-    value->set_deletion(!return_addition);
     value->set_addition(return_addition);
+    value->set_deletion(return_deletion);
 
     // If we encountered a local change, and we are filtering those, trigger the next iteration.
     if (is_filter_local_changes && value->is_local_change(patch_id_filter)) {
@@ -292,6 +303,11 @@ DB::Cursor *PatchTreeIteratorBase<DV>::getAdditionCursor() {
 template <class DV>
 void PatchTreeIteratorBase<DV>::set_early_break(bool can_early_break) {
     this->can_early_break = can_early_break;
+}
+
+template <class DV>
+void PatchTreeIteratorBase<DV>::set_squash_equal_addition_deletion(bool squash_equal_addition_deletion) {
+    this->squash_equal_addition_deletion = squash_equal_addition_deletion;
 }
 
 template class PatchTreeIteratorBase<PatchTreeDeletionValue>;

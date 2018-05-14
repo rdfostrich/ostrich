@@ -44,6 +44,7 @@ ForwardPatchTripleDeltaIterator<DV>::ForwardPatchTripleDeltaIterator(PatchTree* 
     it->set_patch_filter(patch_id_end, false);
     it->set_filter_local_changes(true);
     it->set_early_break(true);
+    it->set_squash_equal_addition_deletion(true);
     value = new PatchTreeValueBase<DV>();
 }
 

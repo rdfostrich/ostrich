@@ -45,6 +45,16 @@ public:
      * @param If the patch id must match exactly, otherwise previous patch id's will also be matched
      */
     bool is_deletion(int patch_id, bool exact) const;
+    /**
+     * This check only uses metadata from the addition and deletion values.
+     * @return Check if this element exists in the snapshot.
+     */
+    bool exists_in_snapshot() const;
+    /**
+     * If this value is present in the given patch id.
+     * @param The patch id to match.
+     */
+    bool is_present(int patch_id) const;
     PatchTreeAdditionValue* get_addition() const;
     DV* get_deletion() const;
     void set_addition(bool has_addition);

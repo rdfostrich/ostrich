@@ -1214,6 +1214,135 @@ TEST_F(ControllerTest, EdgeCaseGetDeltaMaterialized2) {
     ASSERT_EQ(false, it3->next(&t)) << "Iterator should be finished";
 }
 
+TEST_F(ControllerTest, EdgeCaseGetDeltaMaterialized3) {
+    /*
+     * Test if DM is correct when the range does not match the changeset bounds,
+     * and the triple *is not* present in the snapshot.
+     */
+    controller->new_patch_bulk()
+            ->addition(TripleString("<dummy>", "<dummy>", "<dummy>"))
+            ->commit();
+
+    controller->new_patch_bulk()
+            ->addition(TripleString("<dummy2>", "<dummy2>", "<dummy2>"))
+            ->commit();
+
+    controller->new_patch_bulk()
+            ->addition(TripleString("<a>", "<a>", "<a>"))
+            ->commit();
+
+    controller->new_patch_bulk()
+            ->addition(TripleString("<dummy3>", "<dummy3>", "<dummy3>"))
+            ->commit();
+
+    controller->new_patch_bulk()
+            ->deletion(TripleString("<a>", "<a>", "<a>"))
+            ->commit();
+
+    DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
+
+    // Expected version 0:
+
+    // Expected version 1:
+
+    // Expected version 2:
+    // <a> <a> <a>
+
+    // Expected version 3:
+    // <a> <a> <a>
+
+    // Expected version 4:
+
+    TripleDelta t;
+
+    // Request between versions 1 and 4 for <a> ? ?
+    TripleDeltaIterator* it0 = controller->get_delta_materialized(Triple("<a>", "", "", dict), 0, 1, 4);
+    ASSERT_EQ(false, it0->next(&t)) << "Iterator should be finished";
+
+    // Request between versions 2 and 4 for <a> ? ?
+    TripleDeltaIterator* it1 = controller->get_delta_materialized(Triple("<a>", "", "", dict), 0, 2, 4);
+
+    ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <a>.", t.get_triple()->to_string(*dict)) << "Element is incorrect";
+    ASSERT_EQ(false, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(false, it1->next(&t)) << "Iterator should be finished";
+
+    // Request between versions 1 and 3 for <a> ? ?
+    TripleDeltaIterator* it2 = controller->get_delta_materialized(Triple("<a>", "", "", dict), 0, 1, 3);
+
+    ASSERT_EQ(true, it2->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <a>.", t.get_triple()->to_string(*dict)) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(false, it2->next(&t)) << "Iterator should be finished";
+}
+
+TEST_F(ControllerTest, EdgeCaseGetDeltaMaterialized4) {
+    /*
+     * Test if DM is correct when the range does not match the changeset bounds,
+     * and the triple *is* present in the snapshot.
+     */
+    controller->new_patch_bulk()
+            ->addition(TripleString("<a>", "<a>", "<a>"))
+            ->commit();
+
+    controller->new_patch_bulk()
+            ->addition(TripleString("<dummy>", "<dummy>", "<dummy>"))
+            ->commit();
+
+    controller->new_patch_bulk()
+            ->deletion(TripleString("<a>", "<a>", "<a>"))
+            ->commit();
+
+    controller->new_patch_bulk()
+            ->addition(TripleString("<dummy2>", "<dummy2>", "<dummy2>"))
+            ->commit();
+
+    controller->new_patch_bulk()
+            ->addition(TripleString("<a>", "<a>", "<a>"))
+            ->commit();
+
+    DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
+
+    // Expected version 0:
+    // <a> <a> <a>
+
+    // Expected version 1:
+    // <a> <a> <a>
+
+    // Expected version 2:
+
+    // Expected version 3:
+
+    // Expected version 4:
+    // <a> <a> <a>
+
+    TripleDelta t;
+
+    // Request between versions 1 and 4 for <a> ? ?
+    TripleDeltaIterator* it0 = controller->get_delta_materialized(Triple("<a>", "", "", dict), 0, 1, 4);
+    ASSERT_EQ(false, it0->next(&t)) << "Iterator should be finished";
+
+    // Request between versions 2 and 4 for <a> ? ?
+    TripleDeltaIterator* it1 = controller->get_delta_materialized(Triple("<a>", "", "", dict), 0, 2, 4);
+
+    ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <a>.", t.get_triple()->to_string(*dict)) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(false, it1->next(&t)) << "Iterator should be finished";
+
+    // Request between versions 1 and 3 for <a> ? ?
+    TripleDeltaIterator* it2 = controller->get_delta_materialized(Triple("<a>", "", "", dict), 0, 1, 3);
+
+    ASSERT_EQ(true, it2->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <a>.", t.get_triple()->to_string(*dict)) << "Element is incorrect";
+    ASSERT_EQ(false, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(false, it2->next(&t)) << "Iterator should be finished";
+}
+
 TEST_F(ControllerTest, GetVersionSnapshot) {
     controller->new_patch_bulk()
             ->addition(TripleString("<a>", "<a>", "<a>"))
