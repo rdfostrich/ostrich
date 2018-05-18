@@ -30,6 +30,7 @@ private:
     string metadata_filename;
     int min_patch_id;
     int max_patch_id;
+    bool readonly;
 
     HashDB sp_;
     HashDB s_o;

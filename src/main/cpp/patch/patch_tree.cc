@@ -9,35 +9,41 @@ using namespace std;
 using namespace kyotocabinet;
 
 PatchTree::PatchTree(string basePath, int min_patch_id, DictionaryManager* dict, int8_t kc_opts, bool readonly)
-        : metadata_filename(basePath + METADATA_FILENAME_BASE(min_patch_id)), min_patch_id(min_patch_id), max_patch_id(min_patch_id) {
+        : metadata_filename(basePath + METADATA_FILENAME_BASE(min_patch_id)), min_patch_id(min_patch_id), max_patch_id(min_patch_id), readonly(readonly) {
     tripleStore = new TripleStore(basePath + PATCHTREE_FILENAME_BASE(min_patch_id), dict, kc_opts, readonly);
     read_metadata();
 
-    std::remove(".additions.sp_.tmp");
-    std::remove(".additions.s_o.tmp");
-    std::remove(".additions.s__.tmp");
-    std::remove(".additions._po.tmp");
-    std::remove(".additions._p_.tmp");
-    std::remove(".additions.__o.tmp");
+    if (!readonly) {
+        std::remove(".additions.sp_.tmp");
+        std::remove(".additions.s_o.tmp");
+        std::remove(".additions.s__.tmp");
+        std::remove(".additions._po.tmp");
+        std::remove(".additions._p_.tmp");
+        std::remove(".additions.__o.tmp");
 
-    sp_.open(".additions.sp_.tmp", HashDB::OWRITER | HashDB::OCREATE);
-    s_o.open(".additions.s_o.tmp", HashDB::OWRITER | HashDB::OCREATE);
-    s__.open(".additions.s__.tmp", HashDB::OWRITER | HashDB::OCREATE);
-    _po.open(".additions._po.tmp", HashDB::OWRITER | HashDB::OCREATE);
-    _p_.open(".additions._p_.tmp", HashDB::OWRITER | HashDB::OCREATE);
-    __o.open(".additions.__o.tmp", HashDB::OWRITER | HashDB::OCREATE);
+        sp_.open(".additions.sp_.tmp", HashDB::OWRITER | HashDB::OCREATE);
+        s_o.open(".additions.s_o.tmp", HashDB::OWRITER | HashDB::OCREATE);
+        s__.open(".additions.s__.tmp", HashDB::OWRITER | HashDB::OCREATE);
+        _po.open(".additions._po.tmp", HashDB::OWRITER | HashDB::OCREATE);
+        _p_.open(".additions._p_.tmp", HashDB::OWRITER | HashDB::OCREATE);
+        __o.open(".additions.__o.tmp", HashDB::OWRITER | HashDB::OCREATE);
+    }
 };
 
 PatchTree::~PatchTree() {
-    write_metadata();
+    if (!readonly) {
+        write_metadata();
+    }
     delete tripleStore;
 
-    std::remove(".additions.sp_.tmp");
-    std::remove(".additions.s_o.tmp");
-    std::remove(".additions.s__.tmp");
-    std::remove(".additions._po.tmp");
-    std::remove(".additions._p_.tmp");
-    std::remove(".additions.__o.tmp");
+    if (!readonly) {
+        std::remove(".additions.sp_.tmp");
+        std::remove(".additions.s_o.tmp");
+        std::remove(".additions.s__.tmp");
+        std::remove(".additions._po.tmp");
+        std::remove(".additions._p_.tmp");
+        std::remove(".additions.__o.tmp");
+    }
 }
 
 void PatchTree::clear_temp_insertion_trees() {
@@ -97,6 +103,10 @@ inline bool a_lt_d(PINS_COMP_PARAMS_DEF) { return !have_additions_ended && (have
  */
 
 void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, ProgressListener *progressListener) {
+    if (readonly) {
+        throw std::invalid_argument("Can not append in read-only mode");
+    }
+
     // TODO: enable this for improved efficiency, and after it has been fixed...
     //PatchElementIteratorBuffered* patch_it = new PatchElementIteratorBuffered(patch_it_original, PATCH_INSERT_BUFFER_SIZE);
 
