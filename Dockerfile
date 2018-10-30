@@ -1,7 +1,7 @@
 FROM buildpack-deps:jessie
 
 # Download sources
-RUN cd /opt && curl -O http://fallabs.com/kyotocabinet/pkg/kyotocabinet-1.2.76.tar.gz
+RUN cd /opt && curl -LO http://fallabs.com/kyotocabinet/pkg/kyotocabinet-1.2.76.tar.gz
 RUN cd /opt && tar -xvzf kyotocabinet-1.2.76.tar.gz && mv kyotocabinet-1.2.76 kyotocabinet && rm kyotocabinet-1.2.76.tar.gz
 RUN apt-get update
 
