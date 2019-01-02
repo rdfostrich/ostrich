@@ -5,14 +5,16 @@ _Offset-enabled TRIple store for CHangesets_
 [![Docker Automated Build](https://img.shields.io/docker/automated/rdfostrich/ostrich.svg)](https://hub.docker.com/r/rdfostrich/ostrich/)
 [![DOI](https://zenodo.org/badge/97819866.svg)](https://zenodo.org/badge/latestdoi/97819866)
 
-A triple store that allows multiple dataset versions to be stored and queried.
-The store is a hybrid between snapshot, delta and timestamp-based storage,
+**OSTRICH** is an _RDF triple store_ that allows _multiple versions_ of a dataset to be stored and queried at the same time.
+
+The store is a hybrid between _snapshot_, _delta_ and _timestamp-based_ storage,
 which provides a good trade-off between storage size and query time.
-Version materialized, version and delta materialized queries can be performed efficiently over the different versions.
-These queries support limits and offsets for any triple pattern, as results are returned as triple streams.
+It provides several built-in algorithms to enable efficient iterator-based queries _at_ a certain version, _between_ any two versions, and _for_ versions. These queries support limits and offsets for any triple pattern.
 
 Insertion is done by first inserting a dataset snapshot, which is encoded in [HDT](rdfhdt.org).
 After that, deltas can be inserted, which contain additions and deletions based on the last delta or snapshot.
+
+More details on OSTRICH can be found in our [journal](https://rdfostrich.github.io/article-jws2018-ostrich/) or [demo](https://rdfostrich.github.io/article-demo/) articles.
 
 ## Building
 
