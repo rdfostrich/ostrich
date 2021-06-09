@@ -3,10 +3,16 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated")
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include("ext/hunter/HunterGate.cmake")
+
 HunterGate(
-    URL "https://github.com/ruslo/hunter/archive/v0.12.40.tar.gz"
-    SHA1 "0ccc3f3fd571676a1804723984598f9f90a4d6bc"
+    URL "https://github.com/cpp-pm/hunter/archive/v0.23.304.tar.gz"
+    SHA1 "cae9026e69d7d8333897663688a11f4232fb8826"
 )
+
+# HunterGate(
+#     URL "https://github.com/ruslo/hunter/archive/v0.12.40.tar.gz"
+#     SHA1 "0ccc3f3fd571676a1804723984598f9f90a4d6bc"
+# )
 
 # Add HDT
 # We may want to declare hdt as a library

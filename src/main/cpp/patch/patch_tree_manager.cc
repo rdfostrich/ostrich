@@ -47,7 +47,8 @@ std::map<int, PatchTree*> PatchTreeManager::detect_patch_trees() const {
     struct dirent *ent;
     if ((dir = opendir(basePath.c_str())) != NULL) {
         while ((ent = readdir(dir)) != NULL) {
-            if(std::regex_match(std::string(ent->d_name), base_match, r)) {
+            std::string dir_name = std::string(ent->d_name);
+            if(std::regex_match(dir_name, base_match, r)) {
                 // The first sub_match is the whole string; the next
                 // sub_match is the first parenthesized expression.
                 if (base_match.size() == 2) {
