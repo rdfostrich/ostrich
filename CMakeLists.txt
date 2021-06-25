@@ -9,21 +9,16 @@ HunterGate(
     SHA1 "cae9026e69d7d8333897663688a11f4232fb8826"
 )
 
-# HunterGate(
-#     URL "https://github.com/ruslo/hunter/archive/v0.12.40.tar.gz"
-#     SHA1 "0ccc3f3fd571676a1804723984598f9f90a4d6bc"
-# )
-
 # Add HDT
 # We may want to declare hdt as a library
 include_directories(
-        deps/hdt/libcds-v1.0.12/includes/
-        deps/hdt/hdt-lib/include/
-        deps/hdt/hdt-lib/src/
+        deps/hdt/libcds/include/
+        deps/hdt/libhdt/include/
+        deps/hdt/libhdt/src/
 )
 file(GLOB_RECURSE HDT_FILES
-        "deps/hdt/hdt-lib/src/*.h"
-        "deps/hdt/hdt-lib/src/*.cpp"
+        "deps/hdt/libhdt/src/*.h"
+        "deps/hdt/libhdt/src/*.cpp"
 )
 
 # Build settings

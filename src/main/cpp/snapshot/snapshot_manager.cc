@@ -3,7 +3,7 @@
 #include <dirent.h>
 #include <hdt/BasicHDT.hpp>
 #include "snapshot_manager.h"
-#include "../../../../deps/hdt/hdt-lib/src/hdt/BasicModifiableHDT.hpp"
+#include "hdt/BasicModifiableHDT.hpp"
 #include "../dictionary/dictionary_manager.h"
 
 using namespace hdt;

@@ -36,7 +36,7 @@ public:
     * @param id The id to translate
     * @param position The position of the id in the triple
     **/
-    std::string idToString(unsigned int id, TripleComponentRole position);
+    std::string idToString(size_t id, TripleComponentRole position);
 
     /**
     * Probes HDT dictionary and patch dictionary for string and return ID.
@@ -44,7 +44,7 @@ public:
     * @param &str Reference to the string
     * @param position The position of the string in the triple
     **/
-    unsigned int stringToId(std::string &str, TripleComponentRole position);
+    size_t stringToId(const std::string &str, TripleComponentRole position);
 
     /**
     * inserts a string in the patch dictionary if it's not already in the HDT
@@ -53,7 +53,7 @@ public:
     * @param position The position of the string in the triple
     *
     **/
-    unsigned int insert(std::string &str, TripleComponentRole position);
+    size_t insert(const std::string &str, TripleComponentRole position);
 
     Dictionary* getHdtDict() const;
     ModifiableDictionary* getPatchDict() const;
@@ -68,7 +68,7 @@ public:
      * @param role SUBJECT, PREDICATE or OBJECT
      * @return The comparisson
      */
-    int compareComponent(unsigned int componentId1, unsigned int componentId2, TripleComponentRole role);
+    int compareComponent(size_t componentId1, size_t componentId2, TripleComponentRole role);
 
     /**
     * Proxied methods
@@ -78,15 +78,17 @@ public:
     size_t getNumberOfElements();
     uint64_t size();
 
-    unsigned int getNsubjects();
-    unsigned int getNpredicates();
-    unsigned int getNobjects();
-    unsigned int getNshared();
+    size_t getNsubjects();
+    size_t getNpredicates();
+    size_t getNobjects();
+    size_t getNshared();
+    size_t getNobjectsLiterals();
+    size_t getNobjectsNotLiterals();
 
-    unsigned int getMaxID();
-    unsigned int getMaxSubjectID();
-    unsigned int getMaxPredicateID();
-    unsigned int getMaxObjectID();
+    size_t getMaxID();
+    size_t getMaxSubjectID();
+    size_t getMaxPredicateID();
+    size_t getMaxObjectID();
 
     void populateHeader(Header &header, string rootNode);
     void save(std::ostream &output, ControlInformation &ci, ProgressListener *listener = NULL);
@@ -105,9 +107,12 @@ public:
     void stopProcessing(ProgressListener *listener = NULL);
 
     string getType();
-    unsigned int getMapping();
+    size_t getMapping();
 
     void getSuggestions(const char *base, TripleComponentRole role, std::vector<string> &out, int maxResults);
+    hdt::IteratorUCharString *getSuggestions(const char *prefix, TripleComponentRole role);
+    hdt::IteratorUInt *getIDSuggestions(const char *prefix, TripleComponentRole role);
+
     void save();
 protected:
     void load();

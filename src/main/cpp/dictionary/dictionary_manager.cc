@@ -7,7 +7,6 @@
 #include <Triples.hpp>
 #include <dictionary/PlainDictionary.hpp>
 #include <boost/iostreams/filtering_streambuf.hpp>
-#include <boost/iostreams/copy.hpp>
 #include <boost/iostreams/filter/zlib.hpp>
 
 #include "dictionary_manager.h"
@@ -73,7 +72,7 @@ void DictionaryManager::save() {
     patchDict->save(compressed, ci);
 }
 
-std::string DictionaryManager::idToString(unsigned int id,
+std::string DictionaryManager::idToString(size_t id,
                                           TripleComponentRole position) {
     unique_lock<mutex> lock(action_mutex);
     if (id == 0) return "";
@@ -86,7 +85,7 @@ std::string DictionaryManager::idToString(unsigned int id,
     return patchDict->idToString(id - bitmask, position);
 }
 
-unsigned int DictionaryManager::stringToId(std::string &str,
+size_t DictionaryManager::stringToId(const std::string &str,
                                            TripleComponentRole position) {
     unique_lock<mutex> lock(action_mutex);
     // if string is empty, it's a variable, and thus, a zero
@@ -106,7 +105,7 @@ unsigned int DictionaryManager::stringToId(std::string &str,
     return bitmask | id;
 }
 
-unsigned int DictionaryManager::insert(std::string &str,
+size_t DictionaryManager::insert(const std::string &str,
                                        TripleComponentRole position) {
     unique_lock<mutex> lock(action_mutex);
 
@@ -152,35 +151,43 @@ uint64_t DictionaryManager::size() {
     return hdtDict->size() + patchDict->size();
 }
 
-unsigned int DictionaryManager::getNsubjects() {
+size_t DictionaryManager::getNsubjects() {
     return hdtDict->getNsubjects() + patchDict->getNsubjects();
 }
 
-unsigned int DictionaryManager::getNpredicates() {
+size_t DictionaryManager::getNpredicates() {
     return hdtDict->getNpredicates() + patchDict->getNpredicates();
 }
 
-unsigned int DictionaryManager::getNobjects() {
+size_t DictionaryManager::getNobjects() {
     return hdtDict->getNobjects() + patchDict->getNobjects();
 }
 
-unsigned int DictionaryManager::getNshared() {
+size_t DictionaryManager::getNobjectsLiterals() {
+    return hdtDict->getNobjectsLiterals() + patchDict->getNobjectsLiterals();
+}
+
+size_t DictionaryManager::getNobjectsNotLiterals() {
+    return hdtDict->getNobjectsNotLiterals() + patchDict->getNobjectsNotLiterals();
+}
+
+size_t DictionaryManager::getNshared() {
     return hdtDict->getNshared() + patchDict->getNshared();
 }
 
-unsigned int DictionaryManager::getMaxID() {
+size_t DictionaryManager::getMaxID() {
     return patchDict->getMaxID();
 }
 
-unsigned int DictionaryManager::getMaxSubjectID() {
+size_t DictionaryManager::getMaxSubjectID() {
     return patchDict->getMaxSubjectID();
 }
 
-unsigned int DictionaryManager::getMaxPredicateID() {
+size_t DictionaryManager::getMaxPredicateID() {
     return patchDict->getMaxPredicateID();
 }
 
-unsigned int DictionaryManager::getMaxObjectID() {
+size_t DictionaryManager::getMaxObjectID() {
     return patchDict->getMaxObjectID();
 }
 
@@ -223,15 +230,18 @@ string DictionaryManager::getType() {
     return HDTVocabulary::HDT_DICTIONARY_BASE+"Manager>";
 }
 
-unsigned int DictionaryManager::getMapping() {
+size_t DictionaryManager::getMapping() {
     return hdtDict->getMapping() + patchDict->getMapping();
 }
 
 void DictionaryManager::getSuggestions(const char *base, TripleComponentRole role, std::vector<string> &out, int maxResults) {}
 
-int DictionaryManager::compareComponent(unsigned int componentId1, unsigned int componentId2,
+hdt::IteratorUCharString* DictionaryManager::getSuggestions(const char *prefix, TripleComponentRole role) {}
+hdt::IteratorUInt* DictionaryManager::getIDSuggestions(const char *prefix, TripleComponentRole role) {}
+
+int DictionaryManager::compareComponent(size_t componentId1, size_t componentId2,
                                         TripleComponentRole role) {
-    unsigned int sharedCount = hdtDict->getNshared();
+    size_t sharedCount = hdtDict->getNshared();
     bool shared1 = componentId1 > sharedCount;
     bool shared2 = componentId2 > sharedCount;
     if (shared1 == shared2) {
