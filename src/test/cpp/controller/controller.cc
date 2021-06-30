@@ -175,6 +175,13 @@ TEST_F(ControllerTest, GetVersionMaterializedSimple) {
     ASSERT_EQ(1, controller->get_version_materialized_count(Triple("", "", "<c>", dict), 0).first) << "Count is incorrect";
     TripleIterator* it3 = controller->get_version_materialized(Triple("", "", "<c>", dict), 0, 0);
 
+//    std::cout << "DEBUG it3: " << it3->next(&t) << std::endl;
+//    std::cout << "DEBUG it3 t: " << t.to_string(*dict) << std::endl;
+//    std::cout << "DEBUG it3: " << it3->next(&t) << std::endl;
+//    std::cout << "DEBUG it3 t: " << t.to_string(*dict) << std::endl;
+//    std::cout << "DEBUG it3: " << it3->next(&t) << std::endl;
+//    std::cout << "DEBUG it3 t: " << t.to_string(*dict) << std::endl;
+
     ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
     ASSERT_EQ("<a> <a> <c>.", t.to_string(*dict)) << "Element is incorrect";
 
@@ -598,6 +605,10 @@ TEST_F(ControllerTest, GetVersionMaterializedComplex3) {
     // Request version 0 (snapshot)
     ASSERT_EQ(1, controller->get_version_materialized_count(Triple("s", "", "", dict), 0).first) << "Count is incorrect";
     TripleIterator* it0 = controller->get_version_materialized(Triple("s", "", "", dict), 0, 0);
+
+    while(it0->next(&t)) {
+        std::cout << t.to_string(*dict) << std::endl;
+    }
 
     ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
     ASSERT_EQ("s z o.", t.to_string(*dict)) << "Element is incorrect";

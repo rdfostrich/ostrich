@@ -93,7 +93,7 @@ PatchIterator* PatchSorted::iterator() const {
     return new PatchIteratorVector(elements.cbegin(), elements.cend());
 }
 
-inline PatchPosition contains_and_increment_position(HashDB& m, long hash) {
+inline PatchPosition contains_and_increment_position(HashDB& m, size_t hash) {
     size_t _;
     char raw_key[sizeof(long)];
     char* raw_value;
@@ -102,7 +102,7 @@ inline PatchPosition contains_and_increment_position(HashDB& m, long hash) {
 
     raw_value = m.get(raw_key, sizeof(long), &_);
     PatchPosition pos = 0;
-    if (raw_value != NULL) {
+    if (raw_value != nullptr) {
         was_present = true;
         memcpy(&pos, raw_value, sizeof(PatchPosition));
     } else {
@@ -129,12 +129,12 @@ PatchPositions Patch::positions(const Triple& triple,
                                 HashDB& __o,
                                 PatchPosition& ___) {
     PatchPositions positions = PatchPositions();
-    long hsp_ = triple.get_subject() | (triple.get_predicate() << 16);
-    long hs_o = triple.get_subject() | (triple.get_object() << 16);
-    long hs__ = triple.get_subject();
-    long h_po = triple.get_predicate() | (triple.get_object() << 16);
-    long h_p_ = triple.get_predicate();
-    long h__o = triple.get_object();
+    size_t hsp_ = triple.get_subject() | (triple.get_predicate() << 16);
+    size_t hs_o = triple.get_subject() | (triple.get_object() << 16);
+    size_t hs__ = triple.get_subject();
+    size_t h_po = triple.get_predicate() | (triple.get_object() << 16);
+    size_t h_p_ = triple.get_predicate();
+    size_t h__o = triple.get_object();
 
     positions.sp_ = contains_and_increment_position(sp_, hsp_);
     positions.s_o = contains_and_increment_position(s_o, hs_o);

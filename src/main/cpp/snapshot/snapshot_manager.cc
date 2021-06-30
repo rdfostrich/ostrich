@@ -133,11 +133,11 @@ IteratorTripleID* SnapshotManager::search_with_offset(HDT *hdt, const Triple& tr
             try {
                 it->goTo(offset);
                 offset = 0;
-            } catch (char const* error) {}
+            } catch (std::exception& e) {}
         }
         while(offset-- > 0 && it->hasNext()) it->next();
         return it;
-    } catch (char const* e) {
+    } catch (std::exception& e) {
         // HDT will crash when we are not using any triple component id's that are not available
         // in the HDT dict.
         // In that case, HDT will not contain any triples for the given pattern, so we return an empty iterator.

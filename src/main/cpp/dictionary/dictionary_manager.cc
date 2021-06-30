@@ -92,7 +92,7 @@ size_t DictionaryManager::stringToId(const std::string &str,
     if (str.empty()) return 0;
 
     // First ask HDT
-    unsigned int id;
+    size_t id;
     try {
         id = hdtDict->stringToId(str, position);
         if (id > 0)
@@ -112,7 +112,7 @@ size_t DictionaryManager::insert(const std::string &str,
     if (str.empty()) return 0;
 
     // First ask HDT
-    unsigned int id;
+    size_t id;
     try {
         id = hdtDict->stringToId(str, position);
         if (id > 0)
@@ -120,10 +120,11 @@ size_t DictionaryManager::insert(const std::string &str,
     } catch (exception e) {
     } // ID is not in there
 
-    unsigned int originalId = patchDict->stringToId(str, position);
+    size_t originalId = patchDict->stringToId(str, position);
     if (originalId == 0) {
         patchDict->insert(str, position == SUBJECT ? NOT_SHARED_SUBJECT : (position == PREDICATE ? NOT_SHARED_PREDICATE
                                                                                                  : NOT_SHARED_OBJECT));
+//        patchDict->insert(str, position);
         originalId = patchDict->stringToId(str, position);
     }
     id = bitmask | originalId;

@@ -19,7 +19,7 @@ class DictionaryManager : public ModifiableDictionary {
     Dictionary *hdtDict;             // Dictionary from HDT file
     PlainDictionary *patchDict; // Additional dictionary
 
-    const unsigned int bitmask;
+    const size_t bitmask;
     int snapshotId;
     bool readonly;
 

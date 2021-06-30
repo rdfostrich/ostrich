@@ -16,15 +16,15 @@ Triple::Triple(const string& s, const string& p, const string& o, ModifiableDict
   object = !o.empty() ? dict->insert(const_cast<string&>(o), OBJECT) : 0;
 }
 
-const unsigned int Triple::get_subject() const {
+const size_t Triple::get_subject() const {
     return subject;
 }
 
-const unsigned int Triple::get_predicate() const {
+const size_t Triple::get_predicate() const {
     return predicate;
 }
 
-const unsigned int Triple::get_object() const {
+const size_t Triple::get_object() const {
     return object;
 }
 
@@ -65,15 +65,15 @@ void Triple::deserialize(const char* data, size_t size) {
   memcpy(&object, &data[sizeof(subject) + sizeof(predicate)],  sizeof(object));
 }
 
-void Triple::set_subject(unsigned int subject) {
+void Triple::set_subject(size_t subject) {
     this->subject = subject;
 }
 
-void Triple::set_predicate(unsigned int predicate) {
+void Triple::set_predicate(size_t predicate) {
     this->predicate = predicate;
 }
 
-void Triple::set_object(unsigned int object) {
+void Triple::set_object(size_t object) {
     this->object = object;
 }
 

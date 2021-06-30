@@ -29,6 +29,7 @@ std::pair<size_t, ResultEstimationType> Controller::get_version_materialized_cou
     HDT* snapshot = get_snapshot_manager()->get_snapshot(snapshot_id);
     IteratorTripleID* snapshot_it = SnapshotManager::search_with_offset(snapshot, triple_pattern, 0);
     size_t snapshot_count = snapshot_it->estimatedNumResults();
+
     if (!allowEstimates && snapshot_it->numResultEstimation() != EXACT) {
         snapshot_count = 0;
         while (snapshot_it->hasNext()) {
@@ -42,7 +43,7 @@ std::pair<size_t, ResultEstimationType> Controller::get_version_materialized_cou
 
     DictionaryManager *dict = get_snapshot_manager()->get_dictionary_manager(snapshot_id);
     PatchTree* patchTree = get_patch_tree_manager()->get_patch_tree(patch_id, dict);
-    if(patchTree == NULL) {
+    if(patchTree == nullptr) {
         return std::make_pair(snapshot_count, snapshot_it->numResultEstimation());
     }
 
@@ -69,10 +70,10 @@ TripleIterator* Controller::get_version_materialized(const Triple &triple_patter
 
     // Otherwise, we have to prepare an iterator for a certain patch
     PatchTree* patchTree = get_patch_tree_manager()->get_patch_tree(patch_id, dict);
-    if(patchTree == NULL) {
+    if(patchTree == nullptr) {
         return new SnapshotTripleIterator(snapshot_it);
     }
-    PositionedTripleIterator* deletion_it = NULL;
+    PositionedTripleIterator* deletion_it = nullptr;
     long added_offset = 0;
     bool check_offseted_deletions = true;
 
@@ -361,7 +362,7 @@ void Controller::cleanup(string basePath, Controller* controller) {
     while(itS != snapshots.end()) {
         int id = itS->first;
         std::remove((basePath + SNAPSHOT_FILENAME_BASE(id)).c_str());
-        std::remove((basePath + SNAPSHOT_FILENAME_BASE(id) + ".index").c_str());
+        std::remove((basePath + SNAPSHOT_FILENAME_BASE(id) + ".index.v1-1").c_str());
 
         patchDictsToDelete.push_back(id);
         itS++;

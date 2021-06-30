@@ -114,7 +114,9 @@ TEST(TripleTest, SerializationSize) {
     size_t size;
     const char* data = tripleIn.serialize(&size);
 
-    ASSERT_EQ(12, size) << "Serialization length is too high";
+//    ASSERT_EQ(12, size) << "Serialization length is too high";
+    size_t expected_size = 3 * sizeof(size_t);
+    ASSERT_EQ(expected_size, size) << "Serialization length is too high";
     free((char*) data);
 
     DictionaryManager::cleanup(TESTPATH, 0);

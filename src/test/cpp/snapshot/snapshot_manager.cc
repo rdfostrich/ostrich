@@ -31,7 +31,7 @@ protected:
         while(it != patches.end()) {
             int id = it->first;
             std::remove((TESTPATH + SNAPSHOT_FILENAME_BASE(id)).c_str());
-            std::remove((TESTPATH + SNAPSHOT_FILENAME_BASE(id) + ".index").c_str());
+            std::remove((TESTPATH + SNAPSHOT_FILENAME_BASE(id) + ".index.v1-1").c_str());
             patchDictsToDelete.push_back(id);
             it++;
         }
