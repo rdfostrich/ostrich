@@ -2,6 +2,8 @@
 #include "controller.h"
 #include "snapshot_patch_iterator_triple_id.h"
 #include "patch_builder_streaming.h"
+#include "../snapshot/combined_triple_iterator.h"
+#include "../simpleprogresslistener.h"
 #include <sys/stat.h>
 
 Controller::Controller(string basePath, int8_t kc_opts, bool readonly) : patchTreeManager(new PatchTreeManager(basePath, kc_opts, readonly)), snapshotManager(new SnapshotManager(basePath, readonly)) {
@@ -389,4 +391,80 @@ PatchBuilder* Controller::new_patch_bulk() {
 
 PatchBuilderStreaming *Controller::new_patch_stream() {
     return new PatchBuilderStreaming(this);
+}
+
+
+
+bool Controller::ingest(const std::vector<std::pair<IteratorTripleString*, bool>> &files, int patch_id,
+                        const SnapshotCreationStrategy &strategy, ProgressListener* progressListener) {
+
+    std::string base_uri = "<http://example.org>";  // change to macro like other part of the code ?
+
+    // Create metadata
+    const CreationStrategyMetadata* meta = get_strategy_metadata();
+    // Here trigger strategy
+    bool create_snapshot = strategy.doCreate(*meta) || patch_id == 0;
+
+    DictionaryManager* dict;
+
+    // Initialize iterators
+    CombinedTripleIterator* it_snapshot;
+    PatchElementIteratorCombined* it_patch;
+    if (create_snapshot) {
+        it_snapshot = new CombinedTripleIterator();
+    } else {
+        int snapshot_id = snapshotManager->get_latest_snapshot(meta->num_version);
+        snapshotManager->load_snapshot(snapshot_id);
+        dict = snapshotManager->get_dictionary_manager(snapshot_id);
+        it_patch = new PatchElementIteratorCombined(PatchTreeKeyComparator(comp_s, comp_p, comp_o, dict));
+    }
+
+    for (auto& file: files) {
+        if (create_snapshot) {
+            if (patch_id == 0) {
+                if (!file.second) {
+                    cerr << "Initial versions can not contain deletions" << endl;
+                    return false;
+                }
+                it_snapshot->appendIterator(file.first);
+            } else {
+                // NEW SNAPSHOT
+                // Unimplemented yet
+                // VM patch_id-1 + new changes ?
+            }
+        } else {
+            it_patch->appendIterator(new PatchElementIteratorTripleStrings(dict, file.first, file.second));
+        }
+    }
+
+    size_t added;
+    if (create_snapshot) {
+        NOTIFYMSG(progressListener, "\nCreating snapshot...\n");
+        std::cout.setstate(std::ios_base::failbit); // Disable cout info from HDT
+        HDT* hdt = snapshotManager->create_snapshot(patch_id, it_snapshot, base_uri, progressListener);
+        std::cout.clear();
+        added = hdt->getTriples()->getNumberOfElements();
+        delete it_snapshot;
+    } else {
+        NOTIFYMSG(progressListener, "\nAppending patch...\n");
+        append(it_patch, patch_id, dict, false, progressListener);
+        added = it_patch->getPassed();
+
+        delete it_patch;
+    }
+
+    NOTIFYMSG(progressListener, ("\nInserted " + to_string(added) + " for version " + to_string(patch_id) + ".\n").c_str());
+    delete progressListener;
+
+    return true;
+}
+
+const CreationStrategyMetadata *Controller::get_strategy_metadata() {
+    int last_snapshot_id = snapshotManager->get_max_snapshot_id();
+    int number_versions = patchTreeManager->get_max_patch_id(snapshotManager->get_dictionary_manager(last_snapshot_id));
+
+    auto meta = new CreationStrategyMetadata;
+    meta->num_version = number_versions;
+
+    return meta;
 }
