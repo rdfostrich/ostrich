@@ -158,3 +158,9 @@ DictionaryManager* SnapshotManager::get_dictionary_manager(int snapshot_id) {
     }
     return it->second;
 }
+
+int SnapshotManager::get_max_snapshot_id() {
+    auto end_it = loaded_snapshots.cend();
+    end_it--;
+    return end_it->first;
+}

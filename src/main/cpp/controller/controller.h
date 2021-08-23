@@ -8,6 +8,8 @@
 #include "patch_builder_streaming.h"
 #include "triple_delta_iterator.h"
 #include "triple_versions_iterator.h"
+#include "snapshot_creation_strategy.h"
+
 
 class Controller {
 private:
@@ -68,6 +70,7 @@ public:
      * @return If the append succeeded.
      */
     bool append(const PatchSorted& patch, int patch_id, DictionaryManager* dict, bool check_uniqueness = true, ProgressListener* progressListener = NULL);
+
     /**
      * @return The internal patchtree manager.
      */
@@ -96,6 +99,24 @@ public:
      * Removes all the files that were created by the controller.
      */
     static void cleanup(string basePath, Controller* controller);
+
+    /**
+     * Get the metadata required for snapshot creation decision
+     * @return a const pointer to the metadata
+     */
+    const CreationStrategyMetadata* get_strategy_metadata();
+
+    /**
+    * Add the content from the given files to the patch tree
+    * Create new snapshots when relevant, according to the given strategy.
+    * @param files The list of files to ingest as a pair of filenames and boolean indicating if it's additions.
+    * @param patch_id The id of the patch.
+    * @param strategy The strategy to use for snapshot creation
+    * @return if ingestion has succeeded
+    */
+    bool ingest(const std::vector<std::pair<IteratorTripleString*, bool>>& files, int patch_id, const SnapshotCreationStrategy& strategy, ProgressListener* progressListener = nullptr);
+
+
 };
 
 

@@ -26,6 +26,9 @@ public:
      * this means that patch_id is directly refering to a snapshot.
      */
     int get_latest_snapshot(int patch_id);
+
+    int get_max_snapshot_id();
+
     /**
      * Load the HDT file for the given snapshot id.
      */
