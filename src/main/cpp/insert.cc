@@ -26,8 +26,7 @@ int main(int argc, char** argv) {
     Controller controller("./", TreeDB::TCOMPRESS);
 
     // Get parameters
-    int patch_id = std::atoi(argv[1 + verbose]);
-
+    int patch_id = std::stoi(argv[1 + verbose]);
 
     // Read command line parameters
     std::vector<std::pair<IteratorTripleString*, bool>> files;
@@ -48,7 +47,7 @@ int main(int argc, char** argv) {
     }
 
     SnapshotCreationStrategy* strat = new NeverCreateSnapshot;
-    bool status = controller.ingest(files, patch_id, *strat, progressListener);
+    bool status = controller.ingest(files, patch_id, progressListener);
 
     delete strat;
 

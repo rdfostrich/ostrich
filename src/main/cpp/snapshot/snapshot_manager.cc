@@ -42,7 +42,7 @@ int SnapshotManager::get_latest_snapshot(int patch_id) {
             return it->first;
         }
         it--;
-    };
+    }
     if(loaded_snapshots.begin()->first <= patch_id) {
         return loaded_snapshots.begin()->first;
     }
@@ -160,7 +160,12 @@ DictionaryManager* SnapshotManager::get_dictionary_manager(int snapshot_id) {
 }
 
 int SnapshotManager::get_max_snapshot_id() {
-    auto end_it = loaded_snapshots.cend();
-    end_it--;
-    return end_it->first;
+    if (loaded_snapshots.empty())
+        return -1;
+    auto it = loaded_snapshots.end();
+    if(it == loaded_snapshots.begin() && it == loaded_snapshots.end()) {
+        return it->first;
+    }
+    it--;
+    return it->first;
 }

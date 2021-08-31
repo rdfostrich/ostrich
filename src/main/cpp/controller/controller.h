@@ -15,8 +15,12 @@ class Controller {
 private:
     PatchTreeManager* patchTreeManager;
     SnapshotManager* snapshotManager;
+    SnapshotCreationStrategy* strategy;
+    CreationStrategyMetadata* metadata;
+
 public:
-    Controller(string basePath, int8_t kc_opts = 0, bool readonly = false);
+    explicit Controller(string basePath, int8_t kc_opts = 0, bool readonly = false);
+    Controller(string basePath, SnapshotCreationStrategy* strategy, int8_t kc_opts = 0, bool readonly = false);
     ~Controller();
     /**
      * Get an iterator for all triples matching the given triple pattern with a certain offset
@@ -101,20 +105,18 @@ public:
     static void cleanup(string basePath, Controller* controller);
 
     /**
-     * Get the metadata required for snapshot creation decision
-     * @return a const pointer to the metadata
+     * Compute the metadata required for snapshot creation decision
      */
-    const CreationStrategyMetadata* get_strategy_metadata();
+    void init_strategy_metadata();
 
     /**
     * Add the content from the given files to the patch tree
     * Create new snapshots when relevant, according to the given strategy.
     * @param files The list of files to ingest as a pair of filenames and boolean indicating if it's additions.
     * @param patch_id The id of the patch.
-    * @param strategy The strategy to use for snapshot creation
     * @return if ingestion has succeeded
     */
-    bool ingest(const std::vector<std::pair<IteratorTripleString*, bool>>& files, int patch_id, const SnapshotCreationStrategy& strategy, ProgressListener* progressListener = nullptr);
+    bool ingest(const std::vector<std::pair<IteratorTripleString*, bool>>& files, int patch_id, ProgressListener* progressListener = nullptr);
 
 
 };

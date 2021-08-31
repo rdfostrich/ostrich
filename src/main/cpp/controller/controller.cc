@@ -6,16 +6,29 @@
 #include "../simpleprogresslistener.h"
 #include <sys/stat.h>
 
-Controller::Controller(string basePath, int8_t kc_opts, bool readonly) : patchTreeManager(new PatchTreeManager(basePath, kc_opts, readonly)), snapshotManager(new SnapshotManager(basePath, readonly)) {
-    struct stat sb;
+#define BASEURI "<http://example.org>"
+
+
+Controller::Controller(string basePath, int8_t kc_opts, bool readonly) : Controller(basePath, nullptr, kc_opts,
+                                                                                    readonly) {}
+
+Controller::Controller(string basePath, SnapshotCreationStrategy *strategy, int8_t kc_opts, bool readonly)
+        : patchTreeManager(new PatchTreeManager(basePath, kc_opts, readonly)),
+          snapshotManager(new SnapshotManager(basePath, readonly)),
+          strategy(strategy), metadata(nullptr) {
+    struct stat sb{};
     if (!(stat(basePath.c_str(), &sb) == 0 && S_ISDIR(sb.st_mode))) {
         throw std::invalid_argument("The provided path '" + basePath + "' is not a valid directory.");
     }
+
+    // Get the metadata for snapshot creation
+    init_strategy_metadata();
 }
 
 Controller::~Controller() {
     delete patchTreeManager;
     delete snapshotManager;
+    delete metadata;
 }
 
 size_t Controller::get_version_materialized_count_estimated(const Triple& triple_pattern, int patch_id) const {
@@ -296,8 +309,28 @@ TripleVersionsIterator* Controller::get_version(const Triple &triple_pattern, in
 }
 
 bool Controller::append(PatchElementIterator* patch_it, int patch_id, DictionaryManager* dict, bool check_uniqueness, ProgressListener* progressListener) {
-    // TODO: this will require some changes when we implement automatic snapshot creation.
-    return get_patch_tree_manager()->append(patch_it, patch_id, dict, check_uniqueness, progressListener);
+    // Ingest as a regular delta
+    bool status = get_patch_tree_manager()->append(patch_it, patch_id, dict, check_uniqueness, progressListener);
+
+    // If we need to create a new snapshot:
+    // - We do a VM query on the current patch_it
+    // - We use the result of the query to make a new snapshot
+    // - (optional) we delete the current patch_it in the patch_tree ?
+    bool create_snapshot = strategy != nullptr && strategy->doCreate(*metadata);
+    if (create_snapshot) {
+        NOTIFYMSG(progressListener, "\nCreating snapshot from patch...\n");
+        TripleIterator* triples_vm = get_version_materialized(Triple("", "", "", dict), 0, patch_id);
+        std::vector<TripleString> triples;
+        Triple t;
+        while (triples_vm->next(&t)) {
+            triples.emplace_back(t.get_subject(*dict), t.get_predicate(*dict), t.get_object(*dict));
+        }
+        IteratorTripleStringVector vec_it(&triples);
+        std::cout.setstate(std::ios_base::failbit); // Disable cout info from HDT
+        snapshotManager->create_snapshot(patch_id, &vec_it, BASEURI, progressListener);
+        std::cout.clear();
+    }
+    return status;
 }
 
 bool Controller::append(const PatchSorted& patch, int patch_id, DictionaryManager *dict, bool check_uniqueness,
@@ -394,54 +427,42 @@ PatchBuilderStreaming *Controller::new_patch_stream() {
 }
 
 
+bool Controller::ingest(const std::vector<std::pair<IteratorTripleString *, bool>> &files, int patch_id,
+                        ProgressListener *progressListener) {
 
-bool Controller::ingest(const std::vector<std::pair<IteratorTripleString*, bool>> &files, int patch_id,
-                        const SnapshotCreationStrategy &strategy, ProgressListener* progressListener) {
+    DictionaryManager *dict;
 
-    std::string base_uri = "<http://example.org>";  // change to macro like other part of the code ?
-
-    // Create metadata
-    const CreationStrategyMetadata* meta = get_strategy_metadata();
-    // Here trigger strategy
-    bool create_snapshot = strategy.doCreate(*meta) || patch_id == 0;
-
-    DictionaryManager* dict;
+    bool first = patch_id == 0;
 
     // Initialize iterators
-    CombinedTripleIterator* it_snapshot;
-    PatchElementIteratorCombined* it_patch;
-    if (create_snapshot) {
+    CombinedTripleIterator *it_snapshot;
+    PatchElementIteratorCombined *it_patch;
+    if (first) {
         it_snapshot = new CombinedTripleIterator();
     } else {
-        int snapshot_id = snapshotManager->get_latest_snapshot(meta->num_version);
+        int snapshot_id = snapshotManager->get_latest_snapshot(metadata->num_version);
         snapshotManager->load_snapshot(snapshot_id);
         dict = snapshotManager->get_dictionary_manager(snapshot_id);
         it_patch = new PatchElementIteratorCombined(PatchTreeKeyComparator(comp_s, comp_p, comp_o, dict));
     }
 
-    for (auto& file: files) {
-        if (create_snapshot) {
-            if (patch_id == 0) {
-                if (!file.second) {
-                    cerr << "Initial versions can not contain deletions" << endl;
-                    return false;
-                }
-                it_snapshot->appendIterator(file.first);
-            } else {
-                // NEW SNAPSHOT
-                // Unimplemented yet
-                // VM patch_id-1 + new changes ?
+    for (auto &file: files) {
+        if (first) {
+            if (!file.second) {
+                cerr << "Initial versions can not contain deletions" << endl;
+                return false;
             }
+            it_snapshot->appendIterator(file.first);
         } else {
             it_patch->appendIterator(new PatchElementIteratorTripleStrings(dict, file.first, file.second));
         }
     }
 
     size_t added;
-    if (create_snapshot) {
+    if (first) {
         NOTIFYMSG(progressListener, "\nCreating snapshot...\n");
         std::cout.setstate(std::ios_base::failbit); // Disable cout info from HDT
-        HDT* hdt = snapshotManager->create_snapshot(patch_id, it_snapshot, base_uri, progressListener);
+        HDT *hdt = snapshotManager->create_snapshot(patch_id, it_snapshot, BASEURI, progressListener);
         std::cout.clear();
         added = hdt->getTriples()->getNumberOfElements();
         delete it_snapshot;
@@ -453,18 +474,23 @@ bool Controller::ingest(const std::vector<std::pair<IteratorTripleString*, bool>
         delete it_patch;
     }
 
-    NOTIFYMSG(progressListener, ("\nInserted " + to_string(added) + " for version " + to_string(patch_id) + ".\n").c_str());
+    NOTIFYMSG(progressListener,
+              ("\nInserted " + to_string(added) + " for version " + to_string(patch_id) + ".\n").c_str());
     delete progressListener;
 
     return true;
 }
 
-const CreationStrategyMetadata *Controller::get_strategy_metadata() {
-    int last_snapshot_id = snapshotManager->get_max_snapshot_id();
-    int number_versions = patchTreeManager->get_max_patch_id(snapshotManager->get_dictionary_manager(last_snapshot_id));
+void Controller::init_strategy_metadata() {
+    int number_versions = snapshotManager->get_max_snapshot_id();
+    if (number_versions > -1) {
+        int max_patch = patchTreeManager->get_max_patch_id(snapshotManager->get_dictionary_manager(number_versions));
+        if (max_patch > -1)
+            number_versions = max_patch;
+    }
 
-    auto meta = new CreationStrategyMetadata;
-    meta->num_version = number_versions;
-
-    return meta;
+    metadata = new CreationStrategyMetadata;
+    metadata->num_version = number_versions;
 }
+
+
