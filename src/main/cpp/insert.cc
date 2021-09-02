@@ -23,7 +23,10 @@ int main(int argc, char** argv) {
     ProgressListener* progressListener = verbose ? new SimpleProgressListener() : nullptr;
 
     // Load the store
-    Controller controller("./", TreeDB::TCOMPRESS);
+//    Controller controller("./", TreeDB::TCOMPRESS);
+
+    CreateSnapshotEveryN strategy(2); // for testing, later as a parameter (and/or config file ?)
+    Controller controller("./", &strategy, TreeDB::TCOMPRESS);
 
     // Get parameters
     int patch_id = std::stoi(argv[1 + verbose]);
@@ -46,10 +49,12 @@ int main(int argc, char** argv) {
         }
     }
 
-    SnapshotCreationStrategy* strat = new NeverCreateSnapshot;
     bool status = controller.ingest(files, patch_id, progressListener);
 
-    delete strat;
+    if (progressListener)
+        cout << endl;
+
+    delete progressListener;
 
     return status;
 }

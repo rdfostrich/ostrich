@@ -1,7 +1,3 @@
-//
-// Created by olivier on 30/06/2021.
-//
-
 #include "snapshot_creation_strategy.h"
 
 
@@ -19,8 +15,6 @@ bool CreateSnapshotEveryN::doCreate(const CreationStrategyMetadata &metadata) co
     return false;
 }
 
-CreateSnapshotEveryN::CreateSnapshotEveryN(unsigned int step) {
-    step = step;
-}
+CreateSnapshotEveryN::CreateSnapshotEveryN(unsigned step): step(step) {}
 
 CreateSnapshotEveryN::CreateSnapshotEveryN(): step(5) {}

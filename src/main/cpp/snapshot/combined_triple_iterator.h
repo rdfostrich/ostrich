@@ -13,6 +13,7 @@ private:
     std::vector<IteratorTripleString*> iterators;
 public:
     CombinedTripleIterator();
+    ~CombinedTripleIterator();
     bool hasNext();
     TripleString *next();
     void appendIterator(IteratorTripleString* it);

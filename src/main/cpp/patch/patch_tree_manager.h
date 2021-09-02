@@ -86,6 +86,7 @@ public:
      * @return The largest patch id that is currently available.
      */
     int get_max_patch_id(DictionaryManager* dict);
+
 };
 
 

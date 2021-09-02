@@ -309,16 +309,23 @@ TripleVersionsIterator* Controller::get_version(const Triple &triple_pattern, in
 }
 
 bool Controller::append(PatchElementIterator* patch_it, int patch_id, DictionaryManager* dict, bool check_uniqueness, ProgressListener* progressListener) {
+    // Detect if we need to construct a new patchTree (when last patch triggered a new snapshot)
+    int snapshot_id = snapshotManager->get_latest_snapshot(patch_id);
+    int patch_tree_id = patchTreeManager->get_patch_tree_id(patch_id);
+    if (snapshot_id >= patch_tree_id)
+        patchTreeManager->construct_next_patch_tree(patch_id, dict);
+
     // Ingest as a regular delta
-    bool status = get_patch_tree_manager()->append(patch_it, patch_id, dict, check_uniqueness, progressListener);
+    bool status = patchTreeManager->append(patch_it, patch_id, dict, check_uniqueness, progressListener);
 
     // If we need to create a new snapshot:
-    // - We do a VM query on the current patch_it
+    // - We do a VM query on the current patch_id
     // - We use the result of the query to make a new snapshot
-    // - (optional) we delete the current patch_it in the patch_tree ?
+    // - (optional) we delete the current patch_id in the patch_tree ?
     bool create_snapshot = strategy != nullptr && strategy->doCreate(*metadata);
     if (create_snapshot) {
         NOTIFYMSG(progressListener, "\nCreating snapshot from patch...\n");
+        NOTIFYMSG(progressListener, "\nMaterializing version ...\n");
         TripleIterator* triples_vm = get_version_materialized(Triple("", "", "", dict), 0, patch_id);
         std::vector<TripleString> triples;
         Triple t;
@@ -326,6 +333,7 @@ bool Controller::append(PatchElementIterator* patch_it, int patch_id, Dictionary
             triples.emplace_back(t.get_subject(*dict), t.get_predicate(*dict), t.get_object(*dict));
         }
         IteratorTripleStringVector vec_it(&triples);
+        NOTIFYMSG(progressListener, "\nCreating new snapshot ...\n");
         std::cout.setstate(std::ios_base::failbit); // Disable cout info from HDT
         snapshotManager->create_snapshot(patch_id, &vec_it, BASEURI, progressListener);
         std::cout.clear();
@@ -476,21 +484,23 @@ bool Controller::ingest(const std::vector<std::pair<IteratorTripleString *, bool
 
     NOTIFYMSG(progressListener,
               ("\nInserted " + to_string(added) + " for version " + to_string(patch_id) + ".\n").c_str());
-    delete progressListener;
 
     return true;
 }
 
+
 void Controller::init_strategy_metadata() {
     int number_versions = snapshotManager->get_max_snapshot_id();
     if (number_versions > -1) {
-        int max_patch = patchTreeManager->get_max_patch_id(snapshotManager->get_dictionary_manager(number_versions));
-        if (max_patch > -1)
-            number_versions = max_patch;
+        snapshotManager->load_snapshot(number_versions);
+        int max_patch_id = patchTreeManager->get_max_patch_id(snapshotManager->get_dictionary_manager(number_versions));
+        if (max_patch_id > -1) {
+            number_versions = max_patch_id;
+        }
     }
 
     metadata = new CreationStrategyMetadata;
-    metadata->num_version = number_versions;
+    metadata->num_version = number_versions > -1 ? number_versions + 1 : number_versions;
 }
 
 
