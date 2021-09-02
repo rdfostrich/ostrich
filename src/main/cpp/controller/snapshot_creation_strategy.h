@@ -1,6 +1,3 @@
-//
-// Created by olivier on 30/06/2021.
-//
 
 #ifndef OSTRICH_SNAPSHOT_CREATION_STRATEGY_H
 #define OSTRICH_SNAPSHOT_CREATION_STRATEGY_H
@@ -38,7 +35,7 @@ private:
     unsigned step;
 public:
     CreateSnapshotEveryN();
-    CreateSnapshotEveryN(unsigned step);
+    explicit CreateSnapshotEveryN(unsigned step);
     bool doCreate(const CreationStrategyMetadata& metadata) const override;
 };
 

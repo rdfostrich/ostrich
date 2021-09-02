@@ -51,6 +51,11 @@ int SnapshotManager::get_latest_snapshot(int patch_id) {
 
 HDT* SnapshotManager::load_snapshot(int snapshot_id) {
     // TODO: We might want to look into unloading snapshots if they aren't used for a while. (using splay-tree/queue?)
+    // We check if a snapshot is already loaded for the given snapshot_id
+    auto it = loaded_snapshots.find(snapshot_id);
+    if (it != loaded_snapshots.end() && it->second)
+        return it->second;
+
     string fileName = basePath + SNAPSHOT_FILENAME_BASE(snapshot_id);
     loaded_snapshots[snapshot_id] = hdt::HDTManager::mapIndexedHDT(fileName.c_str());
 

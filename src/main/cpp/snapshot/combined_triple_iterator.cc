@@ -35,3 +35,8 @@ void CombinedTripleIterator::goToStart() {
     }
     pos++;
 }
+
+CombinedTripleIterator::~CombinedTripleIterator() {
+    for (auto it: iterators)
+        delete it;
+}
