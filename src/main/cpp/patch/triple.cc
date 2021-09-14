@@ -1,4 +1,5 @@
 #include <sstream>
+#include <utility>
 #include <vector>
 #include "triple.h"
 #include "patch_tree_key_comparator.h"
@@ -110,3 +111,49 @@ const char *TripleVersion::serialize(size_t *size) const {
     memcpy(&bytes[sizeof(patch_id)], (char*)&triple, sizeof(triple));
     return bytes;
 }
+
+TemporaryTriple::TemporaryTriple() = default;
+
+TemporaryTriple::TemporaryTriple(string s, string p, string o) : subject(std::move(s)), predicate(std::move(p)),
+                                                                 object(std::move(o)) {}
+
+Triple TemporaryTriple::get_as_triple(ModifiableDictionary *dict) const {
+    return {subject, predicate, object, dict};
+}
+
+std::string TemporaryTriple::get_subject() const {
+    return subject;
+}
+
+std::string TemporaryTriple::get_predicate() const {
+    return predicate;
+}
+
+std::string TemporaryTriple::get_object() const {
+    return object;
+}
+
+std::string TemporaryTriple::to_string() const {
+    return subject + " " + predicate + " " + object + ".";
+}
+
+bool TemporaryTriple::operator==(const TemporaryTriple &other) const {
+    return subject == other.subject && predicate == other.predicate && object == other.object;
+}
+
+bool TemporaryTriple::operator<(const TemporaryTriple &other) const {
+    return to_string() < other.to_string();
+}
+
+void TemporaryTriple::set_subject(std::string new_subject) {
+    this->subject = std::move(new_subject);
+}
+
+void TemporaryTriple::set_predicate(std::string new_predicate) {
+    this->predicate = std::move(new_predicate);
+}
+
+void TemporaryTriple::set_object(std::string new_object) {
+    this->object = std::move(new_object);
+}
+

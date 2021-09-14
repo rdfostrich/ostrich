@@ -3,7 +3,9 @@
 #include "../snapshot/vector_triple_iterator.h"
 
 PatchBuilder::PatchBuilder(Controller* controller) : controller(controller), patch_id(-1) {
-    dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
+    int max_patch_id = controller->get_max_patch_id();
+    int snapshot_id = controller->get_snapshot_manager()->get_latest_snapshot(max_patch_id);
+    dict = controller->get_snapshot_manager()->get_dictionary_manager(snapshot_id);
     if (dict != NULL) {
         patch = new PatchSorted(dict);
     } else {

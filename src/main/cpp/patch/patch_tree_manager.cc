@@ -74,17 +74,17 @@ PatchTree* PatchTreeManager::load_patch_tree(int patch_id_start, DictionaryManag
 
 PatchTree* PatchTreeManager::get_patch_tree(int patch_id_start, DictionaryManager* dict) {
     if(patch_id_start < 0) {
-        return NULL;
+        return nullptr;
     }
     std::map<int, PatchTree*>::iterator it = loaded_patches.find(patch_id_start);
     if(it == loaded_patches.end()) {
         if(it == loaded_patches.begin()) {
-            return NULL; // We have an empty map
+            return nullptr; // We have an empty map
         }
         it--;
     }
     PatchTree* patchtree = it->second;
-    if(patchtree == NULL) {
+    if(patchtree == nullptr) {
         return load_patch_tree(it->first, dict);
     }
     return it->second;

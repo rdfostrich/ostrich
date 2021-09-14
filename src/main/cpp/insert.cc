@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
     // Load the store
 //    Controller controller("./", TreeDB::TCOMPRESS);
 
-    CreateSnapshotEveryN strategy(2); // for testing, later as a parameter (and/or config file ?)
+    CreateSnapshotEveryN strategy(3); // for testing, later as a parameter (and/or config file ?)
     Controller controller("./", &strategy, TreeDB::TCOMPRESS);
 
     // Get parameters

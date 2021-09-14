@@ -273,6 +273,41 @@ std::pair<size_t, ResultEstimationType> Controller::get_version_count(const Trip
     return std::make_pair(count, allowEstimates ? snapshot_it->numResultEstimation() : EXACT);
 }
 
+std::pair<size_t, ResultEstimationType> Controller::get_version_count(const TemporaryTriple &triple_pattern, bool allowEstimates) const {
+
+    ResultEstimationType estimation_type_used = hdt::EXACT;
+    auto snapshots = snapshotManager->get_snapshots();
+    size_t count = 0;
+    for (auto snapshot: snapshots) {
+        DictionaryManager* dict = snapshotManager->get_dictionary_manager(snapshot.first);
+        Triple pattern = triple_pattern.get_as_triple(dict);
+        IteratorTripleID *snapshot_it = SnapshotManager::search_with_offset(snapshot.second, pattern, 0);
+        count = snapshot_it->estimatedNumResults();
+        if (!allowEstimates && snapshot_it->numResultEstimation() != EXACT) {
+            count = 0;
+            while (snapshot_it->hasNext()) {
+                snapshot_it->next();
+                count++;
+            }
+        }
+
+        // Count the additions for all versions
+        // We get the ID of the next patch_tree (after the current snapshot)
+        int patch_tree_id = patchTreeManager->get_patch_tree_id(snapshot.first+1);;
+        if (patch_tree_id > -1) {
+            PatchTree* patchTree = patchTreeManager->get_patch_tree(patch_tree_id, dict);
+            if (patchTree != nullptr) {
+                count += patchTree->addition_count(0, pattern);
+            }
+        }
+        if (allowEstimates && snapshot_it->numResultEstimation() != hdt::EXACT) {
+            if (estimation_type_used == hdt::EXACT)
+                estimation_type_used = snapshot_it->numResultEstimation();
+        }
+    }
+    return std::make_pair(count, estimation_type_used);
+}
+
 size_t Controller::get_version_count_estimated(const Triple &triple_pattern) const {
     return get_version_count(triple_pattern, true).first;
 }
@@ -308,12 +343,48 @@ TripleVersionsIterator* Controller::get_version(const Triple &triple_pattern, in
     return (new TripleVersionsIterator(triple_pattern, snapshot_it, patchTree))->offset(offset);
 }
 
+TripleVersionsIteratorCombined *Controller::get_version(const TemporaryTriple &triple_pattern, int offset) const {
+    TripleVersionsIteratorCombined* it_version = new TripleVersionsIteratorCombined;
+
+    for (auto it: snapshotManager->get_snapshots()) {
+        DictionaryManager* dict = snapshotManager->get_dictionary_manager(it.first);
+        Triple pattern = triple_pattern.get_as_triple(dict);
+        IteratorTripleID* snapshot_it = SnapshotManager::search_with_offset(it.second, pattern, offset);
+        int patch_tree_id = patchTreeManager->get_patch_tree_id(it.first+1);
+        PatchTree* patchTree = patchTreeManager->get_patch_tree(patch_tree_id, dict);
+
+        // Snapshots have already been offsetted, calculate the remaining offset.
+        // After this, offset will only be >0 if we are past the snapshot elements and at the additions.
+        if (snapshot_it->numResultEstimation() == EXACT) {
+            offset -= snapshot_it->estimatedNumResults();
+            if (offset <= 0) {
+                offset = 0;
+            } else {
+                delete snapshot_it;
+                snapshot_it = nullptr;
+            }
+        } else {
+            IteratorTripleID *tmp_it = SnapshotManager::search_with_offset(it.second, pattern, 0);
+            while (tmp_it->hasNext() && offset > 0) {
+                tmp_it->next();
+                offset--;
+            }
+            delete tmp_it;
+        }
+
+        it_version->append_iterator(new TripleVersionsIterator(pattern, snapshot_it, patchTree), dict);
+    }
+    // Should we really offset now ?
+    return it_version->offset(offset);
+}
+
 bool Controller::append(PatchElementIterator* patch_it, int patch_id, DictionaryManager* dict, bool check_uniqueness, ProgressListener* progressListener) {
     // Detect if we need to construct a new patchTree (when last patch triggered a new snapshot)
     int snapshot_id = snapshotManager->get_latest_snapshot(patch_id);
     int patch_tree_id = patchTreeManager->get_patch_tree_id(patch_id);
-    if (snapshot_id >= patch_tree_id)
+    if (snapshot_id >= patch_tree_id) {
         patchTreeManager->construct_next_patch_tree(patch_id, dict);
+    }
 
     // Ingest as a regular delta
     bool status = patchTreeManager->append(patch_it, patch_id, dict, check_uniqueness, progressListener);
@@ -322,6 +393,7 @@ bool Controller::append(PatchElementIterator* patch_it, int patch_id, Dictionary
     // - We do a VM query on the current patch_id
     // - We use the result of the query to make a new snapshot
     // - (optional) we delete the current patch_id in the patch_tree ?
+    metadata->patch_id = patch_id;
     bool create_snapshot = strategy != nullptr && strategy->doCreate(*metadata);
     if (create_snapshot) {
         NOTIFYMSG(progressListener, "\nCreating snapshot from patch...\n");
@@ -338,6 +410,7 @@ bool Controller::append(PatchElementIterator* patch_it, int patch_id, Dictionary
         snapshotManager->create_snapshot(patch_id, &vec_it, BASEURI, progressListener);
         std::cout.clear();
     }
+//    update_strategy_metadata();
     return status;
 }
 
@@ -367,8 +440,9 @@ DictionaryManager *Controller::get_dictionary_manager(int patch_id) const {
 }
 
 int Controller::get_max_patch_id() {
-    get_snapshot_manager()->get_snapshot(0); // Make sure our first snapshot is loaded, otherwise KC might get intro trouble while reorganising since it needs the dict for that.
-    int max_patch_id = get_patch_tree_manager()->get_max_patch_id(get_snapshot_manager()->get_dictionary_manager(0));
+    int snapshot_id = get_snapshot_manager()->get_max_snapshot_id();
+    get_snapshot_manager()->get_snapshot(snapshot_id); // Make sure our first snapshot is loaded, otherwise KC might get intro trouble while reorganising since it needs the dict for that.
+    int max_patch_id = get_patch_tree_manager()->get_max_patch_id(get_snapshot_manager()->get_dictionary_manager(snapshot_id));
     if (max_patch_id < 0) {
         return get_snapshot_manager()->get_latest_snapshot(0);
     }
@@ -434,7 +508,6 @@ PatchBuilderStreaming *Controller::new_patch_stream() {
     return new PatchBuilderStreaming(this);
 }
 
-
 bool Controller::ingest(const std::vector<std::pair<IteratorTripleString *, bool>> &files, int patch_id,
                         ProgressListener *progressListener) {
 
@@ -488,8 +561,13 @@ bool Controller::ingest(const std::vector<std::pair<IteratorTripleString *, bool
     return true;
 }
 
-
 void Controller::init_strategy_metadata() {
+    metadata = new CreationStrategyMetadata;
+    metadata->num_version = get_number_versions();
+    metadata->patch_id = -1;
+}
+
+int Controller::get_number_versions() {
     int number_versions = snapshotManager->get_max_snapshot_id();
     if (number_versions > -1) {
         snapshotManager->load_snapshot(number_versions);
@@ -498,9 +576,15 @@ void Controller::init_strategy_metadata() {
             number_versions = max_patch_id;
         }
     }
-
-    metadata = new CreationStrategyMetadata;
-    metadata->num_version = number_versions > -1 ? number_versions + 1 : number_versions;
+//    number_versions = number_versions > -1 ? number_versions + 1 : number_versions;
+    return number_versions;
 }
 
+void Controller::update_strategy_metadata() {
+    metadata->num_version = get_number_versions();
+    metadata->patch_id = -1;
+}
 
+CreationStrategyMetadata *Controller::get_strategy_metadata() {
+    return metadata;
+}
