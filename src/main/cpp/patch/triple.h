@@ -130,4 +130,30 @@ namespace std {
 typedef Triple PatchTreeKey;
 
 
+class TemporaryTriple {
+private:
+    std::string subject;
+    std::string predicate;
+    std::string object;
+
+public:
+    TemporaryTriple();
+    TemporaryTriple(std::string s, std::string p, std::string o);
+
+    Triple get_as_triple(ModifiableDictionary *dict) const;
+
+    std::string get_subject() const;
+    std::string get_predicate() const;
+    std::string get_object() const;
+    void set_subject(std::string new_subject);
+    void set_predicate(std::string new_predicate);
+    void set_object(std::string new_object);
+
+    std::string to_string() const;
+
+    bool operator==(const TemporaryTriple& other) const;
+    bool operator<(const TemporaryTriple& other) const;
+};
+
+
 #endif //TPFPATCH_STORE_TRIPLE_H

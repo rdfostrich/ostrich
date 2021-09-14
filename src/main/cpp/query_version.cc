@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
     if(std::strcmp(p.c_str(), "?") == 0) p = "";
     if(std::strcmp(o.c_str(), "?") == 0) o = "";
 
-    int offset = argc == 5 ? std::atoi(argv[4]) : 0;
+    int offset = argc == 5 ? std::stoi(argv[4]) : 0;
 
     // Construct query
     DictionaryManager* dict = controller.get_dictionary_manager(0);

@@ -1,6 +1,7 @@
 #include "triple_versions_iterator.h"
 #include <algorithm>
 #include <numeric>
+#include <utility>
 
 TripleVersions::TripleVersions() : triple(new Triple()), versions(new vector<int>()) {}
 
@@ -97,4 +98,98 @@ TripleVersionsIterator* TripleVersionsIterator::offset(int offset) {
     TripleVersions tv;
     while(offset-- > 0 && next(&tv));
     return this;
+}
+
+
+TripleVersionsIteratorCombined::TripleVersionsIteratorCombined() : index(0) {}
+
+void TripleVersionsIteratorCombined::append_iterator(TripleVersionsIterator *iterator, DictionaryManager *dict) {
+    TripleVersions t;
+    std::vector<TripleVersionsString> tmp_triples;
+    while (iterator->next(&t)) {
+        TemporaryTriple ts(t.get_triple()->get_subject(*dict), t.get_triple()->get_predicate(*dict),
+                           t.get_triple()->get_object(*dict));
+        tmp_triples.emplace_back(ts, *t.get_versions());
+    }
+    delete iterator;
+
+    std::sort(tmp_triples.begin(), tmp_triples.end());
+
+    std::vector<TripleVersionsString> sorted_out;
+    auto it1 = triples.begin();
+    auto it2 = tmp_triples.begin();
+    while (it1 != triples.end()) {
+        if (it2 == tmp_triples.end()) {
+            sorted_out.insert(sorted_out.end(), it1, triples.end());
+            break;
+        }
+        if (*it2 < *it1) {
+            sorted_out.push_back(*it2);
+            ++it2;
+        } else {
+            if (*it1->get_triple() == *it2->get_triple()) {
+                std::vector<int> tmp_vec(*(*it2).get_versions());
+                std::vector<int> tmp_out;
+                (*it2).get_versions()->clear();
+                std::merge(tmp_vec.begin(), tmp_vec.end(), (*it1).get_versions()->begin(), (*it1).get_versions()->end(),
+                           std::back_inserter(tmp_out));
+//                std::sort(tmp_vec.begin(), tmp_vec.end());
+                auto erase_it = std::unique(tmp_vec.begin(), tmp_vec.end());
+                tmp_vec.erase(erase_it, tmp_vec.end());
+                (*it2).get_versions()->insert((*it2).get_versions()->begin(), tmp_out.begin(), tmp_out.end());
+                sorted_out.push_back(*it2);
+                ++it1;
+                ++it2;
+            } else {
+                sorted_out.push_back(*it1);
+                ++it1;
+            }
+        }
+    }
+    sorted_out.insert(sorted_out.end(), it2, tmp_triples.end());
+
+    triples.clear();
+    triples.insert(triples.begin(), sorted_out.begin(), sorted_out.end());
+}
+
+bool TripleVersionsIteratorCombined::next(TripleVersionsString *triple_versions) {
+    if (index == triples.size())
+        return false;
+    TemporaryTriple *currentTriple = triples[index].get_triple();
+    triple_versions->get_triple()->set_subject(currentTriple->get_subject());
+    triple_versions->get_triple()->set_predicate(currentTriple->get_predicate());
+    triple_versions->get_triple()->set_object(currentTriple->get_object());
+    triple_versions->get_versions()->clear();
+    triple_versions->get_versions()->insert(triple_versions->get_versions()->begin(),
+                                            triples[index].get_versions()->begin(),
+                                            triples[index].get_versions()->end());
+    index++;
+    return true;
+}
+
+size_t TripleVersionsIteratorCombined::get_count() {
+    return triples.size();
+}
+
+TripleVersionsIteratorCombined *TripleVersionsIteratorCombined::offset(int offset) {
+    index += offset;
+    return this;
+}
+
+
+TripleVersionsString::TripleVersionsString() = default;
+
+TripleVersionsString::TripleVersionsString(TemporaryTriple triple, std::vector<int> versions) : triple(
+        std::move(triple)), versions(std::move(versions)) {}
+
+TemporaryTriple *TripleVersionsString::get_triple() {
+    return &triple;
+}
+
+std::vector<int> *TripleVersionsString::get_versions() {
+    return &versions;
+}
+
+bool TripleVersionsString::operator<(const TripleVersionsString &other) const {
+    return (triple < other.triple);
 }

@@ -5,6 +5,7 @@
 
 struct CreationStrategyMetadata {
     int num_version;
+    int patch_id;
 };
 
 

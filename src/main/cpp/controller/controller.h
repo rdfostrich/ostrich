@@ -51,8 +51,10 @@ public:
      * @param offset A certain offset the iterator should start with.
      * @param patch_id The patch id for which triples should be returned.
      */
+    TripleVersionsIteratorCombined* get_version(const TemporaryTriple &triple_pattern, int offset) const;
     TripleVersionsIterator* get_version(const Triple &triple_pattern, int offset) const;
     std::pair<size_t, ResultEstimationType> get_version_count(const Triple& triple_pattern, bool allowEstimates = false) const;
+    std::pair<size_t, ResultEstimationType> get_version_count(const TemporaryTriple& triple_pattern, bool allowEstimates = false) const;
     size_t get_version_count_estimated(const Triple& triple_pattern) const;
 
     /**
@@ -105,9 +107,19 @@ public:
     static void cleanup(string basePath, Controller* controller);
 
     /**
+     * @return the number of versions handled by this controller (snapshots + patches)
+     */
+    int get_number_versions();
+    /**
      * Compute the metadata required for snapshot creation decision
      */
     void init_strategy_metadata();
+    /**
+     * Update the metadata required for snapshot creation decision
+     */
+    void update_strategy_metadata();
+
+    CreationStrategyMetadata* get_strategy_metadata();
 
     /**
     * Add the content from the given files to the patch tree

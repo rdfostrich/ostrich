@@ -23,6 +23,27 @@ protected:
     }
 };
 
+class ControllerMSTest : public ::testing::Test {
+protected:
+    Controller* controller;
+    SnapshotCreationStrategy* strategy;
+
+    ControllerMSTest() {
+        // Patch every 2 versions
+        // 0 (snapshot), 1 (patch), 2 (snapshot), 3 (patch), 4 (snapshot), ...
+        strategy = new CreateSnapshotEveryN(2);
+        controller = new Controller(TESTPATH, strategy);
+    }
+
+    virtual void SetUp() {
+
+    }
+
+    virtual void TearDown() {
+        Controller::cleanup(TESTPATH, controller);
+    }
+};
+
 TEST_F(ControllerTest, GetEdge) {
     Triple t;
 
@@ -366,6 +387,203 @@ TEST_F(ControllerTest, GetVersionMaterializedComplex1) {
     ASSERT_EQ(false, it9->next(&t)) << "Iterator should be finished";
 }
 
+
+TEST_F(ControllerMSTest, GetVersionMaterializedComplexMS1) {
+    // Build a snapshot
+    std::vector<TripleString> triples;
+    triples.push_back(TripleString("g", "p", "o"));
+    triples.push_back(TripleString("s", "z", "o"));
+    triples.push_back(TripleString("h", "z", "o"));
+    triples.push_back(TripleString("h", "p", "o"));
+    VectorTripleIterator* it = new VectorTripleIterator(triples);
+    controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
+    PatchTreeManager* patchTreeManager = controller->get_patch_tree_manager();
+    DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
+
+    PatchSorted patch1(dict);
+    patch1.add(PatchElement(Triple("g", "p", "o", dict), false));
+    patch1.add(PatchElement(Triple("a", "p", "o", dict), true));
+    controller->append(patch1, 1, dict);
+
+    PatchSorted patch2(dict);
+    patch2.add(PatchElement(Triple("s", "z", "o", dict), false));
+    patch2.add(PatchElement(Triple("s", "a", "o", dict), true));
+    controller->append(patch2, 1, dict);
+
+    int snapshot_id = controller->get_snapshot_manager()->get_latest_snapshot(1);
+    controller->get_snapshot_manager()->load_snapshot(snapshot_id);
+    dict = controller->get_snapshot_manager()->get_dictionary_manager(snapshot_id);
+
+    PatchSorted patch3(dict);
+    patch3.add(PatchElement(Triple("g", "p", "o", dict), false));
+    patch3.add(PatchElement(Triple("a", "p", "o", dict), false));
+    patch3.add(PatchElement(Triple("h", "z", "o", dict), false));
+    patch3.add(PatchElement(Triple("l", "a", "o", dict), true));
+    controller->append(patch3, 2, dict);
+
+    snapshot_id = controller->get_snapshot_manager()->get_latest_snapshot(2);
+    controller->get_snapshot_manager()->load_snapshot(snapshot_id);
+    dict = controller->get_snapshot_manager()->get_dictionary_manager(snapshot_id);
+
+    PatchSorted patch4(dict);
+    patch4.add(PatchElement(Triple("h", "p", "o", dict), false));
+    patch4.add(PatchElement(Triple("s", "z", "o", dict), false));
+    controller->append(patch4, 4, dict);
+
+    snapshot_id = controller->get_snapshot_manager()->get_latest_snapshot(4);
+    controller->get_snapshot_manager()->load_snapshot(snapshot_id);
+    dict = controller->get_snapshot_manager()->get_dictionary_manager(snapshot_id);
+
+    PatchSorted patch5(dict);
+    patch5.add(PatchElement(Triple("h", "p", "o", dict), true));
+    controller->append(patch5, 5, dict);
+
+    snapshot_id = controller->get_snapshot_manager()->get_latest_snapshot(5);
+    controller->get_snapshot_manager()->load_snapshot(snapshot_id);
+    dict = controller->get_snapshot_manager()->get_dictionary_manager(snapshot_id);
+
+    PatchSorted patch6(dict);
+    patch6.add(PatchElement(Triple("a", "p", "o", dict), true));
+    controller->append(patch6, 6, dict);
+
+    Triple t;
+
+    // Request version 0 (snapshot)
+    dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
+    ASSERT_EQ(4, controller->get_version_materialized_count(Triple("", "", "", dict), 0).first) << "Count is incorrect";
+    TripleIterator* it0 = controller->get_version_materialized(Triple("", "", "", dict), 0, 0);
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("g p o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("h p o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("h z o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("s z o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(false, it0->next(&t)) << "Iterator should be finished";
+
+    // Request version 1 (patch)
+    snapshot_id = controller->get_snapshot_manager()->get_latest_snapshot(1);
+    dict = controller->get_snapshot_manager()->get_dictionary_manager(snapshot_id);
+    ASSERT_EQ(4, controller->get_version_materialized_count(Triple("", "", "", dict), 1).first) << "Count is incorrect";
+    TripleIterator* it1 = controller->get_version_materialized(Triple("", "", "", dict), 0, 1);
+
+    ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("h p o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("h z o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("a p o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("s a o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(false, it1->next(&t)) << "Iterator should be finished";
+
+    // Request version 1 (patch), offset 1
+    TripleIterator* it2 = controller->get_version_materialized(Triple("", "", "", dict), 1, 1);
+
+    ASSERT_EQ(true, it2->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("h z o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(true, it2->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("a p o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(true, it2->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("s a o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(false, it2->next(&t)) << "Iterator should be finished";
+
+    // Request version 1 (patch), offset 2
+    TripleIterator* it3 = controller->get_version_materialized(Triple("", "", "", dict), 2, 1);
+
+    ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("a p o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("s a o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(false, it3->next(&t)) << "Iterator should be finished";
+
+    // Request version 1 (patch), offset 3
+    TripleIterator* it4 = controller->get_version_materialized(Triple("", "", "", dict), 3, 1);
+
+    ASSERT_EQ(true, it4->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("s a o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(false, it4->next(&t)) << "Iterator should be finished";
+
+    // Request version 1 (patch), offset 4
+    TripleIterator* it5 = controller->get_version_materialized(Triple("", "", "", dict), 4, 1);
+
+    ASSERT_EQ(false, it5->next(&t)) << "Iterator should be finished";
+
+    // Request version 2 (patch)
+    snapshot_id = controller->get_snapshot_manager()->get_latest_snapshot(2);
+    dict = controller->get_snapshot_manager()->get_dictionary_manager(snapshot_id);
+    ASSERT_EQ(3, controller->get_version_materialized_count(Triple("", "", "", dict), 2).first) << "Count is incorrect";
+    TripleIterator* it6 = controller->get_version_materialized(Triple("", "", "", dict), 0, 2);
+
+    ASSERT_EQ(true, it6->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("h p o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(true, it6->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("l a o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(true, it6->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("s a o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(false, it6->next(&t)) << "Iterator should be finished";
+
+    // Request version 2 (patch), offset 1
+    TripleIterator* it7 = controller->get_version_materialized(Triple("", "", "", dict), 1, 2);
+
+    ASSERT_EQ(true, it7->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("l a o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(true, it7->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("s a o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(false, it7->next(&t)) << "Iterator should be finished";
+
+    // Request version 2 (patch), offset 2
+    TripleIterator* it8 = controller->get_version_materialized(Triple("", "", "", dict), 2, 2);
+
+    ASSERT_EQ(true, it8->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("s a o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(false, it8->next(&t)) << "Iterator should be finished";
+
+    // Request version 2 (patch), offset 3
+    TripleIterator* it9 = controller->get_version_materialized(Triple("", "", "", dict), 3, 2);
+
+    ASSERT_EQ(false, it9->next(&t)) << "Iterator should be finished";
+
+    // Request version 5, offset 0
+    snapshot_id = controller->get_snapshot_manager()->get_latest_snapshot(5);
+    dict = controller->get_snapshot_manager()->get_dictionary_manager(snapshot_id);
+    TripleIterator* it10 = controller->get_version_materialized(Triple("", "", "", dict), 0, 5);
+
+    ASSERT_EQ(true, it10->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("l a o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(true, it10->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("s a o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(true, it10->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("h p o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(false, it10->next(&t)) << "Iterator should be finished";
+
+}
+
 TEST_F(ControllerTest, GetVersionMaterializedComplex2) {
     // Build a snapshot
     std::vector<TripleString> triples;
@@ -532,6 +750,190 @@ TEST_F(ControllerTest, GetVersionMaterializedComplex2) {
 
     ASSERT_EQ(true, it8->next(&t)) << "Iterator has a no next value";
     ASSERT_EQ("s a o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(false, it8->next(&t)) << "Iterator should be finished";
+
+    // Request version 2 (patch), offset 3
+    TripleIterator* it9 = controller->get_version_materialized(Triple("", "", "o", dict), 3, 2);
+
+    ASSERT_EQ(false, it9->next(&t)) << "Iterator should be finished";
+}
+
+
+TEST_F(ControllerMSTest, GetVersionMaterializedComplexMS2) {
+    // Build a snapshot
+    std::vector<TripleString> triples;
+    triples.push_back(TripleString("g", "p", "o"));
+    triples.push_back(TripleString("s", "z", "o"));
+    triples.push_back(TripleString("h", "z", "o"));
+    triples.push_back(TripleString("h", "p", "o"));
+    VectorTripleIterator* it = new VectorTripleIterator(triples);
+    controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
+    DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
+
+    PatchSorted patch1(dict);
+    patch1.add(PatchElement(Triple("g", "p", "o", dict), false));
+    patch1.add(PatchElement(Triple("a", "p", "o", dict), true));
+    controller->append(patch1, 1, dict);
+
+    PatchSorted patch2(dict);
+    patch2.add(PatchElement(Triple("s", "z", "o", dict), false));
+    patch2.add(PatchElement(Triple("s", "a", "o", dict), true));
+    controller->append(patch2, 1, dict);
+
+    int snapshot_id = controller->get_snapshot_manager()->get_latest_snapshot(1);
+    controller->get_snapshot_manager()->load_snapshot(snapshot_id);
+    dict = controller->get_snapshot_manager()->get_dictionary_manager(snapshot_id);
+
+    PatchSorted patch3(dict);
+    patch3.add(PatchElement(Triple("g", "p", "o", dict), false));
+    patch3.add(PatchElement(Triple("a", "p", "o", dict), false));
+    patch3.add(PatchElement(Triple("h", "z", "o", dict), false));
+    patch3.add(PatchElement(Triple("l", "a", "o", dict), true));
+    controller->append(patch3, 2, dict);
+
+    snapshot_id = controller->get_snapshot_manager()->get_latest_snapshot(2);
+    controller->get_snapshot_manager()->load_snapshot(snapshot_id);
+    dict = controller->get_snapshot_manager()->get_dictionary_manager(snapshot_id);
+
+    PatchSorted patch4(dict);
+    patch4.add(PatchElement(Triple("h", "p", "o", dict), false));
+    patch4.add(PatchElement(Triple("s", "z", "o", dict), false));
+    controller->append(patch4, 4, dict);
+
+    snapshot_id = controller->get_snapshot_manager()->get_latest_snapshot(4);
+    controller->get_snapshot_manager()->load_snapshot(snapshot_id);
+    dict = controller->get_snapshot_manager()->get_dictionary_manager(snapshot_id);
+
+    PatchSorted patch5(dict);
+    patch5.add(PatchElement(Triple("h", "p", "o", dict), true));
+    controller->append(patch5, 5, dict);
+
+    snapshot_id = controller->get_snapshot_manager()->get_latest_snapshot(5);
+    controller->get_snapshot_manager()->load_snapshot(snapshot_id);
+    dict = controller->get_snapshot_manager()->get_dictionary_manager(snapshot_id);
+
+    PatchSorted patch6(dict);
+    patch6.add(PatchElement(Triple("a", "p", "o", dict), true));
+    controller->append(patch6, 6, dict);
+
+
+    Triple t;
+
+    // Request version 0 (snapshot)
+    snapshot_id = controller->get_snapshot_manager()->get_latest_snapshot(0);
+    dict = controller->get_snapshot_manager()->get_dictionary_manager(snapshot_id);
+
+    ASSERT_EQ(4, controller->get_version_materialized_count(Triple("", "", "o", dict), 0).first) << "Count is incorrect";
+    TripleIterator* it0 = controller->get_version_materialized(Triple("", "", "o", dict), 0, 0);
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("g p o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("h p o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("h z o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("s z o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(false, it0->next(&t)) << "Iterator should be finished";
+
+    // Request version 1 (patch)
+    snapshot_id = controller->get_snapshot_manager()->get_latest_snapshot(1);
+    dict = controller->get_snapshot_manager()->get_dictionary_manager(snapshot_id);
+
+    ASSERT_EQ(4, controller->get_version_materialized_count(Triple("", "", "o", dict), 1).first) << "Count is incorrect";
+    TripleIterator* it1 = controller->get_version_materialized(Triple("", "", "o", dict), 0, 1);
+
+    ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("h p o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("h z o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("a p o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("s a o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(false, it1->next(&t)) << "Iterator should be finished";
+
+    // Request version 1 (patch), offset 1
+    TripleIterator* it2 = controller->get_version_materialized(Triple("", "", "o", dict), 1, 1);
+
+    ASSERT_EQ(true, it2->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("h z o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(true, it2->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("a p o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(true, it2->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("s a o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(false, it2->next(&t)) << "Iterator should be finished";
+
+    // Request version 1 (patch), offset 2
+    TripleIterator* it3 = controller->get_version_materialized(Triple("", "", "o", dict), 2, 1);
+
+    ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("a p o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("s a o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(false, it3->next(&t)) << "Iterator should be finished";
+
+    // Request version 1 (patch), offset 3
+    TripleIterator* it4 = controller->get_version_materialized(Triple("", "", "o", dict), 3, 1);
+
+    ASSERT_EQ(true, it4->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("s a o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(false, it4->next(&t)) << "Iterator should be finished";
+
+    // Request version 1 (patch), offset 4
+    TripleIterator* it5 = controller->get_version_materialized(Triple("", "", "o", dict), 4, 1);
+
+    ASSERT_EQ(false, it5->next(&t)) << "Iterator should be finished";
+
+    // Request version 2 (patch)
+    snapshot_id = controller->get_snapshot_manager()->get_latest_snapshot(2);
+    dict = controller->get_snapshot_manager()->get_dictionary_manager(snapshot_id);
+
+    ASSERT_EQ(3, controller->get_version_materialized_count(Triple("", "", "o", dict), 2).first) << "Count is incorrect";
+    TripleIterator* it6 = controller->get_version_materialized(Triple("", "", "o", dict), 0, 2);
+
+    ASSERT_EQ(true, it6->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("l a o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(true, it6->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("s a o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(true, it6->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("h p o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(false, it6->next(&t)) << "Iterator should be finished";
+
+    // Request version 2 (patch), offset 1
+    TripleIterator* it7 = controller->get_version_materialized(Triple("", "", "o", dict), 1, 2);
+
+    ASSERT_EQ(true, it7->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("s a o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(true, it7->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("h p o.", t.to_string(*dict)) << "Element is incorrect";
+
+    ASSERT_EQ(false, it7->next(&t)) << "Iterator should be finished";
+
+    // Request version 2 (patch), offset 2
+    TripleIterator* it8 = controller->get_version_materialized(Triple("", "", "o", dict), 2, 2);
+
+    ASSERT_EQ(true, it8->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("h p o.", t.to_string(*dict)) << "Element is incorrect";
 
     ASSERT_EQ(false, it8->next(&t)) << "Iterator should be finished";
 
@@ -1843,4 +2245,254 @@ TEST_F(ControllerTest, GetVersion) {
     TripleVersionsIterator* it17 = controller->get_version(Triple("", "", "<d>", dict), 1);
 
     ASSERT_EQ(false, it17->next(&t)) << "Iterator should be finished";
+}
+
+
+TEST_F(ControllerMSTest, GetVersionMS) {
+    controller->new_patch_bulk()
+    ->addition(TripleString("<a>", "<a>", "<a>"))
+    ->addition(TripleString("<a>", "<a>", "<b>"))
+    ->addition(TripleString("<a>", "<a>", "<c>"))
+    ->commit();
+
+    controller->new_patch_bulk()
+    ->deletion(TripleString("<a>", "<a>", "<b>"))
+    ->commit();
+
+    controller->new_patch_bulk()
+    ->addition(TripleString("<a>", "<a>", "<d>"))
+    ->commit();
+
+    controller->new_patch_bulk()
+    ->addition(TripleString("<a>", "<b>", "<c>"))
+    ->addition(TripleString("<a>", "<b>", "<d>"))
+    ->deletion(TripleString("<a>", "<a>", "<a>"))
+    ->commit();
+
+    // Expected version 0:
+    // <a> <a> <a>
+    // <a> <a> <b>
+    // <a> <a> <c>
+
+    // Expected version 1:
+    // <a> <a> <a>
+    // <a> <a> <c>
+
+    // Expected version 2:
+    // <a> <a> <a>
+    // <a> <a> <c>
+    // <a> <a> <d>
+
+    // Expected version 3
+    // <a> <a> <c>
+    // <a> <a> <d>
+    // <a> <b> <c>
+    // <a> <b> <c>
+
+    TripleVersionsString t;
+
+    std::vector<int> v_012 = {0,2,3};
+    std::vector<int> v_0123 = {0,1,2,3};
+    std::vector<int> v_0 = {0};
+    std::vector<int> v_23 = {2,3};
+    std::vector<int> v_3 = {3};
+
+    // Request versions for ? ? ?
+    // TODO: FIX controller->get_version_count
+//    ASSERT_EQ(6, controller->get_version_count(TemporaryTriple("", "", "")).first) << "Count is incorrect";
+    TripleVersionsIteratorCombined* it0 = controller->get_version(TemporaryTriple("", "", ""), 0);
+
+    while (it0->next(&t)){
+        std::cout << t.get_triple()->to_string() << std::endl;
+    }
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <a>.", t.get_triple()->to_string()) << "Element is incorrect";
+    ASSERT_EQ(v_012, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <b>.", t.get_triple()->to_string()) << "Element is incorrect";
+    ASSERT_EQ(v_0, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <c>.", t.get_triple()->to_string()) << "Element is incorrect";
+    ASSERT_EQ(v_012, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <d>.", t.get_triple()->to_string()) << "Element is incorrect";
+    ASSERT_EQ(v_23, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(false, it0->next(&t)) << "Iterator should be finished";
+
+    // Request versions for ? ? ? with offset 1
+    TripleVersionsIteratorCombined* it1 = controller->get_version(TemporaryTriple("", "", ""), 1);
+
+    ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <b>.", t.get_triple()->to_string()) << "Element is incorrect";
+    ASSERT_EQ(v_0, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <c>.", t.get_triple()->to_string()) << "Element is incorrect";
+    ASSERT_EQ(v_012, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <d>.", t.get_triple()->to_string()) << "Element is incorrect";
+    ASSERT_EQ(v_23, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(false, it1->next(&t)) << "Iterator should be finished";
+
+    // Request versions for ? ? ? with offset 2
+    TripleVersionsIteratorCombined* it2 = controller->get_version(TemporaryTriple("", "", ""), 2);
+
+    ASSERT_EQ(true, it2->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <c>.", t.get_triple()->to_string()) << "Element is incorrect";
+    ASSERT_EQ(v_012, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(true, it2->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <d>.", t.get_triple()->to_string()) << "Element is incorrect";
+    ASSERT_EQ(v_23, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(false, it2->next(&t)) << "Iterator should be finished";
+
+    // Request versions for ? ? ? with offset 3
+    TripleVersionsIteratorCombined* it3 = controller->get_version(TemporaryTriple("", "", ""), 3);
+
+    ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <d>.", t.get_triple()->to_string()) << "Element is incorrect";
+    ASSERT_EQ(v_23, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(false, it3->next(&t)) << "Iterator should be finished";
+
+    // Request versions for ? ? ? with offset 4
+    TripleVersionsIteratorCombined* it4 = controller->get_version(TemporaryTriple("", "", ""), 4);
+
+    ASSERT_EQ(false, it4->next(&t)) << "Iterator should be finished";
+
+    // Request versions for <a> ? ?
+    ASSERT_EQ(4, controller->get_version_count(TemporaryTriple("", "", "")).first) << "Count is incorrect";
+    TripleVersionsIteratorCombined* it5 = controller->get_version(TemporaryTriple("", "", ""), 0);
+
+    ASSERT_EQ(true, it5->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <a>.", t.get_triple()->to_string()) << "Element is incorrect";
+    ASSERT_EQ(v_012, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(true, it5->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <b>.", t.get_triple()->to_string()) << "Element is incorrect";
+    ASSERT_EQ(v_0, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(true, it5->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <c>.", t.get_triple()->to_string()) << "Element is incorrect";
+    ASSERT_EQ(v_012, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(true, it5->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <d>.", t.get_triple()->to_string()) << "Element is incorrect";
+    ASSERT_EQ(v_23, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(false, it5->next(&t)) << "Iterator should be finished";
+
+    // Request versions for <a> ? ? with offset 1
+    TripleVersionsIteratorCombined* it6 = controller->get_version(TemporaryTriple("<a>", "", ""), 1);
+
+    ASSERT_EQ(true, it6->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <b>.", t.get_triple()->to_string()) << "Element is incorrect";
+    ASSERT_EQ(v_0, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(true, it6->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <c>.", t.get_triple()->to_string()) << "Element is incorrect";
+    ASSERT_EQ(v_012, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(true, it6->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <d>.", t.get_triple()->to_string()) << "Element is incorrect";
+    ASSERT_EQ(v_23, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(false, it6->next(&t)) << "Iterator should be finished";
+
+    // Request versions for <a> ? ? with offset 2
+    TripleVersionsIteratorCombined* it7 = controller->get_version(TemporaryTriple("<a>", "", ""), 2);
+
+    ASSERT_EQ(true, it7->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <c>.", t.get_triple()->to_string()) << "Element is incorrect";
+    ASSERT_EQ(v_012, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(true, it7->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <d>.", t.get_triple()->to_string()) << "Element is incorrect";
+    ASSERT_EQ(v_23, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(false, it7->next(&t)) << "Iterator should be finished";
+
+    // Request versions for <a> ? ? with offset 3
+    TripleVersionsIteratorCombined* it8 = controller->get_version(TemporaryTriple("<a>", "", ""), 3);
+
+    ASSERT_EQ(true, it8->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <d>.", t.get_triple()->to_string()) << "Element is incorrect";
+    ASSERT_EQ(v_23, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(false, it8->next(&t)) << "Iterator should be finished";
+
+    // Request versions for <a> ? ? with offset 4
+    TripleVersionsIteratorCombined* it9 = controller->get_version(TemporaryTriple("<a>", "", ""), 4);
+
+    ASSERT_EQ(false, it9->next(&t)) << "Iterator should be finished";
+
+    // Request versions for ? ? <a>
+    ASSERT_EQ(1, controller->get_version_count(TemporaryTriple("", "", "")).first) << "Count is incorrect";
+    TripleVersionsIteratorCombined* it10 = controller->get_version(TemporaryTriple("", "", "<a>"), 0);
+
+    ASSERT_EQ(true, it10->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <a>.", t.get_triple()->to_string()) << "Element is incorrect";
+    ASSERT_EQ(v_012, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(false, it10->next(&t)) << "Iterator should be finished";
+
+    // Request versions for ? ? <a> with offset 1
+    TripleVersionsIteratorCombined* it11 = controller->get_version(TemporaryTriple("", "", "<a>"), 1);
+
+    ASSERT_EQ(false, it11->next(&t)) << "Iterator should be finished";
+
+    // Request versions for ? ? <b>
+    ASSERT_EQ(1, controller->get_version_count(TemporaryTriple("", "", "")).first) << "Count is incorrect";
+    TripleVersionsIteratorCombined* it12 = controller->get_version(TemporaryTriple("", "", "<b>"), 0);
+
+    ASSERT_EQ(true, it12->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <b>.", t.get_triple()->to_string()) << "Element is incorrect";
+    ASSERT_EQ(v_0, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(false, it12->next(&t)) << "Iterator should be finished";
+
+    // Request versions for ? ? <b> with offset 1
+    TripleVersionsIteratorCombined* it13 = controller->get_version(TemporaryTriple("", "", "<b>"), 1);
+
+    ASSERT_EQ(false, it13->next(&t)) << "Iterator should be finished";
+
+    // Request versions for ? ? <c>
+    ASSERT_EQ(1, controller->get_version_count(TemporaryTriple("", "", "")).first) << "Count is incorrect";
+    TripleVersionsIteratorCombined* it14 = controller->get_version(TemporaryTriple("", "", "<c>"), 0);
+
+    ASSERT_EQ(true, it14->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <c>.", t.get_triple()->to_string()) << "Element is incorrect";
+    ASSERT_EQ(v_012, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(false, it14->next(&t)) << "Iterator should be finished";
+
+    // Request versions for ? ? <c> with offset 1
+    TripleVersionsIteratorCombined* it15 = controller->get_version(TemporaryTriple("", "", "<c>"), 1);
+
+    ASSERT_EQ(false, it15->next(&t)) << "Iterator should be finished";
+
+    // Request versions for ? ? <d>
+    ASSERT_EQ(1, controller->get_version_count(TemporaryTriple("", "", "")).first) << "Count is incorrect";
+    TripleVersionsIteratorCombined* it16 = controller->get_version(TemporaryTriple("", "", "<d>"), 0);
+
+    ASSERT_EQ(true, it16->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <d>.", t.get_triple()->to_string()) << "Element is incorrect";
+    ASSERT_EQ(v_23, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(false, it16->next(&t)) << "Iterator should be finished";
+
+    // Request versions for ? ? <d> with offset 1
+    TripleVersionsIteratorCombined* it17 = controller->get_version(TemporaryTriple("", "", "<d>"), 1);
+
+    ASSERT_EQ(false, it17->next(&t)) << "Iterator should be finished";
+
+
 }

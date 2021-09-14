@@ -10,7 +10,8 @@ bool AlwaysCreateSnapshot::doCreate(const CreationStrategyMetadata &metadata) co
 }
 
 bool CreateSnapshotEveryN::doCreate(const CreationStrategyMetadata &metadata) const {
-    if (metadata.num_version % step == 0)
+//    if (metadata.num_version % step == 0)
+    if (metadata.patch_id % step == 0)
         return true;
     return false;
 }
