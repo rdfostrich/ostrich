@@ -275,20 +275,22 @@ std::pair<size_t, ResultEstimationType> Controller::get_version_count(const Trip
 
 std::pair<size_t, ResultEstimationType> Controller::get_version_count(const TemporaryTriple &triple_pattern, bool allowEstimates) const {
 
+
+    // In a multiple snapshots context, the count has to be EXACT
+    // Meaning that we get all triples matching the pattern
+    // we remove duplicates (each delta chain will have duplicated triples with respect to other DC)
+    // there is probably optimizations opportunities.
     ResultEstimationType estimation_type_used = hdt::EXACT;
+    std::set<std::string> triples;
     auto snapshots = snapshotManager->get_snapshots();
     size_t count = 0;
     for (auto snapshot: snapshots) {
         DictionaryManager* dict = snapshotManager->get_dictionary_manager(snapshot.first);
         Triple pattern = triple_pattern.get_as_triple(dict);
         IteratorTripleID *snapshot_it = SnapshotManager::search_with_offset(snapshot.second, pattern, 0);
-        count = snapshot_it->estimatedNumResults();
-        if (!allowEstimates && snapshot_it->numResultEstimation() != EXACT) {
-            count = 0;
-            while (snapshot_it->hasNext()) {
-                snapshot_it->next();
-                count++;
-            }
+        while (snapshot_it->hasNext()) {
+            Triple t(*snapshot_it->next());
+            triples.insert(t.to_string(*dict));
         }
 
         // Count the additions for all versions
@@ -297,14 +299,16 @@ std::pair<size_t, ResultEstimationType> Controller::get_version_count(const Temp
         if (patch_tree_id > -1) {
             PatchTree* patchTree = patchTreeManager->get_patch_tree(patch_tree_id, dict);
             if (patchTree != nullptr) {
-                count += patchTree->addition_count(0, pattern);
+                auto it = patchTree->addition_iterator(pattern);
+                Triple t;
+                PatchTreeValueBase<PatchTreeDeletionValue> del_val;
+                while (it->next(&t, &del_val)) {
+                    triples.insert(t.to_string(*dict));
+                }
             }
         }
-        if (allowEstimates && snapshot_it->numResultEstimation() != hdt::EXACT) {
-            if (estimation_type_used == hdt::EXACT)
-                estimation_type_used = snapshot_it->numResultEstimation();
-        }
     }
+    count = triples.size();
     return std::make_pair(count, estimation_type_used);
 }
 
@@ -372,7 +376,7 @@ TripleVersionsIteratorCombined *Controller::get_version(const TemporaryTriple &t
             delete tmp_it;
         }
 
-        it_version->append_iterator(new TripleVersionsIterator(pattern, snapshot_it, patchTree), dict);
+        it_version->append_iterator(new TripleVersionsIterator(pattern, snapshot_it, patchTree, it.first), dict);
     }
     // Should we really offset now ?
     return it_version->offset(offset);

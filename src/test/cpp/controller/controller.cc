@@ -2291,20 +2291,15 @@ TEST_F(ControllerMSTest, GetVersionMS) {
 
     TripleVersionsString t;
 
-    std::vector<int> v_012 = {0,2,3};
+    std::vector<int> v_012 = {0,1,2};
     std::vector<int> v_0123 = {0,1,2,3};
     std::vector<int> v_0 = {0};
     std::vector<int> v_23 = {2,3};
     std::vector<int> v_3 = {3};
 
     // Request versions for ? ? ?
-    // TODO: FIX controller->get_version_count
-//    ASSERT_EQ(6, controller->get_version_count(TemporaryTriple("", "", "")).first) << "Count is incorrect";
+    ASSERT_EQ(6, controller->get_version_count(TemporaryTriple("", "", "")).first) << "Count is incorrect";
     TripleVersionsIteratorCombined* it0 = controller->get_version(TemporaryTriple("", "", ""), 0);
-
-    while (it0->next(&t)){
-        std::cout << t.get_triple()->to_string() << std::endl;
-    }
 
     ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
     ASSERT_EQ("<a> <a> <a>.", t.get_triple()->to_string()) << "Element is incorrect";
@@ -2316,7 +2311,7 @@ TEST_F(ControllerMSTest, GetVersionMS) {
 
     ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
     ASSERT_EQ("<a> <a> <c>.", t.get_triple()->to_string()) << "Element is incorrect";
-    ASSERT_EQ(v_012, *(t.get_versions())) << "Element is incorrect";
+    ASSERT_EQ(v_0123, *(t.get_versions())) << "Element is incorrect";
 
     ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
     ASSERT_EQ("<a> <a> <d>.", t.get_triple()->to_string()) << "Element is incorrect";
