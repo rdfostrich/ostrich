@@ -22,8 +22,8 @@ vector<int>* TripleVersions::get_versions() {
     return versions;
 }
 
-TripleVersionsIterator::TripleVersionsIterator(Triple triple_pattern, IteratorTripleID* snapshot_it, PatchTree* patchTree)
-        : triple_pattern(triple_pattern), snapshot_it(snapshot_it), patchTree(patchTree), addition_it(NULL) {}
+TripleVersionsIterator::TripleVersionsIterator(Triple triple_pattern, IteratorTripleID* snapshot_it, PatchTree* patchTree, int first_version)
+        : triple_pattern(triple_pattern), snapshot_it(snapshot_it), patchTree(patchTree), addition_it(NULL), first_version(first_version) {}
 
 TripleVersionsIterator::~TripleVersionsIterator() {
     if (snapshot_it != NULL) delete snapshot_it;
@@ -53,13 +53,14 @@ inline void TripleVersionsIterator::eraseDeletedVersions(std::vector<int>* versi
 
 bool TripleVersionsIterator::next(TripleVersions* triple_versions) {
     // Loop over snapshot elements, and emit all versions minus the versions that have been deleted.
+
     if (snapshot_it != NULL && snapshot_it->hasNext()) {
         TripleID *tripleId = snapshot_it->next();
         Triple* currentTriple = triple_versions->get_triple();
         currentTriple->set_subject(tripleId->getSubject());
         currentTriple->set_predicate(tripleId->getPredicate());
         currentTriple->set_object(tripleId->getObject());
-        eraseDeletedVersions(triple_versions->get_versions(), currentTriple, 0);
+        eraseDeletedVersions(triple_versions->get_versions(), currentTriple, first_version);
         return true;
     }
 
@@ -72,6 +73,7 @@ bool TripleVersionsIterator::next(TripleVersions* triple_versions) {
     if (addition_it == NULL) {
         addition_it = patchTree->addition_iterator(triple_pattern);
     }
+
     PatchTreeAdditionValue value;
     while (addition_it->next_addition(triple_versions->get_triple(), &value)) {
         // Skip if FIRST this addition has a local change for its first patch id,
@@ -134,8 +136,8 @@ void TripleVersionsIteratorCombined::append_iterator(TripleVersionsIterator *ite
                 std::merge(tmp_vec.begin(), tmp_vec.end(), (*it1).get_versions()->begin(), (*it1).get_versions()->end(),
                            std::back_inserter(tmp_out));
 //                std::sort(tmp_vec.begin(), tmp_vec.end());
-                auto erase_it = std::unique(tmp_vec.begin(), tmp_vec.end());
-                tmp_vec.erase(erase_it, tmp_vec.end());
+                auto erase_it = std::unique(tmp_out.begin(), tmp_out.end());
+                tmp_out.erase(erase_it, tmp_out.end());
                 (*it2).get_versions()->insert((*it2).get_versions()->begin(), tmp_out.begin(), tmp_out.end());
                 sorted_out.push_back(*it2);
                 ++it1;
