@@ -275,11 +275,8 @@ std::pair<size_t, ResultEstimationType> Controller::get_version_count(const Trip
 
 std::pair<size_t, ResultEstimationType> Controller::get_version_count(const TemporaryTriple &triple_pattern, bool allowEstimates) const {
 
-
-    // In a multiple snapshots context, the count has to be EXACT
-    // Meaning that we get all triples matching the pattern
-    // we remove duplicates (each delta chain will have duplicated triples with respect to other DC)
-    // there is probably optimizations opportunities.
+    // If allowEstimate is true, when multiple snapshots exists, the count can overestimate the number of results.
+    // This is due to triples being duplicated in multiple delta chains that can not be filtered out when only doing estimates.
     ResultEstimationType estimation_type_used = hdt::EXACT;
     std::set<std::string> triples;
     auto snapshots = snapshotManager->get_snapshots();
@@ -288,9 +285,14 @@ std::pair<size_t, ResultEstimationType> Controller::get_version_count(const Temp
         DictionaryManager* dict = snapshotManager->get_dictionary_manager(snapshot.first);
         Triple pattern = triple_pattern.get_as_triple(dict);
         IteratorTripleID *snapshot_it = SnapshotManager::search_with_offset(snapshot.second, pattern, 0);
-        while (snapshot_it->hasNext()) {
-            Triple t(*snapshot_it->next());
-            triples.insert(t.to_string(*dict));
+        if (allowEstimates) {
+            count += snapshot_it->estimatedNumResults();
+            estimation_type_used = hdt::APPROXIMATE;
+        } else {
+            while (snapshot_it->hasNext()) {
+                Triple t(*snapshot_it->next());
+                triples.insert(t.to_string(*dict));
+            }
         }
 
         // Count the additions for all versions
@@ -299,16 +301,21 @@ std::pair<size_t, ResultEstimationType> Controller::get_version_count(const Temp
         if (patch_tree_id > -1) {
             PatchTree* patchTree = patchTreeManager->get_patch_tree(patch_tree_id, dict);
             if (patchTree != nullptr) {
-                auto it = patchTree->addition_iterator(pattern);
-                Triple t;
-                PatchTreeValueBase<PatchTreeDeletionValue> del_val;
-                while (it->next(&t, &del_val)) {
-                    triples.insert(t.to_string(*dict));
+                if (allowEstimates) {
+                    count += patchTree->addition_count(snapshot.first, pattern);
+                } else {
+                    auto it = patchTree->addition_iterator(pattern);
+                    Triple t;
+                    PatchTreeValueBase<PatchTreeDeletionValue> del_val;
+                    while (it->next(&t, &del_val)) {
+                        triples.insert(t.to_string(*dict));
+                    }
                 }
             }
         }
     }
-    count = triples.size();
+    if (!allowEstimates)
+        count = triples.size();
     return std::make_pair(count, estimation_type_used);
 }
 
@@ -348,37 +355,17 @@ TripleVersionsIterator* Controller::get_version(const Triple &triple_pattern, in
 }
 
 TripleVersionsIteratorCombined *Controller::get_version(const TemporaryTriple &triple_pattern, int offset) const {
-    TripleVersionsIteratorCombined* it_version = new TripleVersionsIteratorCombined;
+    auto it_version = new TripleVersionsIteratorCombined;
 
     for (auto it: snapshotManager->get_snapshots()) {
         DictionaryManager* dict = snapshotManager->get_dictionary_manager(it.first);
         Triple pattern = triple_pattern.get_as_triple(dict);
-        IteratorTripleID* snapshot_it = SnapshotManager::search_with_offset(it.second, pattern, offset);
+        IteratorTripleID* snapshot_it = SnapshotManager::search_with_offset(it.second, pattern, 0);
         int patch_tree_id = patchTreeManager->get_patch_tree_id(it.first+1);
         PatchTree* patchTree = patchTreeManager->get_patch_tree(patch_tree_id, dict);
 
-        // Snapshots have already been offsetted, calculate the remaining offset.
-        // After this, offset will only be >0 if we are past the snapshot elements and at the additions.
-        if (snapshot_it->numResultEstimation() == EXACT) {
-            offset -= snapshot_it->estimatedNumResults();
-            if (offset <= 0) {
-                offset = 0;
-            } else {
-                delete snapshot_it;
-                snapshot_it = nullptr;
-            }
-        } else {
-            IteratorTripleID *tmp_it = SnapshotManager::search_with_offset(it.second, pattern, 0);
-            while (tmp_it->hasNext() && offset > 0) {
-                tmp_it->next();
-                offset--;
-            }
-            delete tmp_it;
-        }
-
         it_version->append_iterator(new TripleVersionsIterator(pattern, snapshot_it, patchTree, it.first), dict);
     }
-    // Should we really offset now ?
     return it_version->offset(offset);
 }
 
