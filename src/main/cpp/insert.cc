@@ -15,26 +15,47 @@ using namespace std;
 
 int main(int argc, char** argv) {
     if (argc < 2) {
-        cerr << "ERROR: Insert command must be invoked as '[-v] patch_id [+|- file_1.nt [file_2.nt [...]]]*' " << endl;
+        cerr << "ERROR: Insert command must be invoked as '[-v] [-s int] patch_id [+|- file_1.nt [file_2.nt [...]]]*' " << endl;
         return 1;
     }
 
+    int param_offset = 0;
+
     bool verbose = std::string(argv[1]) == "-v";
+    param_offset += 1;
     ProgressListener* progressListener = verbose ? new SimpleProgressListener() : nullptr;
 
-    // Load the store
-//    Controller controller("./", TreeDB::TCOMPRESS);
+    bool has_strat = std::string(argv[1 + param_offset]) == "-s";
+    unsigned strat_value = 0;
+    if (has_strat) {
+        param_offset += 1;
+        strat_value = std::stoul(argv[1 + param_offset]);
+        param_offset += 1;
+    }
 
-    CreateSnapshotEveryN strategy(3); // for testing, later as a parameter (and/or config file ?)
-    Controller controller("./", &strategy, TreeDB::TCOMPRESS);
+    // Load the store
+
+    // Should be moved into a strategy factory ?
+    SnapshotCreationStrategy* strategy = nullptr;
+    if (has_strat) {
+        if (strat_value == 0) {
+            strategy = new NeverCreateSnapshot;
+        } else if (strat_value == 1) {
+            strategy = new AlwaysCreateSnapshot;
+        } else {
+            strategy = new CreateSnapshotEveryN(strat_value);
+        }
+    }
+
+    Controller controller("./", strategy, TreeDB::TCOMPRESS);
 
     // Get parameters
-    int patch_id = std::stoi(argv[1 + verbose]);
+    int patch_id = std::stoi(argv[1 + param_offset]);
 
     // Read command line parameters
     std::vector<std::pair<IteratorTripleString*, bool>> files;
     bool additions = true;
-    for (int file_id = 2 + verbose; file_id < argc; file_id++) {
+    for (int file_id = 2 + param_offset; file_id < argc; file_id++) {
         std::string file(argv[file_id]);
         if (file == "+" || file == "-") {
             additions = file == "+";
@@ -52,9 +73,10 @@ int main(int argc, char** argv) {
     bool status = controller.ingest(files, patch_id, progressListener);
 
     if (progressListener)
-        cout << endl;
+        std::cout << std::endl;
 
     delete progressListener;
+    delete strategy;
 
     return status;
 }
