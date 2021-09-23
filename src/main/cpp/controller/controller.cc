@@ -67,6 +67,41 @@ std::pair<size_t, ResultEstimationType> Controller::get_version_materialized_cou
     return std::make_pair(snapshot_count - deletion_count_data.first + addition_count, snapshot_it->numResultEstimation());
 }
 
+std::pair<size_t, ResultEstimationType> Controller::get_version_materialized_count(const TemporaryTriple& triple_pattern, int patch_id, bool allowEstimates) const {
+    int snapshot_id = get_snapshot_manager()->get_latest_snapshot(patch_id);
+    if(snapshot_id < 0) {
+        return std::make_pair(0, EXACT);
+    }
+
+    HDT* snapshot = get_snapshot_manager()->get_snapshot(snapshot_id);
+
+    DictionaryManager* dict = get_snapshot_manager()->get_dictionary_manager(snapshot_id);
+    Triple pattern = triple_pattern.get_as_triple(dict);
+
+    IteratorTripleID* snapshot_it = SnapshotManager::search_with_offset(snapshot, pattern, 0);
+    size_t snapshot_count = snapshot_it->estimatedNumResults();
+
+    if (!allowEstimates && snapshot_it->numResultEstimation() != EXACT) {
+        snapshot_count = 0;
+        while (snapshot_it->hasNext()) {
+            snapshot_it->next();
+            snapshot_count++;
+        }
+    }
+    if(snapshot_id == patch_id) {
+        return std::make_pair(snapshot_count, snapshot_it->numResultEstimation());
+    }
+
+    PatchTree* patchTree = get_patch_tree_manager()->get_patch_tree(patch_id, dict);
+    if(patchTree == nullptr) {
+        return std::make_pair(snapshot_count, snapshot_it->numResultEstimation());
+    }
+
+    std::pair<PatchPosition, Triple> deletion_count_data = patchTree->deletion_count(pattern, patch_id);
+    size_t addition_count = patchTree->addition_count(patch_id, pattern);
+    return std::make_pair(snapshot_count - deletion_count_data.first + addition_count, snapshot_it->numResultEstimation());
+}
+
 TripleIterator* Controller::get_version_materialized(const Triple &triple_pattern, int offset, int patch_id) const {
     // Find the snapshot
     int snapshot_id = get_snapshot_manager()->get_latest_snapshot(patch_id);
@@ -154,6 +189,97 @@ TripleIterator* Controller::get_version_materialized(const Triple &triple_patter
         }
     }
     return new SnapshotPatchIteratorTripleID(snapshot_it, deletion_it, patchTree->get_spo_comparator(), snapshot, triple_pattern, patchTree, patch_id, offset, deletion_count_data.first);
+}
+
+TripleIterator* Controller::get_version_materialized(const TemporaryTriple &triple_pattern, int offset, int patch_id) const {
+    // Find the snapshot
+    int snapshot_id = get_snapshot_manager()->get_latest_snapshot(patch_id);
+    if(snapshot_id < 0) {
+        //throw std::invalid_argument("No snapshot was found for version " + std::to_string(patch_id));
+        return new EmptyTripleIterator();
+    }
+    HDT* snapshot = get_snapshot_manager()->get_snapshot(snapshot_id);
+    DictionaryManager* dict = get_snapshot_manager()->get_dictionary_manager(snapshot_id);
+
+    Triple pattern = triple_pattern.get_as_triple(dict);
+
+    // Simple case: We are requesting a snapshot, delegate lookup to that snapshot.
+    IteratorTripleID* snapshot_it = SnapshotManager::search_with_offset(snapshot, pattern, offset);
+    if(snapshot_id == patch_id) {
+        return new SnapshotTripleIterator(snapshot_it);
+    }
+
+    // Otherwise, we have to prepare an iterator for a certain patch
+    PatchTree* patchTree = get_patch_tree_manager()->get_patch_tree(patch_id, dict);
+    if(patchTree == nullptr) {
+        return new SnapshotTripleIterator(snapshot_it);
+    }
+    PositionedTripleIterator* deletion_it = nullptr;
+    long added_offset = 0;
+    bool check_offseted_deletions = true;
+
+    // Limit the patch id to the latest available patch id
+    int max_patch_id = patchTree->get_max_patch_id();
+    if (patch_id > max_patch_id) {
+        patch_id = max_patch_id;
+    }
+
+    std::pair<PatchPosition, Triple> deletion_count_data = patchTree->deletion_count(pattern, patch_id);
+    // This loop continuously determines new snapshot iterators until it finds one that contains
+    // no new deletions with respect to the snapshot iterator from last iteration.
+    // This loop is required to handle special cases like the one in the ControllerTest::EdgeCase1.
+    // As worst-case, this loop will take O(n) (n:dataset size), as an optimization we can look
+    // into storing long consecutive chains of deletions more efficiently.
+    while(check_offseted_deletions) {
+        if (snapshot_it->hasNext()) { // We have elements left in the snapshot we should apply deletions to
+            // Determine the first triple in the original snapshot and use it as offset for the deletion iterator
+            TripleID *tripleId = snapshot_it->next();
+            Triple firstTriple(tripleId->getSubject(), tripleId->getPredicate(), tripleId->getObject());
+            deletion_it = patchTree->deletion_iterator_from(firstTriple, patch_id, pattern);
+            deletion_it->getPatchTreeIterator()->set_early_break(true);
+
+            // Calculate a new offset, taking into account deletions.
+            PositionedTriple first_deletion_triple;
+            long snapshot_offset = 0;
+            if (deletion_it->next(&first_deletion_triple, true)) {
+                snapshot_offset = first_deletion_triple.position;
+            } else {
+                // The exact snapshot triple could not be found as a deletion
+                if (patchTree->get_spo_comparator()->compare(firstTriple, deletion_count_data.second) < 0) {
+                    // If the snapshot triple is smaller than the largest deletion,
+                    // set the offset to zero, as all deletions will come *after* this triple.
+
+                    // Note that it should impossible that there would exist a deletion *before* this snapshot triple,
+                    // otherwise we would already have found this triple as a snapshot triple before.
+                    // If we would run into issues because of this after all, we could do a backwards step with
+                    // deletion_it and see if we find a triple matching the pattern, and use its position.
+
+                    snapshot_offset = 0;
+                } else {
+                    // If the snapshot triple is larger than the largest deletion,
+                    // set the offset to the total number of deletions.
+                    snapshot_offset = deletion_count_data.first;
+                }
+            }
+            long previous_added_offset = added_offset;
+            added_offset = snapshot_offset;
+
+            // Make a new snapshot iterator for the new offset
+            // TODO: look into reusing the snapshot iterator and applying a relative offset (NOTE: I tried it before, it's trickier than it seems...)
+            delete snapshot_it;
+            snapshot_it = SnapshotManager::search_with_offset(snapshot, pattern, offset + added_offset);
+
+            // Check if we need to loop again
+            check_offseted_deletions = previous_added_offset < added_offset;
+            if(check_offseted_deletions) {
+                delete deletion_it;
+                deletion_it = nullptr;
+            }
+        } else {
+            check_offseted_deletions = false;
+        }
+    }
+    return new SnapshotPatchIteratorTripleID(snapshot_it, deletion_it, patchTree->get_spo_comparator(), snapshot, pattern, patchTree, patch_id, offset, deletion_count_data.first);
 }
 
 std::pair<size_t, ResultEstimationType> Controller::get_delta_materialized_count(const Triple &triple_pattern, int patch_id_start, int patch_id_end, bool allowEstimates) const {
@@ -507,12 +633,12 @@ bool Controller::ingest(const std::vector<std::pair<IteratorTripleString *, bool
     bool first = patch_id == 0;
 
     // Initialize iterators
-    CombinedTripleIterator *it_snapshot;
-    PatchElementIteratorCombined *it_patch;
+    CombinedTripleIterator *it_snapshot = nullptr;
+    PatchElementIteratorCombined *it_patch = nullptr;
     if (first) {
         it_snapshot = new CombinedTripleIterator();
     } else {
-        int snapshot_id = snapshotManager->get_latest_snapshot(metadata->num_version);
+        int snapshot_id = snapshotManager->get_latest_snapshot(patch_id);
         snapshotManager->load_snapshot(snapshot_id);
         dict = snapshotManager->get_dictionary_manager(snapshot_id);
         it_patch = new PatchElementIteratorCombined(PatchTreeKeyComparator(comp_s, comp_p, comp_o, dict));

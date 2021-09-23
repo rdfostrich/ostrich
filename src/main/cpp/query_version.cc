@@ -33,18 +33,17 @@ int main(int argc, char** argv) {
     int offset = argc == 5 ? std::stoi(argv[4]) : 0;
 
     // Construct query
-    DictionaryManager* dict = controller.get_dictionary_manager(0);
-    Triple triple_pattern(s, p, o, dict);
+    TemporaryTriple triple_pattern(s, p, o);
 
     std::pair<size_t, ResultEstimationType> count = controller.get_version_count(triple_pattern, true);
     cerr << "Count: " << count.first << (count.second == EXACT ? "" : " (estimate)") << endl;
 
-    TripleVersionsIterator* it = controller.get_version(triple_pattern, offset);
-    TripleVersions triple_versions;
+    TripleVersionsIteratorCombined* it = controller.get_version(triple_pattern, offset);
+    TripleVersionsString triple_versions;
     while (it->next(&triple_versions)) {
         std::stringstream vect;
         std::copy(triple_versions.get_versions()->begin(), triple_versions.get_versions()->end(), std::ostream_iterator<int>(vect, " "));
-        cout << triple_versions.get_triple()->to_string(*dict) << " :: [ " << vect.str() << "]" << endl;
+        cout << triple_versions.get_triple()->to_string() << " :: [ " << vect.str() << "]" << endl;
     }
     delete it;
 

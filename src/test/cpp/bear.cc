@@ -52,20 +52,59 @@ void test_lookups_for_queries(Evaluator& evaluator, string queriesFilePath, int 
     cout << "---QUERIES END---" << endl;
 }
 
+void test_lookups_for_queries_ms(BearEvaluatorMS& evaluator, string queriesFilePath, int replications) {
+    std::ifstream queriesFile(queriesFilePath);
+    std::string line;
+    cout << "---QUERIES START: " << queriesFilePath << "---" << endl;
+    while (std::getline(queriesFile, line)) {
+        vector<string> line_split = split(line, " ");
+        evaluator.test_lookup(
+                remove_brackets(line_split[0]),
+                remove_brackets(line_split[1]),
+                remove_brackets(line_split[2]),
+                replications,
+                line_split.size() > 4 ? std::atoi(line_split[3].c_str()) : 0, // offset
+                line_split.size() > 4 ? std::atoi(line_split[4].c_str()) : -2 // limit
+        );
+    }
+    cout << "---QUERIES END---" << endl;
+}
+
+
 int main(int argc, char *argv[]) {
     if (argc < 4) {
-        cerr << "Usage: " << argv[0] << " path_to_patches start_index end_index [path_to_queries_file replications]" << endl;
+        cerr << "Usage: " << argv[0] << " [-s int] path_to_patches start_index end_index [path_to_queries_file replications]" << endl;
         exit(1);
     }
 
-    Evaluator evaluator;
-    SimpleProgressListener* listener = new SimpleProgressListener();
-    evaluator.init("./", argv[1], stoi(argv[2]), stoi(argv[3]), listener);
+    SnapshotCreationStrategy* strategy = nullptr;
+
+    int param_offset = 0;
+    bool has_strat = std::string(argv[1]) == "-s";
+    if (has_strat) {
+        param_offset += 1;
+        unsigned strat_value = std::stoul(argv[2]);
+        param_offset += 1;
+        if (strat_value == 0) {
+            strategy = new NeverCreateSnapshot;
+        } else if (strat_value == 1) {
+            strategy = new AlwaysCreateSnapshot;
+        } else {
+            strategy = new CreateSnapshotEveryN(strat_value);
+        }
+    }
+
+    BearEvaluatorMS evaluator;
+    auto listener = new SimpleProgressListener();
+
+    evaluator.init("./", argv[1 + param_offset], strategy, stoi(argv[2 + param_offset]), stoi(argv[3 + param_offset]), listener);
     delete listener;
 
-    if (argc >= 6) {
-        test_lookups_for_queries(evaluator, ((std::string) argv[4]), stoi(argv[5]));
+    if (argc >= 6 + param_offset) {
+        test_lookups_for_queries_ms(evaluator, ((std::string) argv[4 + param_offset]), stoi(argv[5 + param_offset]));
     }
 
     evaluator.cleanup_controller();
+
+    delete strategy;
 }
