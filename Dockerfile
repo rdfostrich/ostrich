@@ -1,7 +1,7 @@
 FROM buildpack-deps:focal
 
 # Download sources
-RUN cd /opt && curl -LO http://fallabs.com/kyotocabinet/pkg/kyotocabinet-1.2.79.tar.gz
+RUN cd /opt && curl -LO https://dbmx.net/kyotocabinet/pkg/kyotocabinet-1.2.79.tar.gz
 RUN cd /opt && tar -xvzf kyotocabinet-1.2.79.tar.gz && mv kyotocabinet-1.2.79 kyotocabinet && rm kyotocabinet-1.2.79.tar.gz
 RUN apt-get update
 
