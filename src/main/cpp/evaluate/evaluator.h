@@ -52,7 +52,7 @@ public:
     void test_lookup(string s, string p, string o, int replications, int offset, int limit);
     void cleanup_controller();
 protected:
-    void populate_controller_with_version(int patch_id, const string& path, ProgressListener* progressListener = NULL);
+    void populate_controller_with_version(int patch_id, string path, ProgressListener* progressListener = NULL);
     static std::ifstream::pos_type patchstore_size(Controller* controller);
     static std::ifstream::pos_type filesize(const string& file);
     static IteratorTripleString* get_from_file(const string& file);

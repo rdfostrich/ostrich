@@ -332,15 +332,28 @@ void BearEvaluatorMS::cleanup_controller() {
     delete controller;
 }
 
-void BearEvaluatorMS::populate_controller_with_version(int patch_id, const string& path, ProgressListener *progressListener) {
+void BearEvaluatorMS::populate_controller_with_version(int patch_id, string path, ProgressListener *progressListener) {
+    if (path.back() == '/') path.pop_back();
+
+    patch_id--; // the first BEAR version is 1 but Ostrich starts at 0, so we decrement patch_id by 1
+
     std::string versions_ids(std::to_string(patch_id) + "-" + std::to_string(patch_id+1));
-    std::string file_additions(path + k_path_separator + "CB" + k_path_separator + "data-added_" + versions_ids + ".nt");
-    std::string file_deletions(path + k_path_separator + "CB" + k_path_separator + "data-deleted_" + versions_ids + ".nt");
+    std::string file_additions(path + k_path_separator + "alldata.CB.nt" + k_path_separator + "data-added_" + versions_ids + ".nt");
+    std::string file_deletions(path + k_path_separator + "alldata.CB.nt" + k_path_separator + "data-deleted_" + versions_ids + ".nt");
 
     bool first = patch_id == 0;
 
     if (first) {
-        file_additions = path + k_path_separator + "IC" + k_path_separator + "1.nt";
+        file_additions = path + k_path_separator + "alldata.IC.nt" + k_path_separator + "1.nt";
+        ifstream f(file_additions.c_str());
+        if (!f.good()) {
+            file_additions = path + k_path_separator + "alldata.IC.nt" + k_path_separator + "000001.nt";
+            ifstream f2(file_additions.c_str());
+            if (!f2.good()) {
+                cerr << "Could not find the first file at location: " << file_additions << endl;
+                return;
+            }
+        }
     }
 
     DictionaryManager* dict;
