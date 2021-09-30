@@ -237,8 +237,13 @@ size_t DictionaryManager::getMapping() {
 
 void DictionaryManager::getSuggestions(const char *base, TripleComponentRole role, std::vector<string> &out, int maxResults) {}
 
-hdt::IteratorUCharString* DictionaryManager::getSuggestions(const char *prefix, TripleComponentRole role) {}
-hdt::IteratorUInt* DictionaryManager::getIDSuggestions(const char *prefix, TripleComponentRole role) {}
+hdt::IteratorUCharString* DictionaryManager::getSuggestions(const char *prefix, TripleComponentRole role) {
+    return nullptr;
+}
+
+hdt::IteratorUInt* DictionaryManager::getIDSuggestions(const char *prefix, TripleComponentRole role) {
+    return nullptr;
+}
 
 int DictionaryManager::compareComponent(size_t componentId1, size_t componentId2,
                                         TripleComponentRole role) {
