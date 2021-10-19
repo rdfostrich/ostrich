@@ -288,11 +288,17 @@ void BearEvaluatorMS::init(string basePath, string patchesBasePatch, SnapshotCre
         for (int i = startIndex; i <= endIndex; i++) {
             string versionname = to_string(i);
             NOTIFYMSG(progressListener, ("Version " + versionname + "\n").c_str());
-            populate_controller_with_version(patch_count++, patchesBasePatch, progressListener);
+            populate_controller_with_version(patch_count, patchesBasePatch, progressListener);
+            patch_count++;
         }
         closedir(dir);
     }
     cout << "---INSERTION END---" << endl;
+}
+
+void BearEvaluatorMS::init_readonly(string basePath) {
+    controller = new Controller(basePath, TreeDB::TCOMPRESS, true);
+    patch_count = controller->get_number_versions();
 }
 
 void BearEvaluatorMS::test_lookup(string s, string p, string o, int replications, int offset, int limit) {
@@ -334,8 +340,6 @@ void BearEvaluatorMS::cleanup_controller() {
 
 void BearEvaluatorMS::populate_controller_with_version(int patch_id, string path, ProgressListener *progressListener) {
     if (path.back() == '/') path.pop_back();
-
-    patch_id--; // the first BEAR version is 1 but Ostrich starts at 0, so we decrement patch_id by 1
 
     std::string versions_ids(std::to_string(patch_id) + "-" + std::to_string(patch_id+1));
     std::string file_additions(path + k_path_separator + "alldata.CB.nt" + k_path_separator + "data-added_" + versions_ids + ".nt");
@@ -529,5 +533,7 @@ long long BearEvaluatorMS::measure_count_version(const TemporaryTriple& triple_p
     }
     return total / replications;
 }
+
+
 
 

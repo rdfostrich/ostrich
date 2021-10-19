@@ -34,7 +34,7 @@ string remove_brackets(string element) {
     return element;
 }
 
-void test_lookups_for_queries(Evaluator& evaluator, string queriesFilePath, int replications) {
+void test_lookups_for_queries(Evaluator &evaluator, string queriesFilePath, int replications) {
     std::ifstream queriesFile(queriesFilePath);
     std::string line;
     cout << "---QUERIES START: " << queriesFilePath << "---" << endl;
@@ -52,7 +52,7 @@ void test_lookups_for_queries(Evaluator& evaluator, string queriesFilePath, int 
     cout << "---QUERIES END---" << endl;
 }
 
-void test_lookups_for_queries_ms(BearEvaluatorMS& evaluator, string queriesFilePath, int replications) {
+void test_lookups_for_queries_ms(BearEvaluatorMS &evaluator, string queriesFilePath, int replications) {
     std::ifstream queriesFile(queriesFilePath);
     std::string line;
     cout << "---QUERIES START: " << queriesFilePath << "---" << endl;
@@ -63,8 +63,8 @@ void test_lookups_for_queries_ms(BearEvaluatorMS& evaluator, string queriesFileP
                 remove_brackets(line_split[1]),
                 remove_brackets(line_split[2]),
                 replications,
-                line_split.size() > 4 ? std::atoi(line_split[3].c_str()) : 0, // offset
-                line_split.size() > 4 ? std::atoi(line_split[4].c_str()) : -2 // limit
+                line_split.size() > 4 ? std::stoi(line_split[3]) : 0, // offset
+                line_split.size() > 4 ? std::stoi(line_split[4]) : -2 // limit
         );
     }
     cout << "---QUERIES END---" << endl;
@@ -72,39 +72,40 @@ void test_lookups_for_queries_ms(BearEvaluatorMS& evaluator, string queriesFileP
 
 
 int main(int argc, char *argv[]) {
-    if (argc < 4) {
-        cerr << "Usage: " << argv[0] << " [-s int] path_to_patches start_index end_index [path_to_queries_file replications]" << endl;
-        exit(1);
-    }
-
-    SnapshotCreationStrategy* strategy = nullptr;
-
-    int param_offset = 0;
-    bool has_strat = std::string(argv[1]) == "-s";
-    if (has_strat) {
-        param_offset += 1;
-        unsigned strat_value = std::stoul(argv[2]);
-        param_offset += 1;
-        if (strat_value == 0) {
-            strategy = new NeverCreateSnapshot;
-        } else if (strat_value == 1) {
-            strategy = new AlwaysCreateSnapshot;
-        } else {
-            strategy = new CreateSnapshotEveryN(strat_value);
-        }
+    if (argc < 4 || argc > 8) {
+        std::cerr << "Usage: " << argv[0] << " ingest|ingest-query|query " << std::endl;
+        std::cerr << "\tcmd \"ingest\": snapshot_interval path_to_patches start_index end_index" << std::endl;
+        std::cerr
+                << "\tcmd \"ingest-query\": snapshot_interval path_to_patches start_index end_index path_to_queries_file replications"
+                << std::endl;
+        std::cerr << "\tcmd \"query\": path_to_queries_file replications" << std::endl;
+        return 1;
     }
 
     BearEvaluatorMS evaluator;
     auto listener = new SimpleProgressListener();
 
-    evaluator.init("./", argv[1 + param_offset], strategy, stoi(argv[2 + param_offset]), stoi(argv[3 + param_offset]), listener);
-    delete listener;
-
-    if (argc >= 6 + param_offset) {
-        test_lookups_for_queries_ms(evaluator, ((std::string) argv[4 + param_offset]), stoi(argv[5 + param_offset]));
+    if (std::strcmp("ingest", argv[1]) == 0 || std::strcmp("ingest-query", argv[1]) == 0) {
+        SnapshotCreationStrategy *strategy = nullptr;
+        unsigned snapshot_interval = std::stoul(argv[2]);
+        if (snapshot_interval == 0) {
+            strategy = new NeverCreateSnapshot;
+        } else if (snapshot_interval == 1) {
+            strategy = new AlwaysCreateSnapshot;
+        } else {
+            strategy = new CreateSnapshotEveryN(snapshot_interval);
+        }
+        evaluator.init("./", argv[3], strategy, stoi(argv[4]), stoi(argv[5]), listener);
+        if (std::strcmp("ingest-query", argv[1]) == 0) {
+            test_lookups_for_queries_ms(evaluator, ((std::string) argv[6]), stoi(argv[7]));
+        }
+        delete strategy;
+    } else if (std::strcmp("query", argv[1]) == 0) {
+        evaluator.init_readonly("./");
+        test_lookups_for_queries_ms(evaluator, ((std::string) argv[2]), stoi(argv[3]));
     }
 
-    evaluator.cleanup_controller();
+    delete listener;
 
-    delete strategy;
+    evaluator.cleanup_controller();
 }

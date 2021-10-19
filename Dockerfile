@@ -45,4 +45,4 @@ WORKDIR /var/evalrun
 
 # Default command
 ENTRYPOINT ["/opt/ostrich/run.sh"]
-CMD ["/var/patches", "1", "58", "/var/queries"]
+CMD ["ingest", "/var/patches", "1", "58", "/var/queries"]
