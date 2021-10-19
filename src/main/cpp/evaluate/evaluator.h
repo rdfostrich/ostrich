@@ -49,6 +49,7 @@ private:
     std::string file_prefix;
 public:
     void init(string basePath, string patchesBasePatch, SnapshotCreationStrategy* strategy, int startIndex, int endIndex, ProgressListener* progressListener = NULL);
+    void init_readonly(string basePath);
     void test_lookup(string s, string p, string o, int replications, int offset, int limit);
     void cleanup_controller();
 protected:
