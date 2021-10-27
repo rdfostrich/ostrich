@@ -279,8 +279,6 @@ void BearEvaluatorMS::init(string basePath, string patchesBasePatch, SnapshotCre
                            ProgressListener *progressListener) {
     controller = new Controller(basePath, strategy, TreeDB::TCOMPRESS);
 
-    std::cout << patchesBasePatch << std::endl;
-
     cout << "---INSERTION START---" << endl;
     cout << "version,added,durationms,rate,accsize" << endl;
     DIR *dir;
@@ -395,7 +393,9 @@ void BearEvaluatorMS::populate_controller_with_version(int patch_id, string path
         added = hdt->getTriples()->getNumberOfElements();
     } else {
         NOTIFYMSG(progressListener, "\nAppending patch...\n");
+        std::cout.setstate(std::ios_base::failbit); // Disable cout info from HDT
         controller->append(it_patch, patch_id, dict, false, progressListener);
+        std::cout.clear();
         added = it_patch->getPassed();
     }
 

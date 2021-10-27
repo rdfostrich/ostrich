@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
     }
 
     BearEvaluatorMS evaluator;
-    auto listener = new SimpleProgressListener();
+    SimpleProgressListener* listener = nullptr;
 
     if (std::strcmp("ingest", argv[1]) == 0 || std::strcmp("ingest-query", argv[1]) == 0) {
         SnapshotCreationStrategy *strategy = nullptr;
