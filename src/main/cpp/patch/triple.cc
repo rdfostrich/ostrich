@@ -8,7 +8,7 @@ Triple::Triple() : subject(0), predicate(0), object(0) {}
 
 Triple::Triple(const TripleID& tripleId) :
         subject(tripleId.getSubject()), predicate(tripleId.getPredicate()), object(tripleId.getObject()) {}
-Triple::Triple(unsigned int subject, unsigned int predicate, unsigned int object) :
+Triple::Triple(size_t subject, size_t predicate, size_t object) :
         subject(subject), predicate(predicate), object(object) {}
 
 Triple::Triple(const string& s, const string& p, const string& o, ModifiableDictionary* dict) {

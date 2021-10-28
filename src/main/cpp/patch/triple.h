@@ -19,7 +19,7 @@ public:
 
     Triple(const TripleID &triple);
 
-    Triple(unsigned int subject, unsigned int predicate, unsigned int object);
+    Triple(size_t subject, size_t predicate, size_t object);
 
     Triple(const string &s, const string &p, const string &o, ModifiableDictionary *dict);
 
