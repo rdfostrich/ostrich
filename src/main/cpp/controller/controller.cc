@@ -376,6 +376,8 @@ TripleDeltaIterator* Controller::get_delta_materialized(const Triple &triple_pat
     return nullptr;
 }
 
+
+
 std::pair<size_t, ResultEstimationType> Controller::get_version_count(const Triple &triple_pattern, bool allowEstimates) const {
     // TODO: this will require some changes when we support multiple snapshots.
     // Find the snapshot an count its elements
