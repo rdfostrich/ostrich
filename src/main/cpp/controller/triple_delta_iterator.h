@@ -5,7 +5,6 @@
 #include "../patch/patch_tree_iterator.h"
 #include "../patch/patch_tree.h"
 #include "../snapshot/snapshot_manager.h"
-#include "controller.h"
 
 // Triple annotated with addition/deletion.
 class TripleDelta {
