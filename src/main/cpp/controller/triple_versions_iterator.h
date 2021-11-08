@@ -20,12 +20,12 @@ public:
 
 class TripleVersionsString {
 protected:
-    TemporaryTriple triple;
+    StringTriple triple;
     std::vector<int> versions;
 public:
     TripleVersionsString();
-    TripleVersionsString(TemporaryTriple triple, std::vector<int> versions);
-    TemporaryTriple* get_triple();
+    TripleVersionsString(StringTriple triple, std::vector<int> versions);
+    StringTriple* get_triple();
     std::vector<int>* get_versions();
 
     // Compare triples strings, not versions, so we can sort a vector of TripleVersionsString

@@ -2298,8 +2298,8 @@ TEST_F(ControllerMSTest, GetVersionMS) {
     std::vector<int> v_3 = {3};
 
     // Request versions for ? ? ?
-    ASSERT_EQ(6, controller->get_version_count(TemporaryTriple("", "", "")).first) << "Count is incorrect";
-    TripleVersionsIteratorCombined* it0 = controller->get_version(TemporaryTriple("", "", ""), 0);
+    ASSERT_EQ(6, controller->get_version_count(StringTriple("", "", "")).first) << "Count is incorrect";
+    TripleVersionsIteratorCombined* it0 = controller->get_version(StringTriple("", "", ""), 0);
 
     ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
     ASSERT_EQ("<a> <a> <a>.", t.get_triple()->to_string()) << "Element is incorrect";
@@ -2328,7 +2328,7 @@ TEST_F(ControllerMSTest, GetVersionMS) {
     ASSERT_EQ(false, it0->next(&t)) << "Iterator should be finished";
 
     // Request versions for ? ? ? with offset 1
-    TripleVersionsIteratorCombined* it1 = controller->get_version(TemporaryTriple("", "", ""), 1);
+    TripleVersionsIteratorCombined* it1 = controller->get_version(StringTriple("", "", ""), 1);
 
     ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
     ASSERT_EQ("<a> <a> <b>.", t.get_triple()->to_string()) << "Element is incorrect";
@@ -2353,7 +2353,7 @@ TEST_F(ControllerMSTest, GetVersionMS) {
     ASSERT_EQ(false, it1->next(&t)) << "Iterator should be finished";
 
     // Request versions for ? ? ? with offset 2
-    TripleVersionsIteratorCombined* it2 = controller->get_version(TemporaryTriple("", "", ""), 2);
+    TripleVersionsIteratorCombined* it2 = controller->get_version(StringTriple("", "", ""), 2);
 
     ASSERT_EQ(true, it2->next(&t)) << "Iterator has a no next value";
     ASSERT_EQ("<a> <a> <c>.", t.get_triple()->to_string()) << "Element is incorrect";
@@ -2374,7 +2374,7 @@ TEST_F(ControllerMSTest, GetVersionMS) {
     ASSERT_EQ(false, it2->next(&t)) << "Iterator should be finished";
 
     // Request versions for ? ? ? with offset 3
-    TripleVersionsIteratorCombined* it3 = controller->get_version(TemporaryTriple("", "", ""), 3);
+    TripleVersionsIteratorCombined* it3 = controller->get_version(StringTriple("", "", ""), 3);
 
     ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
     ASSERT_EQ("<a> <a> <d>.", t.get_triple()->to_string()) << "Element is incorrect";
@@ -2391,13 +2391,13 @@ TEST_F(ControllerMSTest, GetVersionMS) {
     ASSERT_EQ(false, it3->next(&t)) << "Iterator should be finished";
 
     // Request versions for ? ? ? with offset 6
-    TripleVersionsIteratorCombined* it4 = controller->get_version(TemporaryTriple("", "", ""), 6);
+    TripleVersionsIteratorCombined* it4 = controller->get_version(StringTriple("", "", ""), 6);
 
     ASSERT_EQ(false, it4->next(&t)) << "Iterator should be finished";
 
     // Request versions for <a> ? ?
-    ASSERT_EQ(6, controller->get_version_count(TemporaryTriple("<a>", "", "")).first) << "Count is incorrect";
-    TripleVersionsIteratorCombined* it5 = controller->get_version(TemporaryTriple("", "", ""), 0);
+    ASSERT_EQ(6, controller->get_version_count(StringTriple("<a>", "", "")).first) << "Count is incorrect";
+    TripleVersionsIteratorCombined* it5 = controller->get_version(StringTriple("", "", ""), 0);
 
     ASSERT_EQ(true, it5->next(&t)) << "Iterator has a no next value";
     ASSERT_EQ("<a> <a> <a>.", t.get_triple()->to_string()) << "Element is incorrect";
@@ -2426,7 +2426,7 @@ TEST_F(ControllerMSTest, GetVersionMS) {
     ASSERT_EQ(false, it5->next(&t)) << "Iterator should be finished";
 
     // Request versions for <a> ? ? with offset 1
-    TripleVersionsIteratorCombined* it6 = controller->get_version(TemporaryTriple("<a>", "", ""), 1);
+    TripleVersionsIteratorCombined* it6 = controller->get_version(StringTriple("<a>", "", ""), 1);
 
     ASSERT_EQ(true, it6->next(&t)) << "Iterator has a no next value";
     ASSERT_EQ("<a> <a> <b>.", t.get_triple()->to_string()) << "Element is incorrect";
@@ -2451,7 +2451,7 @@ TEST_F(ControllerMSTest, GetVersionMS) {
     ASSERT_EQ(false, it6->next(&t)) << "Iterator should be finished";
 
     // Request versions for <a> ? ? with offset 2
-    TripleVersionsIteratorCombined* it7 = controller->get_version(TemporaryTriple("<a>", "", ""), 2);
+    TripleVersionsIteratorCombined* it7 = controller->get_version(StringTriple("<a>", "", ""), 2);
 
     ASSERT_EQ(true, it7->next(&t)) << "Iterator has a no next value";
     ASSERT_EQ("<a> <a> <c>.", t.get_triple()->to_string()) << "Element is incorrect";
@@ -2472,7 +2472,7 @@ TEST_F(ControllerMSTest, GetVersionMS) {
     ASSERT_EQ(false, it7->next(&t)) << "Iterator should be finished";
 
     // Request versions for <a> ? ? with offset 3
-    TripleVersionsIteratorCombined* it8 = controller->get_version(TemporaryTriple("<a>", "", ""), 3);
+    TripleVersionsIteratorCombined* it8 = controller->get_version(StringTriple("<a>", "", ""), 3);
 
     ASSERT_EQ(true, it8->next(&t)) << "Iterator has a no next value";
     ASSERT_EQ("<a> <a> <d>.", t.get_triple()->to_string()) << "Element is incorrect";
@@ -2489,13 +2489,13 @@ TEST_F(ControllerMSTest, GetVersionMS) {
     ASSERT_EQ(false, it8->next(&t)) << "Iterator should be finished";
 
     // Request versions for <a> ? ? with offset 6
-    TripleVersionsIteratorCombined* it9 = controller->get_version(TemporaryTriple("<a>", "", ""), 6);
+    TripleVersionsIteratorCombined* it9 = controller->get_version(StringTriple("<a>", "", ""), 6);
 
     ASSERT_EQ(false, it9->next(&t)) << "Iterator should be finished";
 
     // Request versions for ? ? <a>
-    ASSERT_EQ(1, controller->get_version_count(TemporaryTriple("", "", "<a>")).first) << "Count is incorrect";
-    TripleVersionsIteratorCombined* it10 = controller->get_version(TemporaryTriple("", "", "<a>"), 0);
+    ASSERT_EQ(1, controller->get_version_count(StringTriple("", "", "<a>")).first) << "Count is incorrect";
+    TripleVersionsIteratorCombined* it10 = controller->get_version(StringTriple("", "", "<a>"), 0);
 
     ASSERT_EQ(true, it10->next(&t)) << "Iterator has a no next value";
     ASSERT_EQ("<a> <a> <a>.", t.get_triple()->to_string()) << "Element is incorrect";
@@ -2504,13 +2504,13 @@ TEST_F(ControllerMSTest, GetVersionMS) {
     ASSERT_EQ(false, it10->next(&t)) << "Iterator should be finished";
 
     // Request versions for ? ? <a> with offset 1
-    TripleVersionsIteratorCombined* it11 = controller->get_version(TemporaryTriple("", "", "<a>"), 1);
+    TripleVersionsIteratorCombined* it11 = controller->get_version(StringTriple("", "", "<a>"), 1);
 
     ASSERT_EQ(false, it11->next(&t)) << "Iterator should be finished";
 
     // Request versions for ? ? <b>
-    ASSERT_EQ(1, controller->get_version_count(TemporaryTriple("", "", "<b>")).first) << "Count is incorrect";
-    TripleVersionsIteratorCombined* it12 = controller->get_version(TemporaryTriple("", "", "<b>"), 0);
+    ASSERT_EQ(1, controller->get_version_count(StringTriple("", "", "<b>")).first) << "Count is incorrect";
+    TripleVersionsIteratorCombined* it12 = controller->get_version(StringTriple("", "", "<b>"), 0);
 
     ASSERT_EQ(true, it12->next(&t)) << "Iterator has a no next value";
     ASSERT_EQ("<a> <a> <b>.", t.get_triple()->to_string()) << "Element is incorrect";
@@ -2519,13 +2519,13 @@ TEST_F(ControllerMSTest, GetVersionMS) {
     ASSERT_EQ(false, it12->next(&t)) << "Iterator should be finished";
 
     // Request versions for ? ? <b> with offset 1
-    TripleVersionsIteratorCombined* it13 = controller->get_version(TemporaryTriple("", "", "<b>"), 1);
+    TripleVersionsIteratorCombined* it13 = controller->get_version(StringTriple("", "", "<b>"), 1);
 
     ASSERT_EQ(false, it13->next(&t)) << "Iterator should be finished";
 
     // Request versions for ? ? <c>
-    ASSERT_EQ(2, controller->get_version_count(TemporaryTriple("", "", "<c>")).first) << "Count is incorrect";
-    TripleVersionsIteratorCombined* it14 = controller->get_version(TemporaryTriple("", "", "<c>"), 0);
+    ASSERT_EQ(2, controller->get_version_count(StringTriple("", "", "<c>")).first) << "Count is incorrect";
+    TripleVersionsIteratorCombined* it14 = controller->get_version(StringTriple("", "", "<c>"), 0);
 
     ASSERT_EQ(true, it14->next(&t)) << "Iterator has a no next value";
     ASSERT_EQ("<a> <a> <c>.", t.get_triple()->to_string()) << "Element is incorrect";
@@ -2538,7 +2538,7 @@ TEST_F(ControllerMSTest, GetVersionMS) {
     ASSERT_EQ(false, it14->next(&t)) << "Iterator should be finished";
 
     // Request versions for ? ? <c> with offset 1
-    TripleVersionsIteratorCombined* it15 = controller->get_version(TemporaryTriple("", "", "<c>"), 1);
+    TripleVersionsIteratorCombined* it15 = controller->get_version(StringTriple("", "", "<c>"), 1);
 
     ASSERT_EQ(true, it15->next(&t)) << "Iterator has a no next value";
     ASSERT_EQ("<a> <b> <c>.", t.get_triple()->to_string()) << "Element is incorrect";
@@ -2548,14 +2548,14 @@ TEST_F(ControllerMSTest, GetVersionMS) {
 
     // Request versions for ? ? <c> with offset 2
 
-    TripleVersionsIteratorCombined* it16 = controller->get_version(TemporaryTriple("", "", "<c>"), 2);
+    TripleVersionsIteratorCombined* it16 = controller->get_version(StringTriple("", "", "<c>"), 2);
 
     ASSERT_EQ(false, it16->next(&t)) << "Iterator should be finished";
 
 
     // Request versions for ? ? <d>
-    ASSERT_EQ(2, controller->get_version_count(TemporaryTriple("", "", "<d>")).first) << "Count is incorrect";
-    TripleVersionsIteratorCombined* it17 = controller->get_version(TemporaryTriple("", "", "<d>"), 0);
+    ASSERT_EQ(2, controller->get_version_count(StringTriple("", "", "<d>")).first) << "Count is incorrect";
+    TripleVersionsIteratorCombined* it17 = controller->get_version(StringTriple("", "", "<d>"), 0);
 
     ASSERT_EQ(true, it17->next(&t)) << "Iterator has a no next value";
     ASSERT_EQ("<a> <a> <d>.", t.get_triple()->to_string()) << "Element is incorrect";
@@ -2568,7 +2568,7 @@ TEST_F(ControllerMSTest, GetVersionMS) {
     ASSERT_EQ(false, it17->next(&t)) << "Iterator should be finished";
 
     // Request versions for ? ? <d> with offset 1
-    TripleVersionsIteratorCombined* it18 = controller->get_version(TemporaryTriple("", "", "<d>"), 1);
+    TripleVersionsIteratorCombined* it18 = controller->get_version(StringTriple("", "", "<d>"), 1);
 
     ASSERT_EQ(true, it18->next(&t)) << "Iterator has a no next value";
     ASSERT_EQ("<a> <b> <d>.", t.get_triple()->to_string()) << "Element is incorrect";
@@ -2577,7 +2577,7 @@ TEST_F(ControllerMSTest, GetVersionMS) {
     ASSERT_EQ(false, it18->next(&t)) << "Iterator should be finished";
 
     // Request versions for ? ? <d> with offset 2
-    TripleVersionsIteratorCombined* it19 = controller->get_version(TemporaryTriple("", "", "<d>"), 2);
+    TripleVersionsIteratorCombined* it19 = controller->get_version(StringTriple("", "", "<d>"), 2);
 
     ASSERT_EQ(false, it19->next(&t)) << "Iterator should be finished";
 

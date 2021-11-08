@@ -112,48 +112,48 @@ const char *TripleVersion::serialize(size_t *size) const {
     return bytes;
 }
 
-TemporaryTriple::TemporaryTriple() = default;
+StringTriple::StringTriple() = default;
 
-TemporaryTriple::TemporaryTriple(string s, string p, string o) : subject(std::move(s)), predicate(std::move(p)),
-                                                                 object(std::move(o)) {}
+StringTriple::StringTriple(string s, string p, string o) : subject(std::move(s)), predicate(std::move(p)),
+                                                           object(std::move(o)) {}
 
-Triple TemporaryTriple::get_as_triple(ModifiableDictionary *dict) const {
+Triple StringTriple::get_as_triple(ModifiableDictionary *dict) const {
     return {subject, predicate, object, dict};
 }
 
-std::string TemporaryTriple::get_subject() const {
+std::string StringTriple::get_subject() const {
     return subject;
 }
 
-std::string TemporaryTriple::get_predicate() const {
+std::string StringTriple::get_predicate() const {
     return predicate;
 }
 
-std::string TemporaryTriple::get_object() const {
+std::string StringTriple::get_object() const {
     return object;
 }
 
-std::string TemporaryTriple::to_string() const {
+std::string StringTriple::to_string() const {
     return subject + " " + predicate + " " + object + ".";
 }
 
-bool TemporaryTriple::operator==(const TemporaryTriple &other) const {
+bool StringTriple::operator==(const StringTriple &other) const {
     return subject == other.subject && predicate == other.predicate && object == other.object;
 }
 
-bool TemporaryTriple::operator<(const TemporaryTriple &other) const {
+bool StringTriple::operator<(const StringTriple &other) const {
     return to_string() < other.to_string();
 }
 
-void TemporaryTriple::set_subject(std::string new_subject) {
+void StringTriple::set_subject(std::string new_subject) {
     this->subject = std::move(new_subject);
 }
 
-void TemporaryTriple::set_predicate(std::string new_predicate) {
+void StringTriple::set_predicate(std::string new_predicate) {
     this->predicate = std::move(new_predicate);
 }
 
-void TemporaryTriple::set_object(std::string new_object) {
+void StringTriple::set_object(std::string new_object) {
     this->object = std::move(new_object);
 }
 

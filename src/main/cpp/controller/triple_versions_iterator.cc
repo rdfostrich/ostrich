@@ -109,8 +109,8 @@ void TripleVersionsIteratorCombined::append_iterator(TripleVersionsIterator *ite
     TripleVersions t;
     std::vector<TripleVersionsString> tmp_triples;
     while (iterator->next(&t)) {
-        TemporaryTriple ts(t.get_triple()->get_subject(*dict), t.get_triple()->get_predicate(*dict),
-                           t.get_triple()->get_object(*dict));
+        StringTriple ts(t.get_triple()->get_subject(*dict), t.get_triple()->get_predicate(*dict),
+                        t.get_triple()->get_object(*dict));
         tmp_triples.emplace_back(ts, *t.get_versions());
     }
     delete iterator;
@@ -157,7 +157,7 @@ void TripleVersionsIteratorCombined::append_iterator(TripleVersionsIterator *ite
 bool TripleVersionsIteratorCombined::next(TripleVersionsString *triple_versions) {
     if (index == triples.size())
         return false;
-    TemporaryTriple *currentTriple = triples[index].get_triple();
+    StringTriple *currentTriple = triples[index].get_triple();
     triple_versions->get_triple()->set_subject(currentTriple->get_subject());
     triple_versions->get_triple()->set_predicate(currentTriple->get_predicate());
     triple_versions->get_triple()->set_object(currentTriple->get_object());
@@ -181,10 +181,10 @@ TripleVersionsIteratorCombined *TripleVersionsIteratorCombined::offset(int offse
 
 TripleVersionsString::TripleVersionsString() = default;
 
-TripleVersionsString::TripleVersionsString(TemporaryTriple triple, std::vector<int> versions) : triple(
+TripleVersionsString::TripleVersionsString(StringTriple triple, std::vector<int> versions) : triple(
         std::move(triple)), versions(std::move(versions)) {}
 
-TemporaryTriple *TripleVersionsString::get_triple() {
+StringTriple *TripleVersionsString::get_triple() {
     return &triple;
 }
 

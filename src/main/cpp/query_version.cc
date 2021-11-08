@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
     int offset = argc == 5 ? std::stoi(argv[4]) : 0;
 
     // Construct query
-    TemporaryTriple triple_pattern(s, p, o);
+    StringTriple triple_pattern(s, p, o);
 
     std::pair<size_t, ResultEstimationType> count = controller.get_version_count(triple_pattern, true);
     cerr << "Count: " << count.first << (count.second == EXACT ? "" : " (estimate)") << endl;

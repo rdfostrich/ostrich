@@ -50,7 +50,7 @@ bool EmptyTripleDeltaIterator::next(TripleDelta *triple) {
 }
 
 template <class DV>
-ForwardPatchTripleDeltaIterator<DV>::ForwardPatchTripleDeltaIterator(PatchTree* patchTree, const Triple &triple_pattern, int patch_id_end) : it(patchTree->iterator<DV>(&triple_pattern)) {
+ForwardPatchTripleDeltaIterator<DV>::ForwardPatchTripleDeltaIterator(PatchTree* patchTree, const Triple &triple_pattern, int patch_id_end, DictionaryManager* dict) : it(patchTree->iterator<DV>(&triple_pattern)), dict(dict) {
     it->set_patch_filter(patch_id_end, false);
     it->set_filter_local_changes(true);
     it->set_early_break(true);
@@ -74,12 +74,13 @@ bool ForwardPatchTripleDeltaIterator<DV>::next(TripleDelta* triple) {
     if (valid) {
         triple->set_addition(addition);
     }
+    triple->set_dictionary(dict);
     return valid;
 }
 
 template <class DV>
-FowardDiffPatchTripleDeltaIterator<DV>::FowardDiffPatchTripleDeltaIterator(PatchTree* patchTree, const Triple &triple_pattern, int patch_id_start, int patch_id_end)
-        : ForwardPatchTripleDeltaIterator<DV>(patchTree, triple_pattern, patch_id_end), patch_id_start(patch_id_start), patch_id_end(patch_id_end) {
+FowardDiffPatchTripleDeltaIterator<DV>::FowardDiffPatchTripleDeltaIterator(PatchTree* patchTree, const Triple &triple_pattern, int patch_id_start, int patch_id_end, DictionaryManager* dict)
+        : ForwardPatchTripleDeltaIterator<DV>(patchTree, triple_pattern, patch_id_end, dict), patch_id_start(patch_id_start), patch_id_end(patch_id_end) {
     this->it->set_filter_local_changes(false);
 }
 
@@ -101,15 +102,16 @@ template class FowardDiffPatchTripleDeltaIterator<PatchTreeDeletionValue>;
 template class FowardDiffPatchTripleDeltaIterator<PatchTreeDeletionValueReduced>;
 
 
-SnapshotDiffIterator::SnapshotDiffIterator(TripleString &triple_pattern, SnapshotManager *manager, int snapshot_1,
+SnapshotDiffIterator::SnapshotDiffIterator(const StringTriple &triple_pattern, SnapshotManager *manager, int snapshot_1,
                                            int snapshot_2): t1(nullptr), t2(nullptr) {
     HDT* snap_1 = manager->get_snapshot(snapshot_1);
     dict1 = manager->get_dictionary_manager(snapshot_1);
     HDT* snap_2 = manager->get_snapshot(snapshot_2);
     dict2 = manager->get_dictionary_manager(snapshot_2);
     if (snap_1 && snap_2) {
-        snapshot_it_1 = snap_1->search(triple_pattern);
-        snapshot_it_2 = snap_2->search(triple_pattern);
+        TripleString tp(triple_pattern.get_subject(), triple_pattern.get_predicate(), triple_pattern.get_object());
+        snapshot_it_1 = snap_1->search(tp);
+        snapshot_it_2 = snap_2->search(tp);
         if (snapshot_it_1->hasNext()) t1 = snapshot_it_1->next();
         if (snapshot_it_2->hasNext()) t2 = snapshot_it_2->next();
     }
@@ -227,6 +229,8 @@ bool MergeDiffIterator::next(TripleDelta *triple) {
             } else {
                 emit_triple(triple2, triple, false);
             }
+            status1 = it1->next(triple1);
+            status2 = it2->next(triple2);
             return true;
         } else if (comp < 0) {
             emit_triple(triple1, triple, triple1->is_addition());
@@ -247,6 +251,13 @@ bool MergeDiffIterator::next(TripleDelta *triple) {
         return true;
     }
     return false;
+}
+
+MergeDiffIterator::~MergeDiffIterator() {
+    delete it1;
+    delete it2;
+    delete triple1;
+    delete triple2;
 }
 
 
@@ -276,3 +287,66 @@ bool SortedTripleDeltaIterator::next(TripleDelta *triple) {
     }
     return false;
 }
+
+
+MergeDiffIteratorCase2::MergeDiffIteratorCase2(TripleDeltaIterator *iterator_1, TripleDeltaIterator *iterator_2):
+    it1(iterator_1), it2(iterator_2), triple1(new TripleDelta), triple2(new TripleDelta)
+{
+    status1 = it1->next(triple1);
+    status2 = it2->next(triple2);
+}
+
+MergeDiffIteratorCase2::~MergeDiffIteratorCase2() {
+    delete it1;
+    delete it2;
+    delete triple1;
+    delete triple2;
+}
+
+bool MergeDiffIteratorCase2::next(TripleDelta *triple) {
+    auto emit_triple = [](TripleDelta* source, TripleDelta* target, bool is_addition) {
+        target->get_triple()->set_subject(source->get_triple()->get_subject());
+        target->get_triple()->set_predicate(source->get_triple()->get_predicate());
+        target->get_triple()->set_object(source->get_triple()->get_object());
+        target->set_addition(is_addition);
+        target->set_dictionary(target->get_dictionary());
+    };
+
+    if (status1 && status2) {
+        int comp = compare_triple_delta(triple1, triple2);
+        if (comp == 0) {  // It's the same triple (SPO)
+            if (triple2->is_addition()) {
+                emit_triple(triple2, triple, true);
+            } else {
+                emit_triple(triple2, triple, false);
+            }
+            status1 = it1->next(triple1);
+            status2 = it2->next(triple2);
+            return true;
+        } else if (comp < 0) {
+            // The triple from set 1 but does not exist in set 2
+            // It means that it must have been reverted somewhere in between
+            // So if triple1 is addition, then it's a deletion
+            // and if triple1 is deletion, then it's an addition
+            emit_triple(triple1, triple, !triple1->is_addition());
+            status1 = it1->next(triple1);
+            return true;
+        } else {
+            emit_triple(triple2, triple, triple2->is_addition());
+            status2 = it2->next(triple2);
+            return true;
+        }
+    } else if (status1) {
+        emit_triple(triple1, triple, !triple1->is_addition());
+        status1 = it1->next(triple1);
+        return true;
+    } else if (status2) {
+        emit_triple(triple2, triple, triple2->is_addition());
+        status2 = it2->next(triple2);
+        return true;
+    }
+    return false;
+}
+
+
+
