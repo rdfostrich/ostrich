@@ -441,26 +441,45 @@ TripleDeltaIterator* Controller::get_delta_materialized(const StringTriple &trip
             delete tmp_it;
         }
         auto snap_diff = new SnapshotDiffIterator(triple_pattern, snapshotManager, snapshot_id_start, snapshot_id_end);
-        return (new MergeDiffIterator(last_dc_dm, snap_diff))->offset(offset);
+        return (new MergeDiffIteratorCase2(last_dc_dm, snap_diff))->offset(offset);
     }
 
     // start = patch, end = patch
     if(snapshot_id_start != patch_id_start && snapshot_id_end != patch_id_end) {
-        DictionaryManager *dict = get_snapshot_manager()->get_dictionary_manager(snapshot_id_end);
         if (snapshot_id_start == snapshot_id_end) {
+            Triple tp = triple_pattern.get_as_triple(dict_end);
             // Return diff between two patches relative to the same snapshot
-            PatchTree* patchTree = get_patch_tree_manager()->get_patch_tree(patch_id_end, dict);
-            if(patchTree == NULL) {
+            PatchTree* patchTree = get_patch_tree_manager()->get_patch_tree(patch_id_end, dict_end);
+            if(patchTree == nullptr) {
                 throw std::invalid_argument("Could not find the given end patch id");
             }
-            if (TripleStore::is_default_tree(triple_pattern)) {
-                return (new FowardDiffPatchTripleDeltaIterator<PatchTreeDeletionValue>(patchTree, triple_pattern, patch_id_start, patch_id_end))->offset(offset);
+            if (TripleStore::is_default_tree(tp)) {
+                return (new FowardDiffPatchTripleDeltaIterator<PatchTreeDeletionValue>(patchTree, tp, patch_id_start, patch_id_end, dict_end))->offset(offset);
             } else {
-                return (new FowardDiffPatchTripleDeltaIterator<PatchTreeDeletionValueReduced>(patchTree, triple_pattern, patch_id_start, patch_id_end))->offset(offset);
+                return (new FowardDiffPatchTripleDeltaIterator<PatchTreeDeletionValueReduced>(patchTree, tp, patch_id_start, patch_id_end, dict_end))->offset(offset);
             }
         } else {
-            // TODO: implement this when multiple snapshots are supported
-            throw std::invalid_argument("Multiple snapshots are not supported.");
+            Triple tp_start = triple_pattern.get_as_triple(dict_start);
+            Triple tp_end = triple_pattern.get_as_triple(dict_end);
+            bool is_spo = TripleStore::is_default_tree(tp_start);
+            PatchTree* patchtree_start = get_patch_tree_manager()->get_patch_tree(patch_id_start, dict_start);
+            PatchTree* patchtree_end = get_patch_tree_manager()->get_patch_tree(patch_id_end, dict_end);
+            TripleDeltaIterator* first_dc_dm;
+            TripleDeltaIterator* last_dc_dm;
+            if (is_spo) {
+                first_dc_dm = new ForwardPatchTripleDeltaIterator<PatchTreeDeletionValue>(patchtree_start, tp_start, patch_id_start, dict_start);
+                last_dc_dm = new ForwardPatchTripleDeltaIterator<PatchTreeDeletionValue>(patchtree_end, tp_end, patch_id_end, dict_end);
+            } else {
+                auto tmp_it = new ForwardPatchTripleDeltaIterator<PatchTreeDeletionValueReduced>(patchtree_start, tp_start, patch_id_start, dict_start);
+                first_dc_dm = new SortedTripleDeltaIterator(tmp_it);
+                delete tmp_it;
+                auto tmp_it2 = new ForwardPatchTripleDeltaIterator<PatchTreeDeletionValueReduced>(patchtree_end, tp_end, patch_id_end, dict_end);
+                last_dc_dm = new SortedTripleDeltaIterator(tmp_it2);
+                delete tmp_it2;
+            }
+            auto snap_diff = new SnapshotDiffIterator(triple_pattern, snapshotManager, snapshot_id_start, snapshot_id_end);
+            TripleDeltaIterator* intermediate_diff = new MergeDiffIteratorCase2(first_dc_dm, snap_diff);
+            return (new MergeDiffIterator(intermediate_diff, last_dc_dm))->offset(offset);
         }
     }
     return nullptr;
