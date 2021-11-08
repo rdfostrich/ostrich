@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.3)
+cmake_minimum_required(VERSION 3.20)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated")
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -25,10 +25,7 @@ file(GLOB_RECURSE HDT_FILES
 set(PROJECT_NAME_STR ostrich)
 project(${PROJECT_NAME_STR})
 
-set(SOURCE_FILE_EVALUATE
-        #src/test/cpp/performance.cc
-        src/test/cpp/bear.cc
-)
+set(SOURCE_FILE_EVALUATE src/test/cpp/bear.cc)
 set(SOURCE_FILE_QUERY_VERSION_MATERIALIZED src/main/cpp/query_version_materialized.cc)
 set(SOURCE_FILE_QUERY_DELTA_MATERIALIZED src/main/cpp/query_delta_materialized.cc)
 set(SOURCE_FILE_QUERY_VERSION src/main/cpp/query_version.cc)
@@ -78,92 +75,58 @@ set(TEST_FILES
         src/test/cpp/dictionary/dictionary_manager.cc
         src/test/cpp/snapshot/snapshot_manager.cc)
 
-add_executable(${PROJECT_NAME_STR}-evaluate ${HDT_FILES} ${COMMON_FILES} ${SOURCE_FILE_EVALUATE})
+add_library(ostrich STATIC ${HDT_FILES} ${COMMON_FILES})
+
+# Kyoto Cabinet dependencies
+find_library(LZMA lzma REQUIRED)
+find_library(LZO lzo2 REQUIRED)
 
 # Add Kyoto Cabinet
-find_library(KYOTO_SHARED_LIBRARY kyotocabinet PATHS ${KC_ROOT}/lib)
-find_path(KYOTO_INCLUDE_DIR kchashdb.h PATHS ${KC_ROOT}/include)
-if (KYOTO_SHARED_LIBRARY MATCHES KYOTO_LIBRARY-NOTFOUND)
-    message("FATAL_ERROR Kyoto Cabinet not found!")
-    set(Kyoto-NOTFOUND 1)
-    set(Kyoto-FOUND)
-else (KYOTO_SHARED_LIBRARY MATCHES KYOTO_LIBRARY-NOTFOUND)
-    if (KYOTO_INCLUDE_DIR MATCHES KYOTO_INCLUDE_DIR-NOTFOUND)
-        message("FATAL_ERROR Kyoto Cabinet not found!")
-        set(Kyoto-NOTFOUND 1)
-        set(Kyoto-FOUND)
-    else (KYOTO_INCLUDE_DIR MATCHES KYOTO_INCLUDE_DIR-NOTFOUND)
-        set(Kyoto-FOUND 1)
-        set(Kyoto-NOTFOUND)
-        message(STATUS "Kyoto Cabinet Found")
-        # get the static version
-        string(REGEX REPLACE "\\${CMAKE_SHARED_LIBRARY_SUFFIX}$" ".a" KYOTO_STATIC_LIBRARY ${KYOTO_SHARED_LIBRARY})
-        message(STATUS "Kyoto Cabinet: ${KYOTO_STATIC_LIBRARY}" )
-        target_link_libraries(${PROJECT_NAME_STR}-evaluate ${KYOTO_SHARED_LIBRARY})
-        include_directories(${KYOTO_INCLUDE_DIR})
-        add_definitions(-DHAS_KYOTO)
-    endif (KYOTO_INCLUDE_DIR MATCHES KYOTO_INCLUDE_DIR-NOTFOUND)
-endif (KYOTO_SHARED_LIBRARY MATCHES KYOTO_LIBRARY-NOTFOUND)
-
-if (Kyoto-FOUND)
-    add_definitions(-DHAVE_KYOTO)
-endif()
+find_library(KYOTO_CABINET libkyotocabinet.a REQUIRED)
+find_path(KYOTO_INCLUDE_DIR kcplantdb.h REQUIRED)
+include_directories(${KYOTO_INCLUDE_DIR})
 
 # Add pthreads
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
-target_link_libraries(${PROJECT_NAME_STR}-evaluate Threads::Threads)
 
 # Add zlib
 hunter_add_package(ZLIB)
 find_package(ZLIB CONFIG REQUIRED)
 include_directories(${ZLIB_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME_STR}-evaluate ${ZLIB_LIBRARIES})
 
 # Add Boost
 hunter_add_package(Boost COMPONENTS iostreams regex)
 find_package(Boost CONFIG REQUIRED COMPONENTS iostreams regex)
-target_link_libraries(${PROJECT_NAME_STR}-evaluate Boost::iostreams Boost::regex)
+
+target_link_libraries(ostrich ${LZMA} ${LZO})
+target_link_libraries(ostrich ${KYOTO_CABINET})
+target_link_libraries(ostrich ${ZLIB_LIBRARIES})
+target_link_libraries(ostrich Threads::Threads)
+target_link_libraries(ostrich Boost::iostreams Boost::regex)
+
+# Evaluation executable
+add_executable(${PROJECT_NAME_STR}-evaluate ${SOURCE_FILE_EVALUATE})
+target_link_libraries(${PROJECT_NAME_STR}-evaluate ostrich)
 
 # 3rdparty Libraries
 set(EXT_PROJECTS_DIR ${PROJECT_SOURCE_DIR}/ext)
-#include(CMakeLists-External.txt)
 
 # Add query version materialized executable
-add_executable(${PROJECT_NAME_STR}-query-version-materialized ${HDT_FILES} ${COMMON_FILES} ${SOURCE_FILE_QUERY_VERSION_MATERIALIZED})
-target_link_libraries(${PROJECT_NAME_STR}-query-version-materialized ${LIBSTDCXX})
-target_link_libraries(${PROJECT_NAME_STR}-query-version-materialized ${KYOTO_SHARED_LIBRARY})
-target_link_libraries(${PROJECT_NAME_STR}-query-version-materialized ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(${PROJECT_NAME_STR}-query-version-materialized ${ZLIB_LIBRARIES})
-target_link_libraries(${PROJECT_NAME_STR}-query-version-materialized Boost::iostreams)
-target_link_libraries(${PROJECT_NAME_STR}-query-version-materialized Threads::Threads)
+add_executable(${PROJECT_NAME_STR}-query-version-materialized ${SOURCE_FILE_QUERY_VERSION_MATERIALIZED})
+target_link_libraries(${PROJECT_NAME_STR}-query-version-materialized ostrich)
 
 # Add query delta materialized executable
-add_executable(${PROJECT_NAME_STR}-query-delta-materialized ${HDT_FILES} ${COMMON_FILES} ${SOURCE_FILE_QUERY_DELTA_MATERIALIZED})
-target_link_libraries(${PROJECT_NAME_STR}-query-delta-materialized ${LIBSTDCXX})
-target_link_libraries(${PROJECT_NAME_STR}-query-delta-materialized ${KYOTO_SHARED_LIBRARY})
-target_link_libraries(${PROJECT_NAME_STR}-query-delta-materialized ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(${PROJECT_NAME_STR}-query-delta-materialized ${ZLIB_LIBRARIES})
-target_link_libraries(${PROJECT_NAME_STR}-query-delta-materialized Boost::iostreams)
-target_link_libraries(${PROJECT_NAME_STR}-query-delta-materialized Threads::Threads)
+add_executable(${PROJECT_NAME_STR}-query-delta-materialized ${SOURCE_FILE_QUERY_DELTA_MATERIALIZED})
+target_link_libraries(${PROJECT_NAME_STR}-query-delta-materialized ostrich)
 
 # Add query version executable
-add_executable(${PROJECT_NAME_STR}-query-version ${HDT_FILES} ${COMMON_FILES} ${SOURCE_FILE_QUERY_VERSION})
-target_link_libraries(${PROJECT_NAME_STR}-query-version ${LIBSTDCXX})
-target_link_libraries(${PROJECT_NAME_STR}-query-version ${KYOTO_SHARED_LIBRARY})
-target_link_libraries(${PROJECT_NAME_STR}-query-version ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(${PROJECT_NAME_STR}-query-version ${ZLIB_LIBRARIES})
-target_link_libraries(${PROJECT_NAME_STR}-query-version Boost::iostreams)
-target_link_libraries(${PROJECT_NAME_STR}-query-version Threads::Threads)
+add_executable(${PROJECT_NAME_STR}-query-version ${SOURCE_FILE_QUERY_VERSION})
+target_link_libraries(${PROJECT_NAME_STR}-query-version ostrich)
 
 # Add insert executable
-add_executable(${PROJECT_NAME_STR}-insert ${HDT_FILES} ${COMMON_FILES} ${SOURCE_FILE_INSERT})
-target_link_libraries(${PROJECT_NAME_STR}-insert ${LIBSTDCXX})
-target_link_libraries(${PROJECT_NAME_STR}-insert ${KYOTO_SHARED_LIBRARY})
-target_link_libraries(${PROJECT_NAME_STR}-insert ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(${PROJECT_NAME_STR}-insert ${ZLIB_LIBRARIES})
-target_link_libraries(${PROJECT_NAME_STR}-insert Boost::iostreams)
-target_link_libraries(${PROJECT_NAME_STR}-insert Threads::Threads)
+add_executable(${PROJECT_NAME_STR}-insert ${SOURCE_FILE_INSERT})
+target_link_libraries(${PROJECT_NAME_STR}-insert ostrich)
 
 # Add gtest
 add_subdirectory(${EXT_PROJECTS_DIR}/gtest)
@@ -171,8 +134,8 @@ enable_testing()
 set(PROJECT_TEST_NAME ${PROJECT_NAME_STR}_test)
 include_directories(${GTEST_INCLUDE_DIRS})
 
-file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/src/test/cpp/*.cpp)
-add_executable(${PROJECT_TEST_NAME} ${TEST_FILES} ${HDT_FILES} ${COMMON_FILES})
+file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/src/test/cpp/*.cc)
+add_executable(${PROJECT_TEST_NAME} ${TEST_FILES})
 add_dependencies(${PROJECT_TEST_NAME} googletest)
 
 if(NOT MSVC)
@@ -196,11 +159,6 @@ else()
             )
 endif()
 
-target_link_libraries(${PROJECT_TEST_NAME} ${LIBSTDCXX})
-target_link_libraries(${PROJECT_TEST_NAME} ${KYOTO_SHARED_LIBRARY})
-target_link_libraries(${PROJECT_TEST_NAME} ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(${PROJECT_TEST_NAME} ${ZLIB_LIBRARIES})
-target_link_libraries(${PROJECT_TEST_NAME} Boost::iostreams)
-target_link_libraries(${PROJECT_TEST_NAME} Threads::Threads)
+target_link_libraries(${PROJECT_TEST_NAME} ostrich)
 
 add_test(test1 ${PROJECT_TEST_NAME})
