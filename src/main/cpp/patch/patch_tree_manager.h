@@ -3,11 +3,16 @@
 
 #include <regex>
 #include <map>
+#include <list>
 #include "patch_tree.h"
 
 class PatchTreeManager {
 private:
     string basePath;
+
+    size_t max_loaded_patches;
+    std::list<int> lru_list;
+    std::map<int, std::list<int>::iterator> lru_map;
     // Mapping from LOADED patchtree_id -> patch_id
     std::map<int, PatchTree*> loaded_patches;
     // Options for KC trees
@@ -86,6 +91,11 @@ public:
      * @return The largest patch id that is currently available.
      */
     int get_max_patch_id(DictionaryManager* dict);
+
+    /**
+     * Update the state of the patch cache
+     */
+    void update_cache(int accessed_patch_id);
 
 };
 
