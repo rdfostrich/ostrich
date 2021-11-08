@@ -300,7 +300,7 @@ void BearEvaluatorMS::init_readonly(string basePath) {
 }
 
 void BearEvaluatorMS::test_lookup(string s, string p, string o, int replications, int offset, int limit) {
-    TemporaryTriple triple_pattern(s, p, o);
+    StringTriple triple_pattern(s, p, o);
     cout << "---PATTERN START: " << triple_pattern.to_string() << endl;
 
     cout << "--- ---VERSION MATERIALIZED" << endl;
@@ -453,7 +453,7 @@ IteratorTripleString *BearEvaluatorMS::get_from_file(const string& file) {
 }
 
 long long
-BearEvaluatorMS::measure_lookup_version_materialized(const TemporaryTriple& triple_pattern, int offset, int patch_id, int limit,
+BearEvaluatorMS::measure_lookup_version_materialized(const StringTriple& triple_pattern, int offset, int patch_id, int limit,
                                                      int replications, int &result_count) {
 
     int snapshot_id = controller->get_snapshot_manager()->get_latest_snapshot(patch_id);
@@ -481,7 +481,7 @@ BearEvaluatorMS::measure_lookup_version_materialized(const TemporaryTriple& trip
 }
 
 long long
-BearEvaluatorMS::measure_count_version_materialized(const TemporaryTriple& triple_pattern, int patch_id, int replications) {
+BearEvaluatorMS::measure_count_version_materialized(const StringTriple& triple_pattern, int patch_id, int replications) {
     long long total = 0;
     for (int i = 0; i < replications; i++) {
         StopWatch st;
@@ -491,19 +491,19 @@ BearEvaluatorMS::measure_count_version_materialized(const TemporaryTriple& tripl
     return total / replications;
 }
 
-//long long BearEvaluatorMS::measure_lookup_delta_materialized(const TemporaryTriple& triple_pattern, int offset, int patch_id_start,
+//long long BearEvaluatorMS::measure_lookup_delta_materialized(const StringTriple& triple_pattern, int offset, int patch_id_start,
 //                                                         int patch_id_end, int limit, int replications,
 //                                                         int &result_count) {
 //    return 0;
 //}
 //
 //long long
-//BearEvaluatorMS::measure_count_delta_materialized(const TemporaryTriple& triple_pattern, int patch_id_start, int patch_id_end,
+//BearEvaluatorMS::measure_count_delta_materialized(const StringTriple& triple_pattern, int patch_id_start, int patch_id_end,
 //                                              int replications) {
 //    return 0;
 //}
 
-long long BearEvaluatorMS::measure_lookup_version(const TemporaryTriple& triple_pattern, int offset, int limit, int replications,
+long long BearEvaluatorMS::measure_lookup_version(const StringTriple& triple_pattern, int offset, int limit, int replications,
                                                   int &result_count) {
     long long total = 0;
     for (int i = 0; i < replications; i++) {
@@ -524,7 +524,7 @@ long long BearEvaluatorMS::measure_lookup_version(const TemporaryTriple& triple_
     return total / replications;
 }
 
-long long BearEvaluatorMS::measure_count_version(const TemporaryTriple& triple_pattern, int replications) {
+long long BearEvaluatorMS::measure_count_version(const StringTriple& triple_pattern, int replications) {
     long long total = 0;
     for (int i = 0; i < replications; i++) {
         StopWatch st;

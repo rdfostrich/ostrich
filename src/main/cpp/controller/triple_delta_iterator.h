@@ -5,6 +5,7 @@
 #include "../patch/patch_tree_iterator.h"
 #include "../patch/patch_tree.h"
 #include "../snapshot/snapshot_manager.h"
+#include "../patch/patch_tree_manager.h"
 
 // Triple annotated with addition/deletion.
 class TripleDelta {
@@ -38,8 +39,9 @@ class ForwardPatchTripleDeltaIterator : public TripleDeltaIterator {
 protected:
     PatchTreeIteratorBase<DV>* it;
     PatchTreeValueBase<DV>* value;
+    DictionaryManager* dict;
 public:
-    ForwardPatchTripleDeltaIterator(PatchTree* patchTree, const Triple &triple_pattern, int patch_id_end);
+    ForwardPatchTripleDeltaIterator(PatchTree* patchTree, const Triple &triple_pattern, int patch_id_end, DictionaryManager* dict);
     ~ForwardPatchTripleDeltaIterator();
     bool next(TripleDelta* triple);
 };
@@ -51,7 +53,7 @@ protected:
     int patch_id_start;
     int patch_id_end;
 public:
-    FowardDiffPatchTripleDeltaIterator(PatchTree* patchTree, const Triple &triple_pattern, int patch_id_start, int patch_id_end);
+    FowardDiffPatchTripleDeltaIterator(PatchTree* patchTree, const Triple &triple_pattern, int patch_id_start, int patch_id_end, DictionaryManager* dict);
     bool next(TripleDelta* triple);
 };
 
@@ -62,7 +64,8 @@ public:
 
 
 
-
+// Snapshots should emit in SPO order
+// This should always be the case with our system
 class SnapshotDiffIterator: public TripleDeltaIterator {
 private:
     IteratorTripleString* snapshot_it_1;
@@ -76,11 +79,23 @@ private:
     static int compare_ts(TripleString* ts1, TripleString* ts2);
 
 public:
-    SnapshotDiffIterator(TripleString& triple_pattern, SnapshotManager* manager , int snapshot_1, int snapshot_2);
+    SnapshotDiffIterator(const StringTriple& triple_pattern, SnapshotManager* manager , int snapshot_1, int snapshot_2);
     bool next(TripleDelta* triple) override;
 };
 
+//class IterativeSnapshotDiffIterator: public TripleDeltaIterator {
+//private:
+//    SnapshotManager* snapshot_manager;
+//    PatchTreeManager* patch_tree_manager;
+//    int snapshot_id1;
+//    int snapshot_id2;
+//
+//public:
+//    IterativeSnapshotDiffIterator(SnapshotManager* snapshot_manager, PatchTreeManager* patch_tree_manager, int snapshot_id_1, int snapshot_id_2);
+//    bool next(TripleDelta* triple) override;
+//};
 
+// Sort a TripleDeltaIterator in SPO order
 class SortedTripleDeltaIterator: public TripleDeltaIterator {
 private:
     size_t index;
@@ -106,9 +121,27 @@ private:
 
 public:
     MergeDiffIterator(TripleDeltaIterator* iterator_1, TripleDeltaIterator* iterator_2);
+    ~MergeDiffIterator() override;
     bool next(TripleDelta* triple) override;
 };
 
+// Special case of merge
+// where we want to merge the diff of two snapshots
+// and the diff of a patch relative to the first snapshot
+class MergeDiffIteratorCase2: public TripleDeltaIterator {
+private:
+    TripleDeltaIterator* it1;
+    TripleDeltaIterator* it2;
+    bool status1;
+    bool status2;
+    TripleDelta* triple1;
+    TripleDelta* triple2;
+
+public:
+    MergeDiffIteratorCase2(TripleDeltaIterator* iterator_1, TripleDeltaIterator* iterator_2);
+    ~MergeDiffIteratorCase2() override;
+    bool next(TripleDelta* triple) override;
+};
 
 
 #endif //TPFPATCH_STORE_TRIPLEDELTAITERATOR_H
