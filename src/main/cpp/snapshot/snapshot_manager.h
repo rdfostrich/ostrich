@@ -13,6 +13,11 @@ using namespace hdt;
 class SnapshotManager {
 private:
     string basePath;
+
+    size_t max_loaded_snapshots;
+    std::list<int> lru_list;
+    std::map<int, std::list<int>::iterator> lru_map;
+
     std::map<int, HDT*> loaded_snapshots;
     std::map<int, DictionaryManager*> loaded_dictionaries;
     bool readonly;
@@ -79,6 +84,11 @@ public:
      * @return The DictionaryManager file for the given snapshot id.
      */
     DictionaryManager* get_dictionary_manager(int snapshot_id);
+
+    /**
+     * Update the state of the patch cache
+     */
+    void update_cache(int accessed_snapshot_id);
 };
 
 
