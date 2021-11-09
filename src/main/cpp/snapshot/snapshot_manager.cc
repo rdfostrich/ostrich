@@ -8,7 +8,7 @@
 
 using namespace hdt;
 
-SnapshotManager::SnapshotManager(string basePath, bool readonly) : basePath(basePath), readonly(readonly), loaded_snapshots(detect_snapshots()), loaded_dictionaries(std::map<int, DictionaryManager*>()) {}
+SnapshotManager::SnapshotManager(string basePath, bool readonly) : basePath(basePath), max_loaded_snapshots(64), readonly(readonly), loaded_snapshots(detect_snapshots()), loaded_dictionaries(std::map<int, DictionaryManager*>()) {}
 
 SnapshotManager::~SnapshotManager() {
     std::map<int, HDT*>::iterator it1 = loaded_snapshots.begin();
@@ -50,11 +50,12 @@ int SnapshotManager::get_latest_snapshot(int patch_id) {
 }
 
 HDT* SnapshotManager::load_snapshot(int snapshot_id) {
-    // TODO: We might want to look into unloading snapshots if they aren't used for a while. (using splay-tree/queue?)
     // We check if a snapshot is already loaded for the given snapshot_id
+    update_cache(snapshot_id);
     auto it = loaded_snapshots.find(snapshot_id);
-    if (it != loaded_snapshots.end() && it->second)
+    if (it != loaded_snapshots.end() && it->second) {
         return it->second;
+    }
 
     string fileName = basePath + SNAPSHOT_FILENAME_BASE(snapshot_id);
     loaded_snapshots[snapshot_id] = hdt::HDTManager::mapIndexedHDT(fileName.c_str());
@@ -81,6 +82,7 @@ HDT* SnapshotManager::get_snapshot(int snapshot_id) {
     if(snapshot == NULL) {
         return load_snapshot(snapshot_id);
     }
+    update_cache(it->first);
     return it->second;
 }
 
@@ -173,4 +175,24 @@ int SnapshotManager::get_max_snapshot_id() {
     }
     it--;
     return it->first;
+}
+
+void SnapshotManager::update_cache(int accessed_patch_id) {
+    if (lru_map.find(accessed_patch_id) == lru_map.end()) {
+        if (lru_map.size() == max_loaded_snapshots) {
+            int id = lru_list.back();
+            lru_list.pop_back();
+            lru_map.erase(id);
+            HDT* tmp = loaded_snapshots[id];
+            DictionaryManager* tmp_d = loaded_dictionaries[id];
+            loaded_snapshots[id] = nullptr;
+            loaded_dictionaries[id] = nullptr;
+            delete tmp;
+            delete tmp_d;
+        }
+    } else {
+        lru_list.erase(lru_map[accessed_patch_id]);
+    }
+    lru_list.push_front(accessed_patch_id);
+    lru_map[accessed_patch_id] = lru_list.begin();
 }
