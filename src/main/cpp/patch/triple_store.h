@@ -40,7 +40,7 @@ private:
     HashDB* count_additions;
     HashDB* temp_count_additions;
     //TreeDB index_ops; // We don't need this one if we maintain our s,p,o order priorites
-    DictionaryManager* dict;
+    std::shared_ptr<DictionaryManager> dict;
     PatchTreeKeyComparator* spo_comparator;
     PatchTreeKeyComparator* pos_comparator;
     PatchTreeKeyComparator* osp_comparator;
@@ -52,7 +52,7 @@ protected:
     void close(TreeDB* db, string name);
     void increment_addition_count(const TripleVersion& triple_version);
 public:
-    TripleStore(string base_file_name, DictionaryManager* dict, int8_t kc_opts = 0, bool readonly = false);
+    TripleStore(string base_file_name, std::shared_ptr<DictionaryManager> dict, int8_t kc_opts = 0, bool readonly = false);
     ~TripleStore();
     TreeDB* getAdditionsTree(Triple triple_pattern);
     TreeDB* getDefaultAdditionsTree();
@@ -76,7 +76,7 @@ public:
     /**
      * @return The dictionary manager.
      */
-    DictionaryManager* get_dict_manager() const;
+    std::shared_ptr<DictionaryManager> get_dict_manager() const;
     /**
      * @param triple_pattern A triple pattern
      * @return If the given triple pattern applies to a default addition or deletions tree, i.e., if it is using SPO order.

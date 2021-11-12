@@ -6,7 +6,7 @@
 using namespace std;
 using namespace kyotocabinet;
 
-TripleStore::TripleStore(string base_file_name, DictionaryManager* dict, int8_t kc_opts, bool readonly) : dict(dict) {
+TripleStore::TripleStore(string base_file_name, std::shared_ptr<DictionaryManager> dict, int8_t kc_opts, bool readonly) : dict(dict) {
     // Construct trees
     index_spo_deletions = new TreeDB();
     index_pos_deletions = new TreeDB();
@@ -240,7 +240,7 @@ PatchElementComparator *TripleStore::get_element_comparator() const {
     return element_comparator;
 }
 
-DictionaryManager *TripleStore::get_dict_manager() const {
+std::shared_ptr<DictionaryManager> TripleStore::get_dict_manager() const {
     return dict;
 }
 

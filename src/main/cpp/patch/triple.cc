@@ -1,5 +1,4 @@
 #include <sstream>
-#include <utility>
 #include <vector>
 #include "triple.h"
 #include "patch_tree_key_comparator.h"
@@ -11,7 +10,7 @@ Triple::Triple(const TripleID& tripleId) :
 Triple::Triple(size_t subject, size_t predicate, size_t object) :
         subject(subject), predicate(predicate), object(object) {}
 
-Triple::Triple(const string& s, const string& p, const string& o, ModifiableDictionary* dict) {
+Triple::Triple(const string& s, const string& p, const string& o, std::shared_ptr<ModifiableDictionary> dict) {
   subject = !s.empty() ? dict->insert(const_cast<string&>(s), SUBJECT) : 0;
   predicate = !p.empty() ? dict->insert(const_cast<string&>(p), PREDICATE) : 0;
   object = !o.empty() ? dict->insert(const_cast<string&>(o), OBJECT) : 0;
@@ -117,7 +116,7 @@ StringTriple::StringTriple() = default;
 StringTriple::StringTriple(string s, string p, string o) : subject(std::move(s)), predicate(std::move(p)),
                                                            object(std::move(o)) {}
 
-Triple StringTriple::get_as_triple(ModifiableDictionary *dict) const {
+Triple StringTriple::get_as_triple(std::shared_ptr<ModifiableDictionary> dict) const {
     return {subject, predicate, object, dict};
 }
 

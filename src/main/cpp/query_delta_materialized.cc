@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
     int offset = argc == 7 ? std::atoi(argv[6]) : 0;
 
     // Construct query
-    DictionaryManager* dict = controller.get_dictionary_manager(patch_id_start);
+    std::shared_ptr<DictionaryManager> dict = controller.get_dictionary_manager(patch_id_start);
     Triple triple_pattern(s, p, o, dict);
 
     std::pair<size_t, ResultEstimationType> count = controller.get_delta_materialized_count(triple_pattern, patch_id_start, patch_id_end, true);

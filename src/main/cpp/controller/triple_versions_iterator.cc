@@ -22,16 +22,16 @@ vector<int>* TripleVersions::get_versions() {
     return versions;
 }
 
-TripleVersionsIterator::TripleVersionsIterator(Triple triple_pattern, IteratorTripleID* snapshot_it, PatchTree* patchTree, int first_version)
-        : triple_pattern(triple_pattern), snapshot_it(snapshot_it), patchTree(patchTree), addition_it(NULL), first_version(first_version) {}
+TripleVersionsIterator::TripleVersionsIterator(Triple triple_pattern, IteratorTripleID* snapshot_it, std::shared_ptr<PatchTree> patchTree, int first_version)
+        : triple_pattern(triple_pattern), snapshot_it(snapshot_it), patchTree(patchTree), addition_it(nullptr), first_version(first_version) {}
 
 TripleVersionsIterator::~TripleVersionsIterator() {
-    if (snapshot_it != NULL) delete snapshot_it;
-    if (addition_it != NULL) delete addition_it;
+    delete snapshot_it;
+    delete addition_it;
 }
 
 inline void TripleVersionsIterator::eraseDeletedVersions(std::vector<int>* versions, Triple* currentTriple, int initial_version) {
-    if (patchTree == NULL) {
+    if (patchTree == nullptr) {
         // If we only have a snapshot, return a single version annotation.
         versions->clear();
         versions->push_back(initial_version);
@@ -40,7 +40,7 @@ inline void TripleVersionsIterator::eraseDeletedVersions(std::vector<int>* versi
         versions->clear();
         versions->resize(patchTree->get_max_patch_id() + 1 - initial_version);
         std::iota(versions->begin(), versions->end(), initial_version); // Fill up the vector with all versions from initial_version to max_patch_id
-        if (deletion != NULL) {
+        if (deletion != nullptr) {
             for (int v_del = 0; v_del < deletion->get_size(); v_del++) {
                 PatchTreeDeletionValueElement deletion_element = deletion->get_patch(v_del);
                 // Erase-remove idiom on sorted vector, and maintain order
@@ -105,7 +105,7 @@ TripleVersionsIterator* TripleVersionsIterator::offset(int offset) {
 
 TripleVersionsIteratorCombined::TripleVersionsIteratorCombined() : index(0) {}
 
-void TripleVersionsIteratorCombined::append_iterator(TripleVersionsIterator *iterator, DictionaryManager *dict) {
+void TripleVersionsIteratorCombined::append_iterator(TripleVersionsIterator *iterator, std::shared_ptr<DictionaryManager> dict) {
     TripleVersions t;
     std::vector<TripleVersionsString> tmp_triples;
     while (iterator->next(&t)) {

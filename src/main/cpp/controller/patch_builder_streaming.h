@@ -18,7 +18,7 @@ class PatchBuilderStreaming : public PatchElementIterator, IteratorTripleString 
 private:
     Controller* controller;
     ProgressListener* progressListener;
-    DictionaryManager* dict;
+    std::shared_ptr<DictionaryManager> dict;
     int patch_id;
     bool check_uniqueness;
     std::queue<PatchElement> buffer_patchelements;

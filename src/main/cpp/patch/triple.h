@@ -1,6 +1,7 @@
 #ifndef TPFPATCH_STORE_TRIPLE_H
 #define TPFPATCH_STORE_TRIPLE_H
 
+#include <memory>
 #include <string>
 #include <SingleTriple.hpp>
 #include <Dictionary.hpp>
@@ -21,7 +22,7 @@ public:
 
     Triple(size_t subject, size_t predicate, size_t object);
 
-    Triple(const string &s, const string &p, const string &o, ModifiableDictionary *dict);
+    Triple(const string &s, const string &p, const string &o, std::shared_ptr<ModifiableDictionary> dict);
 
     /**
      * @return The subject
@@ -140,7 +141,7 @@ public:
     StringTriple();
     StringTriple(std::string s, std::string p, std::string o);
 
-    Triple get_as_triple(ModifiableDictionary *dict) const;
+    Triple get_as_triple(std::shared_ptr<ModifiableDictionary> dict) const;
 
     std::string get_subject() const;
     std::string get_predicate() const;

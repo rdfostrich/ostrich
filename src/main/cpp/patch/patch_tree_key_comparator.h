@@ -19,9 +19,9 @@ protected:
     comp compare_1;
     comp compare_2;
     comp compare_3;
-    DictionaryManager* dict;
+    std::shared_ptr<DictionaryManager> dict;
 public:
-    PatchTreeKeyComparator(comp compare_1, comp compare_2, comp compare_3, DictionaryManager* dict);
+    PatchTreeKeyComparator(comp compare_1, comp compare_2, comp compare_3, std::shared_ptr<DictionaryManager> dict);
     int32_t compare(const char* akbuf, size_t aksiz, const char* bkbuf, size_t bksiz);
     int32_t compare(const PatchTreeKey& key1, const PatchTreeKey& key2);
 };

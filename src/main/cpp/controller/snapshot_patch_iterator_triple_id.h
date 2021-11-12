@@ -16,16 +16,16 @@ private:
 
     bool has_last_deleted_triple;
     PositionedTriple* last_deleted_triple;
-    HDT* snapshot;
+    std::shared_ptr<HDT> snapshot;
     const Triple triple_pattern;
-    PatchTree* patchTree;
+    std::shared_ptr<PatchTree> patchTree;
     int patch_id;
     int offset;
     PatchPosition deletion_count;
 public:
     SnapshotPatchIteratorTripleID(IteratorTripleID* snapshot_it, PositionedTripleIterator* deletion_it,
-                                  PatchTreeKeyComparator* spo_comparator, HDT* snapshot, const Triple& triple_pattern,
-                                  PatchTree* patchTree, int patch_id, int offset, PatchPosition deletion_count);
+                                  PatchTreeKeyComparator* spo_comparator, std::shared_ptr<HDT> snapshot, const Triple& triple_pattern,
+                                  std::shared_ptr<PatchTree> patchTree, int patch_id, int offset, PatchPosition deletion_count);
     ~SnapshotPatchIteratorTripleID();
     bool next(Triple* triple);
 };

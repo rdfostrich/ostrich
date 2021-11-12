@@ -3,6 +3,7 @@
 
 #define SNAPSHOT_FILENAME_BASE(id) ("snapshot_" + std::to_string(id) + ".hdt")
 
+#include <memory>
 #include <HDT.hpp>
 #include "../patch/patch.h"
 #include <Dictionary.hpp>
@@ -18,17 +19,20 @@ private:
     std::list<int> lru_list;
     std::map<int, std::list<int>::iterator> lru_map;
 
-    std::map<int, HDT*> loaded_snapshots;
-    std::map<int, DictionaryManager*> loaded_dictionaries;
+    std::map<int, std::shared_ptr<HDT>> loaded_snapshots;
+    std::map<int, std::shared_ptr<DictionaryManager>> loaded_dictionaries;
     bool readonly;
+
+    void update_cache_internal(int accessed_id, int iterations);
+
 public:
-    SnapshotManager(string basePath, bool readonly = false);
+    explicit SnapshotManager(string basePath, bool readonly = false);
     ~SnapshotManager();
     /**
      * Get the id of the snapshot that is smaller or equal than the given patch id.
      * @param patch_id The patch id to look up.
      * @return The snapshot id. If this is equal to the given patch_id,
-     * this means that patch_id is directly refering to a snapshot.
+     * this means that patch_id is directly referring to a snapshot.
      */
     int get_latest_snapshot(int patch_id);
 
@@ -37,11 +41,11 @@ public:
     /**
      * Load the HDT file for the given snapshot id.
      */
-    HDT* load_snapshot(int snapshot_id);
+    std::shared_ptr<HDT> load_snapshot(int snapshot_id);
     /**
      * Get the HDT file for the given snapshot id.
      */
-    HDT* get_snapshot(int snapshot_id);
+    std::shared_ptr<HDT> get_snapshot(int snapshot_id);
     /**
      * Create a HDT file for the given snapshot id.
      * It will automatically be persisted in this manager.
@@ -50,7 +54,7 @@ public:
      * @param base_uri The base uri for the triples graph.
      * @return The created snapshot
      */
-    HDT* create_snapshot(int snapshot_id, IteratorTripleString* triples, string base_uri, ProgressListener* listener = NULL);
+    std::shared_ptr<HDT> create_snapshot(int snapshot_id, IteratorTripleString* triples, string base_uri, ProgressListener* listener = NULL);
     /**
      * Create a HDT file for the given snapshot id.
      * It will automatically be persisted in this manager.
@@ -60,17 +64,17 @@ public:
      * @param notation The RDF serialization type of the file.
      * @return The created snapshot
      */
-    HDT* create_snapshot(int snapshot_id, string triples_file, string base_uri, RDFNotation notation);
+    std::shared_ptr<HDT> create_snapshot(int snapshot_id, string triples_file, string base_uri, RDFNotation notation);
     /**
      * Find all snapshots in the current directory.
      * @return The found patch trees
      */
-    std::map<int, HDT*> detect_snapshots();
+    const std::map<int, std::shared_ptr<HDT>>& detect_snapshots();
     /**
      * Get the internal snapshot mapping.
      * @return The snapshots
      */
-    std::map<int, HDT*> get_snapshots();
+    const std::map<int,  std::shared_ptr<HDT>>& get_snapshots();
     /**
      * Search the given triple pattern in the given hdt file with a certain offset.
      * @param hdt A hdt file
@@ -78,12 +82,12 @@ public:
      * @param offset The offset the iterator should start from.
      * @return the iterator.
      */
-    static IteratorTripleID* search_with_offset(HDT* hdt, const Triple& triple_pattern, long offset);
+    static IteratorTripleID* search_with_offset(std::shared_ptr<HDT> hdt, const Triple& triple_pattern, long offset);
 
     /**
      * @return The DictionaryManager file for the given snapshot id.
      */
-    DictionaryManager* get_dictionary_manager(int snapshot_id);
+    std::shared_ptr<DictionaryManager> get_dictionary_manager(int snapshot_id);
 
     /**
      * Update the state of the patch cache

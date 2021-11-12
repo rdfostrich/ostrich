@@ -1,11 +1,31 @@
 #include <gtest/gtest.h>
+#include <regex>
+#include <dirent.h>
 
 #include "../../../main/cpp/controller/controller.h"
 #include "../../../main/cpp/snapshot/vector_triple_iterator.h"
-#include "../../../main/cpp/dictionary/dictionary_manager.h"
 
 #define BASEURI "<http://example.org>"
 #define TESTPATH "./"
+
+// Due to the use of shared_pointer some patch trees can have a "late" deletion
+// as it's held by an iterator that gets deleted after the controller
+// so the meta file has not been created yet at cleanup (since it is made at patchtree deletion)
+// we need to delete them as it can cause problems with later tests
+void clean_meta_files() {
+    std::regex r("meta_([0-9]+).dat");
+    std::smatch base_match;
+    DIR *dir;
+    struct dirent *ent;
+    if ((dir = opendir(TESTPATH)) != nullptr) {
+        while ((ent = readdir(dir)) != nullptr) {
+            std::string dir_name = std::string(ent->d_name);
+            if(std::regex_match(dir_name, base_match, r)) {
+                std::remove(base_match.str().c_str());
+            }
+        }
+    }
+}
 
 // The fixture for testing class controller->
 class ControllerTest : public ::testing::Test {
@@ -20,6 +40,7 @@ protected:
 
     virtual void TearDown() {
         Controller::cleanup(TESTPATH, controller);
+        clean_meta_files();
     }
 };
 
@@ -41,6 +62,7 @@ protected:
 
     virtual void TearDown() {
         Controller::cleanup(TESTPATH, controller);
+        clean_meta_files();
     }
 };
 
@@ -56,7 +78,7 @@ TEST_F(ControllerTest, GetEdge) {
     controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     PatchTreeManager* patchTreeManager = controller->get_patch_tree_manager();
 
-    DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
+    std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
 
     // Request version 1 (after snapshot before a patch id added)
     TripleIterator* it1 = controller->get_version_materialized(Triple("", "", "", dict), 0, 1);
@@ -106,7 +128,7 @@ TEST_F(ControllerTest, PatchBuilder) {
             ->deletion(TripleString("c", "c", "c"))
             ->commit();
 
-    DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
+    std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
     ASSERT_EQ(3, controller->get_version_materialized_count(Triple("", "", "", dict), 0).first) << "Count is incorrect";
     ASSERT_EQ(2, controller->get_version_materialized_count(Triple("", "", "", dict), 1).first) << "Count is incorrect";
 }
@@ -124,7 +146,7 @@ TEST_F(ControllerTest, PatchBuilderStreaming) {
             ->deletion(TripleString("c", "c", "c"))
             ->close();
 
-    DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
+    std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
     ASSERT_EQ(3, controller->get_version_materialized_count(Triple("", "", "", dict), 0).first) << "Count is incorrect";
     ASSERT_EQ(2, controller->get_version_materialized_count(Triple("", "", "", dict), 1).first) << "Count is incorrect";
 }
@@ -138,7 +160,7 @@ TEST_F(ControllerTest, GetVersionMaterializedSimple) {
     VectorTripleIterator* it = new VectorTripleIterator(triples);
     controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     PatchTreeManager* patchTreeManager = controller->get_patch_tree_manager();
-    DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
+    std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
 
     // Apply a simple patch
     PatchSorted patch1(dict);
@@ -222,7 +244,7 @@ TEST_F(ControllerTest, GetVersionMaterializedComplex1) {
     VectorTripleIterator* it = new VectorTripleIterator(triples);
     controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     PatchTreeManager* patchTreeManager = controller->get_patch_tree_manager();
-    DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
+    std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
 
     PatchSorted patch1(dict);
     patch1.add(PatchElement(Triple("g", "p", "o", dict), false));
@@ -398,7 +420,7 @@ TEST_F(ControllerMSTest, GetVersionMaterializedComplexMS1) {
     VectorTripleIterator* it = new VectorTripleIterator(triples);
     controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     PatchTreeManager* patchTreeManager = controller->get_patch_tree_manager();
-    DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
+    std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
 
     PatchSorted patch1(dict);
     patch1.add(PatchElement(Triple("g", "p", "o", dict), false));
@@ -594,7 +616,7 @@ TEST_F(ControllerTest, GetVersionMaterializedComplex2) {
     VectorTripleIterator* it = new VectorTripleIterator(triples);
     controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     PatchTreeManager* patchTreeManager = controller->get_patch_tree_manager();
-    DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
+    std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
 
     PatchSorted patch1(dict);
     patch1.add(PatchElement(Triple("g", "p", "o", dict), false));
@@ -769,7 +791,7 @@ TEST_F(ControllerMSTest, GetVersionMaterializedComplexMS2) {
     triples.push_back(TripleString("h", "p", "o"));
     VectorTripleIterator* it = new VectorTripleIterator(triples);
     controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
-    DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
+    std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
 
     PatchSorted patch1(dict);
     patch1.add(PatchElement(Triple("g", "p", "o", dict), false));
@@ -953,7 +975,7 @@ TEST_F(ControllerTest, GetVersionMaterializedComplex3) {
     VectorTripleIterator* it = new VectorTripleIterator(triples);
     controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     PatchTreeManager* patchTreeManager = controller->get_patch_tree_manager();
-    DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
+    std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
 
     PatchSorted patch1(dict);
     patch1.add(PatchElement(Triple("g", "p", "o", dict), false));
@@ -1065,7 +1087,7 @@ TEST_F(ControllerTest, EdgeCaseVersionMaterialized1) {
     VectorTripleIterator *it = new VectorTripleIterator(triples);
     controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     PatchTreeManager* patchTreeManager = controller->get_patch_tree_manager();
-    DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
+    std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
 
     PatchSorted patch1(dict);
     patch1.add(PatchElement(Triple("0", "0", "0", dict), false));
@@ -1115,7 +1137,7 @@ TEST_F(ControllerTest, EdgeCaseVersionMaterialized2) {
     VectorTripleIterator* it = new VectorTripleIterator(triples);
     controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     PatchTreeManager* patchTreeManager = controller->get_patch_tree_manager();
-    DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
+    std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
 
     PatchSorted patch1(dict);
     patch1.add(PatchElement(Triple("b", "b", "b", dict), false));
@@ -1176,7 +1198,7 @@ TEST_F(ControllerTest, EdgeCaseVersionMaterialized3) {
     VectorTripleIterator* it = new VectorTripleIterator(triples);
     controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     PatchTreeManager* patchTreeManager = controller->get_patch_tree_manager();
-    DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
+    std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
 
     PatchSorted patch1(dict);
     patch1.add(PatchElement(Triple("b", "a", "a", dict), false));
@@ -1261,7 +1283,7 @@ TEST_F(ControllerTest, GetDeltaMaterializedSnapshotPatch) {
             ->addition(TripleString("<a>", "<a>", "<d>"))
             ->commit();
 
-    DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
+    std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
 
     // Expected version 0:
     // <a> <a> <a>
@@ -1288,7 +1310,6 @@ TEST_F(ControllerTest, GetDeltaMaterializedSnapshotPatch) {
     ASSERT_EQ(false, t.is_addition()) << "Element is incorrect";
 
     ASSERT_EQ(false, it0->next(&t)) << "Iterator should be finished";
-
 
     // Request between versions 0 and 1 for <a> ? ?
     ASSERT_EQ(1, controller->get_delta_materialized_count(Triple("<a>", "", "", dict), 0, 1).first) << "Count is incorrect";
@@ -1355,7 +1376,7 @@ TEST_F(ControllerTest, GetDeltaMaterializedPatchPatch) {
             ->deletion(TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
-    DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
+    std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
 
     // Expected version 0:
     // <a> <a> <a>
@@ -1493,7 +1514,7 @@ TEST_F(ControllerTest, EdgeCaseGetDeltaMaterialized1) {
             ->addition(TripleString("<y>", "<y>", "<y>"))
             ->commit();
 
-    DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
+    std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
 
     // Expected version 0:
     // <a> <a> <a>
@@ -1563,7 +1584,7 @@ TEST_F(ControllerTest, EdgeCaseGetDeltaMaterialized2) {
             ->addition(TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
-    DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
+    std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
 
     // Expected version 0:
     // <a> <a> <a>
@@ -1642,7 +1663,7 @@ TEST_F(ControllerTest, EdgeCaseGetDeltaMaterialized3) {
             ->deletion(TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
-    DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
+    std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
 
     // Expected version 0:
 
@@ -1706,7 +1727,7 @@ TEST_F(ControllerTest, EdgeCaseGetDeltaMaterialized4) {
             ->addition(TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
-    DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
+    std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
 
     // Expected version 0:
     // <a> <a> <a>
@@ -1763,7 +1784,7 @@ TEST_F(ControllerTest, EdgeCaseGetDeltaMaterialized5) {
             ->deletion(TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
-    DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
+    std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
 
     // Expected version 0:
 
@@ -1814,7 +1835,7 @@ TEST_F(ControllerTest, EdgeCaseGetDeltaMaterialized6) {
             ->addition(TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
-    DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
+    std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
 
     // Expected version 0:
     // <a> <a> <a>
@@ -1856,7 +1877,7 @@ TEST_F(ControllerTest, GetVersionSnapshot) {
             ->addition(TripleString("<a>", "<a>", "<c>"))
             ->commit();
 
-    DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
+    std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
 
     // Expected version 0:
     // <a> <a> <a>
@@ -2025,7 +2046,7 @@ TEST_F(ControllerTest, GetVersion) {
             ->addition(TripleString("<a>", "<a>", "<d>"))
             ->commit();
 
-    DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
+    std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
 
     // Expected version 0:
     // <a> <a> <a>
