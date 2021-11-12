@@ -50,7 +50,7 @@ protected:
     template <class DV>
     std::pair<DV*, Triple> last_deletion_value(const Triple &triple_pattern, int patch_id) const;
 public:
-    PatchTree(string basePath, int min_patch_id, DictionaryManager* dict, int8_t kc_opts = 0, bool readonly = false);
+    PatchTree(string basePath, int min_patch_id, std::shared_ptr<DictionaryManager> dict, int8_t kc_opts = 0, bool readonly = false);
     ~PatchTree();
     /**
      * Append the given patch elements to the tree with given patch id.

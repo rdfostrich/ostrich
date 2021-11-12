@@ -4,8 +4,10 @@
 
 PatchBuilderStreaming::PatchBuilderStreaming(Controller* controller, int patch_id, bool check_uniqueness, ProgressListener* progressListener)
         : controller(controller), check_uniqueness(check_uniqueness), progressListener(progressListener) {
-    dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
-    this->patch_id = patch_id < 0 ? controller->get_max_patch_id() + 1 : patch_id;
+    int max_patch_id = controller->get_max_patch_id();
+    int snapshot_id = controller->get_snapshot_manager()->get_latest_snapshot(max_patch_id);
+    dict = controller->get_snapshot_manager()->get_dictionary_manager(snapshot_id);
+    this->patch_id = patch_id < 0 ? max_patch_id + 1 : patch_id;
     thread = std::thread(std::bind(&PatchBuilderStreaming::threaded_insert, this));
 }
 

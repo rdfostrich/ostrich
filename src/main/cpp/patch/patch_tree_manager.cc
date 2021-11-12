@@ -1,21 +1,17 @@
 #include <dirent.h>
 #include <iostream>
+#include <memory>
 #include "patch_tree_manager.h"
 
-PatchTreeManager::PatchTreeManager(string basePath, int8_t kc_opts, bool readonly) : basePath(basePath), max_loaded_patches(64), loaded_patches(detect_patch_trees()), kc_opts(kc_opts), readonly(readonly) {}
-
-PatchTreeManager::~PatchTreeManager() {
-    std::map<int, PatchTree*>::iterator it = loaded_patches.begin();
-    while(it != loaded_patches.end()) {
-        PatchTree* patchtree = it->second;
-        delete patchtree;
-        it++;
-    }
+PatchTreeManager::PatchTreeManager(string basePath, int8_t kc_opts, bool readonly) : basePath(basePath), max_loaded_patches(64), kc_opts(kc_opts), readonly(readonly) {
+    detect_patch_trees();
 }
 
-bool PatchTreeManager::append(PatchElementIterator* patch_it, int patch_id, DictionaryManager* dict, bool check_uniqueness, ProgressListener* progressListener) {
+PatchTreeManager::~PatchTreeManager() = default;
+
+bool PatchTreeManager::append(PatchElementIterator* patch_it, int patch_id, std::shared_ptr<DictionaryManager> dict, bool check_uniqueness, ProgressListener* progressListener) {
     int patchtree_id = get_patch_tree_id(patch_id);
-    PatchTree* patchtree;
+    std::shared_ptr<PatchTree> patchtree;
     if(patchtree_id < 0) {
         patchtree = construct_next_patch_tree(patch_id, dict);
     } else {
@@ -29,7 +25,7 @@ bool PatchTreeManager::append(PatchElementIterator* patch_it, int patch_id, Dict
     }
 }
 
-bool PatchTreeManager::append(const PatchSorted &patch, int patch_id, DictionaryManager *dict, bool check_uniqueness,
+bool PatchTreeManager::append(const PatchSorted &patch, int patch_id, std::shared_ptr<DictionaryManager> dict, bool check_uniqueness,
                               ProgressListener *progressListener) {
     PatchElementIteratorVector* it = new PatchElementIteratorVector(&patch.get_vector());
     bool ret = append(it, patch_id, dict, check_uniqueness, progressListener);
@@ -37,6 +33,7 @@ bool PatchTreeManager::append(const PatchSorted &patch, int patch_id, Dictionary
     return ret;
 }
 
+/*
 std::map<int, PatchTree*> PatchTreeManager::detect_patch_trees() const {
     std::regex r("patchtree_([0-9]*).kct_spo_deletions");
     std::smatch base_match;
@@ -60,28 +57,53 @@ std::map<int, PatchTree*> PatchTreeManager::detect_patch_trees() const {
     }
     return trees;
 }
+*/
 
-const std::map<int, PatchTree*>& PatchTreeManager::get_patch_trees() const {
+const std::map<int, std::shared_ptr<PatchTree>>& PatchTreeManager::detect_patch_trees() {
+    std::regex r("patchtree_([0-9]*).kct_spo_deletions");
+    std::smatch base_match;
+    DIR *dir;
+    struct dirent *ent;
+    if ((dir = opendir(basePath.c_str())) != nullptr) {
+        while ((ent = readdir(dir)) != nullptr) {
+            std::string dir_name = std::string(ent->d_name);
+            if(std::regex_match(dir_name, base_match, r)) {
+                // The first sub_match is the whole string; the next
+                // sub_match is the first parenthesized expression.
+                if (base_match.size() == 2) {
+                    std::ssub_match base_sub_match = base_match[1];
+                    std::string base = (std::string) base_sub_match.str();
+                    loaded_patches[std::stoi(base)] = nullptr; // Don't load the actual file, we do this lazily
+                }
+            }
+        }
+        closedir(dir);
+    }
+    return loaded_patches;
+}
+
+const std::map<int, std::shared_ptr<PatchTree>>& PatchTreeManager::get_patch_trees() const {
     return this->loaded_patches;
 }
 
-PatchTree* PatchTreeManager::load_patch_tree(int patch_id_start, DictionaryManager* dict) {
+std::shared_ptr<PatchTree> PatchTreeManager::load_patch_tree(int patch_id_start, std::shared_ptr<DictionaryManager> dict) {
     update_cache(patch_id_start);
-    return loaded_patches[patch_id_start] = new PatchTree(basePath, patch_id_start, dict, kc_opts, readonly);
+    loaded_patches[patch_id_start] = std::make_shared<PatchTree>(basePath, patch_id_start, dict, kc_opts, readonly);
+    return loaded_patches[patch_id_start];
 }
 
-PatchTree* PatchTreeManager::get_patch_tree(int patch_id_start, DictionaryManager* dict) {
+std::shared_ptr<PatchTree> PatchTreeManager::get_patch_tree(int patch_id_start, std::shared_ptr<DictionaryManager> dict) {
     if(patch_id_start < 0) {
         return nullptr;
     }
-    std::map<int, PatchTree*>::iterator it = loaded_patches.find(patch_id_start);
+    auto it = loaded_patches.find(patch_id_start);
     if(it == loaded_patches.end()) {
         if(it == loaded_patches.begin()) {
             return nullptr; // We have an empty map
         }
         it--;
     }
-    PatchTree* patchtree = it->second;
+    std::shared_ptr<PatchTree> patchtree = it->second;
     if(patchtree == nullptr) {
         return load_patch_tree(it->first, dict);
     }
@@ -89,13 +111,13 @@ PatchTree* PatchTreeManager::get_patch_tree(int patch_id_start, DictionaryManage
     return it->second;
 }
 
-PatchTree* PatchTreeManager::construct_next_patch_tree(int patch_id_start, DictionaryManager* dict) {
+std::shared_ptr<PatchTree> PatchTreeManager::construct_next_patch_tree(int patch_id_start, std::shared_ptr<DictionaryManager> dict) {
     return load_patch_tree(patch_id_start, dict);
 }
 
 int PatchTreeManager::get_patch_tree_id(int patch_id) const {
     // lower_bound does binary search in the map, so this is quite efficient.
-    std::map<int, PatchTree*>::const_iterator it = loaded_patches.lower_bound(patch_id);
+    auto it = loaded_patches.lower_bound(patch_id);
     if(it == loaded_patches.end() || it->first > patch_id) {
         if(it == loaded_patches.begin()) {
             // In this case our patches did not start from id 0, but we still have to catch it.
@@ -106,7 +128,7 @@ int PatchTreeManager::get_patch_tree_id(int patch_id) const {
     return it->first;
 }
 
-Patch* PatchTreeManager::get_patch(int patch_id, DictionaryManager* dict) {
+Patch* PatchTreeManager::get_patch(int patch_id, std::shared_ptr<DictionaryManager> dict) {
     int patchtree_id = get_patch_tree_id(patch_id);
     if(patchtree_id < 0) {
         return new PatchSorted(dict);
@@ -114,12 +136,12 @@ Patch* PatchTreeManager::get_patch(int patch_id, DictionaryManager* dict) {
     return get_patch_tree(patchtree_id, dict)->reconstruct_patch(patch_id, true);
 }
 
-int PatchTreeManager::get_max_patch_id(DictionaryManager* dict) {
-    if (loaded_patches.size() > 0) {
-        std::map<int, PatchTree*>::const_iterator it = loaded_patches.end();
+int PatchTreeManager::get_max_patch_id(std::shared_ptr<DictionaryManager> dict) {
+    if (!loaded_patches.empty()) {
+        std::map<int, std::shared_ptr<PatchTree>>::const_iterator it = loaded_patches.end();
         --it;
-        PatchTree* patchTree = it->second;
-        if (patchTree == NULL) {
+        std::shared_ptr<PatchTree> patchTree = it->second;
+        if (patchTree == nullptr) {
             patchTree = load_patch_tree(it->first, dict);
         }
         return patchTree->get_max_patch_id();
@@ -128,20 +150,32 @@ int PatchTreeManager::get_max_patch_id(DictionaryManager* dict) {
 }
 
 void PatchTreeManager::update_cache(int accessed_patch_id) {
-    if (lru_map.find(accessed_patch_id) == lru_map.end()) {
-        if (lru_map.size() == max_loaded_patches) {
-            int lru_patchtree = lru_list.back();
-            lru_list.pop_back();
-            lru_map.erase(lru_patchtree);
-            PatchTree* tmp = loaded_patches[lru_patchtree];
-            loaded_patches[lru_patchtree] = nullptr;
-            delete tmp;
+    update_cache_internal(accessed_patch_id, max_loaded_patches);
+}
+
+void PatchTreeManager::update_cache_internal(int accessed_id, int iterations) {
+    if (lru_map.find(accessed_id) == lru_map.end()) {
+        if (lru_map.size() >= max_loaded_patches) {
+            if (iterations > 0) {
+                int lru_patchtree = lru_list.back();
+                lru_list.pop_back();
+                lru_map.erase(lru_patchtree);
+                if (!loaded_patches[lru_patchtree].unique()) {
+                    // the patchtree we want to unload is still used somewhere
+                    // so we push it to the front of the list
+                    lru_list.push_front(lru_patchtree);
+                    lru_map[lru_patchtree] = lru_list.begin();
+                    update_cache_internal(accessed_id, --iterations);
+                    return;
+                }
+                loaded_patches[lru_patchtree] = nullptr;
+            }
         }
     } else {
-        lru_list.erase(lru_map[accessed_patch_id]);
+        lru_list.erase(lru_map[accessed_id]);
     }
-    lru_list.push_front(accessed_patch_id);
-    lru_map[accessed_patch_id] = lru_list.begin();
+    lru_list.push_front(accessed_id);
+    lru_map[accessed_id] = lru_list.begin();
 }
 
 

@@ -8,29 +8,12 @@
 
 using namespace hdt;
 
-SnapshotManager::SnapshotManager(string basePath, bool readonly) : basePath(basePath), max_loaded_snapshots(64), readonly(readonly), loaded_snapshots(detect_snapshots()), loaded_dictionaries(std::map<int, DictionaryManager*>()) {}
+SnapshotManager::SnapshotManager(string basePath, bool readonly) : basePath(basePath), max_loaded_snapshots(64), readonly(readonly) {}
 
-SnapshotManager::~SnapshotManager() {
-    std::map<int, HDT*>::iterator it1 = loaded_snapshots.begin();
-    while(it1 != loaded_snapshots.end()) {
-        HDT* hdt = it1->second;
-        if(hdt != NULL) {
-            delete hdt;
-        }
-        it1++;
-    }
-    std::map<int, DictionaryManager*>::iterator it2 = loaded_dictionaries.begin();
-    while(it2 != loaded_dictionaries.end()) {
-        DictionaryManager* dict = it2->second;
-        if(dict != NULL) {
-            delete dict;
-        }
-        it2++;
-    }
-}
+SnapshotManager::~SnapshotManager() = default;
 
 int SnapshotManager::get_latest_snapshot(int patch_id) {
-    std::map<int, HDT*>::iterator it = loaded_snapshots.lower_bound(patch_id);
+    auto it = loaded_snapshots.lower_bound(patch_id);
     if(it == loaded_snapshots.begin() && it == loaded_snapshots.end()) {
         return -1;
     }
@@ -49,7 +32,7 @@ int SnapshotManager::get_latest_snapshot(int patch_id) {
     return -1;
 }
 
-HDT* SnapshotManager::load_snapshot(int snapshot_id) {
+std::shared_ptr<HDT> SnapshotManager::load_snapshot(int snapshot_id) {
     // We check if a snapshot is already loaded for the given snapshot_id
     update_cache(snapshot_id);
     auto it = loaded_snapshots.find(snapshot_id);
@@ -58,35 +41,33 @@ HDT* SnapshotManager::load_snapshot(int snapshot_id) {
     }
 
     string fileName = basePath + SNAPSHOT_FILENAME_BASE(snapshot_id);
-    loaded_snapshots[snapshot_id] = hdt::HDTManager::mapIndexedHDT(fileName.c_str());
+    loaded_snapshots[snapshot_id] = std::shared_ptr<HDT>(hdt::HDTManager::mapIndexedHDT(fileName.c_str()));
 
     // load dictionary as well
-    DictionaryManager* dict = new DictionaryManager(basePath, snapshot_id, loaded_snapshots[snapshot_id]->getDictionary());
-    loaded_dictionaries[snapshot_id] = dict;
+    loaded_dictionaries[snapshot_id] = std::make_shared<DictionaryManager>(basePath, snapshot_id, loaded_snapshots[snapshot_id]->getDictionary());
 
     return loaded_snapshots[snapshot_id];
 }
 
-HDT* SnapshotManager::get_snapshot(int snapshot_id) {
+std::shared_ptr<HDT> SnapshotManager::get_snapshot(int snapshot_id) {
     if(snapshot_id < 0) {
-        return NULL;
+        return nullptr;
     }
-    std::map<int, HDT*>::iterator it = loaded_snapshots.find(snapshot_id);
+    auto it = loaded_snapshots.find(snapshot_id);
     if(it == loaded_snapshots.end()) {
         if(it == loaded_snapshots.begin()) {
-            return NULL; // We have an empty map
+            return nullptr; // We have an empty map
         }
         it--;
     }
-    HDT* snapshot = it->second;
-    if(snapshot == NULL) {
+    if(it->second == nullptr) {
         return load_snapshot(snapshot_id);
     }
     update_cache(it->first);
     return it->second;
 }
 
-HDT* SnapshotManager::create_snapshot(int snapshot_id, IteratorTripleString* triples, string base_uri, ProgressListener* listener) {
+std::shared_ptr<HDT> SnapshotManager::create_snapshot(int snapshot_id, IteratorTripleString* triples, string base_uri, ProgressListener* listener) {
     BasicHDT* basicHdt = new BasicHDT();
     basicHdt->loadFromTriples(triples, base_uri, listener);
     basicHdt->saveToHDT((basePath + SNAPSHOT_FILENAME_BASE(snapshot_id)).c_str());
@@ -94,7 +75,7 @@ HDT* SnapshotManager::create_snapshot(int snapshot_id, IteratorTripleString* tri
     return load_snapshot(snapshot_id);
 }
 
-HDT* SnapshotManager::create_snapshot(int snapshot_id, string triples_file, string base_uri, RDFNotation notation) {
+std::shared_ptr<HDT> SnapshotManager::create_snapshot(int snapshot_id, string triples_file, string base_uri, RDFNotation notation) {
     BasicHDT* basicHdt = new BasicHDT();
     basicHdt->loadFromRDF(triples_file.c_str(), base_uri, notation);
     basicHdt->saveToHDT((basePath + SNAPSHOT_FILENAME_BASE(snapshot_id)).c_str());
@@ -102,14 +83,14 @@ HDT* SnapshotManager::create_snapshot(int snapshot_id, string triples_file, stri
     return load_snapshot(snapshot_id);
 }
 
-std::map<int, HDT*> SnapshotManager::detect_snapshots() {
+const std::map<int, std::shared_ptr<HDT>>& SnapshotManager::detect_snapshots() {
     std::regex r("snapshot_([0-9]*).hdt");
     std::smatch base_match;
-    std::map<int, HDT*> snapshots = std::map<int, HDT*>();
+    //std::map<int, HDT*> snapshots = std::map<int, HDT*>();
     DIR *dir;
     struct dirent *ent;
-    if ((dir = opendir(basePath.c_str())) != NULL) {
-        while ((ent = readdir(dir)) != NULL) {
+    if ((dir = opendir(basePath.c_str())) != nullptr) {
+        while ((ent = readdir(dir)) != nullptr) {
             std::string dir_name = std::string(ent->d_name);
             if(std::regex_match(dir_name, base_match, r)) {
                 // The first sub_match is the whole string; the next
@@ -117,21 +98,20 @@ std::map<int, HDT*> SnapshotManager::detect_snapshots() {
                 if (base_match.size() == 2) {
                     std::ssub_match base_sub_match = base_match[1];
                     std::string base = (std::string) base_sub_match.str();
-                    snapshots[std::stoi(base)] = NULL; // Don't load the actual file, we do this lazily
+                    loaded_snapshots[std::stoi(base)] = nullptr; // Don't load the actual file, we do this lazily
                 }
             }
         }
         closedir(dir);
     }
-    return snapshots;
+    return loaded_snapshots;
 }
 
-std::map<int, HDT*> SnapshotManager::get_snapshots() {
+const std::map<int, std::shared_ptr<HDT>>& SnapshotManager::get_snapshots() {
     return this->loaded_snapshots;
 }
 
-
-IteratorTripleID* SnapshotManager::search_with_offset(HDT *hdt, const Triple& triple_pattern, long offset) {
+IteratorTripleID* SnapshotManager::search_with_offset(std::shared_ptr<HDT> hdt, const Triple& triple_pattern, long offset) {
     TripleID tripleId(triple_pattern.get_subject(), triple_pattern.get_predicate(), triple_pattern.get_object());
 
     try {
@@ -152,14 +132,14 @@ IteratorTripleID* SnapshotManager::search_with_offset(HDT *hdt, const Triple& tr
     }
 }
 
-DictionaryManager* SnapshotManager::get_dictionary_manager(int snapshot_id) {
+std::shared_ptr<DictionaryManager> SnapshotManager::get_dictionary_manager(int snapshot_id) {
     if(snapshot_id < 0) {
-        return NULL;
+        return nullptr;
     }
-    std::map<int, DictionaryManager*>::iterator it = loaded_dictionaries.find(snapshot_id);
+    auto it = loaded_dictionaries.find(snapshot_id);
     if(it == loaded_dictionaries.end()) {
         if(it == loaded_dictionaries.begin()) {
-            return NULL; // We have an empty map
+            return nullptr; // We have an empty map
         }
         it--;
     }
@@ -177,22 +157,31 @@ int SnapshotManager::get_max_snapshot_id() {
     return it->first;
 }
 
-void SnapshotManager::update_cache(int accessed_patch_id) {
-    if (lru_map.find(accessed_patch_id) == lru_map.end()) {
-        if (lru_map.size() == max_loaded_snapshots) {
-            int id = lru_list.back();
-            lru_list.pop_back();
-            lru_map.erase(id);
-            HDT* tmp = loaded_snapshots[id];
-            DictionaryManager* tmp_d = loaded_dictionaries[id];
-            loaded_snapshots[id] = nullptr;
-            loaded_dictionaries[id] = nullptr;
-            delete tmp;
-            delete tmp_d;
+void SnapshotManager::update_cache(int accessed_snapshot_id) {
+    update_cache_internal(accessed_snapshot_id, max_loaded_snapshots);
+}
+
+void SnapshotManager::update_cache_internal(int accessed_id, int iterations) {
+    if (lru_map.find(accessed_id) == lru_map.end()) {
+        if (lru_map.size() >= max_loaded_snapshots) {
+            if (iterations > 0) {
+                int lru_snapshot_id = lru_list.back();
+                lru_list.pop_back();
+                lru_map.erase(lru_snapshot_id);
+                if (!loaded_snapshots[lru_snapshot_id].unique()) {
+                    // the snapshot we want to unload is still used somewhere
+                    // so we push it to the front of the list
+                    lru_list.push_front(lru_snapshot_id);
+                    lru_map[lru_snapshot_id] = lru_list.begin();
+                    update_cache_internal(accessed_id, --iterations);
+                    return;
+                }
+                loaded_snapshots[lru_snapshot_id] = nullptr;
+            }
         }
     } else {
-        lru_list.erase(lru_map[accessed_patch_id]);
+        lru_list.erase(lru_map[accessed_id]);
     }
-    lru_list.push_front(accessed_patch_id);
-    lru_map[accessed_patch_id] = lru_list.begin();
+    lru_list.push_front(accessed_id);
+    lru_map[accessed_id] = lru_list.begin();
 }

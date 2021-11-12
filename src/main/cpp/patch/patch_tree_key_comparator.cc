@@ -2,7 +2,7 @@
 
 #include "patch_tree_key_comparator.h"
 
-PatchTreeKeyComparator::PatchTreeKeyComparator(comp compare_1, comp compare_2, comp compare_3, DictionaryManager* dict)
+PatchTreeKeyComparator::PatchTreeKeyComparator(comp compare_1, comp compare_2, comp compare_3, std::shared_ptr<DictionaryManager> dict)
         : compare_1(compare_1), compare_2(compare_2), compare_3(compare_3), dict(dict) {}
 
 int32_t PatchTreeKeyComparator::compare(const char* akbuf, size_t aksiz, const char* bkbuf, size_t bksiz) {

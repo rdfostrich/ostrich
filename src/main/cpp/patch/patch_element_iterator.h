@@ -16,11 +16,11 @@ public:
 
 class PatchElementIteratorTripleStrings : public PatchElementIterator {
 protected:
-    DictionaryManager* dict;
+    std::shared_ptr<DictionaryManager> dict;
     IteratorTripleString* it;
     bool additions;
 public:
-    PatchElementIteratorTripleStrings(DictionaryManager* dict, IteratorTripleString* subIt, bool additions);
+    PatchElementIteratorTripleStrings(std::shared_ptr<DictionaryManager> dict, IteratorTripleString* subIt, bool additions);
     ~PatchElementIteratorTripleStrings();
     bool next(PatchElement* element);
     void goToStart();

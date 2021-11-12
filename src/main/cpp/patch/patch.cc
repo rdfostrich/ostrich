@@ -42,7 +42,7 @@ string Patch::to_string(Dictionary& dict) const {
 
 PatchSorted::PatchSorted(PatchElementComparator* element_comparator) : elements(), element_comparator(element_comparator) {}
 
-PatchSorted::PatchSorted(DictionaryManager* dict) : PatchSorted(new PatchElementComparator(new PatchTreeKeyComparator(comp_s, comp_p, comp_o, dict))) {}
+PatchSorted::PatchSorted(std::shared_ptr<DictionaryManager> dict) : PatchSorted(new PatchElementComparator(new PatchTreeKeyComparator(comp_s, comp_p, comp_o, dict))) {}
 
 PatchSorted::PatchSorted(PatchElementComparator* element_comparator, std::vector<PatchElement> elements) : elements(elements), element_comparator(element_comparator) {}
 

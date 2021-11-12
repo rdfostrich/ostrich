@@ -37,12 +37,12 @@ class TripleVersionsIterator {
 protected:
     Triple triple_pattern;
     IteratorTripleID* snapshot_it;
-    PatchTree* patchTree;
+    std::shared_ptr<PatchTree> patchTree;
     PatchTreeIterator* addition_it;
     int first_version;
     inline void eraseDeletedVersions(std::vector<int>* versions, Triple* currentTriple, int initial_version);
 public:
-    TripleVersionsIterator(Triple triple_pattern, IteratorTripleID* snapshot_it, PatchTree* patchTree, int first_version = 0);
+    TripleVersionsIterator(Triple triple_pattern, IteratorTripleID* snapshot_it, std::shared_ptr<PatchTree> patchTree, int first_version = 0);
     ~TripleVersionsIterator();
     bool next(TripleVersions* triple_versions);
     size_t get_count();
@@ -57,7 +57,7 @@ private:
     std::vector<TripleVersionsString> triples;
 public:
     TripleVersionsIteratorCombined();
-    void append_iterator(TripleVersionsIterator* iterator, DictionaryManager* dict);
+    void append_iterator(TripleVersionsIterator* iterator, std::shared_ptr<DictionaryManager> dict);
     bool next(TripleVersionsString* triple_versions);
     size_t get_count();
     TripleVersionsIteratorCombined* offset(int offset);

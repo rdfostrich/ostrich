@@ -31,7 +31,7 @@ void Evaluator::populate_controller_with_version(int patch_id, string path, Prog
     std::regex regex_additions("([a-z0-9]*).nt.additions.txt");
     std::regex regex_deletions("([a-z0-9]*).nt.deletions.txt");
 
-    DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
+    std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
     bool first = patch_id == 0;
     CombinedTripleIterator* it_snapshot = new CombinedTripleIterator();
     PatchElementIteratorCombined* it_patch = new PatchElementIteratorCombined(PatchTreeKeyComparator(comp_s, comp_p, comp_o, dict));
@@ -42,7 +42,7 @@ void Evaluator::populate_controller_with_version(int patch_id, string path, Prog
             controller->get_snapshot_manager()->load_snapshot(patch_id);
         } else {
             NOTIFYMSG(progressListener, "Skipped constructing patch because it already exists, loading instead...\n");
-            DictionaryManager* dict_patch = controller->get_dictionary_manager(patch_id);
+            std::shared_ptr<DictionaryManager> dict_patch = controller->get_dictionary_manager(patch_id);
             if (controller->get_patch_tree_manager()->get_patch_tree(patch_id, dict_patch)->get_max_patch_id() < patch_id) {
                 controller->get_patch_tree_manager()->load_patch_tree(patch_id, dict_patch);
             }
@@ -79,7 +79,7 @@ void Evaluator::populate_controller_with_version(int patch_id, string path, Prog
     if (first) {
         NOTIFYMSG(progressListener, "\nCreating snapshot...\n");
         std::cout.setstate(std::ios_base::failbit); // Disable cout info from HDT
-        HDT* hdt = controller->get_snapshot_manager()->create_snapshot(0, it_snapshot, BASEURI, progressListener);
+        std::shared_ptr<HDT> hdt = controller->get_snapshot_manager()->create_snapshot(0, it_snapshot, BASEURI, progressListener);
         std::cout.clear();
         added = hdt->getTriples()->getNumberOfElements();
 
@@ -101,8 +101,8 @@ void Evaluator::populate_controller_with_version(int patch_id, string path, Prog
 std::ifstream::pos_type Evaluator::patchstore_size(Controller* controller) {
     long size = 0;
 
-    std::map<int, PatchTree*> patches = controller->get_patch_tree_manager()->get_patch_trees();
-    std::map<int, PatchTree*>::iterator itP = patches.begin();
+    std::map<int, std::shared_ptr<PatchTree>> patches = controller->get_patch_tree_manager()->get_patch_trees();
+    auto itP = patches.begin();
     while(itP != patches.end()) {
         int id = itP->first;
         size += filesize(PATCHTREE_FILENAME(id, "spo_deletions"));
@@ -119,9 +119,9 @@ std::ifstream::pos_type Evaluator::patchstore_size(Controller* controller) {
         itP++;
     }
 
-    std::map<int, HDT*> snapshots = controller->get_snapshot_manager()->get_snapshots();
+    std::map<int, std::shared_ptr<HDT>> snapshots = controller->get_snapshot_manager()->get_snapshots();
     controller->get_snapshot_manager()->get_dictionary_manager(0)->save();
-    std::map<int, HDT*>::iterator itS = snapshots.begin();
+    auto itS = snapshots.begin();
     while(itS != snapshots.end()) {
         int id = itS->first;
         size += filesize(SNAPSHOT_FILENAME_BASE(id));
@@ -234,7 +234,7 @@ long long Evaluator::measure_count_version(Triple triple_pattern, int replicatio
 }
 
 void Evaluator::test_lookup(string s, string p, string o, int replications, int offset, int limit) {
-    DictionaryManager *dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
+    std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
     Triple triple_pattern(s, p, o, dict);
     cout << "---PATTERN START: " << triple_pattern.to_string(*dict) << endl;
 
@@ -358,7 +358,7 @@ void BearEvaluatorMS::populate_controller_with_version(int patch_id, string path
         }
     }
 
-    DictionaryManager* dict;
+    std::shared_ptr<DictionaryManager> dict;
 
     CombinedTripleIterator *it_snapshot = nullptr;
     PatchElementIteratorCombined *it_patch = nullptr;
@@ -388,7 +388,7 @@ void BearEvaluatorMS::populate_controller_with_version(int patch_id, string path
     if (first) {
         NOTIFYMSG(progressListener, "\nCreating snapshot...\n");
         std::cout.setstate(std::ios_base::failbit); // Disable cout info from HDT
-        HDT *hdt = controller->get_snapshot_manager()->create_snapshot(patch_id, it_snapshot, BASEURI, progressListener);
+        std::shared_ptr<HDT> hdt = controller->get_snapshot_manager()->create_snapshot(patch_id, it_snapshot, BASEURI, progressListener);
         std::cout.clear();
         added = hdt->getTriples()->getNumberOfElements();
     } else {
@@ -412,7 +412,7 @@ void BearEvaluatorMS::populate_controller_with_version(int patch_id, string path
 std::ifstream::pos_type BearEvaluatorMS::patchstore_size(Controller *controller) {
     long size = 0;
 
-    std::map<int, PatchTree*> patches = controller->get_patch_tree_manager()->get_patch_trees();
+    std::map<int, std::shared_ptr<PatchTree>> patches = controller->get_patch_tree_manager()->get_patch_trees();
     auto itP = patches.begin();
     while(itP != patches.end()) {
         int id = itP->first;
@@ -430,7 +430,7 @@ std::ifstream::pos_type BearEvaluatorMS::patchstore_size(Controller *controller)
         itP++;
     }
 
-    std::map<int, HDT*> snapshots = controller->get_snapshot_manager()->get_snapshots();
+    std::map<int, std::shared_ptr<HDT>> snapshots = controller->get_snapshot_manager()->get_snapshots();
     auto itS = snapshots.begin();
     while(itS != snapshots.end()) {
         controller->get_snapshot_manager()->get_dictionary_manager(itS->first)->save();
@@ -458,7 +458,7 @@ BearEvaluatorMS::measure_lookup_version_materialized(const StringTriple& triple_
 
     int snapshot_id = controller->get_snapshot_manager()->get_latest_snapshot(patch_id);
     controller->get_snapshot_manager()->load_snapshot(snapshot_id);
-    DictionaryManager* dict = controller->get_snapshot_manager()->get_dictionary_manager(snapshot_id);
+    std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(snapshot_id);
 
     long long total = 0;
     for (int i = 0; i < replications; i++) {

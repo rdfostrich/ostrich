@@ -25,8 +25,8 @@ protected:
     }
 
     virtual void TearDown() {
-        std::map<int, HDT*> patches = snapshotManager->get_snapshots();
-        std::map<int, HDT*>::iterator it = patches.begin();
+        std::map<int, std::shared_ptr<HDT>> patches = snapshotManager->get_snapshots();
+        auto it = patches.begin();
         std::list<int> patchDictsToDelete;
         while(it != patches.end()) {
             int id = it->first;
@@ -46,9 +46,9 @@ protected:
 };
 
 TEST_F(SnapshotManagerTest, ConstructSnapshot) {
-    ASSERT_EQ((HDT*) NULL, snapshotManager->get_snapshot(100));
+    ASSERT_EQ(nullptr, snapshotManager->get_snapshot(100));
     snapshotManager->create_snapshot(100, it, BASEURI);
-    ASSERT_NE((HDT*) NULL, snapshotManager->get_snapshot(100));
+    ASSERT_NE(nullptr, snapshotManager->get_snapshot(100));
 }
 
 TEST_F(SnapshotManagerTest, DetectSnapshotsTrees) {
@@ -60,7 +60,7 @@ TEST_F(SnapshotManagerTest, DetectSnapshotsTrees) {
 }
 
 TEST_F(SnapshotManagerTest, GetSnapshot) {
-    HDT* snapshot = snapshotManager->create_snapshot(100, it, BASEURI);
+    std::shared_ptr<HDT> snapshot = snapshotManager->create_snapshot(100, it, BASEURI);
     ASSERT_EQ(snapshot, snapshotManager->get_snapshot(100));
 }
 

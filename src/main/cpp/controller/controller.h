@@ -69,7 +69,7 @@ public:
      * @return If the append succeeded.
      * @note The patch iterator MUST provide triples sorted by SPO.
      */
-    bool append(PatchElementIterator* patch_it, int patch_id, DictionaryManager* dict, bool check_uniqueness = true, ProgressListener* progressListener = NULL);
+    bool append(PatchElementIterator* patch_it, int patch_id, std::shared_ptr<DictionaryManager> dict, bool check_uniqueness = true, ProgressListener* progressListener = NULL);
     /**
      * Add the given patch to a patch tree.
      * @param patch The patch to add.
@@ -78,7 +78,7 @@ public:
      * @param progressListener an optional progress listener.
      * @return If the append succeeded.
      */
-    bool append(const PatchSorted& patch, int patch_id, DictionaryManager* dict, bool check_uniqueness = true, ProgressListener* progressListener = NULL);
+    bool append(const PatchSorted& patch, int patch_id, std::shared_ptr<DictionaryManager> dict, bool check_uniqueness = true, ProgressListener* progressListener = NULL);
 
     /**
      * @return The internal patchtree manager.
@@ -91,7 +91,7 @@ public:
     /**
      * @return The DictionaryManager file for a certain patch id, this patch id does not have to be created yet.
      */
-    DictionaryManager* get_dictionary_manager(int patch_id) const;
+    std::shared_ptr<DictionaryManager> get_dictionary_manager(int patch_id) const;
     /**
      * @return The largest patch id that is currently available.
      */

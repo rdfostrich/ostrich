@@ -19,20 +19,20 @@ TEST(TripleTest, FieldsRawOverlap) {
 }
 
 TEST(TripleTest, Fields) {
-    DictionaryManager dict(TESTPATH, 0);
-    Triple triple("s1", "p1", "o1", &dict);
-    ASSERT_EQ("s1", triple.get_subject(dict)) << "Subject is not saved correctly";
-    ASSERT_EQ("p1", triple.get_predicate(dict)) << "Predicate is not saved correctly";
-    ASSERT_EQ("o1", triple.get_object(dict)) << "Object is not saved correctly";
+    std::shared_ptr<DictionaryManager> dict = std::make_shared<DictionaryManager>(TESTPATH, 0);
+    Triple triple("s1", "p1", "o1", dict);
+    ASSERT_EQ("s1", triple.get_subject(*dict)) << "Subject is not saved correctly";
+    ASSERT_EQ("p1", triple.get_predicate(*dict)) << "Predicate is not saved correctly";
+    ASSERT_EQ("o1", triple.get_object(*dict)) << "Object is not saved correctly";
     DictionaryManager::cleanup(TESTPATH, 0);
 }
 
 TEST(TripleTest, FieldsOverlap) {
-    DictionaryManager dict(TESTPATH, 0);
-    Triple triple("a", "a", "a", &dict);
-    ASSERT_EQ("a", triple.get_subject(dict)) << "Subject is not saved correctly";
-    ASSERT_EQ("a", triple.get_predicate(dict)) << "Predicate is not saved correctly";
-    ASSERT_EQ("a", triple.get_object(dict)) << "Object is not saved correctly";
+    std::shared_ptr<DictionaryManager> dict = std::make_shared<DictionaryManager>(TESTPATH, 0);
+    Triple triple("a", "a", "a", dict);
+    ASSERT_EQ("a", triple.get_subject(*dict)) << "Subject is not saved correctly";
+    ASSERT_EQ("a", triple.get_predicate(*dict)) << "Predicate is not saved correctly";
+    ASSERT_EQ("a", triple.get_object(*dict)) << "Object is not saved correctly";
     DictionaryManager::cleanup(TESTPATH, 0);
 }
 
@@ -42,16 +42,16 @@ TEST(TripleTest, ToStringRaw) {
 }
 
 TEST(TripleTest, ToString) {
-    DictionaryManager dict(TESTPATH, 0);
-    Triple triple("s1", "p1", "o1", &dict);
-    ASSERT_EQ("s1 p1 o1.", triple.to_string(dict)) << "to_string is incorrect";
+    std::shared_ptr<DictionaryManager> dict = std::make_shared<DictionaryManager>(TESTPATH, 0);
+    Triple triple("s1", "p1", "o1", dict);
+    ASSERT_EQ("s1 p1 o1.", triple.to_string(*dict)) << "to_string is incorrect";
     DictionaryManager::cleanup(TESTPATH, 0);
 }
 
 TEST(TripleTest, ToStringOverlap) {
-    DictionaryManager dict(TESTPATH, 0);
-    Triple triple("a", "a", "a", &dict);
-    ASSERT_EQ("a a a.", triple.to_string(dict)) << "to_string is incorrect";
+    std::shared_ptr<DictionaryManager> dict = std::make_shared<DictionaryManager>(TESTPATH, 0);
+    Triple triple("a", "a", "a", dict);
+    ASSERT_EQ("a a a.", triple.to_string(*dict)) << "to_string is incorrect";
     DictionaryManager::cleanup(TESTPATH, 0);
 }
 
@@ -71,8 +71,8 @@ TEST(TripleTest, SerializationRaw) {
 }
 
 TEST(TripleTest, Serialization) {
-    DictionaryManager dict(TESTPATH, 0);
-    Triple tripleIn("s1", "p1", "o1", &dict);
+    std::shared_ptr<DictionaryManager> dict = std::make_shared<DictionaryManager>(TESTPATH, 0);
+    Triple tripleIn("s1", "p1", "o1", dict);
 
     // Serialize
     size_t size;
@@ -82,15 +82,15 @@ TEST(TripleTest, Serialization) {
     Triple tripleOut;
     tripleOut.deserialize(data, size);
 
-    ASSERT_EQ(tripleIn.to_string(dict), tripleOut.to_string(dict)) << "Serialization failed";
+    ASSERT_EQ(tripleIn.to_string(*dict), tripleOut.to_string(*dict)) << "Serialization failed";
     free((char*) data);
 
     DictionaryManager::cleanup(TESTPATH, 0);
 }
 
 TEST(TripleTest, SerializationLong) {
-    DictionaryManager dict(TESTPATH, 0);
-    Triple tripleIn("abc:yioknbvfty", "def:qspdojhbgy", "ghi:pjhgfdrtyuiolk,nbvfyukl:;,n,;lkijhg", &dict);
+    std::shared_ptr<DictionaryManager> dict = std::make_shared<DictionaryManager>(TESTPATH, 0);
+    Triple tripleIn("abc:yioknbvfty", "def:qspdojhbgy", "ghi:pjhgfdrtyuiolk,nbvfyukl:;,n,;lkijhg", dict);
 
     // Serialize
     size_t size;
@@ -100,15 +100,15 @@ TEST(TripleTest, SerializationLong) {
     Triple tripleOut;
     tripleOut.deserialize(data, size);
 
-    ASSERT_EQ(tripleIn.to_string(dict), tripleOut.to_string(dict)) << "Serialization failed";
+    ASSERT_EQ(tripleIn.to_string(*dict), tripleOut.to_string(*dict)) << "Serialization failed";
     free((char*) data);
 
     DictionaryManager::cleanup(TESTPATH, 0);
 }
 
 TEST(TripleTest, SerializationSize) {
-    DictionaryManager dict(TESTPATH, 0);
-    Triple tripleIn("s1", "p1", "o1", &dict);
+    std::shared_ptr<DictionaryManager> dict = std::make_shared<DictionaryManager>(TESTPATH, 0);
+    Triple tripleIn("s1", "p1", "o1", dict);
 
     // Serialize
     size_t size;

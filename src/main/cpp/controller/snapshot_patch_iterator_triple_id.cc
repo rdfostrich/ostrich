@@ -4,13 +4,13 @@
 
 SnapshotPatchIteratorTripleID::SnapshotPatchIteratorTripleID(IteratorTripleID* snapshot_it,
                                                              PositionedTripleIterator* deletion_it,
-                                                             PatchTreeKeyComparator* spo_comparator, HDT* snapshot,
-                                                             const Triple& triple_pattern, PatchTree* patchTree,
+                                                             PatchTreeKeyComparator* spo_comparator, std::shared_ptr<HDT> snapshot,
+                                                             const Triple& triple_pattern, std::shared_ptr<PatchTree> patchTree,
                                                              int patch_id, int offset, PatchPosition deletion_count)
-        : snapshot_it(snapshot_it), deletion_it(deletion_it), addition_it(NULL), spo_comparator(spo_comparator),
+        : snapshot_it(snapshot_it), deletion_it(deletion_it), addition_it(nullptr), spo_comparator(spo_comparator),
           snapshot(snapshot), triple_pattern(triple_pattern), patchTree(patchTree), patch_id(patch_id), offset(offset),
           deletion_count(deletion_count) {
-    if (deletion_it != NULL) {
+    if (deletion_it != nullptr) {
         // Reset the filter, because from here on we only need to know if a triple is in the tree or not.
         // So we don't need the filter, because this will introduce unnecessary (possibly huge for specific triple patterns) overhead.
         deletion_it->getPatchTreeIterator()->reset_triple_pattern_filter();
@@ -20,14 +20,14 @@ SnapshotPatchIteratorTripleID::SnapshotPatchIteratorTripleID(IteratorTripleID* s
 
 SnapshotPatchIteratorTripleID::~SnapshotPatchIteratorTripleID() {
     delete last_deleted_triple;
-    if (snapshot_it != NULL) delete snapshot_it;
-    if (deletion_it != NULL) delete deletion_it;
-    if (addition_it != NULL) delete addition_it;
+    delete snapshot_it;
+    delete deletion_it;
+    delete addition_it;
 }
 
 bool SnapshotPatchIteratorTripleID::next(Triple* triple) {
-    while(snapshot_it != NULL || addition_it != NULL) {
-        if (snapshot_it != NULL && snapshot_it->hasNext()) { // Emit triples from snapshot - deletions
+    while(snapshot_it != nullptr || addition_it != nullptr) {
+        if (snapshot_it != nullptr && snapshot_it->hasNext()) { // Emit triples from snapshot - deletions
             // Find snapshot triple
             TripleID* snapshot_triple = snapshot_it->next();
             triple->set_subject(snapshot_triple->getSubject());
@@ -74,7 +74,7 @@ bool SnapshotPatchIteratorTripleID::next(Triple* triple) {
                 return true;
             }
         } else { // Emit additions
-            if (snapshot_it != NULL) {
+            if (snapshot_it != nullptr) {
                 // Calculate the offset for our addition iterator.
                 long snapshot_count = snapshot_it->numResultEstimation() == EXACT ? snapshot_it->estimatedNumResults() : -1;
                 if (snapshot_count == -1) {
@@ -89,7 +89,7 @@ bool SnapshotPatchIteratorTripleID::next(Triple* triple) {
 
                 // Delete snapshot iterator
                 delete snapshot_it;
-                snapshot_it = NULL;
+                snapshot_it = nullptr;
 
                 // Create addition iterator with the correct offset
                 long addition_offset = offset - snapshot_count + deletion_count;
@@ -98,8 +98,8 @@ bool SnapshotPatchIteratorTripleID::next(Triple* triple) {
             if(addition_it->next(triple)) {
                 return true;
             } else {
-                if (addition_it != NULL) delete addition_it;
-                addition_it = NULL;
+                delete addition_it;
+                addition_it = nullptr;
             }
         }
     }

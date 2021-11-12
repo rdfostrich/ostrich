@@ -1,10 +1,10 @@
 #include "patch_element_iterator.h"
 
-PatchElementIterator::PatchElementIterator() {}
+PatchElementIterator::PatchElementIterator() = default;
 
-PatchElementIterator::~PatchElementIterator() {}
+PatchElementIterator::~PatchElementIterator() = default;
 
-PatchElementIteratorTripleStrings::PatchElementIteratorTripleStrings(DictionaryManager* dict, IteratorTripleString* it, bool additions)
+PatchElementIteratorTripleStrings::PatchElementIteratorTripleStrings(std::shared_ptr<DictionaryManager> dict, IteratorTripleString* it, bool additions)
         : dict(dict), it(it), additions(additions) {}
 
 PatchElementIteratorTripleStrings::~PatchElementIteratorTripleStrings() {

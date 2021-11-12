@@ -105,7 +105,7 @@ protected:
     PatchElementComparator* element_comparator;
 public:
     PatchSorted(PatchElementComparator* element_comparator);
-    PatchSorted(DictionaryManager* dict);
+    PatchSorted(std::shared_ptr<DictionaryManager> dict);
     PatchSorted(PatchElementComparator* element_comparator, std::vector<PatchElement> elements);
     void add(const PatchElement& element);
     /**

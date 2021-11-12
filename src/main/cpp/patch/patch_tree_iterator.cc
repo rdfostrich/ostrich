@@ -95,7 +95,8 @@ bool PatchTreeIteratorBase<DV>::next_deletion(PatchTreeKey* key, DV* value, bool
     // If the filter is not enabled, this loop will be executed only once.
     while (!filter_valid) {
         kbp = cursor_deletions->get(&ksp, &vbp, &vsp);
-        if (!kbp) return false;
+        if (!kbp)
+            return false;
         value->deserialize(vbp, vsp);
 
         key->deserialize(kbp, ksp);

@@ -20,11 +20,11 @@ void TripleDelta::set_addition(bool addition) {
     this->addition = addition;
 }
 
-DictionaryManager* TripleDelta::get_dictionary() {
+std::shared_ptr<DictionaryManager> TripleDelta::get_dictionary() {
     return dict;
 }
 
-void TripleDelta::set_dictionary(DictionaryManager *dictionary) {
+void TripleDelta::set_dictionary(std::shared_ptr<DictionaryManager> dictionary) {
     dict = dictionary;
 }
 
@@ -50,7 +50,7 @@ bool EmptyTripleDeltaIterator::next(TripleDelta *triple) {
 }
 
 template <class DV>
-ForwardPatchTripleDeltaIterator<DV>::ForwardPatchTripleDeltaIterator(PatchTree* patchTree, const Triple &triple_pattern, int patch_id_end, DictionaryManager* dict) : it(patchTree->iterator<DV>(&triple_pattern)), dict(dict) {
+ForwardPatchTripleDeltaIterator<DV>::ForwardPatchTripleDeltaIterator(std::shared_ptr<PatchTree> patchTree, const Triple &triple_pattern, int patch_id_end, std::shared_ptr<DictionaryManager> dict) : it(patchTree->iterator<DV>(&triple_pattern)), dict(dict) {
     it->set_patch_filter(patch_id_end, false);
     it->set_filter_local_changes(true);
     it->set_early_break(true);
@@ -79,7 +79,7 @@ bool ForwardPatchTripleDeltaIterator<DV>::next(TripleDelta* triple) {
 }
 
 template <class DV>
-FowardDiffPatchTripleDeltaIterator<DV>::FowardDiffPatchTripleDeltaIterator(PatchTree* patchTree, const Triple &triple_pattern, int patch_id_start, int patch_id_end, DictionaryManager* dict)
+FowardDiffPatchTripleDeltaIterator<DV>::FowardDiffPatchTripleDeltaIterator(std::shared_ptr<PatchTree> patchTree, const Triple &triple_pattern, int patch_id_start, int patch_id_end, std::shared_ptr<DictionaryManager> dict)
         : ForwardPatchTripleDeltaIterator<DV>(patchTree, triple_pattern, patch_id_end, dict), patch_id_start(patch_id_start), patch_id_end(patch_id_end) {
     this->it->set_filter_local_changes(false);
 }
@@ -104,9 +104,9 @@ template class FowardDiffPatchTripleDeltaIterator<PatchTreeDeletionValueReduced>
 
 SnapshotDiffIterator::SnapshotDiffIterator(const StringTriple &triple_pattern, SnapshotManager *manager, int snapshot_1,
                                            int snapshot_2): t1(nullptr), t2(nullptr) {
-    HDT* snap_1 = manager->get_snapshot(snapshot_1);
+    std::shared_ptr<HDT> snap_1 = manager->get_snapshot(snapshot_1);
     dict1 = manager->get_dictionary_manager(snapshot_1);
-    HDT* snap_2 = manager->get_snapshot(snapshot_2);
+    std::shared_ptr<HDT> snap_2 = manager->get_snapshot(snapshot_2);
     dict2 = manager->get_dictionary_manager(snapshot_2);
     if (snap_1 && snap_2) {
         TripleString tp(triple_pattern.get_subject(), triple_pattern.get_predicate(), triple_pattern.get_object());
@@ -198,8 +198,8 @@ int compare_triple_delta(TripleDelta *td1, TripleDelta *td2) {
         // The two triples have two different dict
         // One of them can be unspecified (null) so it will use the dict from the other triple
         // Alternatively we could use the dict from snapshot 0
-        DictionaryManager* dict1 = td1->get_dictionary() ? td1->get_dictionary() : td2->get_dictionary();
-        DictionaryManager* dict2 = td2->get_dictionary() ? td2->get_dictionary() : td1->get_dictionary();
+        std::shared_ptr<DictionaryManager> dict1 = td1->get_dictionary() ? td1->get_dictionary() : td2->get_dictionary();
+        std::shared_ptr<DictionaryManager> dict2 = td2->get_dictionary() ? td2->get_dictionary() : td1->get_dictionary();
         int s_comp = td1->get_triple()->get_subject(*dict1).compare(td2->get_triple()->get_subject(*dict2));
         if (s_comp == 0) {
             int p_comp = td1->get_triple()->get_predicate(*dict1).compare(td2->get_triple()->get_predicate(*dict2));

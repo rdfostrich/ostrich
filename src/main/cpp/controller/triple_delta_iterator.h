@@ -12,7 +12,7 @@ class TripleDelta {
 protected:
     Triple* triple;
     bool addition;
-    DictionaryManager *dict;
+    std::shared_ptr<DictionaryManager> dict;
 public:
     TripleDelta();
     TripleDelta(Triple* triple, bool addition);
@@ -20,8 +20,8 @@ public:
     Triple* get_triple();
     bool is_addition();
     void set_addition(bool addition);
-    DictionaryManager* get_dictionary();
-    void set_dictionary(DictionaryManager *dictionary);
+    std::shared_ptr<DictionaryManager> get_dictionary();
+    void set_dictionary(std::shared_ptr<DictionaryManager> dictionary);
 };
 
 // Iterator for triples annotated with addition/deletion.
@@ -39,9 +39,9 @@ class ForwardPatchTripleDeltaIterator : public TripleDeltaIterator {
 protected:
     PatchTreeIteratorBase<DV>* it;
     PatchTreeValueBase<DV>* value;
-    DictionaryManager* dict;
+    std::shared_ptr<DictionaryManager> dict;
 public:
-    ForwardPatchTripleDeltaIterator(PatchTree* patchTree, const Triple &triple_pattern, int patch_id_end, DictionaryManager* dict);
+    ForwardPatchTripleDeltaIterator(std::shared_ptr<PatchTree> patchTree, const Triple &triple_pattern, int patch_id_end, std::shared_ptr<DictionaryManager> dict);
     ~ForwardPatchTripleDeltaIterator();
     bool next(TripleDelta* triple);
 };
@@ -53,7 +53,7 @@ protected:
     int patch_id_start;
     int patch_id_end;
 public:
-    FowardDiffPatchTripleDeltaIterator(PatchTree* patchTree, const Triple &triple_pattern, int patch_id_start, int patch_id_end, DictionaryManager* dict);
+    FowardDiffPatchTripleDeltaIterator(std::shared_ptr<PatchTree> patchTree, const Triple &triple_pattern, int patch_id_start, int patch_id_end, std::shared_ptr<DictionaryManager> dict);
     bool next(TripleDelta* triple);
 };
 
@@ -73,8 +73,8 @@ private:
     TripleString* t1;
     TripleString* t2;
 
-    DictionaryManager* dict1;
-    DictionaryManager* dict2;
+    std::shared_ptr<DictionaryManager> dict1;
+    std::shared_ptr<DictionaryManager> dict2;
 
     static int compare_ts(TripleString* ts1, TripleString* ts2);
 

@@ -11,7 +11,7 @@ class Controller;
 class PatchBuilder {
 private:
     Controller* controller;
-    DictionaryManager* dict;
+    std::shared_ptr<DictionaryManager> dict;
     PatchSorted* patch;
     std::vector<TripleString> triples;
     int patch_id;
