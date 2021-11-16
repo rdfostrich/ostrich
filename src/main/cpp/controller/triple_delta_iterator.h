@@ -83,17 +83,16 @@ public:
     bool next(TripleDelta* triple) override;
 };
 
-//class IterativeSnapshotDiffIterator: public TripleDeltaIterator {
-//private:
-//    SnapshotManager* snapshot_manager;
-//    PatchTreeManager* patch_tree_manager;
-//    int snapshot_id1;
-//    int snapshot_id2;
-//
-//public:
-//    IterativeSnapshotDiffIterator(SnapshotManager* snapshot_manager, PatchTreeManager* patch_tree_manager, int snapshot_id_1, int snapshot_id_2);
-//    bool next(TripleDelta* triple) override;
-//};
+class IterativeSnapshotDiffIterator: public TripleDeltaIterator {
+private:
+    TripleDeltaIterator *internal_it;
+
+public:
+    IterativeSnapshotDiffIterator(const StringTriple &triple_pattern, SnapshotManager *snapshot_manager,
+                                  PatchTreeManager *patch_tree_manager, int snapshot_id_1, int snapshot_id_2);
+    ~IterativeSnapshotDiffIterator() override;
+    bool next(TripleDelta* triple) override;
+};
 
 // Sort a TripleDeltaIterator in SPO order
 class SortedTripleDeltaIterator: public TripleDeltaIterator {

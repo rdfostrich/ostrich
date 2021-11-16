@@ -3,7 +3,7 @@
 #include <memory>
 #include "patch_tree_manager.h"
 
-PatchTreeManager::PatchTreeManager(string basePath, int8_t kc_opts, bool readonly) : basePath(basePath), max_loaded_patches(64), kc_opts(kc_opts), readonly(readonly) {
+PatchTreeManager::PatchTreeManager(string basePath, int8_t kc_opts, bool readonly) : basePath(basePath), max_loaded_patches(8), kc_opts(kc_opts), readonly(readonly) {
     detect_patch_trees();
 }
 

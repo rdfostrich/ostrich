@@ -395,6 +395,7 @@ TripleDeltaIterator* Controller::get_delta_materialized(const StringTriple &trip
     if(snapshot_id_start == patch_id_start && snapshot_id_end == patch_id_end) {
         // TODO: implement other iterator and heuristic
         return (new SnapshotDiffIterator(triple_pattern, snapshotManager, snapshot_id_start, snapshot_id_end))->offset(offset);
+        //return (new IterativeSnapshotDiffIterator(triple_pattern, snapshotManager, patchTreeManager, snapshot_id_start, snapshot_id_end))->offset(offset);
     }
 
     // start = snapshot, end = patch
