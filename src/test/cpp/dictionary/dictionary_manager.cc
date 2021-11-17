@@ -47,9 +47,9 @@ protected:
         literal2 = "\"This is a second literal.\"^^xsd:string",
         literal3 = "\"zzzzzz\"^^xsd:string";
 
-        patch_id_a = 2147483649;
-        patch_id_b = 2147483650;
-        patch_id_c = 2147483651;
+        patch_id_a = (1ULL << 63) +1;
+        patch_id_b = (1ULL << 63) +2;
+        patch_id_c = (1ULL << 63) +3;
 
         hdt_id_a = 1;
         hdt_id_b = 2;
@@ -261,13 +261,15 @@ TEST_F(DictionaryManagerTest, SaveAndLoad) {
     delete dict;
     dict = new DictionaryManager(TESTPATH, 0);
 
-    EXPECT_EQ(2147483649, dict->stringToId(a, SUBJECT));
-    EXPECT_EQ(2147483649, dict->stringToId(b, PREDICATE));
-    EXPECT_EQ(2147483649, dict->stringToId(c, OBJECT));
-    EXPECT_EQ(2147483650, dict->stringToId(d, SUBJECT));
-    EXPECT_EQ(2147483650, dict->stringToId(e, PREDICATE));
-    EXPECT_EQ(2147483650, dict->stringToId(f, OBJECT));
-    EXPECT_EQ(2147483651, dict->stringToId(g, SUBJECT));
-    EXPECT_EQ(2147483651, dict->stringToId(h, PREDICATE));
-    EXPECT_EQ(2147483651, dict->stringToId(i, OBJECT));
+    size_t base = 1ULL << 63;
+
+    EXPECT_EQ(base+1, dict->stringToId(a, SUBJECT));
+    EXPECT_EQ(base+1, dict->stringToId(b, PREDICATE));
+    EXPECT_EQ(base+1, dict->stringToId(c, OBJECT));
+    EXPECT_EQ(base+2, dict->stringToId(d, SUBJECT));
+    EXPECT_EQ(base+2, dict->stringToId(e, PREDICATE));
+    EXPECT_EQ(base+2, dict->stringToId(f, OBJECT));
+    EXPECT_EQ(base+3, dict->stringToId(g, SUBJECT));
+    EXPECT_EQ(base+3, dict->stringToId(h, PREDICATE));
+    EXPECT_EQ(base+3, dict->stringToId(i, OBJECT));
 }

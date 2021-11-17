@@ -35,7 +35,7 @@ protected:
     ControllerTest() : controller(new Controller(TESTPATH)) {}
 
     virtual void SetUp() {
-
+        clean_meta_files();
     }
 
     virtual void TearDown() {
@@ -1355,6 +1355,251 @@ TEST_F(ControllerTest, GetDeltaMaterializedSnapshotPatch) {
 
     ASSERT_EQ(false, it5->next(&t)) << "Iterator should be finished";
 }
+
+TEST_F(ControllerMSTest, GetDeltaMaterializedSnapshotMS) {
+    controller->new_patch_bulk()
+            ->addition(TripleString("<a>", "<a>", "<a>"))
+            ->addition(TripleString("<a>", "<a>", "<b>"))
+            ->addition(TripleString("<a>", "<a>", "<c>"))
+            ->commit();
+
+    controller->new_patch_bulk()
+            ->deletion(TripleString("<a>", "<a>", "<b>"))
+            ->commit();
+
+    controller->new_patch_bulk()
+            ->addition(TripleString("<a>", "<a>", "<d>"))
+            ->commit();
+
+    controller->new_patch_bulk()
+            ->addition(TripleString("<a>", "<a>", "<e>"))
+            ->addition(TripleString("<a>", "<a>", "<f>"))
+            ->commit();
+
+    controller->new_patch_bulk()
+            ->deletion(TripleString("<a>", "<a>", "<a>"))
+            ->commit();
+
+    controller->new_patch_bulk()
+            ->deletion(TripleString("<a>", "<a>", "<e>"))
+            ->commit();
+
+    // Expected version 0:
+    // <a> <a> <a>
+    // <a> <a> <b>
+    // <a> <a> <c>
+
+    // Expected version 1:
+    // <a> <a> <a>
+    // <a> <a> <c>
+
+    // Expected version 2:
+    // <a> <a> <a>
+    // <a> <a> <c>
+    // <a> <a> <d>
+
+    // Expected version 3:
+    // <a> <a> <a>
+    // <a> <a> <c>
+    // <a> <a> <d>
+    // <a> <a> <e>
+    // <a> <a> <f>
+
+    // Expected version 4
+    // <a> <a> <c>
+    // <a> <a> <d>
+    // <a> <a> <e>
+    // <a> <a> <f>
+
+    // Expected version 5
+    // <a> <a> <c>
+    // <a> <a> <d>
+    // <a> <a> <f>
+
+    TripleDelta t;
+
+    // Case snapshot-patch single delta chain
+    // Request between versions 0 and 1 for ? ? ?
+    ASSERT_EQ(1, controller->get_delta_materialized_count(StringTriple("", "", ""), 0, 1).first) << "Count is incorrect";
+    TripleDeltaIterator* it0 = controller->get_delta_materialized(StringTriple("", "", ""), 0, 0, 1);
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <b>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(false, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(false, it0->next(&t)) << "Iterator should be finished";
+
+    // Request between versions 0 and 1 for <a> ? ?
+    ASSERT_EQ(1, controller->get_delta_materialized_count(StringTriple("<a>", "", ""), 0, 1).first) << "Count is incorrect";
+    TripleDeltaIterator* it1 = controller->get_delta_materialized(StringTriple("<a>", "", ""), 0, 0, 1);
+
+    ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <b>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(false, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(false, it1->next(&t)) << "Iterator should be finished";
+
+    // Request between versions 0 and 1 for ? ? <d>
+    ASSERT_EQ(0, controller->get_delta_materialized_count(StringTriple("", "", "<d>"), 0, 1).first) << "Count is incorrect";
+    TripleDeltaIterator* it2 = controller->get_delta_materialized(StringTriple("", "", "<d>"), 0, 0, 1);
+
+    ASSERT_EQ(false, it2->next(&t)) << "Iterator should be finished";
+
+    // Request between versions 0 and 2 for <a> ? ?
+    // Case snapshot-snapshot multiple delta chains
+    ASSERT_EQ(2, controller->get_delta_materialized_count(StringTriple("<a>", "", ""), 0, 2).first) << "Count is incorrect";
+    TripleDeltaIterator* it3 = controller->get_delta_materialized(StringTriple("<a>", "", ""), 0, 0, 2);
+
+    ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <b>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(false, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <d>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(false, it3->next(&t)) << "Iterator should be finished";
+
+    // Request between versions 0 and 3 for ? ? ?
+    TripleDeltaIterator* it4 = controller->get_delta_materialized(StringTriple("", "", ""), 0, 0, 3);
+
+    ASSERT_EQ(true, it4->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <b>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(false, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it4->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <d>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it4->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <e>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it4->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <f>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(false, it4->next(&t)) << "Iterator should be finished";
+
+}
+
+TEST_F(ControllerMSTest, GetDeltaMaterializedPatchMS) {
+    controller->new_patch_bulk()
+            ->addition(TripleString("<a>", "<a>", "<a>"))
+            ->addition(TripleString("<a>", "<a>", "<b>"))
+            ->addition(TripleString("<a>", "<a>", "<c>"))
+            ->commit();
+
+    controller->new_patch_bulk()
+            ->deletion(TripleString("<a>", "<a>", "<b>"))
+            ->addition(TripleString("<a>", "<b>", "<c>"))
+            ->commit();
+
+    controller->new_patch_bulk()
+            ->deletion(TripleString("<a>", "<b>", "<c>"))
+            ->addition(TripleString("<a>", "<a>", "<d>"))
+            ->commit();
+
+    controller->new_patch_bulk()
+            ->addition(TripleString("<a>", "<a>", "<e>"))
+            ->addition(TripleString("<a>", "<a>", "<f>"))
+            ->commit();
+
+    controller->new_patch_bulk()
+            ->deletion(TripleString("<a>", "<a>", "<a>"))
+            ->commit();
+
+    controller->new_patch_bulk()
+            ->deletion(TripleString("<a>", "<a>", "<e>"))
+            ->commit();
+
+    // Expected version 0:
+    // <a> <a> <a>
+    // <a> <a> <b>
+    // <a> <a> <c>
+
+    // Expected version 1:
+    // <a> <a> <a>
+    // <a> <a> <c>
+    // <a> <b> <c>
+
+    // Expected version 2:
+    // <a> <a> <a>
+    // <a> <a> <c>
+    // <a> <a> <d>
+
+    // Expected version 3:
+    // <a> <a> <a>
+    // <a> <a> <c>
+    // <a> <a> <d>
+    // <a> <a> <e>
+    // <a> <a> <f>
+
+    // Expected version 4
+    // <a> <a> <c>
+    // <a> <a> <d>
+    // <a> <a> <e>
+    // <a> <a> <f>
+
+    // Expected version 5
+    // <a> <a> <c>
+    // <a> <a> <d>
+    // <a> <a> <f>
+
+    TripleDelta t;
+
+    // Case patch-patch two delta chain
+    // Request between versions 1 and 3 for ? ? ?
+    ASSERT_EQ(4, controller->get_delta_materialized_count(StringTriple("", "", ""), 1, 3).first) << "Count is incorrect";
+    TripleDeltaIterator* it0 = controller->get_delta_materialized(StringTriple("", "", ""), 0, 1, 3);
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <d>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <e>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <f>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <b> <c>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(false, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(false, it0->next(&t)) << "Iterator should be finished";
+
+
+    ASSERT_EQ(5, controller->get_delta_materialized_count(StringTriple("", "", ""), 1, 4).first) << "Count is incorrect";
+    TripleDeltaIterator* it1 = controller->get_delta_materialized(StringTriple("", "", ""), 0, 1, 4);
+
+    ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <a>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(false, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <d>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <e>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <f>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <b> <c>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(false, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(false, it1->next(&t)) << "Iterator should be finished";
+
+}
+
+
 
 TEST_F(ControllerTest, GetDeltaMaterializedPatchPatch) {
     controller->new_patch_bulk()

@@ -34,12 +34,13 @@ int32_t PatchTreeKeyComparator::compare(const PatchTreeKey& element1, const Patc
 }
 
 comp comp_s = [] (const PatchTreeKey& e1, const PatchTreeKey& e2, DictionaryManager& dict) {
-    unsigned int max_id = (unsigned int) -1;
+    size_t max_id = (size_t) -1;
+    size_t mask = 1ULL << 63;
     //if ((e1.get_subject() == max_id && e2.get_subject() == max_id) || (e1.get_subject() == 0 && e2.get_subject() == 0)) return 0; // Should never occur
     if (e1.get_subject() == max_id || e2.get_subject() == 0) return 1;
     if (e2.get_subject() == max_id || e1.get_subject() == 0) return -1;
     // If MSB is not set, id is HDT
-    if (!(e1.get_subject() & 2147483648) && !(e2.get_subject() & 2147483648)) {
+    if (!(e1.get_subject() & mask) && !(e2.get_subject() & mask)) {
         return dict.compareComponent(e1.get_subject(), e2.get_subject(), SUBJECT);
     }
     //Else, translate to string and compare
@@ -47,12 +48,13 @@ comp comp_s = [] (const PatchTreeKey& e1, const PatchTreeKey& e2, DictionaryMana
 };
 
 comp comp_p = [] (const PatchTreeKey& e1, const PatchTreeKey& e2, DictionaryManager& dict) {
-    unsigned int max_id = (unsigned int) -1;
+    size_t max_id = (size_t) -1;
+    size_t mask = 1ULL << 63;
     //if ((e1.get_predicate() == max_id && e2.get_predicate() == max_id) || (e1.get_predicate() == 0 && e2.get_predicate() == 0)) return 0; // Should never occur
     if (e1.get_predicate() == max_id || e2.get_predicate() == 0) return 1;
     if (e2.get_predicate() == max_id || e1.get_predicate() == 0) return -1;
     // If MSB is not set, id is HDT
-    if (!(e1.get_predicate() & 2147483648) && !(e2.get_predicate() & 2147483648)) {
+    if (!(e1.get_predicate() & mask) && !(e2.get_predicate() & mask)) {
         return dict.compareComponent(e1.get_predicate(), e2.get_predicate(), PREDICATE);
     }
     //Else, translate to string and compare
@@ -60,12 +62,13 @@ comp comp_p = [] (const PatchTreeKey& e1, const PatchTreeKey& e2, DictionaryMana
 };
 
 comp comp_o = [] (const PatchTreeKey& e1, const PatchTreeKey& e2, DictionaryManager& dict) {
-    unsigned int max_id = (unsigned int) -1;
+    size_t max_id = (size_t) -1;
+    size_t mask = 1ULL << 63;
     //if ((e1.get_object() == max_id && e2.get_object() == max_id) || (e1.get_object() == 0 && e2.get_object() == 0)) return 0; // Should never occur
     if (e1.get_object() == max_id || e2.get_object() == 0) return 1;
     if (e2.get_object() == max_id || e1.get_object() == 0) return -1;
     // If MSB is not set, id is HDT
-    if (!(e1.get_object() & 2147483648) && !(e2.get_object() & 2147483648)) {
+    if (!(e1.get_object() & mask) && !(e2.get_object() & mask)) {
         return dict.compareComponent(e1.get_object(), e2.get_object(), OBJECT);
     }
     //Else, translate to string and compare

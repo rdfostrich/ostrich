@@ -45,6 +45,7 @@ public:
     TripleDeltaIterator* get_delta_materialized(const Triple &triple_pattern, int offset, int patch_id_start, int patch_id_end) const;
     TripleDeltaIterator* get_delta_materialized(const StringTriple &triple_pattern, int offset, int patch_id_start, int patch_id_end) const;
     std::pair<size_t, ResultEstimationType> get_delta_materialized_count(const Triple& triple_pattern, int patch_id_start, int patch_id_end, bool allowEstimates = false) const;
+    std::pair<size_t, ResultEstimationType> get_delta_materialized_count(const StringTriple& triple_pattern, int patch_id_start, int patch_id_end, bool allowEstimates = false) const;
     size_t get_delta_materialized_count_estimated(const Triple& triple_pattern, int patch_id_start, int patch_id_end) const;
     /**
      * Get an iterator for all triples matching the given triple pattern with a certain offset

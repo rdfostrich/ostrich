@@ -6,10 +6,10 @@ PatchBuilder::PatchBuilder(Controller* controller) : controller(controller), pat
     int max_patch_id = controller->get_max_patch_id();
     int snapshot_id = controller->get_snapshot_manager()->get_latest_snapshot(max_patch_id);
     dict = controller->get_snapshot_manager()->get_dictionary_manager(snapshot_id);
-    if (dict != NULL) {
+    if (dict != nullptr) {
         patch = new PatchSorted(dict);
     } else {
-        patch = NULL;
+        patch = nullptr;
     }
 }
 
@@ -34,7 +34,7 @@ void PatchBuilder::commit(ProgressListener* progressListener) {
 }
 
 PatchBuilder *PatchBuilder::triple(const TripleString& triple_const, bool addition) {
-    if (patch != NULL) {
+    if (patch != nullptr) {
         TripleString& triple = const_cast<TripleString&>(triple_const);
         patch->add_unsorted(PatchElement(Triple(triple.getSubject(), triple.getPredicate(), triple.getObject(), dict), addition));
     } else {
@@ -48,7 +48,7 @@ PatchBuilder* PatchBuilder::addition(const TripleString& triple) {
 }
 
 PatchBuilder* PatchBuilder::deletion(const TripleString& triple) {
-    if (patch == NULL) {
+    if (patch == nullptr) {
         throw std::exception(); // Impossible to add deletions in the first snapshot
     }
     return this->triple(triple, false);
