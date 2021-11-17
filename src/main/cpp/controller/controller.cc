@@ -304,6 +304,11 @@ std::pair<size_t, ResultEstimationType> Controller::get_delta_materialized_count
     }
 }
 
+std::pair<size_t, ResultEstimationType> Controller::get_delta_materialized_count(const StringTriple &triple_pattern, int patch_id_start, int patch_id_end, bool allowEstimates) const {
+    // TODO: implement estimate count
+    return std::make_pair(get_delta_materialized(triple_pattern, 0, patch_id_start, patch_id_end)->get_count(), EXACT);
+}
+
 size_t Controller::get_delta_materialized_count_estimated(const Triple &triple_pattern, int patch_id_start, int patch_id_end) const {
     return get_delta_materialized_count(triple_pattern, patch_id_start, patch_id_end, true).second;
 }
@@ -434,9 +439,9 @@ TripleDeltaIterator* Controller::get_delta_materialized(const StringTriple &trip
         std::shared_ptr<PatchTree> patchTree = get_patch_tree_manager()->get_patch_tree(patch_id_start, dict_start);
         TripleDeltaIterator* last_dc_dm;
         if (is_spo) {
-            last_dc_dm = new ForwardPatchTripleDeltaIterator<PatchTreeDeletionValue>(patchTree, tp, patch_id_start, dict_end);
+            last_dc_dm = new ForwardPatchTripleDeltaIterator<PatchTreeDeletionValue>(patchTree, tp, patch_id_start, dict_start);
         } else {
-            auto tmp_it = new ForwardPatchTripleDeltaIterator<PatchTreeDeletionValueReduced>(patchTree, tp, patch_id_start, dict_end);
+            auto tmp_it = new ForwardPatchTripleDeltaIterator<PatchTreeDeletionValueReduced>(patchTree, tp, patch_id_start, dict_start);
             last_dc_dm = new SortedTripleDeltaIterator(tmp_it);
             delete tmp_it;
         }

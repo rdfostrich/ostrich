@@ -142,33 +142,33 @@ bool SnapshotDiffIterator::next(TripleDelta *triple) {
         triple->get_triple()->set_subject(tmp_t->get_subject());
         triple->get_triple()->set_predicate(tmp_t->get_predicate());
         triple->get_triple()->set_object(tmp_t->get_object());
-        triple->set_addition(false);
+        triple->set_addition(is_addition);
     };
 
     if (t1 && t2) {
         int comp = compare_ts(t1, t2);
         if (comp == 0) {
-            t1 = snapshot_it_1->next();
-            t2 = snapshot_it_1->next();
+            t1 = snapshot_it_1->hasNext() ? snapshot_it_1->next() : nullptr;
+            t2 = snapshot_it_2->hasNext() ? snapshot_it_2->next() : nullptr;
             return next(triple);
         } else if (comp < 0) {
             // t1 is a deletion
             emit_triple(false);
-            t1 = snapshot_it_1->next();
+            t1 = snapshot_it_1->hasNext() ? snapshot_it_1->next() : nullptr;
             return true;
         } else {
             // t2 is an addition
             emit_triple(true);
-            t2 = snapshot_it_2->next();
+            t2 = snapshot_it_2->hasNext() ? snapshot_it_2->next() : nullptr;
             return true;
         }
     } else if (t1) {
         emit_triple(false);
-        t1 = snapshot_it_1->next();
+        t1 = snapshot_it_1->hasNext() ? snapshot_it_1->next() : nullptr;
         return true;
     } else if (t2) {
         emit_triple(true);
-        t2 = snapshot_it_2->next();
+        t2 = snapshot_it_2->hasNext() ? snapshot_it_2->next() : nullptr;
         return true;
     } else {
         return false;
@@ -182,34 +182,51 @@ MergeDiffIterator::MergeDiffIterator(TripleDeltaIterator *iterator_1, TripleDelt
     status2 = it2->next(triple2);
 }
 
+//int compare_triple_delta(TripleDelta *td1, TripleDelta *td2) {
+//    std::shared_ptr<DictionaryManager> dict1 = td1->get_dictionary() ? td1->get_dictionary() : td2->get_dictionary();
+//    std::shared_ptr<DictionaryManager> dict2 = td2->get_dictionary() ? td2->get_dictionary() : td1->get_dictionary();
+//    int s_comp = td1->get_triple()->get_subject(*dict1).compare(td2->get_triple()->get_subject(*dict2));
+//    if (s_comp == 0) {
+//        int p_comp = td1->get_triple()->get_predicate(*dict1).compare(td2->get_triple()->get_predicate(*dict2));
+//        if (p_comp == 0) {
+//            return td1->get_triple()->get_object(*dict1).compare(td2->get_triple()->get_object(*dict2));
+//        }
+//        return p_comp;
+//    }
+//    return s_comp;
+//}
+
 int compare_triple_delta(TripleDelta *td1, TripleDelta *td2) {
-    if (td1->get_dictionary() == td2->get_dictionary()) {
-        int s_comp = td1->get_triple()->get_subject() - td2->get_triple()->get_subject();
-        if (s_comp == 0) {
-            int p_comp = td1->get_triple()->get_predicate() - td2->get_triple()->get_predicate();
-            if (p_comp == 0) {
-                return td1->get_triple()->get_object() - td2->get_triple()->get_object();
-            }
-            return p_comp;
-        }
-        return s_comp;
+    size_t max_id = (size_t) -1;
+    size_t mask = 1ULL << 63;
+    bool is_same_dict = td1->get_dictionary() == td2->get_dictionary();
+    std::shared_ptr<DictionaryManager> dict1 = td1->get_dictionary() ? td1->get_dictionary() : td2->get_dictionary();
+    std::shared_ptr<DictionaryManager> dict2 = td2->get_dictionary() ? td2->get_dictionary() : td1->get_dictionary();
+    int s_comp;
+    if (is_same_dict && !(td1->get_triple()->get_subject() & mask) && !(td2->get_triple()->get_subject() & mask)) {
+        s_comp = dict1->compareComponent(td1->get_triple()->get_subject(), td2->get_triple()->get_subject(), SUBJECT);
     } else {
-        // We need to compare the Triple as string because ids are not (necessarily) the same
-        // The two triples have two different dict
-        // One of them can be unspecified (null) so it will use the dict from the other triple
-        // Alternatively we could use the dict from snapshot 0
-        std::shared_ptr<DictionaryManager> dict1 = td1->get_dictionary() ? td1->get_dictionary() : td2->get_dictionary();
-        std::shared_ptr<DictionaryManager> dict2 = td2->get_dictionary() ? td2->get_dictionary() : td1->get_dictionary();
-        int s_comp = td1->get_triple()->get_subject(*dict1).compare(td2->get_triple()->get_subject(*dict2));
-        if (s_comp == 0) {
-            int p_comp = td1->get_triple()->get_predicate(*dict1).compare(td2->get_triple()->get_predicate(*dict2));
-            if (p_comp == 0) {
-                return td1->get_triple()->get_object(*dict1).compare(td2->get_triple()->get_object(*dict2));
-            }
-            return p_comp;
-        }
-        return s_comp;
+        s_comp = td1->get_triple()->get_subject(*dict1).compare(td2->get_triple()->get_subject(*dict2));
     }
+    if (s_comp == 0) {
+        int p_comp;
+        if (is_same_dict && !(td1->get_triple()->get_predicate() & mask) && !(td2->get_triple()->get_predicate() & mask)) {
+            p_comp = dict1->compareComponent(td1->get_triple()->get_predicate(), td2->get_triple()->get_predicate(), PREDICATE);
+        } else {
+            p_comp = td1->get_triple()->get_predicate(*dict1).compare(td2->get_triple()->get_predicate(*dict2));
+        }
+        if (p_comp == 0) {
+            int o_comp;
+            if (is_same_dict && !(td1->get_triple()->get_object() & mask) && !(td2->get_triple()->get_object() & mask)) {
+                o_comp = dict1->compareComponent(td1->get_triple()->get_object(), td2->get_triple()->get_object(), OBJECT);
+            } else {
+                o_comp = td1->get_triple()->get_object(*dict1).compare(td2->get_triple()->get_object(*dict2));
+            }
+            return o_comp;
+        }
+        return p_comp;
+    }
+    return s_comp;
 }
 
 bool MergeDiffIterator::next(TripleDelta *triple) {
@@ -218,7 +235,7 @@ bool MergeDiffIterator::next(TripleDelta *triple) {
         target->get_triple()->set_predicate(source->get_triple()->get_predicate());
         target->get_triple()->set_object(source->get_triple()->get_object());
         target->set_addition(is_addition);
-        target->set_dictionary(target->get_dictionary());
+        target->set_dictionary(source->get_dictionary());
     };
 
     if (status1 && status2) {
@@ -309,20 +326,22 @@ bool MergeDiffIteratorCase2::next(TripleDelta *triple) {
         target->get_triple()->set_predicate(source->get_triple()->get_predicate());
         target->get_triple()->set_object(source->get_triple()->get_object());
         target->set_addition(is_addition);
-        target->set_dictionary(target->get_dictionary());
+        target->set_dictionary(source->get_dictionary());
     };
 
     if (status1 && status2) {
         int comp = compare_triple_delta(triple1, triple2);
         if (comp == 0) {  // It's the same triple (SPO)
-            if (triple2->is_addition()) {
-                emit_triple(triple2, triple, true);
+            if (triple1->is_addition() != triple2->is_addition()) {
+                emit_triple(triple2, triple, triple2->is_addition());
+                status1 = it1->next(triple1);
+                status2 = it2->next(triple2);
+                return true;
             } else {
-                emit_triple(triple2, triple, false);
+                status1 = it1->next(triple1);
+                status2 = it2->next(triple2);
+                return next(triple);
             }
-            status1 = it1->next(triple1);
-            status2 = it2->next(triple2);
-            return true;
         } else if (comp < 0) {
             // The triple from set 1 but does not exist in set 2
             // It means that it must have been reverted somewhere in between

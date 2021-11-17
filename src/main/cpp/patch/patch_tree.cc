@@ -512,7 +512,7 @@ PatchTreeIteratorBase<DV>* PatchTree::iterator(const Triple *triple_pattern) con
 
 template <class DV>
 std::pair<DV*, Triple> PatchTree::last_deletion_value(const Triple &triple_pattern, int patch_id) const {
-    unsigned int max_id = (unsigned int) -1;
+    size_t max_id = (size_t) -1;
     Triple triple_pattern_jump(
             triple_pattern.get_subject() == 0 ? max_id : triple_pattern.get_subject(),
             triple_pattern.get_predicate() == 0 ? max_id : triple_pattern.get_predicate(),
