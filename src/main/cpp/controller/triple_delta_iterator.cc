@@ -92,6 +92,7 @@ bool FowardDiffPatchTripleDeltaIterator<DV>::next(TripleDelta *triple) {
     if (valid) {
         triple->set_addition(this->value->is_addition(patch_id_end, true));
     }
+    triple->set_dictionary(this->dict);
     return valid;
 }
 
@@ -279,14 +280,15 @@ MergeDiffIterator::~MergeDiffIterator() {
 
 
 SortedTripleDeltaIterator::SortedTripleDeltaIterator(TripleDeltaIterator *iterator): index(0) {
-    auto comp = [](TripleDelta& td1, TripleDelta& td2) {
-        int comp_res = compare_triple_delta(&td1, &td2);
+    auto comp = [](TripleDelta* td1, TripleDelta* td2) {
+        int comp_res = compare_triple_delta(td1, td2);
         return comp_res < 0;
     };
 
-    TripleDelta td;
-    while(iterator->next(&td)) {
+    auto td = new TripleDelta;
+    while(iterator->next(td)) {
         triples.emplace_back(td);
+        td = new TripleDelta;
     }
     if (!std::is_sorted(triples.begin(), triples.end(), comp))
         std::sort(triples.begin(), triples.end(), comp);
@@ -294,15 +296,21 @@ SortedTripleDeltaIterator::SortedTripleDeltaIterator(TripleDeltaIterator *iterat
 
 bool SortedTripleDeltaIterator::next(TripleDelta *triple) {
     if (index < triples.size()) {
-        triple->get_triple()->set_subject(triples[index].get_triple()->get_subject());
-        triple->get_triple()->set_predicate(triples[index].get_triple()->get_predicate());
-        triple->get_triple()->set_object(triples[index].get_triple()->get_object());
-        triple->set_addition(triples[index].is_addition());
-        triple->set_dictionary(triples[index].get_dictionary());
+        triple->get_triple()->set_subject(triples[index]->get_triple()->get_subject());
+        triple->get_triple()->set_predicate(triples[index]->get_triple()->get_predicate());
+        triple->get_triple()->set_object(triples[index]->get_triple()->get_object());
+        triple->set_addition(triples[index]->is_addition());
+        triple->set_dictionary(triples[index]->get_dictionary());
         index++;
         return true;
     }
     return false;
+}
+
+SortedTripleDeltaIterator::~SortedTripleDeltaIterator() {
+    for (auto triple : triples) {
+        delete triple;
+    }
 }
 
 

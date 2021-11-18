@@ -98,10 +98,11 @@ public:
 class SortedTripleDeltaIterator: public TripleDeltaIterator {
 private:
     size_t index;
-    std::vector<TripleDelta> triples;
+    std::vector<TripleDelta*> triples;
 
 public:
-    SortedTripleDeltaIterator(TripleDeltaIterator* iterator);
+    explicit SortedTripleDeltaIterator(TripleDeltaIterator* iterator);
+    ~SortedTripleDeltaIterator() override;
     bool next(TripleDelta* triple) override;
 };
 
