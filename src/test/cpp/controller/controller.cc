@@ -321,7 +321,7 @@ TEST_F(ControllerTest, GetVersionMaterializedComplex1) {
     ASSERT_EQ("h p o.", t.to_string(*dict)) << "Element is incorrect";
 
     ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("h z o.", t.to_string(*dict)) << "Element is incorrect";
+     ASSERT_EQ("h z o.", t.to_string(*dict)) << "Element is incorrect";
 
     ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
     ASSERT_EQ("a p o.", t.to_string(*dict)) << "Element is incorrect";
@@ -1599,6 +1599,91 @@ TEST_F(ControllerMSTest, GetDeltaMaterializedPatchMS) {
 
 }
 
+TEST_F(ControllerMSTest, GetDeltaMaterializedOrderMS) {
+    controller->new_patch_bulk()
+            ->addition(TripleString("<a>", "<b>", "<a>"))
+            ->addition(TripleString("<a>", "<b>", "<b>"))
+            ->addition(TripleString("<a>", "<b>", "<c>"))
+            ->commit();
+
+    controller->new_patch_bulk()
+            ->deletion(TripleString("<a>", "<b>", "<b>"))
+            ->addition(TripleString("<a>", "<b>", "<d>"))
+            ->commit();
+
+    controller->new_patch_bulk()
+            ->deletion(TripleString("<a>", "<b>", "<c>"))
+            ->addition(TripleString("<a>", "<b>", "<e>"))
+            ->commit();
+
+    controller->new_patch_bulk()
+            ->addition(TripleString("<a>", "<b>", "<g>"))
+            ->addition(TripleString("<a>", "<b>", "<h>"))
+            ->commit();
+
+
+    // Expected version 0:
+    // <a> <b> <a>
+    // <a> <b> <b>
+    // <a> <b> <c>
+
+    // Expected version 1:
+    // <a> <b> <a>
+    // <a> <b> <c>
+    // <a> <b> <d>
+
+    // Expected version 2:
+    // <a> <b> <a>
+    // <a> <b> <d>
+    // <a> <b> <e>
+
+    // Expected version 3:
+    // <a> <b> <a>
+    // <a> <b> <d>
+    // <a> <b> <e>
+    // <a> <b> <g>
+    // <a> <b> <h>
+
+    TripleDelta t;
+
+    // Case patch-patch two delta chain
+    // Request between versions 1 and 3 for ? ? ?
+    ASSERT_EQ(2, controller->get_delta_materialized_count(StringTriple("", "<b>", ""), 1, 2).first) << "Count is incorrect";
+    TripleDeltaIterator* it0 = controller->get_delta_materialized(StringTriple("", "<b>", ""), 0, 1, 2);
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <b> <c>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(false, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <b> <e>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(false, it0->next(&t)) << "Iterator should be finished";
+
+
+    ASSERT_EQ(4, controller->get_delta_materialized_count(StringTriple("", "<b>", ""), 1, 3).first) << "Count is incorrect";
+    TripleDeltaIterator* it1 = controller->get_delta_materialized(StringTriple("", "<b>", ""), 0, 1, 3);
+
+    ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <b> <c>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(false, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <b> <e>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <b> <g>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <b> <h>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(false, it1->next(&t)) << "Iterator should be finished";
+
+}
 
 
 TEST_F(ControllerTest, GetDeltaMaterializedPatchPatch) {
