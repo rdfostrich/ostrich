@@ -398,9 +398,7 @@ TripleDeltaIterator* Controller::get_delta_materialized(const StringTriple &trip
 
     // start = snapshot, end = snapshot
     if(snapshot_id_start == patch_id_start && snapshot_id_end == patch_id_end) {
-        // TODO: implement other iterator and heuristic
-        return (new SnapshotDiffIterator(triple_pattern, snapshotManager, snapshot_id_start, snapshot_id_end))->offset(offset);
-        //return (new IterativeSnapshotDiffIterator(triple_pattern, snapshotManager, patchTreeManager, snapshot_id_start, snapshot_id_end))->offset(offset);
+        return (new AutoSnapshotDiffIterator(triple_pattern, snapshotManager, patchTreeManager, snapshot_id_start, snapshot_id_end))->offset(offset);
     }
 
     // start = snapshot, end = patch
@@ -418,7 +416,7 @@ TripleDeltaIterator* Controller::get_delta_materialized(const StringTriple &trip
                 return (new ForwardPatchTripleDeltaIterator<PatchTreeDeletionValueReduced>(patchTree, tp, patch_id_end, dict_end))->offset(offset);
             }
         } else {
-            auto snap_diff = new SnapshotDiffIterator(triple_pattern, snapshotManager, snapshot_id_start, snapshot_id_end);
+            auto snap_diff = new AutoSnapshotDiffIterator(triple_pattern, snapshotManager, patchTreeManager, snapshot_id_start, snapshot_id_end);
             bool is_spo = TripleStore::is_default_tree(tp);
             TripleDeltaIterator* last_dc_dm;
             if (is_spo) {
@@ -445,7 +443,7 @@ TripleDeltaIterator* Controller::get_delta_materialized(const StringTriple &trip
             last_dc_dm = new SortedTripleDeltaIterator(tmp_it);
             delete tmp_it;
         }
-        auto snap_diff = new SnapshotDiffIterator(triple_pattern, snapshotManager, snapshot_id_start, snapshot_id_end);
+        auto snap_diff = new AutoSnapshotDiffIterator(triple_pattern, snapshotManager, patchTreeManager, snapshot_id_start, snapshot_id_end);
         return (new MergeDiffIteratorCase2(last_dc_dm, snap_diff))->offset(offset);
     }
 
@@ -482,7 +480,7 @@ TripleDeltaIterator* Controller::get_delta_materialized(const StringTriple &trip
                 last_dc_dm = new SortedTripleDeltaIterator(tmp_it2);
                 delete tmp_it2;
             }
-            auto snap_diff = new SnapshotDiffIterator(triple_pattern, snapshotManager, snapshot_id_start, snapshot_id_end);
+            auto snap_diff = new AutoSnapshotDiffIterator(triple_pattern, snapshotManager, patchTreeManager, snapshot_id_start, snapshot_id_end);
             TripleDeltaIterator* intermediate_diff = new MergeDiffIteratorCase2(first_dc_dm, snap_diff);
             return (new MergeDiffIterator(intermediate_diff, last_dc_dm))->offset(offset);
         }
