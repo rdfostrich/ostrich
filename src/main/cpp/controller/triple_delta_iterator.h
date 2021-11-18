@@ -94,6 +94,18 @@ public:
     bool next(TripleDelta* triple) override;
 };
 
+class AutoSnapshotDiffIterator: public TripleDeltaIterator {
+private:
+    TripleDeltaIterator *internal_it;
+
+public:
+    AutoSnapshotDiffIterator(const StringTriple &triple_pattern, SnapshotManager *snapshot_manager,
+                             PatchTreeManager *patch_tree_manager, int snapshot_id_1, int snapshot_id_2);
+    ~AutoSnapshotDiffIterator() override;
+    bool next(TripleDelta* triple) override;
+};
+
+
 // Sort a TripleDeltaIterator in SPO order
 class SortedTripleDeltaIterator: public TripleDeltaIterator {
 private:
