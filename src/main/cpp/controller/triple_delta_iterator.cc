@@ -351,7 +351,7 @@ bool MergeDiffIteratorCase2::next(TripleDelta *triple) {
                 return next(triple);
             }
         } else if (comp < 0) {
-            // The triple from set 1 but does not exist in set 2
+            // The triple from set 1 does not exist in set 2
             // It means that it must have been reverted somewhere in between
             // So if triple1 is addition, then it's a deletion
             // and if triple1 is deletion, then it's an addition
