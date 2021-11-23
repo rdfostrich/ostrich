@@ -305,7 +305,36 @@ std::pair<size_t, ResultEstimationType> Controller::get_delta_materialized_count
 }
 
 std::pair<size_t, ResultEstimationType> Controller::get_delta_materialized_count(const StringTriple &triple_pattern, int patch_id_start, int patch_id_end, bool allowEstimates) const {
-    // TODO: implement estimate count
+    if (allowEstimates) {
+        int snapshot_id_start = get_snapshot_manager()->get_latest_snapshot(patch_id_start);
+        int snapshot_id_end = get_snapshot_manager()->get_latest_snapshot(patch_id_end);
+        std::map<int, std::shared_ptr<HDT>> snapshots = snapshotManager->get_snapshots();
+        std::map<int, std::shared_ptr<PatchTree>> patch_trees = patchTreeManager->get_patch_trees();
+        auto it1 = snapshots.find(snapshot_id_start);
+        auto it2 = snapshots.find(snapshot_id_end);
+        std::vector<int> snapshots_ids;
+        while (it1 != it2) {
+            snapshots_ids.push_back(it1->first);
+            it1++;
+        }
+        size_t count = 0;
+        for (int i = 1; i < snapshots_ids.size(); i++) {
+            int id = patchTreeManager->get_patch_tree_id(snapshots_ids[i]);
+            std::shared_ptr<DictionaryManager> dict = snapshotManager->get_dictionary_manager(snapshots_ids[i-1]);
+            std::shared_ptr<PatchTree> pt = patchTreeManager->get_patch_tree(id, dict);
+            Triple tp = triple_pattern.get_as_triple(dict);
+            count += pt->deletion_count(tp, snapshots_ids[i]).first + pt->addition_count(snapshots_ids[i], tp);
+        }
+        // the patch_id_end is a patch not a snapshot
+        if (patch_id_end > snapshots_ids.back()) {
+            int id = patchTreeManager->get_patch_tree_id(patch_id_end);
+            std::shared_ptr<DictionaryManager> dict = snapshotManager->get_dictionary_manager(snapshots_ids.back());
+            std::shared_ptr<PatchTree> pt = patchTreeManager->get_patch_tree(id, dict);
+            Triple tp = triple_pattern.get_as_triple(dict);
+            count += pt->deletion_count(tp, patch_id_end).first + pt->addition_count(patch_id_end, tp);
+        }
+        return std::make_pair(count, UP_TO);
+    }
     return std::make_pair(get_delta_materialized(triple_pattern, 0, patch_id_start, patch_id_end)->get_count(), EXACT);
 }
 
