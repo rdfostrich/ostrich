@@ -663,6 +663,7 @@ bool Controller::append(PatchElementIterator* patch_it, int patch_id, std::share
         while (triples_vm->next(&t)) {
             triples.emplace_back(t.get_subject(*dict), t.get_predicate(*dict), t.get_object(*dict));
         }
+        delete triples_vm;
         IteratorTripleStringVector vec_it(&triples);
         NOTIFYMSG(progressListener, "\nCreating new snapshot ...\n");
         std::cout.setstate(std::ios_base::failbit); // Disable cout info from HDT

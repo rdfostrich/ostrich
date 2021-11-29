@@ -469,3 +469,37 @@ AutoSnapshotDiffIterator::~AutoSnapshotDiffIterator() {
 bool AutoSnapshotDiffIterator::next(TripleDelta *triple) {
     return internal_it->next(triple);
 }
+
+//bool MergeSnapshotPatchIterator::next(TripleDelta *triple) {
+//    auto emit_triple = [](TripleDelta* source, TripleDelta* target, bool is_addition) {
+//        target->get_triple()->set_subject(source->get_triple()->get_subject());
+//        target->get_triple()->set_predicate(source->get_triple()->get_predicate());
+//        target->get_triple()->set_object(source->get_triple()->get_object());
+//        target->set_addition(is_addition);
+//        target->set_dictionary(source->get_dictionary());
+//    };
+//
+//    if (snapshot_it) {
+//        TripleDelta tmp;
+//        snapshot_it->next(&tmp);
+//        if (tmp.is_addition()) {
+//            PatchElement pe(*(tmp.get_triple()), tmp.is_addition());
+//            if (!patchTree->contains_deletion(pe, patch_id)) {
+//                emit_triple(&tmp, triple, true);
+//                return true;
+//            } else {
+//                // triple as been deleted
+//                return next(triple);
+//            }
+//        } else {
+//            PatchElement pe(*(tmp.get_triple()), tmp.is_addition());
+//            if (patchTree->contains_addition(pe, patch_id)) {
+//                // triple was a deletion and then added again, so it's not "really" a change
+//                return next(triple);
+//            } else {
+//                emit_triple(&tmp, triple, false);
+//            }
+//        }
+//    }
+//    return false;
+//}
