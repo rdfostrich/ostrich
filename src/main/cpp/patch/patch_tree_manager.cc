@@ -33,32 +33,6 @@ bool PatchTreeManager::append(const PatchSorted &patch, int patch_id, std::share
     return ret;
 }
 
-/*
-std::map<int, PatchTree*> PatchTreeManager::detect_patch_trees() const {
-    std::regex r("patchtree_([0-9]*).kct_spo_deletions");
-    std::smatch base_match;
-    std::map<int, PatchTree*> trees = std::map<int, PatchTree*>();
-    DIR *dir;
-    struct dirent *ent;
-    if ((dir = opendir(basePath.c_str())) != nullptr) {
-        while ((ent = readdir(dir)) != nullptr) {
-            std::string dir_name = std::string(ent->d_name);
-            if(std::regex_match(dir_name, base_match, r)) {
-                // The first sub_match is the whole string; the next
-                // sub_match is the first parenthesized expression.
-                if (base_match.size() == 2) {
-                    std::ssub_match base_sub_match = base_match[1];
-                    std::string base = (std::string) base_sub_match.str();
-                    trees[std::stoi(base)] = nullptr; // Don't load the actual file, we do this lazily
-                }
-            }
-        }
-        closedir(dir);
-    }
-    return trees;
-}
-*/
-
 const std::map<int, std::shared_ptr<PatchTree>>& PatchTreeManager::detect_patch_trees() {
     std::regex r("patchtree_([0-9]*).kct_spo_deletions");
     std::smatch base_match;

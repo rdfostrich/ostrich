@@ -1,6 +1,8 @@
 #ifndef TPFPATCH_STORE_TRIPLEDELTAITERATOR_H
 #define TPFPATCH_STORE_TRIPLEDELTAITERATOR_H
 
+#include <unordered_set>
+
 #include "../patch/triple.h"
 #include "../patch/patch_tree_iterator.h"
 #include "../patch/patch_tree.h"
@@ -155,5 +157,18 @@ public:
     bool next(TripleDelta* triple) override;
 };
 
+
+//class MergeSnapshotPatchIterator: public TripleDeltaIterator {
+//private:
+//    TripleDeltaIterator* snapshot_it;
+//    PatchTree* patchTree;
+//    int patch_id;
+//    std::unordered_set<Triple> emitted_additions;
+//    std::unordered_set<Triple> emitted_deletions;
+//public:
+//    MergeSnapshotPatchIterator(TripleDeltaIterator* snapshot_it, PatchTree* patch_tree, int patch_id);
+//    ~MergeSnapshotPatchIterator() override;
+//    bool next(TripleDelta* triple) override;
+//};
 
 #endif //TPFPATCH_STORE_TRIPLEDELTAITERATOR_H

@@ -279,19 +279,20 @@ void BearEvaluatorMS::init(string basePath, string patchesBasePatch, SnapshotCre
                            ProgressListener *progressListener) {
     controller = new Controller(basePath, strategy, TreeDB::TCOMPRESS);
 
-    cout << "---INSERTION START---" << endl;
-    cout << "version,added,durationms,rate,accsize" << endl;
+//    cout << "---INSERTION START---" << endl;
+//    cout << "version,added,durationms,rate,accsize" << endl;
     DIR *dir;
     if ((dir = opendir(patchesBasePatch.c_str())) != NULL) {
         for (int i = startIndex; i <= endIndex; i++) {
             string versionname = to_string(i);
             NOTIFYMSG(progressListener, ("Version " + versionname + "\n").c_str());
-            populate_controller_with_version(patch_count, patchesBasePatch, progressListener);
-            patch_count++;
+            populate_controller_with_version(i-1, patchesBasePatch, progressListener);
+//            patch_count++;
+            patch_count = i-1;
         }
         closedir(dir);
     }
-    cout << "---INSERTION END---" << endl;
+//    cout << "---INSERTION END---" << endl;
 }
 
 void BearEvaluatorMS::init_readonly(string basePath) {
