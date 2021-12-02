@@ -450,7 +450,7 @@ std::ifstream::pos_type BearEvaluatorMS::filesize(const string& file) {
 }
 
 IteratorTripleString *BearEvaluatorMS::get_from_file(const string& file) {
-    return new RDFParserNtriples(file.c_str(), NTRIPLES);;
+    return new RDFParserNtriples(file.c_str(), NTRIPLES);
 }
 
 long long
