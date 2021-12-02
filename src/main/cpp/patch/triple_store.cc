@@ -199,6 +199,7 @@ void TripleStore::insertDeletionSingle(const PatchTreeKey* key, const PatchTreeD
 
     free((char*) raw_key);
     free((char*) raw_value);
+    free((char*) raw_value_reduced);
 
     // Flush db to disk
     if (++flush_counter_deletions > FLUSH_TRIPLES_COUNT) {
@@ -289,6 +290,8 @@ PatchPosition TripleStore::get_addition_count(const int patch_id, const Triple &
     if (vbp != NULL) {
         memcpy(&count, vbp, sizeof(PatchPosition));
     }
+    free((char*) kbp);
+    delete[] vbp;
     return count;
 }
 
@@ -306,6 +309,7 @@ long TripleStore::flush_addition_counts() {
             count_additions->set(kbp, ksp, vbp, vsp);
             added++;
         }
+        delete[] kbp;
     }
     delete cursor;
     count_additions->synchronize();

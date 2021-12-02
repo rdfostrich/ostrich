@@ -115,7 +115,8 @@ void TripleVersionsIteratorCombined::append_iterator(TripleVersionsIterator *ite
     }
     delete iterator;
 
-    std::sort(tmp_triples.begin(), tmp_triples.end());
+    if (!std::is_sorted(tmp_triples.begin(), tmp_triples.end()))
+        std::sort(tmp_triples.begin(), tmp_triples.end());
 
     std::vector<TripleVersionsString> sorted_out;
     auto it1 = triples.begin();
