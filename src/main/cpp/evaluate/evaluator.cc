@@ -278,7 +278,6 @@ void Evaluator::cleanup_controller() {
 void BearEvaluatorMS::init(string basePath, string patchesBasePatch, SnapshotCreationStrategy* strategy, int startIndex, int endIndex,
                            ProgressListener *progressListener) {
     controller = new Controller(basePath, strategy, TreeDB::TCOMPRESS);
-
 //    cout << "---INSERTION START---" << endl;
 //    cout << "version,added,durationms,rate,accsize" << endl;
     DIR *dir;
@@ -313,17 +312,16 @@ void BearEvaluatorMS::test_lookup(string s, string p, string o, int replications
         cout << "" << i << "," << offset << "," << limit << "," << dcount << "," << d1 << "," << result_count1 << endl;
     }
 
-//    cout << "--- ---DELTA MATERIALIZED" << endl;
-//    cout << "patch_start,patch_end,offset,limit,count-ms,lookup-mus,results" << endl;
-//    for(int i = 0; i < patch_count; i++) {
-//        for(int j = 0; j < i; j+=i/2+1) {
-//            if (j > 0) j--;
-//            int result_count1 = 0;
-//            long dcount = measure_count_delta_materialized(triple_pattern, j, i, replications);
-//            long d1 = measure_lookup_delta_materialized(*dict, triple_pattern, offset, j, i, limit, replications, result_count1);
-//            cout << "" << j << "," << i << "," << offset << "," << limit << "," << dcount << "," << d1 << "," << result_count1 << endl;
-//        }
-//    }
+    cout << "--- ---DELTA MATERIALIZED" << endl;
+    cout << "patch_start,patch_end,offset,limit,count-ms,lookup-mus,results" << endl;
+    for(int i = 0; i < patch_count; i++) {
+        for(int j = 0; j < i; j++) {
+            int result_count1 = 0;
+            long dcount = measure_count_delta_materialized(triple_pattern, j, i, replications);
+            long d1 = measure_lookup_delta_materialized(triple_pattern, offset, j, i, limit, replications, result_count1);
+            cout << "" << j << "," << i << "," << offset << "," << limit << "," << dcount << "," << d1 << "," << result_count1 << endl;
+        }
+    }
 
     cout << "--- ---VERSION" << endl;
     cout << "offset,limit,count-ms,lookup-mus,results" << endl;
@@ -492,18 +490,6 @@ BearEvaluatorMS::measure_count_version_materialized(const StringTriple& triple_p
     return total / replications;
 }
 
-//long long BearEvaluatorMS::measure_lookup_delta_materialized(const StringTriple& triple_pattern, int offset, int patch_id_start,
-//                                                         int patch_id_end, int limit, int replications,
-//                                                         int &result_count) {
-//    return 0;
-//}
-//
-//long long
-//BearEvaluatorMS::measure_count_delta_materialized(const StringTriple& triple_pattern, int patch_id_start, int patch_id_end,
-//                                              int replications) {
-//    return 0;
-//}
-
 long long BearEvaluatorMS::measure_lookup_version(const StringTriple& triple_pattern, int offset, int limit, int replications,
                                                   int &result_count) {
     long long total = 0;
@@ -535,6 +521,38 @@ long long BearEvaluatorMS::measure_count_version(const StringTriple& triple_patt
     return total / replications;
 }
 
+long long
+BearEvaluatorMS::measure_lookup_delta_materialized(const StringTriple &triple_pattern, int offset, int patch_id_start,
+                                                   int patch_id_end, int limit, int replications, int &result_count) {
+    long long total = 0;
+    for (int i = 0; i < replications; i++) {
+        int limit_l = limit;
+        StopWatch st;
+        TripleDeltaIterator *ti = controller->get_delta_materialized(triple_pattern, offset, patch_id_start,
+                                                                     patch_id_end);
+        TripleDelta t;
+        while ((limit_l == -2 || limit_l-- > 0) && ti->next(&t)) {
+            t.get_triple()->get_subject(*(t.get_dictionary()));
+            t.get_triple()->get_predicate(*(t.get_dictionary()));
+            t.get_triple()->get_object(*(t.get_dictionary()));
+            result_count++;
+        };
+        delete ti;
+        total += st.stopReal();
+    }
+    result_count /= replications;
+    return total / replications;
+}
 
+long long BearEvaluatorMS::measure_count_delta_materialized(const StringTriple &triple_pattern, int patch_id_start,
+                                                            int patch_id_end, int replications) {
+    long long total = 0;
+    for (int i = 0; i < replications; i++) {
+        StopWatch st;
+        std::pair<size_t, ResultEstimationType> count = controller->get_delta_materialized_count(triple_pattern, patch_id_start, patch_id_end, true);
+        total += st.stopReal();
+    }
+    return total / replications;
+}
 
 

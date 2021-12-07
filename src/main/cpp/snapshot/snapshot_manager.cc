@@ -8,7 +8,7 @@
 
 using namespace hdt;
 
-SnapshotManager::SnapshotManager(string basePath, bool readonly) : basePath(basePath), max_loaded_snapshots(8), readonly(readonly) {
+SnapshotManager::SnapshotManager(string basePath, bool readonly) : basePath(basePath), max_loaded_snapshots(4), readonly(readonly) {
     detect_snapshots();
 }
 

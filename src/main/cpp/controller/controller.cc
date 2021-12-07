@@ -312,10 +312,10 @@ std::pair<size_t, ResultEstimationType> Controller::get_delta_materialized_count
         std::map<int, std::shared_ptr<PatchTree>> patch_trees = patchTreeManager->get_patch_trees();
         auto it1 = snapshots.find(snapshot_id_start);
         auto it2 = snapshots.find(snapshot_id_end);
-        std::vector<int> snapshots_ids;
+        std::vector<int> snapshots_ids = {it1->first};
         while (it1 != it2) {
-            snapshots_ids.push_back(it1->first);
             it1++;
+            snapshots_ids.push_back(it1->first);
         }
         size_t count = 0;
         for (int i = 1; i < snapshots_ids.size(); i++) {

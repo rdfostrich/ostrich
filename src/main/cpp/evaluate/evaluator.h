@@ -59,8 +59,8 @@ protected:
     static IteratorTripleString* get_from_file(const string& file);
     long long measure_lookup_version_materialized(const StringTriple& triple_pattern, int offset, int patch_id, int limit, int replications, int& result_count);
     long long measure_count_version_materialized(const StringTriple& triple_pattern, int patch_id, int replications);
-//    long long measure_lookup_delta_materialized(const StringTriple& triple_pattern, int offset, int patch_id_start, int patch_id_end, int limit, int replications, int& result_count);
-//    long long measure_count_delta_materialized(const StringTriple& triple_pattern, int patch_id_start, int patch_id_end, int replications);
+    long long measure_lookup_delta_materialized(const StringTriple& triple_pattern, int offset, int patch_id_start, int patch_id_end, int limit, int replications, int& result_count);
+    long long measure_count_delta_materialized(const StringTriple& triple_pattern, int patch_id_start, int patch_id_end, int replications);
     long long measure_lookup_version(const StringTriple& triple_pattern, int offset, int limit, int replications, int& result_count);
     long long measure_count_version(const StringTriple& triple_pattern, int replications);
 };
