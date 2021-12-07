@@ -82,6 +82,7 @@ private:
 
 public:
     SnapshotDiffIterator(const StringTriple& triple_pattern, SnapshotManager* manager , int snapshot_1, int snapshot_2);
+    ~SnapshotDiffIterator();
     bool next(TripleDelta* triple) override;
 };
 
