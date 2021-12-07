@@ -181,7 +181,8 @@ SnapshotDiffIterator::~SnapshotDiffIterator() {
     delete snapshot_it_1;
     delete snapshot_it_2;
     delete t1;
-    delete t2;}
+    delete t2;
+}
 
 
 MergeDiffIterator::MergeDiffIterator(TripleDeltaIterator *iterator_1, TripleDeltaIterator *iterator_2) : it1(iterator_1),
