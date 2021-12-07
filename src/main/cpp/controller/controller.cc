@@ -79,26 +79,28 @@ std::pair<size_t, ResultEstimationType> Controller::get_version_materialized_cou
 
     IteratorTripleID* snapshot_it = SnapshotManager::search_with_offset(snapshot, pattern, 0);
     size_t snapshot_count = snapshot_it->estimatedNumResults();
+    ResultEstimationType res_type = snapshot_it->numResultEstimation();
 
-    if (!allowEstimates && snapshot_it->numResultEstimation() != EXACT) {
+    if (!allowEstimates && res_type != EXACT) {
         snapshot_count = 0;
         while (snapshot_it->hasNext()) {
             snapshot_it->next();
             snapshot_count++;
         }
     }
+    delete snapshot_it;
     if(snapshot_id == patch_id) {
-        return std::make_pair(snapshot_count, snapshot_it->numResultEstimation());
+        return std::make_pair(snapshot_count, res_type);
     }
 
     std::shared_ptr<PatchTree> patchTree = get_patch_tree_manager()->get_patch_tree(patch_id, dict);
     if(patchTree == nullptr) {
-        return std::make_pair(snapshot_count, snapshot_it->numResultEstimation());
+        return std::make_pair(snapshot_count, res_type);
     }
 
     std::pair<PatchPosition, Triple> deletion_count_data = patchTree->deletion_count(pattern, patch_id);
     size_t addition_count = patchTree->addition_count(patch_id, pattern);
-    return std::make_pair(snapshot_count - deletion_count_data.first + addition_count, snapshot_it->numResultEstimation());
+    return std::make_pair(snapshot_count - deletion_count_data.first + addition_count, res_type);
 }
 
 TripleIterator* Controller::get_version_materialized(const Triple &triple_pattern, int offset, int patch_id) const {
@@ -549,7 +551,7 @@ std::pair<size_t, ResultEstimationType> Controller::get_version_count(const Stri
     std::set<std::string> triples;
     auto snapshots = snapshotManager->get_snapshots();
     size_t count = 0;
-    for (auto snapshot: snapshots) {
+    for (const auto& snapshot: snapshots) {
         std::shared_ptr<DictionaryManager> dict = snapshotManager->get_dictionary_manager(snapshot.first);
         Triple pattern = triple_pattern.get_as_triple(dict);
         IteratorTripleID *snapshot_it = SnapshotManager::search_with_offset(snapshot.second, pattern, 0);
@@ -562,6 +564,7 @@ std::pair<size_t, ResultEstimationType> Controller::get_version_count(const Stri
                 triples.insert(t.to_string(*dict));
             }
         }
+        delete snapshot_it;
 
         // Count the additions for all versions
         // We get the ID of the next patch_tree (after the current snapshot)

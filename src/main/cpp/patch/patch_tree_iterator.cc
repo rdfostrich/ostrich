@@ -16,8 +16,8 @@ PatchTreeIteratorBase<DV>::PatchTreeIteratorBase(DB::Cursor* cursor_deletions, D
 
 template <class DV>
 PatchTreeIteratorBase<DV>::~PatchTreeIteratorBase() {
-    if (cursor_deletions != NULL) delete cursor_deletions;
-    if (cursor_additions != NULL) delete cursor_additions;
+    delete cursor_deletions;
+    delete cursor_additions;
     delete temp_key_deletion;
     delete temp_key_addition;
 }
@@ -288,6 +288,7 @@ bool PatchTreeIteratorBase<DV>::next(PatchTreeKey* key, PatchTreeValueBase<DV>* 
     // If needed, optimize
     data = (return_addition ? temp_key_addition : temp_key_deletion)->serialize(&size);
     key->deserialize(data, size);
+    free((char*) data);
     return true;
 }
 

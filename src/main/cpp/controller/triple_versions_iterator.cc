@@ -48,6 +48,7 @@ inline void TripleVersionsIterator::eraseDeletedVersions(std::vector<int>* versi
                 versions->erase(pr.first, pr.second);
             }
         }
+        delete deletion;
     }
 }
 

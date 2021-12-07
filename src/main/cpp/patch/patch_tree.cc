@@ -526,8 +526,9 @@ std::pair<DV*, Triple> PatchTree::last_deletion_value(const Triple &triple_patte
     bool hasJumped = cursor_deletions->jump_back(data, size);
     if (!hasJumped) {
         // A failure to jump means that there is no triple in the tree that matches the pattern, so we return count 0.
+        free((char*) data);
+        delete cursor_deletions;
         return std::make_pair((DV*) NULL, Triple());
-
     }
     free((char*) data);
 
@@ -567,8 +568,10 @@ std::pair<PatchPosition, Triple> PatchTree::deletion_count(const Triple &triple_
             return std::make_pair((PatchPosition) 0, Triple());
         }
         delete value.first;
-        patch_position = get_deletion_value(value.second)->get(patch_id).get_patch_positions().get_by_pattern(triple_pattern) + 1;
+        PatchTreeDeletionValue *dv = get_deletion_value(value.second);
+        patch_position = dv->get(patch_id).get_patch_positions().get_by_pattern(triple_pattern) + 1;
         triple = value.second;
+        delete dv;
     }
     return std::make_pair(patch_position, triple);
 }

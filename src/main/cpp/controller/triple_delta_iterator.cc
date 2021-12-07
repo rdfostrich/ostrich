@@ -144,6 +144,7 @@ bool SnapshotDiffIterator::next(TripleDelta *triple) {
         triple->get_triple()->set_predicate(tmp_t->get_predicate());
         triple->get_triple()->set_object(tmp_t->get_object());
         triple->set_addition(is_addition);
+        delete tmp_t;
     };
 
     if (t1 && t2) {
@@ -175,6 +176,12 @@ bool SnapshotDiffIterator::next(TripleDelta *triple) {
         return false;
     }
 }
+
+SnapshotDiffIterator::~SnapshotDiffIterator() {
+    delete snapshot_it_1;
+    delete snapshot_it_2;
+    delete t1;
+    delete t2;}
 
 
 MergeDiffIterator::MergeDiffIterator(TripleDeltaIterator *iterator_1, TripleDeltaIterator *iterator_2) : it1(iterator_1),
@@ -290,6 +297,7 @@ SortedTripleDeltaIterator::SortedTripleDeltaIterator(TripleDeltaIterator *iterat
         triples.emplace_back(td);
         td = new TripleDelta;
     }
+    delete td;
     if (!std::is_sorted(triples.begin(), triples.end(), comp))
         std::sort(triples.begin(), triples.end(), comp);
 }
@@ -453,6 +461,7 @@ AutoSnapshotDiffIterator::AutoSnapshotDiffIterator(const StringTriple &triple_pa
     TripleString tp(triple_pattern.get_subject(), triple_pattern.get_predicate(), triple_pattern.get_object());
     auto hdt_it = it2->second->search(tp);
     size_t est = hdt_it->estimatedNumResults();
+    delete hdt_it;
     // TODO: refine the heuristic
     bool use_iterative = distance > 8 || est < 1000;
     if (use_iterative) {
