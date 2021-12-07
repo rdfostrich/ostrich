@@ -14,7 +14,7 @@ It provides several built-in algorithms to enable efficient iterator-based queri
 Insertion is done by first inserting a dataset snapshot, which is encoded in [HDT](rdfhdt.org).
 After that, deltas can be inserted, which contain additions and deletions based on the last delta or snapshot.
 
-More details on OSTRICH can be found in our [journal](https://rdfostrich.github.io/article-jws2018-ostrich/) or [demo](https://rdfostrich.github.io/article-demo/) articles.
+More details on OSTRICH can be found in our [**journal**](https://rdfostrich.github.io/article-jws2018-ostrich/) or [demo](https://rdfostrich.github.io/article-demo/) articles.
 
 ## Building
 
@@ -124,6 +124,22 @@ docker run --rm -it -v path_to_patch_directory:/var/patches -v patch_to_queries:
 `KC_PAGE_CACHE_SIZE`: The KC page cache size per tree. (default `1LL << 25` = 32MB)
 
 `MIN_ADDITION_COUNT`: The minimum addition triple count so that it will be stored in the db. Changing this value only has effect during insertion time. Lookups are compatible with any value. (default `200`)
+
+## Cite
+
+If you are using or extending OSTRICH as part of a scientific publication,
+we would appreciate a citation of our [article](https://rdfostrich.github.io/article-jws2018-ostrich/).
+
+```bibtex
+@article{taelman_jws_ostrich_2018,
+  author = {Taelman, Ruben and Vander Sande, Miel and Van Herwegen, Joachim and Mannens, Erik and Verborgh, Ruben},
+  title = {Triple Storage for Random-Access Versioned Querying of RDF Archives},
+  journal = {Journal of Web Semantics},
+  year = {2018},
+  month = aug,
+  url = {https://rdfostrich.github.io/article-jws2018-ostrich/}
+}
+```
 
 ## License
 This software is written by [Ruben Taelman](http://rubensworks.net/) and colleagues.
