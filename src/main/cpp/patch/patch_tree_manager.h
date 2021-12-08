@@ -14,8 +14,8 @@ private:
     size_t max_loaded_patches;
     std::list<int> lru_list;
     std::map<int, std::list<int>::iterator> lru_map;
-    // Mapping from LOADED patchtree_id -> patch_id
-    std::map<int, std::shared_ptr<PatchTree>> loaded_patches;
+    // Mapping from patchtree_id -> patchTree
+    std::map<int, std::shared_ptr<PatchTree>> loaded_patchtrees;
     // Options for KC trees
     int8_t kc_opts;
     bool readonly;
