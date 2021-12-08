@@ -30,13 +30,12 @@ int main(int argc, char** argv) {
     if(std::strcmp(p.c_str(), "?") == 0) p = "";
     if(std::strcmp(o.c_str(), "?") == 0) o = "";
 
-    int patch_id_start = std::atoi(argv[1]);
-    int patch_id_end = std::atoi(argv[2]);
-    int offset = argc == 7 ? std::atoi(argv[6]) : 0;
+    int patch_id_start = std::stoi(argv[1]);
+    int patch_id_end = std::stoi(argv[2]);
+    int offset = argc == 7 ? std::stoi(argv[6]) : 0;
 
     // Construct query
-    std::shared_ptr<DictionaryManager> dict = controller.get_dictionary_manager(patch_id_start);
-    Triple triple_pattern(s, p, o, dict);
+    StringTriple triple_pattern(s, p, o);
 
     std::pair<size_t, ResultEstimationType> count = controller.get_delta_materialized_count(triple_pattern, patch_id_start, patch_id_end, true);
     cerr << "Count: " << count.first << (count.second == EXACT ? "" : " (estimate)") << endl;
@@ -44,7 +43,7 @@ int main(int argc, char** argv) {
     TripleDeltaIterator* it = controller.get_delta_materialized(triple_pattern, offset, patch_id_start, patch_id_end);
     TripleDelta triple_delta;
     while (it->next(&triple_delta)) {
-        cout << (triple_delta.is_addition() ? "+ " : "- ") << triple_delta.get_triple()->to_string(*dict) << endl;
+        cout << (triple_delta.is_addition() ? "+ " : "- ") << triple_delta.get_triple()->to_string(*(triple_delta.get_dictionary())) << endl;
     }
     delete it;
 
