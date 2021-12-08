@@ -55,7 +55,7 @@ inline void TripleVersionsIterator::eraseDeletedVersions(std::vector<int>* versi
 bool TripleVersionsIterator::next(TripleVersions* triple_versions) {
     // Loop over snapshot elements, and emit all versions minus the versions that have been deleted.
 
-    if (snapshot_it != NULL && snapshot_it->hasNext()) {
+    if (snapshot_it != nullptr && snapshot_it->hasNext()) {
         TripleID *tripleId = snapshot_it->next();
         Triple* currentTriple = triple_versions->get_triple();
         currentTriple->set_subject(tripleId->getSubject());
@@ -66,12 +66,12 @@ bool TripleVersionsIterator::next(TripleVersions* triple_versions) {
     }
 
     // If we only have a snapshot, don't query the unavailable patch tree.
-    if (patchTree == NULL) {
+    if (patchTree == nullptr) {
         return false;
     }
 
     // When we get here, no snapshot elements are left, so emit additions here
-    if (addition_it == NULL) {
+    if (addition_it == nullptr) {
         addition_it = patchTree->addition_iterator(triple_pattern);
     }
 

@@ -150,7 +150,7 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, Prog
 
         if (should_step_deletions) {
             kbp = cursor_deletions->get(&ksp, &vbp, &vsp, false);
-            have_deletions_ended = kbp == NULL;
+            have_deletions_ended = kbp == nullptr;
             if (!have_deletions_ended) {
                 deletion_value.deserialize(vbp, vsp);
                 deletion_key.deserialize(kbp, ksp);
@@ -159,7 +159,7 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, Prog
         }
         if (should_step_additions) {
             kbp = cursor_additions->get(&ksp, &vbp, &vsp, false);
-            have_additions_ended = kbp == NULL;
+            have_additions_ended = kbp == nullptr;
             if (!have_additions_ended) {
                 addition_value.deserialize(vbp, vsp);
                 addition_key.deserialize(kbp, ksp);
