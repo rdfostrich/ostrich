@@ -93,7 +93,8 @@ std::pair<size_t, ResultEstimationType> Controller::get_version_materialized_cou
         return std::make_pair(snapshot_count, res_type);
     }
 
-    std::shared_ptr<PatchTree> patchTree = get_patch_tree_manager()->get_patch_tree(patch_id, dict);
+    int id = get_patch_tree_manager()->get_patch_tree_id(patch_id);
+    std::shared_ptr<PatchTree> patchTree = get_patch_tree_manager()->get_patch_tree(id, dict);
     if(patchTree == nullptr) {
         return std::make_pair(snapshot_count, res_type);
     }
@@ -211,7 +212,8 @@ TripleIterator* Controller::get_version_materialized(const StringTriple &triple_
     }
 
     // Otherwise, we have to prepare an iterator for a certain patch
-    std::shared_ptr<PatchTree> patchTree = get_patch_tree_manager()->get_patch_tree(patch_id, dict);
+    int id = get_patch_tree_manager()->get_patch_tree_id(patch_id);
+    std::shared_ptr<PatchTree> patchTree = get_patch_tree_manager()->get_patch_tree(id, dict);
     if(patchTree == nullptr) {
         return new SnapshotTripleIterator(snapshot_it);
     }
@@ -434,7 +436,8 @@ TripleDeltaIterator* Controller::get_delta_materialized(const StringTriple &trip
 
     // start = snapshot, end = patch
     if(snapshot_id_start == patch_id_start && snapshot_id_end != patch_id_end) {
-        std::shared_ptr<PatchTree> patchTree = get_patch_tree_manager()->get_patch_tree(patch_id_end, dict_end);
+        int patchtree_id_end = get_patch_tree_manager()->get_patch_tree_id(patch_id_end);
+        std::shared_ptr<PatchTree> patchTree = get_patch_tree_manager()->get_patch_tree(patchtree_id_end, dict_end);
         Triple tp = triple_pattern.get_as_triple(dict_end);
         if (snapshot_id_start == snapshot_id_end) {
             // Return iterator for the end patch relative to the start snapshot
@@ -465,6 +468,7 @@ TripleDeltaIterator* Controller::get_delta_materialized(const StringTriple &trip
     if(snapshot_id_start != patch_id_start && snapshot_id_end == patch_id_end) {
         Triple tp = triple_pattern.get_as_triple(dict_start);
         bool is_spo = TripleStore::is_default_tree(tp);
+        int patchtree_id_start = get_patch_tree_manager()->get_patch_tree_id(patch_id_start);
         std::shared_ptr<PatchTree> patchTree = get_patch_tree_manager()->get_patch_tree(patch_id_start, dict_start);
         TripleDeltaIterator* last_dc_dm;
         if (is_spo) {
@@ -483,7 +487,8 @@ TripleDeltaIterator* Controller::get_delta_materialized(const StringTriple &trip
         if (snapshot_id_start == snapshot_id_end) {
             Triple tp = triple_pattern.get_as_triple(dict_end);
             // Return diff between two patches relative to the same snapshot
-            std::shared_ptr<PatchTree> patchTree = get_patch_tree_manager()->get_patch_tree(patch_id_end, dict_end);
+            int patchtree_id_end = get_patch_tree_manager()->get_patch_tree_id(patch_id_end);
+            std::shared_ptr<PatchTree> patchTree = get_patch_tree_manager()->get_patch_tree(patchtree_id_end, dict_end);
             if(patchTree == nullptr) {
                 throw std::invalid_argument("Could not find the given end patch id");
             }
@@ -496,8 +501,10 @@ TripleDeltaIterator* Controller::get_delta_materialized(const StringTriple &trip
             Triple tp_start = triple_pattern.get_as_triple(dict_start);
             Triple tp_end = triple_pattern.get_as_triple(dict_end);
             bool is_spo = TripleStore::is_default_tree(tp_start);
-            std::shared_ptr<PatchTree> patchtree_start = get_patch_tree_manager()->get_patch_tree(patch_id_start, dict_start);
-            std::shared_ptr<PatchTree> patchtree_end = get_patch_tree_manager()->get_patch_tree(patch_id_end, dict_end);
+            int patchtree_id_start = get_patch_tree_manager()->get_patch_tree_id(patch_id_start);
+            int patchtree_id_end = get_patch_tree_manager()->get_patch_tree_id(patch_id_end);
+            std::shared_ptr<PatchTree> patchtree_start = get_patch_tree_manager()->get_patch_tree(patchtree_id_start, dict_start);
+            std::shared_ptr<PatchTree> patchtree_end = get_patch_tree_manager()->get_patch_tree(patchtree_id_end, dict_end);
             TripleDeltaIterator* first_dc_dm;
             TripleDeltaIterator* last_dc_dm;
             if (is_spo) {
@@ -554,7 +561,8 @@ std::pair<size_t, ResultEstimationType> Controller::get_version_count(const Stri
     for (const auto& snapshot: snapshots) {
         std::shared_ptr<DictionaryManager> dict = snapshotManager->get_dictionary_manager(snapshot.first);
         Triple pattern = triple_pattern.get_as_triple(dict);
-        IteratorTripleID *snapshot_it = SnapshotManager::search_with_offset(snapshot.second, pattern, 0);
+        std::shared_ptr<HDT> hdt = snapshotManager->get_snapshot(snapshot.first);  // by using get_snapshot, we make sure it's loaded before use
+        IteratorTripleID *snapshot_it = SnapshotManager::search_with_offset(hdt, pattern, 0);
         if (allowEstimates) {
             count += snapshot_it->estimatedNumResults();
             estimation_type_used = hdt::APPROXIMATE;
@@ -628,10 +636,11 @@ TripleVersionsIterator* Controller::get_version(const Triple &triple_pattern, in
 TripleVersionsIteratorCombined *Controller::get_version(const StringTriple &triple_pattern, int offset) const {
     auto it_version = new TripleVersionsIteratorCombined;
 
-    for (auto it: snapshotManager->get_snapshots()) {
+    for (const auto& it: snapshotManager->get_snapshots()) {
         std::shared_ptr<DictionaryManager> dict = snapshotManager->get_dictionary_manager(it.first);
         Triple pattern = triple_pattern.get_as_triple(dict);
-        IteratorTripleID* snapshot_it = SnapshotManager::search_with_offset(it.second, pattern, 0);
+        std::shared_ptr<HDT> snapshot = snapshotManager->get_snapshot(it.first);
+        IteratorTripleID* snapshot_it = SnapshotManager::search_with_offset(snapshot, pattern, 0);
         int patch_tree_id = patchTreeManager->get_patch_tree_id(it.first+1);
         std::shared_ptr<PatchTree> patchTree = patchTreeManager->get_patch_tree(patch_tree_id, dict);
 

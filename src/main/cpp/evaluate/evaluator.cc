@@ -314,8 +314,8 @@ void BearEvaluatorMS::test_lookup(string s, string p, string o, int replications
 
     cout << "--- ---DELTA MATERIALIZED" << endl;
     cout << "patch_start,patch_end,offset,limit,count-ms,lookup-mus,results" << endl;
-    for(int i = 0; i < patch_count; i++) {
-        for(int j = 0; j < i; j++) {
+    for(int i = 0; i < patch_count/2; i++) {
+        for(int j = 0; j < i/2; j++) {
             int result_count1 = 0;
             long dcount = measure_count_delta_materialized(triple_pattern, j, i, replications);
             long d1 = measure_lookup_delta_materialized(triple_pattern, offset, j, i, limit, replications, result_count1);

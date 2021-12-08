@@ -46,7 +46,7 @@ std::shared_ptr<HDT> SnapshotManager::load_snapshot(int snapshot_id) {
     loaded_snapshots[snapshot_id] = std::shared_ptr<HDT>(hdt::HDTManager::mapIndexedHDT(fileName.c_str()));
 
     // load dictionary as well
-    loaded_dictionaries[snapshot_id] = std::make_shared<DictionaryManager>(basePath, snapshot_id, loaded_snapshots[snapshot_id]->getDictionary());
+    loaded_dictionaries[snapshot_id] = std::make_shared<DictionaryManager>(basePath, snapshot_id, loaded_snapshots[snapshot_id]->getDictionary(), readonly);
 
     return loaded_snapshots[snapshot_id];
 }
@@ -145,6 +145,15 @@ std::shared_ptr<DictionaryManager> SnapshotManager::get_dictionary_manager(int s
         }
         it--;
     }
+    if (it->second == nullptr || loaded_snapshots[snapshot_id] == nullptr) {
+        // we make sure both the snapshot and dictionary are unloaded
+        loaded_snapshots[snapshot_id] = nullptr;
+        loaded_dictionaries[snapshot_id] = nullptr;
+        // we load the snapshot
+        load_snapshot(snapshot_id);
+        return loaded_dictionaries[snapshot_id];
+    }
+    update_cache(snapshot_id);
     return it->second;
 }
 
@@ -170,8 +179,8 @@ void SnapshotManager::update_cache_internal(int accessed_id, int iterations) {
                 int lru_snapshot_id = lru_list.back();
                 lru_list.pop_back();
                 lru_map.erase(lru_snapshot_id);
-                if (!loaded_snapshots[lru_snapshot_id].unique()) {
-                    // the snapshot we want to unload is still used somewhere
+                if (!loaded_snapshots[lru_snapshot_id].unique() || !loaded_dictionaries[lru_snapshot_id].unique()) {
+                    // the snapshot or dictionary we want to unload is still used somewhere
                     // so we push it to the front of the list
                     lru_list.push_front(lru_snapshot_id);
                     lru_map[lru_snapshot_id] = lru_list.begin();
@@ -179,6 +188,7 @@ void SnapshotManager::update_cache_internal(int accessed_id, int iterations) {
                     return;
                 }
                 loaded_snapshots[lru_snapshot_id] = nullptr;
+                loaded_dictionaries[lru_snapshot_id] = nullptr;
             }
         }
     } else {

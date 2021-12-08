@@ -70,15 +70,20 @@ std::shared_ptr<PatchTree> PatchTreeManager::get_patch_tree(int patch_id_start, 
     if(patch_id_start < 0) {
         return nullptr;
     }
-    int patch_tree_id = get_patch_tree_id(patch_id_start);
-    if (patch_tree_id == -1)
-        return nullptr;
-    std::shared_ptr<PatchTree> patchtree = loaded_patchtrees[patch_tree_id];
-    if(patchtree == nullptr) {
-        return load_patch_tree(patch_tree_id, dict);
+    if (patch_id_start == 31)
+        int* sqsq = nullptr;
+    auto it = loaded_patchtrees.find(patch_id_start);
+    if(it == loaded_patchtrees.end()) {
+        if(it == loaded_patchtrees.begin()) {
+            return nullptr; // We have an empty map
+        }
+        it--;
     }
-    update_cache(patch_tree_id);
-    return patchtree;
+    std::shared_ptr<PatchTree> patchtree = it->second;
+    if(patchtree == nullptr) {
+        return load_patch_tree(it->first, dict);
+    }
+    return it->second;
 }
 
 std::shared_ptr<PatchTree> PatchTreeManager::construct_next_patch_tree(int patch_id_start, std::shared_ptr<DictionaryManager> dict) {
