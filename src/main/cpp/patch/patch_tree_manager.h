@@ -61,17 +61,14 @@ public:
      * @param patch_id_start The id of the patchtree to load, which is the id of the first patch in this tree.
      * @param dict The dictionary that must be used in the patch tree.
      */
-    //PatchTree* load_patch_tree(int patch_id_start, DictionaryManager* dict);
     std::shared_ptr<PatchTree> load_patch_tree(int patch_id_start, std::shared_ptr<DictionaryManager> dict);
     /**
      * Get a patchtree by id.
      * Calling this will automatically load it (or create it) in memory if it is not present.
-     * @param patch_id_start The id of the patchtree to load, which is the id of the first patch in this tree.
      * @param patch_id_start The requested patch tree.
      * @param dict The dictionary that must be used in the patch tree if a new one will be created.
      * @return The found patch tree
      */
-    //PatchTree* get_patch_tree(int patch_id_start, DictionaryManager* dict);
     std::shared_ptr<PatchTree> get_patch_tree(int patch_id_start, std::shared_ptr<DictionaryManager> dict);
     /**
      * Creates a new patch tree.
@@ -79,7 +76,6 @@ public:
      * @param dict The dictionary that must be used in the patch tree.
      * @return The newly created patch tree
      */
-    //PatchTree* construct_next_patch_tree(int patch_id_start, DictionaryManager* dict);
     std::shared_ptr<PatchTree> construct_next_patch_tree(int patch_id_start, std::shared_ptr<DictionaryManager> dict);
     /**
      * Get the patchtree id that contains the given patch id.
