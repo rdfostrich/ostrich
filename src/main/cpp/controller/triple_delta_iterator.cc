@@ -451,6 +451,8 @@ AutoSnapshotDiffIterator::AutoSnapshotDiffIterator(const StringTriple &triple_pa
     std::map<int, std::shared_ptr<PatchTree>> patch_trees = patch_tree_manager->get_patch_trees();
     int min_id = std::min(snapshot_id_1, snapshot_id_2);
     int max_id = std::max(snapshot_id_1, snapshot_id_2);
+    std::shared_ptr<HDT> s1 = snapshot_manager->get_snapshot(min_id);
+    std::shared_ptr<HDT> s2 = snapshot_manager->get_snapshot(max_id);
     auto it1 = snapshots.find(min_id);
     auto it2 = snapshots.find(max_id);
     if (it1 == snapshots.end() || it2 == snapshots.end()) {
@@ -460,7 +462,7 @@ AutoSnapshotDiffIterator::AutoSnapshotDiffIterator(const StringTriple &triple_pa
     // Heuristic
     size_t distance = std::distance(it1, it2);
     TripleString tp(triple_pattern.get_subject(), triple_pattern.get_predicate(), triple_pattern.get_object());
-    auto hdt_it = it2->second->search(tp);
+    auto hdt_it = s2->search(tp);
     size_t est = hdt_it->estimatedNumResults();
     delete hdt_it;
     // TODO: refine the heuristic
