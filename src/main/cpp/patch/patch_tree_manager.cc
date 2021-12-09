@@ -125,32 +125,35 @@ int PatchTreeManager::get_max_patch_id(std::shared_ptr<DictionaryManager> dict) 
 }
 
 void PatchTreeManager::update_cache(int accessed_patch_id) {
-    update_cache_internal(accessed_patch_id, max_loaded_patches);
+    update_cache_internal(accessed_patch_id, lru_map.size());
 }
 
 void PatchTreeManager::update_cache_internal(int accessed_id, int iterations) {
-    if (lru_map.find(accessed_id) == lru_map.end()) {
-        if (lru_map.size() >= max_loaded_patches) {
-            if (iterations > 0) {
-                int lru_patchtree = lru_list.back();
-                lru_list.pop_back();
-                lru_map.erase(lru_patchtree);
-                if (!loaded_patchtrees[lru_patchtree].unique()) {
-                    // the patchtree we want to unload is still used somewhere
-                    // so we push it to the front of the list
-                    lru_list.push_front(lru_patchtree);
-                    lru_map[lru_patchtree] = lru_list.begin();
-                    update_cache_internal(accessed_id, --iterations);
-                    return;
-                }
+    if (lru_map.size() >= max_loaded_patches) {
+        if (iterations > 0) {
+            int lru_patchtree = lru_list.back();
+            lru_list.pop_back();
+            lru_map.erase(lru_patchtree);
+            if (!loaded_patchtrees[lru_patchtree].unique() || lru_patchtree == accessed_id) {
+                // the patchtree we want to unload is still used somewhere
+                // so we push it to the front of the list
+                lru_list.push_front(lru_patchtree);
+                lru_map[lru_patchtree] = lru_list.begin();
+                update_cache_internal(accessed_id, --iterations);
+            } else {
                 loaded_patchtrees[lru_patchtree] = nullptr;
             }
         }
-    } else {
+    }
+    if (lru_map.find(accessed_id) != lru_map.end()) {
         lru_list.erase(lru_map[accessed_id]);
     }
     lru_list.push_front(accessed_id);
     lru_map[accessed_id] = lru_list.begin();
+}
+
+size_t PatchTreeManager::get_max_loaded_patches() const {
+    return max_loaded_patches;
 }
 
 
