@@ -101,6 +101,8 @@ public:
      */
     void update_cache(int accessed_patch_id);
 
+    size_t get_max_loaded_patches() const;
+
 };
 
 

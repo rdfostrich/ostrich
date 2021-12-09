@@ -169,29 +169,28 @@ int SnapshotManager::get_max_snapshot_id() {
 }
 
 void SnapshotManager::update_cache(int accessed_snapshot_id) {
-    update_cache_internal(accessed_snapshot_id, max_loaded_snapshots);
+    update_cache_internal(accessed_snapshot_id, lru_map.size());
 }
 
 void SnapshotManager::update_cache_internal(int accessed_id, int iterations) {
-    if (lru_map.find(accessed_id) == lru_map.end()) {
-        if (lru_map.size() >= max_loaded_snapshots) {
-            if (iterations > 0) {
-                int lru_snapshot_id = lru_list.back();
-                lru_list.pop_back();
-                lru_map.erase(lru_snapshot_id);
-                if (!loaded_snapshots[lru_snapshot_id].unique() || !loaded_dictionaries[lru_snapshot_id].unique()) {
-                    // the snapshot or dictionary we want to unload is still used somewhere
-                    // so we push it to the front of the list
-                    lru_list.push_front(lru_snapshot_id);
-                    lru_map[lru_snapshot_id] = lru_list.begin();
-                    update_cache_internal(accessed_id, --iterations);
-                    return;
-                }
+    if (lru_map.size() >= max_loaded_snapshots) {
+        if (iterations >= 0) {
+            int lru_snapshot_id = lru_list.back();
+            lru_list.pop_back();
+            lru_map.erase(lru_snapshot_id);
+            if (!loaded_snapshots[lru_snapshot_id].unique() || !loaded_dictionaries[lru_snapshot_id].unique() || lru_snapshot_id == accessed_id) {
+                // the snapshot or dictionary we want to unload is still used somewhere
+                // so we push it to the front of the list
+                lru_list.push_front(lru_snapshot_id);
+                lru_map[lru_snapshot_id] = lru_list.begin();
+                update_cache_internal(accessed_id, --iterations);
+            } else {
                 loaded_snapshots[lru_snapshot_id] = nullptr;
                 loaded_dictionaries[lru_snapshot_id] = nullptr;
             }
         }
-    } else {
+    }
+    if (lru_map.find(accessed_id) != lru_map.end()) {
         lru_list.erase(lru_map[accessed_id]);
     }
     lru_list.push_front(accessed_id);
