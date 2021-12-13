@@ -2,6 +2,8 @@
 
 #include "patch_tree_key_comparator.h"
 
+constexpr size_t bitmask = 1ULL << (8 * sizeof(size_t) - 1);
+
 PatchTreeKeyComparator::PatchTreeKeyComparator(comp compare_1, comp compare_2, comp compare_3, std::shared_ptr<DictionaryManager> dict)
         : compare_1(compare_1), compare_2(compare_2), compare_3(compare_3), dict(dict) {}
 
@@ -35,12 +37,11 @@ int32_t PatchTreeKeyComparator::compare(const PatchTreeKey& element1, const Patc
 
 comp comp_s = [] (const PatchTreeKey& e1, const PatchTreeKey& e2, DictionaryManager& dict) {
     size_t max_id = (size_t) -1;
-    size_t mask = 1ULL << 63;
     //if ((e1.get_subject() == max_id && e2.get_subject() == max_id) || (e1.get_subject() == 0 && e2.get_subject() == 0)) return 0; // Should never occur
     if (e1.get_subject() == max_id || e2.get_subject() == 0) return 1;
     if (e2.get_subject() == max_id || e1.get_subject() == 0) return -1;
     // If MSB is not set, id is HDT
-    if (!(e1.get_subject() & mask) && !(e2.get_subject() & mask)) {
+    if (!(e1.get_subject() & bitmask) && !(e2.get_subject() & bitmask)) {
         return dict.compareComponent(e1.get_subject(), e2.get_subject(), SUBJECT);
     }
     //Else, translate to string and compare
@@ -49,12 +50,11 @@ comp comp_s = [] (const PatchTreeKey& e1, const PatchTreeKey& e2, DictionaryMana
 
 comp comp_p = [] (const PatchTreeKey& e1, const PatchTreeKey& e2, DictionaryManager& dict) {
     size_t max_id = (size_t) -1;
-    size_t mask = 1ULL << 63;
     //if ((e1.get_predicate() == max_id && e2.get_predicate() == max_id) || (e1.get_predicate() == 0 && e2.get_predicate() == 0)) return 0; // Should never occur
     if (e1.get_predicate() == max_id || e2.get_predicate() == 0) return 1;
     if (e2.get_predicate() == max_id || e1.get_predicate() == 0) return -1;
     // If MSB is not set, id is HDT
-    if (!(e1.get_predicate() & mask) && !(e2.get_predicate() & mask)) {
+    if (!(e1.get_predicate() & bitmask) && !(e2.get_predicate() & bitmask)) {
         return dict.compareComponent(e1.get_predicate(), e2.get_predicate(), PREDICATE);
     }
     //Else, translate to string and compare
@@ -63,12 +63,11 @@ comp comp_p = [] (const PatchTreeKey& e1, const PatchTreeKey& e2, DictionaryMana
 
 comp comp_o = [] (const PatchTreeKey& e1, const PatchTreeKey& e2, DictionaryManager& dict) {
     size_t max_id = (size_t) -1;
-    size_t mask = 1ULL << 63;
     //if ((e1.get_object() == max_id && e2.get_object() == max_id) || (e1.get_object() == 0 && e2.get_object() == 0)) return 0; // Should never occur
     if (e1.get_object() == max_id || e2.get_object() == 0) return 1;
     if (e2.get_object() == max_id || e1.get_object() == 0) return -1;
     // If MSB is not set, id is HDT
-    if (!(e1.get_object() & mask) && !(e2.get_object() & mask)) {
+    if (!(e1.get_object() & bitmask) && !(e2.get_object() & bitmask)) {
         return dict.compareComponent(e1.get_object(), e2.get_object(), OBJECT);
     }
     //Else, translate to string and compare

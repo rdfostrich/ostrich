@@ -50,7 +50,6 @@ public:
 };
 
 
-
 class TripleVersionsIteratorCombined {
 private:
     size_t index;
