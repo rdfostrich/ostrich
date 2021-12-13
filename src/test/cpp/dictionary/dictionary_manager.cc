@@ -47,9 +47,10 @@ protected:
         literal2 = "\"This is a second literal.\"^^xsd:string",
         literal3 = "\"zzzzzz\"^^xsd:string";
 
-        patch_id_a = (1ULL << 63) +1;
-        patch_id_b = (1ULL << 63) +2;
-        patch_id_c = (1ULL << 63) +3;
+        size_t bitmask = 1ULL << (8 * sizeof(size_t) - 1);
+        patch_id_a = bitmask +1;
+        patch_id_b = bitmask +2;
+        patch_id_c = bitmask +3;
 
         hdt_id_a = 1;
         hdt_id_b = 2;

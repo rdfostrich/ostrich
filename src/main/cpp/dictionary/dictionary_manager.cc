@@ -1,4 +1,3 @@
-#include <fstream>
 #include <iostream>
 #include <string>
 
@@ -7,6 +6,7 @@
 #include <Triples.hpp>
 #include <dictionary/PlainDictionary.hpp>
 #include <boost/iostreams/filtering_streambuf.hpp>
+#include <utility>
 #include <boost/iostreams/filter/zlib.hpp>
 
 #include "dictionary_manager.h"
@@ -14,20 +14,22 @@
 using namespace std;
 using namespace hdt;
 
+constexpr size_t bitmask_value = 1ULL << (8 * sizeof(size_t) - 1);
+
 DictionaryManager::DictionaryManager(string basePath, int snapshotId, Dictionary *hdtDict, PlainDictionary *patchDict, bool readonly)
-        : basePath(basePath), snapshotId(snapshotId), hdtDict(hdtDict), patchDict(patchDict), bitmask(1ULL<<63), readonly(readonly) {
+        : basePath(std::move(basePath)), snapshotId(snapshotId), hdtDict(hdtDict), patchDict(patchDict), bitmask(bitmask_value), readonly(readonly) {
     load();
 };
 
 DictionaryManager::DictionaryManager(string basePath, int snapshotId, Dictionary *hdtDict, bool readonly)
-        : basePath(basePath), snapshotId(snapshotId), hdtDict(hdtDict), bitmask(1ULL<<63), readonly(readonly) {
+        : basePath(std::move(basePath)), snapshotId(snapshotId), hdtDict(hdtDict), bitmask(bitmask_value), readonly(readonly) {
     // Create additional dictionary
     patchDict = new PlainDictionary();
     load();
 };
 
 DictionaryManager::DictionaryManager(string basePath, int snapshotId, bool readonly)
-        : basePath(basePath), snapshotId(snapshotId), bitmask(1ULL<<63), readonly(readonly) {
+        : basePath(std::move(basePath)), snapshotId(snapshotId), bitmask(bitmask_value), readonly(readonly) {
     // Create two empty default dictionaries dictionary,
     hdtDict = new PlainDictionary();
     patchDict = new PlainDictionary();
@@ -251,7 +253,7 @@ int DictionaryManager::compareComponent(size_t componentId1, size_t componentId2
     bool shared1 = componentId1 > sharedCount;
     bool shared2 = componentId2 > sharedCount;
     if (shared1 == shared2) {
-        return static_cast<int32_t>(componentId1 - componentId2);
+        return static_cast<int>(componentId1 - componentId2);
     }
     return idToString(componentId1, role).compare(idToString(componentId2, role));
 }

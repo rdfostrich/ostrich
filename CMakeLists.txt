@@ -59,7 +59,7 @@ set(COMMON_FILES
         src/main/cpp/controller/triple_delta_iterator.cc src/main/cpp/controller/triple_delta_iterator.h
         src/main/cpp/controller/triple_versions_iterator.cc src/main/cpp/controller/triple_versions_iterator.h
         src/main/cpp/controller/snapshot_creation_strategy.cc src/main/cpp/controller/snapshot_creation_strategy.h
-        src/main/cpp/patch/patch_element_iterator.cc src/main/cpp/patch/patch_element_iterator.h)
+        src/main/cpp/patch/patch_element_iterator.cc src/main/cpp/patch/patch_element_iterator.h src/main/cpp/patch/triple_comparator.cc src/main/cpp/patch/triple_comparator.h)
 
 set(TEST_FILES
         src/test/cpp/controller/controller.cc
