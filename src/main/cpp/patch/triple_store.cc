@@ -15,7 +15,7 @@ TripleStore::TripleStore(string base_file_name, std::shared_ptr<DictionaryManage
     index_pos_additions = new TreeDB();
     index_osp_additions = new TreeDB();
     count_additions = new HashDB();
-    temp_count_additions = readonly ? NULL : new HashDB();
+    temp_count_additions = readonly ? nullptr : new HashDB();
 
     // Set the triple comparators
     index_spo_deletions->tune_comparator(spo_comparator = new PatchTreeKeyComparator(comp_s, comp_p, comp_o, dict));
@@ -43,7 +43,7 @@ TripleStore::TripleStore(string base_file_name, std::shared_ptr<DictionaryManage
     if (!count_additions->open(base_file_name + "_count_additions", (readonly ? HashDB::OREADER : (HashDB::OWRITER | HashDB::OCREATE)) | HashDB::ONOREPAIR)) {
         cerr << "Open addition count tree error: " << count_additions->error().name() << endl;
     }
-    if (temp_count_additions != NULL) {
+    if (temp_count_additions != nullptr) {
         if (!temp_count_additions->open(base_file_name + "_count_additions.tmp",
                                         (readonly ? HashDB::OREADER : (HashDB::OWRITER | HashDB::OCREATE)) |
                                         HashDB::ONOREPAIR)) {
@@ -65,7 +65,7 @@ TripleStore::~TripleStore() {
         cerr << "Close addition count tree error: " << count_additions->error().name() << endl;
     }
     delete count_additions;
-    if (temp_count_additions != NULL) {
+    if (temp_count_additions != nullptr) {
         string path = temp_count_additions->path();
         if (!temp_count_additions->close()) {
             cerr << "Close temp addition count tree error: " << temp_count_additions->error().name() << endl;
@@ -98,18 +98,11 @@ void TripleStore::close(TreeDB* db, string name) {
 }
 
 TreeDB* TripleStore::getAdditionsTree(Triple triple_pattern) {
-    bool s = triple_pattern.get_subject() > 0;
-    bool p = triple_pattern.get_predicate() > 0;
-    bool o = triple_pattern.get_object() > 0;
+    TripleComponentOrder order = get_query_order(triple_pattern);
 
-    if( s &  p &  o) return index_spo_additions;
-    if( s &  p & !o) return index_spo_additions;
-    if( s & !p &  o) return index_osp_additions;
-    if( s & !p & !o) return index_spo_additions;
-    if(!s &  p &  o) return index_pos_additions;
-    if(!s &  p & !o) return index_pos_additions;
-    if(!s & !p &  o) return index_osp_additions;
-    /*if(!s & !p & !o) */return index_spo_additions;
+    if(order == OSP) return index_osp_additions;
+    if(order == POS) return index_pos_additions;
+    return index_spo_additions;
 }
 
 TreeDB* TripleStore::getDefaultAdditionsTree() {
@@ -117,18 +110,11 @@ TreeDB* TripleStore::getDefaultAdditionsTree() {
 }
 
 TreeDB* TripleStore::getDeletionsTree(Triple triple_pattern) {
-    bool s = triple_pattern.get_subject() > 0;
-    bool p = triple_pattern.get_predicate() > 0;
-    bool o = triple_pattern.get_object() > 0;
+    TripleComponentOrder order = get_query_order(triple_pattern);
 
-    if( s &  p &  o) return index_spo_deletions;
-    if( s &  p & !o) return index_spo_deletions;
-    if( s & !p &  o) return index_osp_deletions;
-    if( s & !p & !o) return index_spo_deletions;
-    if(!s &  p &  o) return index_pos_deletions;
-    if(!s &  p & !o) return index_pos_deletions;
-    if(!s & !p &  o) return index_osp_deletions;
-    /*if(!s & !p & !o) */return index_spo_deletions;
+    if(order == OSP) return index_osp_deletions;
+    if(order == POS) return index_pos_deletions;
+    return index_spo_deletions;
 }
 
 TreeDB* TripleStore::getDefaultDeletionsTree() {
@@ -140,7 +126,7 @@ void TripleStore::insertAdditionSingle(const PatchTreeKey* key, const PatchTreeA
     const char *raw_key = key->serialize(&key_size);
     const char *raw_value = value->serialize(&value_size);
 
-    if (cursor != NULL) {
+    if (cursor != nullptr) {
         cursor->set_value(raw_value, value_size, false);
     } else {
         index_spo_additions->set(raw_key, key_size, raw_value, value_size);
@@ -167,7 +153,7 @@ void TripleStore::insertAdditionSingle(const PatchTreeKey* key, int patch_id, bo
         // We assume that are indexes are sane, we only check one of them
         size_t key_size, value_size;
         const char *raw_key = key->serialize(&key_size);
-        const char *raw_value = cursor == NULL ? index_spo_additions->get(raw_key, key_size, &value_size) : cursor->get_value(&value_size, false);
+        const char *raw_value = cursor == nullptr ? index_spo_additions->get(raw_key, key_size, &value_size) : cursor->get_value(&value_size, false);
         if (raw_value) {
             value.deserialize(raw_value, value_size);
             delete[] raw_value;
@@ -189,7 +175,7 @@ void TripleStore::insertDeletionSingle(const PatchTreeKey* key, const PatchTreeD
     const char *raw_value = value->serialize(&value_size);
     const char *raw_value_reduced = value_reduced->serialize(&value_reduced_size);
 
-    if (cursor != NULL) {
+    if (cursor != nullptr) {
         cursor->set_value(raw_value, value_size, false);
     } else {
         index_spo_deletions->set(raw_key, key_size, raw_value, value_size);
@@ -215,7 +201,7 @@ void TripleStore::insertDeletionSingle(const PatchTreeKey* key, const PatchPosit
     if (!ignore_existing) {
         size_t key_size, value_size;
         const char *raw_key = key->serialize(&key_size);
-        const char *raw_value = cursor == NULL ? index_spo_deletions->get(raw_key, key_size, &value_size) : cursor->get_value(&value_size, false);
+        const char *raw_value = cursor == nullptr ? index_spo_deletions->get(raw_key, key_size, &value_size) : cursor->get_value(&value_size, false);
         if (raw_value) {
             deletion_value.deserialize(raw_value, value_size);
             delete[] raw_value;
@@ -264,7 +250,7 @@ void TripleStore::increment_addition_count(const TripleVersion& triple_version) 
 
     raw_value = temp_count_additions->get(raw_key, sizeof(TripleVersion), &_);
     PatchPosition pos = 0;
-    if (raw_value != NULL) {
+    if (raw_value != nullptr) {
         was_present = true;
         memcpy(&pos, raw_value, sizeof(PatchPosition));
     } else {
@@ -287,7 +273,7 @@ PatchPosition TripleStore::get_addition_count(const int patch_id, const Triple &
     const char* kbp = key.serialize(&ksp);
     const char* vbp = count_additions->get(kbp, ksp, &vsp);
     PatchPosition count = 0;
-    if (vbp != NULL) {
+    if (vbp != nullptr) {
         memcpy(&count, vbp, sizeof(PatchPosition));
     }
     free((char*) kbp);

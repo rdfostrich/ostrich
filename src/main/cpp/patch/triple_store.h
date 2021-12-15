@@ -58,13 +58,13 @@ public:
     TreeDB* getDefaultAdditionsTree();
     TreeDB* getDeletionsTree(Triple triple_pattern);
     TreeDB* getDefaultDeletionsTree();
-    void insertAdditionSingle(const PatchTreeKey* key, const PatchTreeAdditionValue* value, DB::Cursor* cursor = NULL);
-    void insertAdditionSingle(const PatchTreeKey* key, int patch_id, bool local_change, bool ignore_existing, DB::Cursor* cursor = NULL);
-    void increment_addition_counts(const int patch_id, const Triple& triple);
-    PatchPosition get_addition_count(const int patch_id, const Triple& triple);
+    void insertAdditionSingle(const PatchTreeKey* key, const PatchTreeAdditionValue* value, DB::Cursor* cursor = nullptr);
+    void insertAdditionSingle(const PatchTreeKey* key, int patch_id, bool local_change, bool ignore_existing, DB::Cursor* cursor = nullptr);
+    void increment_addition_counts(int patch_id, const Triple& triple);
+    PatchPosition get_addition_count(int patch_id, const Triple& triple);
     long flush_addition_counts();
-    void insertDeletionSingle(const PatchTreeKey* key, const PatchTreeDeletionValue* value, const PatchTreeDeletionValueReduced* value_reduced, DB::Cursor* cursor = NULL);
-    void insertDeletionSingle(const PatchTreeKey* key, const PatchPositions& patch_positions, int patch_id, bool local_change, bool ignore_existing, DB::Cursor* cursor = NULL);
+    void insertDeletionSingle(const PatchTreeKey* key, const PatchTreeDeletionValue* value, const PatchTreeDeletionValueReduced* value_reduced, DB::Cursor* cursor = nullptr);
+    void insertDeletionSingle(const PatchTreeKey* key, const PatchPositions& patch_positions, int patch_id, bool local_change, bool ignore_existing, DB::Cursor* cursor = nullptr);
     /**
      * @return The comparator for this patch tree in SPO order.
      */
@@ -87,7 +87,22 @@ public:
         bool o = triple_pattern.get_object() > 0;
         return (s && p) || (!p && !o);
     }
-};
 
+    static inline TripleComponentOrder get_query_order(const Triple& triple_pattern) {
+        bool s = triple_pattern.get_subject() > 0;
+        bool p = triple_pattern.get_predicate() > 0;
+        bool o = triple_pattern.get_object() > 0;
+
+        if( s &  p &  o) return SPO;
+        if( s &  p & !o) return SPO;
+        if( s & !p &  o) return OSP;
+        if( s & !p & !o) return SPO;
+        if(!s &  p &  o) return POS;
+        if(!s &  p & !o) return POS;
+        if(!s & !p &  o) return OSP;
+        return SPO;
+    }
+
+};
 
 #endif //TPFPATCH_STORE_TRIPLE_STORE_H
