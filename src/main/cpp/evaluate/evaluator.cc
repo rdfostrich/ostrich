@@ -483,6 +483,14 @@ BearEvaluatorMS::measure_lookup_version_materialized(const StringTriple& triple_
 
 long long
 BearEvaluatorMS::measure_count_version_materialized(const StringTriple& triple_pattern, int patch_id, int replications) {
+    // We ensure that the needed snapshot (and patchtree) are loaded prior to querying
+    int snapshot_id = controller->get_snapshot_manager()->get_latest_snapshot(patch_id);
+    controller->get_snapshot_manager()->load_snapshot(snapshot_id);
+    if (snapshot_id != patch_id) {
+        int patchtree_id = controller->get_patch_tree_manager()->get_patch_tree_id(patch_id);
+        controller->get_patch_tree_manager()->load_patch_tree(patchtree_id, controller->get_snapshot_manager()->get_dictionary_manager(snapshot_id));
+    }
+
     long long total = 0;
     for (int i = 0; i < replications; i++) {
         StopWatch st;
