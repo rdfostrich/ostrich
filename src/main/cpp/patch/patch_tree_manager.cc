@@ -62,6 +62,10 @@ const std::map<int, std::shared_ptr<PatchTree>>& PatchTreeManager::get_patch_tre
 
 std::shared_ptr<PatchTree> PatchTreeManager::load_patch_tree(int patch_id_start, std::shared_ptr<DictionaryManager> dict) {
     update_cache(patch_id_start);
+    auto it = loaded_patchtrees.find(patch_id_start);
+    if (it != loaded_patchtrees.end() && it->second) {
+        return it->second;
+    }
     loaded_patchtrees[patch_id_start] = std::make_shared<PatchTree>(basePath, patch_id_start, dict, kc_opts, readonly);
     return loaded_patchtrees[patch_id_start];
 }
