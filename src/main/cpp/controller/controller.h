@@ -19,8 +19,8 @@ private:
     CreationStrategyMetadata* metadata;
 
 public:
-    explicit Controller(string basePath, int8_t kc_opts = 0, bool readonly = false);
-    Controller(string basePath, SnapshotCreationStrategy* strategy, int8_t kc_opts = 0, bool readonly = false);
+    explicit Controller(string basePath, int8_t kc_opts = 0, bool readonly = false, size_t cache_size = 4);
+    Controller(string basePath, SnapshotCreationStrategy* strategy, int8_t kc_opts = 0, bool readonly = false, size_t cache_size = 4);
     ~Controller();
     /**
      * Get an iterator for all triples matching the given triple pattern with a certain offset
@@ -56,7 +56,7 @@ public:
      * @param patch_id The patch id for which triples should be returned.
      */
     TripleVersionsIteratorCombined* get_version(const StringTriple &triple_pattern, int offset) const;
-    TripleVersionsIterator* get_version(const Triple &triple_pattern, int offset) const;
+    PatchTreeTripleVersionsIterator* get_version(const Triple &triple_pattern, int offset) const;
     std::pair<size_t, ResultEstimationType> get_version_count(const Triple& triple_pattern, bool allowEstimates = false) const;
     std::pair<size_t, ResultEstimationType> get_version_count(const StringTriple& triple_pattern, bool allowEstimates = false) const;
     size_t get_version_count_estimated(const Triple& triple_pattern) const;

@@ -8,7 +8,7 @@
 
 using namespace hdt;
 
-SnapshotManager::SnapshotManager(string basePath, bool readonly) : basePath(basePath), max_loaded_snapshots(4), readonly(readonly) {
+SnapshotManager::SnapshotManager(string basePath, bool readonly, size_t cache_size) : basePath(basePath), max_loaded_snapshots(std::max((size_t)2,cache_size)), readonly(readonly) {
     detect_snapshots();
 }
 
@@ -195,4 +195,8 @@ void SnapshotManager::update_cache_internal(int accessed_id, int iterations) {
     }
     lru_list.push_front(accessed_id);
     lru_map[accessed_id] = lru_list.begin();
+}
+
+void SnapshotManager::set_cache_max_size(size_t new_size) {
+    max_loaded_snapshots = std::max((size_t)2, new_size);
 }

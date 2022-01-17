@@ -23,7 +23,7 @@ private:
     void update_cache_internal(int accessed_id, int iterations);
 
 public:
-    PatchTreeManager(string basePath, int8_t kc_opts = 0, bool readonly = false);
+    PatchTreeManager(string basePath, int8_t kc_opts = 0, bool readonly = false, size_t cache_size = 4);
     ~PatchTreeManager();
     /**
      * Add the given patch to a patch tree.
@@ -101,7 +101,9 @@ public:
      */
     void update_cache(int accessed_patch_id);
 
-    size_t get_max_loaded_patches() const;
+    size_t get_cache_max_size() const;
+
+    void set_cache_max_size(size_t new_size);
 
 };
 
