@@ -8,12 +8,12 @@
 #define BASEURI "<http://example.org>"
 
 
-Controller::Controller(string basePath, int8_t kc_opts, bool readonly) : Controller(basePath, nullptr, kc_opts,
-                                                                                    readonly) {}
+Controller::Controller(string basePath, int8_t kc_opts, bool readonly, size_t cache_size) : Controller(basePath, nullptr, kc_opts,
+                                                                                    readonly, cache_size) {}
 
-Controller::Controller(string basePath, SnapshotCreationStrategy *strategy, int8_t kc_opts, bool readonly)
-        : patchTreeManager(new PatchTreeManager(basePath, kc_opts, readonly)),
-          snapshotManager(new SnapshotManager(basePath, readonly)),
+Controller::Controller(string basePath, SnapshotCreationStrategy *strategy, int8_t kc_opts, bool readonly, size_t cache_size)
+        : patchTreeManager(new PatchTreeManager(basePath, kc_opts, readonly, cache_size)),
+          snapshotManager(new SnapshotManager(basePath, readonly, cache_size)),
           strategy(strategy), metadata(nullptr) {
     struct stat sb{};
     if (!(stat(basePath.c_str(), &sb) == 0 && S_ISDIR(sb.st_mode))) {
@@ -602,7 +602,7 @@ size_t Controller::get_version_count_estimated(const Triple &triple_pattern) con
     return get_version_count(triple_pattern, true).first;
 }
 
-TripleVersionsIterator* Controller::get_version(const Triple &triple_pattern, int offset) const {
+PatchTreeTripleVersionsIterator* Controller::get_version(const Triple &triple_pattern, int offset) const {
     // TODO: this will require some changes when we support multiple snapshots. (probably just a simple merge for all snapshots with what is already here)
     // Find the snapshot
     int snapshot_id = 0;
@@ -630,7 +630,7 @@ TripleVersionsIterator* Controller::get_version(const Triple &triple_pattern, in
         delete tmp_it;
     }
 
-    return (new TripleVersionsIterator(triple_pattern, snapshot_it, patchTree))->offset(offset);
+    return (new PatchTreeTripleVersionsIterator(triple_pattern, snapshot_it, patchTree))->offset(offset);
 }
 
 TripleVersionsIteratorCombined *Controller::get_version(const StringTriple &triple_pattern, int offset) const {
@@ -644,7 +644,7 @@ TripleVersionsIteratorCombined *Controller::get_version(const StringTriple &trip
         int patch_tree_id = patchTreeManager->get_patch_tree_id(it.first+1);
         std::shared_ptr<PatchTree> patchTree = patchTreeManager->get_patch_tree(patch_tree_id, dict);
 
-        it_version->append_iterator(new TripleVersionsIterator(pattern, snapshot_it, patchTree, it.first), dict);
+        it_version->append_iterator(new PatchTreeTripleVersionsIterator(pattern, snapshot_it, patchTree, it.first), dict);
     }
     return it_version->offset(offset);
 }

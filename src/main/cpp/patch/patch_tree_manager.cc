@@ -3,7 +3,7 @@
 #include <memory>
 #include "patch_tree_manager.h"
 
-PatchTreeManager::PatchTreeManager(string basePath, int8_t kc_opts, bool readonly) : basePath(basePath), max_loaded_patches(4), kc_opts(kc_opts), readonly(readonly) {
+PatchTreeManager::PatchTreeManager(string basePath, int8_t kc_opts, bool readonly, size_t cache_size) : basePath(basePath), max_loaded_patches(std::max((size_t)2,cache_size)), kc_opts(kc_opts), readonly(readonly) {
     detect_patch_trees();
 }
 
@@ -74,8 +74,6 @@ std::shared_ptr<PatchTree> PatchTreeManager::get_patch_tree(int patch_id_start, 
     if(patch_id_start < 0) {
         return nullptr;
     }
-    if (patch_id_start == 31)
-        int* sqsq = nullptr;
     auto it = loaded_patchtrees.find(patch_id_start);
     if(it == loaded_patchtrees.end()) {
         if(it == loaded_patchtrees.begin()) {
@@ -156,8 +154,13 @@ void PatchTreeManager::update_cache_internal(int accessed_id, int iterations) {
     lru_map[accessed_id] = lru_list.begin();
 }
 
-size_t PatchTreeManager::get_max_loaded_patches() const {
+size_t PatchTreeManager::get_cache_max_size() const {
     return max_loaded_patches;
 }
+
+void PatchTreeManager::set_cache_max_size(size_t new_size) {
+    max_loaded_patches = std::max((size_t)2, new_size);
+}
+
 
 

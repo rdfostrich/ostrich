@@ -26,7 +26,7 @@ private:
     void update_cache_internal(int accessed_id, int iterations);
 
 public:
-    explicit SnapshotManager(string basePath, bool readonly = false);
+    explicit SnapshotManager(string basePath, bool readonly = false, size_t cache_size = 4);
     ~SnapshotManager();
     /**
      * Get the id of the snapshot that is smaller or equal than the given patch id.
@@ -93,6 +93,9 @@ public:
      * Update the state of the patch cache
      */
     void update_cache(int accessed_snapshot_id);
+
+    void set_cache_max_size(size_t new_size);
+
 };
 
 

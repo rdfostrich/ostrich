@@ -208,7 +208,7 @@ long long Evaluator::measure_lookup_version(Dictionary& dict, Triple triple_patt
     for (int i = 0; i < replications; i++) {
         int limit_l = limit;
         StopWatch st;
-        TripleVersionsIterator* ti = controller->get_version(triple_pattern, offset);
+        PatchTreeTripleVersionsIterator* ti = controller->get_version(triple_pattern, offset);
         TripleVersions t;
         while((limit_l == -2 || limit_l-- > 0) && ti->next(&t)) {
             t.get_triple()->get_subject(dict);
@@ -295,8 +295,16 @@ void BearEvaluatorMS::init(string basePath, string patchesBasePatch, SnapshotCre
 }
 
 void BearEvaluatorMS::init_readonly(string basePath) {
-    controller = new Controller(basePath, TreeDB::TCOMPRESS, true);
+    controller = new Controller(basePath, TreeDB::TCOMPRESS, true, 128);
     patch_count = controller->get_number_versions();
+
+    auto itp = controller->get_patch_tree_manager()->get_patch_trees().cend();
+    itp--;
+    for (; itp != controller->get_patch_tree_manager()->get_patch_trees().cbegin(); itp--) {
+        int snapshot_id = controller->get_snapshot_manager()->get_latest_snapshot(itp->first);
+        controller->get_snapshot_manager()->load_snapshot(snapshot_id);
+        controller->get_patch_tree_manager()->load_patch_tree(itp->first, controller->get_dictionary_manager(itp->first));
+    }
 }
 
 void BearEvaluatorMS::test_lookup(string s, string p, string o, int replications, int offset, int limit) {
@@ -488,7 +496,7 @@ BearEvaluatorMS::measure_count_version_materialized(const StringTriple& triple_p
     controller->get_snapshot_manager()->load_snapshot(snapshot_id);
     if (snapshot_id != patch_id) {
         int patchtree_id = controller->get_patch_tree_manager()->get_patch_tree_id(patch_id);
-        controller->get_patch_tree_manager()->load_patch_tree(patchtree_id, controller->get_snapshot_manager()->get_dictionary_manager(snapshot_id));
+        controller->get_patch_tree_manager()->load_patch_tree(patchtree_id, controller->get_dictionary_manager(patch_id));
     }
 
     long long total = 0;
