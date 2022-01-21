@@ -457,7 +457,7 @@ TripleDeltaIterator* Controller::get_delta_materialized(const StringTriple &trip
                 last_dc_dm = new ForwardPatchTripleDeltaIterator<PatchTreeDeletionValue>(patchTree, tp, patch_id_end, dict_end);
             } else {
                 auto tmp_it = new ForwardPatchTripleDeltaIterator<PatchTreeDeletionValueReduced>(patchTree, tp, patch_id_end, dict_end);
-                last_dc_dm = new SortedTripleDeltaIterator(tmp_it);
+                last_dc_dm = new SortedTripleDeltaIterator(tmp_it, SPO);
                 delete tmp_it;
             }
             return (new MergeDiffIterator(snap_diff, last_dc_dm))->offset(offset);
@@ -475,7 +475,7 @@ TripleDeltaIterator* Controller::get_delta_materialized(const StringTriple &trip
             last_dc_dm = new ForwardPatchTripleDeltaIterator<PatchTreeDeletionValue>(patchTree, tp, patch_id_start, dict_start);
         } else {
             auto tmp_it = new ForwardPatchTripleDeltaIterator<PatchTreeDeletionValueReduced>(patchTree, tp, patch_id_start, dict_start);
-            last_dc_dm = new SortedTripleDeltaIterator(tmp_it);
+            last_dc_dm = new SortedTripleDeltaIterator(tmp_it, SPO);
             delete tmp_it;
         }
         auto snap_diff = new AutoSnapshotDiffIterator(triple_pattern, snapshotManager, patchTreeManager, snapshot_id_start, snapshot_id_end);
@@ -512,10 +512,10 @@ TripleDeltaIterator* Controller::get_delta_materialized(const StringTriple &trip
                 last_dc_dm = new ForwardPatchTripleDeltaIterator<PatchTreeDeletionValue>(patchtree_end, tp_end, patch_id_end, dict_end);
             } else {
                 auto tmp_it = new ForwardPatchTripleDeltaIterator<PatchTreeDeletionValueReduced>(patchtree_start, tp_start, patch_id_start, dict_start);
-                first_dc_dm = new SortedTripleDeltaIterator(tmp_it);
+                first_dc_dm = new SortedTripleDeltaIterator(tmp_it, SPO);
                 delete tmp_it;
                 auto tmp_it2 = new ForwardPatchTripleDeltaIterator<PatchTreeDeletionValueReduced>(patchtree_end, tp_end, patch_id_end, dict_end);
-                last_dc_dm = new SortedTripleDeltaIterator(tmp_it2);
+                last_dc_dm = new SortedTripleDeltaIterator(tmp_it2, SPO);
                 delete tmp_it2;
             }
             auto snap_diff = new AutoSnapshotDiffIterator(triple_pattern, snapshotManager, patchTreeManager, snapshot_id_start, snapshot_id_end);
@@ -634,8 +634,7 @@ PatchTreeTripleVersionsIterator* Controller::get_version(const Triple &triple_pa
 }
 
 TripleVersionsIteratorCombined *Controller::get_version(const StringTriple &triple_pattern, int offset) const {
-    auto it_version = new TripleVersionsIteratorCombined;
-
+    std::vector<TripleVersionsIterator*> iterators;
     for (const auto& it: snapshotManager->get_snapshots()) {
         std::shared_ptr<DictionaryManager> dict = snapshotManager->get_dictionary_manager(it.first);
         Triple pattern = triple_pattern.get_as_triple(dict);
@@ -644,8 +643,10 @@ TripleVersionsIteratorCombined *Controller::get_version(const StringTriple &trip
         int patch_tree_id = patchTreeManager->get_patch_tree_id(it.first+1);
         std::shared_ptr<PatchTree> patchTree = patchTreeManager->get_patch_tree(patch_tree_id, dict);
 
-        it_version->append_iterator(new PatchTreeTripleVersionsIterator(pattern, snapshot_it, patchTree, it.first), dict);
+        iterators.push_back(new PatchTreeTripleVersionsIterator(pattern, snapshot_it, patchTree, it.first, dict));
     }
+    auto it_version = new TripleVersionsIteratorCombined(SPO, iterators);
+    for (auto it: iterators) delete it;
     return it_version->offset(offset);
 }
 

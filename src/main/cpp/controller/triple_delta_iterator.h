@@ -1,30 +1,13 @@
 #ifndef TPFPATCH_STORE_TRIPLEDELTAITERATOR_H
 #define TPFPATCH_STORE_TRIPLEDELTAITERATOR_H
 
-#include <unordered_set>
-
 #include "../patch/triple.h"
 #include "../patch/patch_tree_iterator.h"
 #include "../patch/patch_tree.h"
 #include "../snapshot/snapshot_manager.h"
 #include "../patch/patch_tree_manager.h"
+#include "../patch/triple_comparator.h"
 
-// Triple annotated with addition/deletion.
-class TripleDelta {
-protected:
-    Triple* triple;
-    bool addition;
-    std::shared_ptr<DictionaryManager> dict;
-public:
-    TripleDelta();
-    TripleDelta(Triple* triple, bool addition);
-    ~TripleDelta();
-    Triple* get_triple();
-    bool is_addition();
-    void set_addition(bool addition);
-    std::shared_ptr<DictionaryManager> get_dictionary();
-    void set_dictionary(std::shared_ptr<DictionaryManager> dictionary);
-};
 
 // Iterator for triples annotated with addition/deletion.
 class TripleDeltaIterator {
@@ -35,6 +18,7 @@ public:
     TripleDeltaIterator* offset(int offset);
 };
 
+
 // Triple delta iterator where elements from a single patch are emitted.
 template <class DV>
 class ForwardPatchTripleDeltaIterator : public TripleDeltaIterator {
@@ -44,9 +28,10 @@ protected:
     std::shared_ptr<DictionaryManager> dict;
 public:
     ForwardPatchTripleDeltaIterator(std::shared_ptr<PatchTree> patchTree, const Triple &triple_pattern, int patch_id_end, std::shared_ptr<DictionaryManager> dict);
-    ~ForwardPatchTripleDeltaIterator();
-    bool next(TripleDelta* triple);
+    ~ForwardPatchTripleDeltaIterator() override;
+    bool next(TripleDelta* triple) override;
 };
+
 
 // Triple delta iterator where elements only differences between two patches are emitted.
 template <class DV>
@@ -61,9 +46,8 @@ public:
 
 class EmptyTripleDeltaIterator : public TripleDeltaIterator {
 public:
-    bool next(TripleDelta* triple);
+    bool next(TripleDelta* triple) override;
 };
-
 
 
 // Snapshots should emit in SPO order
@@ -86,6 +70,7 @@ public:
     bool next(TripleDelta* triple) override;
 };
 
+
 class IterativeSnapshotDiffIterator: public TripleDeltaIterator {
 private:
     TripleDeltaIterator *internal_it;
@@ -96,6 +81,7 @@ public:
     ~IterativeSnapshotDiffIterator() override;
     bool next(TripleDelta* triple) override;
 };
+
 
 class AutoSnapshotDiffIterator: public TripleDeltaIterator {
 private:
@@ -116,7 +102,7 @@ private:
     std::vector<TripleDelta*> triples;
 
 public:
-    explicit SortedTripleDeltaIterator(TripleDeltaIterator* iterator);
+    explicit SortedTripleDeltaIterator(TripleDeltaIterator* iterator, TripleComponentOrder order);
     ~SortedTripleDeltaIterator() override;
     bool next(TripleDelta* triple) override;
 };
@@ -158,18 +144,5 @@ public:
     bool next(TripleDelta* triple) override;
 };
 
-
-//class MergeSnapshotPatchIterator: public TripleDeltaIterator {
-//private:
-//    TripleDeltaIterator* snapshot_it;
-//    PatchTree* patchTree;
-//    int patch_id;
-//    std::unordered_set<Triple> emitted_additions;
-//    std::unordered_set<Triple> emitted_deletions;
-//public:
-//    MergeSnapshotPatchIterator(TripleDeltaIterator* snapshot_it, PatchTree* patch_tree, int patch_id);
-//    ~MergeSnapshotPatchIterator() override;
-//    bool next(TripleDelta* triple) override;
-//};
 
 #endif //TPFPATCH_STORE_TRIPLEDELTAITERATOR_H

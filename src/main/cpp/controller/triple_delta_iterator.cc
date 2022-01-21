@@ -1,32 +1,5 @@
 #include "triple_delta_iterator.h"
 
-TripleDelta::TripleDelta() : triple(new Triple()), addition(true), dict(nullptr) {}
-
-TripleDelta::TripleDelta(Triple* triple, bool addition) : triple(triple), addition(addition), dict(nullptr) {}
-
-Triple* TripleDelta::get_triple() {
-    return triple;
-}
-
-bool TripleDelta::is_addition() {
-    return addition;
-}
-
-TripleDelta::~TripleDelta() {
-    delete triple;
-}
-
-void TripleDelta::set_addition(bool addition) {
-    this->addition = addition;
-}
-
-std::shared_ptr<DictionaryManager> TripleDelta::get_dictionary() {
-    return dict;
-}
-
-void TripleDelta::set_dictionary(std::shared_ptr<DictionaryManager> dictionary) {
-    dict = dictionary;
-}
 
 
 TripleDeltaIterator::~TripleDeltaIterator() {}
@@ -191,20 +164,6 @@ MergeDiffIterator::MergeDiffIterator(TripleDeltaIterator *iterator_1, TripleDelt
     status2 = it2->next(triple2);
 }
 
-//int compare_triple_delta(TripleDelta *td1, TripleDelta *td2) {
-//    std::shared_ptr<DictionaryManager> dict1 = td1->get_dictionary() ? td1->get_dictionary() : td2->get_dictionary();
-//    std::shared_ptr<DictionaryManager> dict2 = td2->get_dictionary() ? td2->get_dictionary() : td1->get_dictionary();
-//    int s_comp = td1->get_triple()->get_subject(*dict1).compare(td2->get_triple()->get_subject(*dict2));
-//    if (s_comp == 0) {
-//        int p_comp = td1->get_triple()->get_predicate(*dict1).compare(td2->get_triple()->get_predicate(*dict2));
-//        if (p_comp == 0) {
-//            return td1->get_triple()->get_object(*dict1).compare(td2->get_triple()->get_object(*dict2));
-//        }
-//        return p_comp;
-//    }
-//    return s_comp;
-//}
-
 int compare_triple_delta(TripleDelta *td1, TripleDelta *td2) {
     size_t max_id = (size_t) -1;
     size_t mask = 1ULL << (8 * sizeof(size_t) - 1);
@@ -287,20 +246,17 @@ MergeDiffIterator::~MergeDiffIterator() {
 }
 
 
-SortedTripleDeltaIterator::SortedTripleDeltaIterator(TripleDeltaIterator *iterator): index(0) {
-    auto comp = [](TripleDelta* td1, TripleDelta* td2) {
-        int comp_res = compare_triple_delta(td1, td2);
-        return comp_res < 0;
-    };
-
+SortedTripleDeltaIterator::SortedTripleDeltaIterator(TripleDeltaIterator *iterator, TripleComponentOrder order): index(0) {
     auto td = new TripleDelta;
     while(iterator->next(td)) {
         triples.emplace_back(td);
         td = new TripleDelta;
     }
     delete td;
-    if (!std::is_sorted(triples.begin(), triples.end(), comp))
-        std::sort(triples.begin(), triples.end(), comp);
+    TripleComparator* comparator = TripleComparator::get_triple_comparator(order);
+    if (!std::is_sorted(triples.begin(), triples.end(), *comparator))
+        std::sort(triples.begin(), triples.end(), *comparator);
+    delete comparator;
 }
 
 bool SortedTripleDeltaIterator::next(TripleDelta *triple) {
@@ -415,7 +371,7 @@ IterativeSnapshotDiffIterator::IterativeSnapshotDiffIterator(const StringTriple&
             tmp = new ForwardPatchTripleDeltaIterator<PatchTreeDeletionValue>(pt, tp, snapshots_ids[i], dict);
         } else {
             TripleDeltaIterator* unsorted = new ForwardPatchTripleDeltaIterator<PatchTreeDeletionValueReduced>(pt, tp, snapshots_ids[i], dict);
-            tmp = new SortedTripleDeltaIterator(unsorted);
+            tmp = new SortedTripleDeltaIterator(unsorted, SPO);
             delete unsorted;
         }
         if (start_it == nullptr) {
@@ -466,7 +422,7 @@ AutoSnapshotDiffIterator::AutoSnapshotDiffIterator(const StringTriple &triple_pa
     size_t est = hdt_it->estimatedNumResults();
     delete hdt_it;
     // TODO: refine the heuristic
-    bool use_iterative = distance <= patch_tree_manager->get_max_loaded_patches(); // || est > 1000;
+    bool use_iterative = distance <= patch_tree_manager->get_cache_max_size(); // || est > 1000;
     if (use_iterative) {
         internal_it = new IterativeSnapshotDiffIterator(triple_pattern, snapshot_manager, patch_tree_manager, snapshot_id_1, snapshot_id_2);
     } else {
