@@ -5,6 +5,7 @@
 #include <string>
 #include <SingleTriple.hpp>
 #include <Dictionary.hpp>
+#include "../dictionary/dictionary_manager.h"
 
 using namespace std;
 using namespace hdt;
@@ -156,5 +157,57 @@ public:
     bool operator<(const StringTriple& other) const;
 };
 
+
+
+// Triple annotated with versions
+class TripleVersions {
+protected:
+    Triple* triple;
+    std::vector<int>* versions;
+    std::shared_ptr<DictionaryManager> dict;
+public:
+    TripleVersions();
+    TripleVersions(Triple* triple, std::vector<int>* versions, std::shared_ptr<DictionaryManager> dictionary = nullptr);
+    ~TripleVersions();
+    Triple* get_triple();
+    const Triple* get_triple_const() const;  // cleaner to have const pointer when we don't need to modify
+    std::vector<int>* get_versions();
+    std::shared_ptr<DictionaryManager> get_dictionary() const;
+    void set_dictionary(std::shared_ptr<DictionaryManager> dictionary);
+};
+
+class TripleVersionsString {
+protected:
+    StringTriple triple;
+    std::vector<int> versions;
+public:
+    TripleVersionsString();
+    TripleVersionsString(StringTriple triple, std::vector<int> versions);
+    StringTriple* get_triple();
+    std::vector<int>* get_versions();
+
+    // Compare triples strings, not versions, so we can sort a vector of TripleVersionsString
+    bool operator<(const TripleVersionsString& other) const;
+};
+
+
+
+// Triple annotated with addition/deletion.
+class TripleDelta {
+protected:
+    Triple* triple;
+    bool addition;
+    std::shared_ptr<DictionaryManager> dict;
+public:
+    TripleDelta();
+    TripleDelta(Triple* triple, bool addition, std::shared_ptr<DictionaryManager> dictionary = nullptr);
+    ~TripleDelta();
+    Triple* get_triple();
+    const Triple* get_triple_const() const;
+    bool is_addition();
+    void set_addition(bool addition);
+    std::shared_ptr<DictionaryManager> get_dictionary() const;
+    void set_dictionary(std::shared_ptr<DictionaryManager> dictionary);
+};
 
 #endif //TPFPATCH_STORE_TRIPLE_H

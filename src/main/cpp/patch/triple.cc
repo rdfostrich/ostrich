@@ -156,3 +156,83 @@ void StringTriple::set_object(std::string new_object) {
     this->object = std::move(new_object);
 }
 
+
+TripleVersions::TripleVersions() : triple(new Triple()), versions(new vector<int>()), dict(nullptr) {}
+
+TripleVersions::TripleVersions(Triple* triple, std::vector<int>* versions, std::shared_ptr<DictionaryManager> dictionary) : triple(triple), versions(versions), dict(dictionary) {}
+
+TripleVersions::~TripleVersions() {
+    delete triple;
+    delete versions;
+}
+
+Triple* TripleVersions::get_triple() {
+    return triple;
+}
+
+const Triple *TripleVersions::get_triple_const() const {
+    return triple;
+}
+
+vector<int>* TripleVersions::get_versions() {
+    return versions;
+}
+
+std::shared_ptr<DictionaryManager> TripleVersions::get_dictionary() const {
+    return dict;
+}
+
+void TripleVersions::set_dictionary(std::shared_ptr<DictionaryManager> dictionary) {
+    dict = dictionary;
+}
+
+
+TripleVersionsString::TripleVersionsString() = default;
+
+TripleVersionsString::TripleVersionsString(StringTriple triple, std::vector<int> versions) : triple(
+        std::move(triple)), versions(std::move(versions)) {}
+
+StringTriple *TripleVersionsString::get_triple() {
+    return &triple;
+}
+
+std::vector<int> *TripleVersionsString::get_versions() {
+    return &versions;
+}
+
+bool TripleVersionsString::operator<(const TripleVersionsString &other) const {
+    return (triple < other.triple);
+}
+
+
+TripleDelta::TripleDelta() : triple(new Triple()), addition(true), dict(nullptr) {}
+
+TripleDelta::TripleDelta(Triple* triple, bool addition, std::shared_ptr<DictionaryManager> dictionary) : triple(triple), addition(addition), dict(dictionary) {}
+
+Triple* TripleDelta::get_triple() {
+    return triple;
+}
+
+const Triple* TripleDelta::get_triple_const() const {
+    return triple;
+}
+
+bool TripleDelta::is_addition() {
+    return addition;
+}
+
+TripleDelta::~TripleDelta() {
+    delete triple;
+}
+
+void TripleDelta::set_addition(bool addition) {
+    this->addition = addition;
+}
+
+std::shared_ptr<DictionaryManager> TripleDelta::get_dictionary() const {
+    return dict;
+}
+
+void TripleDelta::set_dictionary(std::shared_ptr<DictionaryManager> dictionary) {
+    dict = dictionary;
+}

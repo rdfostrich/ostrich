@@ -515,7 +515,7 @@ long long BearEvaluatorMS::measure_lookup_version(const StringTriple& triple_pat
         int limit_l = limit;
         StopWatch st;
         TripleVersionsIteratorCombined* ti = controller->get_version(triple_pattern, offset);
-        TripleVersionsString t;
+        TripleVersions t;
         while((limit_l == -2 || limit_l-- > 0) && ti->next(&t)) {
             t.get_triple()->get_subject();
             t.get_triple()->get_predicate();

@@ -2,38 +2,22 @@
 #define TPFPATCH_STORE_TRIPLEVERSIONITERATOR_H
 
 #include <vector>
+#include <set>
 #include "../patch/triple.h"
 #include "../patch/patch_tree.h"
-
-// Triple annotated with addition/deletion.
-class TripleVersions {
-protected:
-    Triple* triple;
-    std::vector<int>* versions;
-public:
-    TripleVersions();
-    TripleVersions(Triple* triple, std::vector<int>* versions);
-    ~TripleVersions();
-    Triple* get_triple();
-    std::vector<int>* get_versions();
-};
-
-class TripleVersionsString {
-protected:
-    StringTriple triple;
-    std::vector<int> versions;
-public:
-    TripleVersionsString();
-    TripleVersionsString(StringTriple triple, std::vector<int> versions);
-    StringTriple* get_triple();
-    std::vector<int>* get_versions();
-
-    // Compare triples strings, not versions, so we can sort a vector of TripleVersionsString
-    bool operator<(const TripleVersionsString& other) const;
-};
+#include "../patch/triple_comparator.h"
 
 
 class TripleVersionsIterator {
+public:
+    virtual bool next(TripleVersions* triple_versions) = 0;
+    virtual size_t get_count() = 0;
+    virtual TripleVersionsIterator* offset(int offset) = 0;
+    virtual ~TripleVersionsIterator() = default;
+};
+
+
+class PatchTreeTripleVersionsIterator: public TripleVersionsIterator {
 protected:
     Triple triple_pattern;
     IteratorTripleID* snapshot_it;
@@ -41,25 +25,47 @@ protected:
     PatchTreeIterator* addition_it;
     int first_version;
     inline void eraseDeletedVersions(std::vector<int>* versions, Triple* currentTriple, int initial_version);
+    std::shared_ptr<DictionaryManager> dict;
 public:
-    TripleVersionsIterator(Triple triple_pattern, IteratorTripleID* snapshot_it, std::shared_ptr<PatchTree> patchTree, int first_version = 0);
-    ~TripleVersionsIterator();
-    bool next(TripleVersions* triple_versions);
-    size_t get_count();
-    TripleVersionsIterator* offset(int offset);
+    PatchTreeTripleVersionsIterator(Triple triple_pattern, IteratorTripleID* snapshot_it, std::shared_ptr<PatchTree> patchTree, int first_version = 0, std::shared_ptr<DictionaryManager> dictionary = nullptr);
+    ~PatchTreeTripleVersionsIterator() override;
+    bool next(TripleVersions* triple_versions) override;
+    size_t get_count() override;
+    PatchTreeTripleVersionsIterator* offset(int offset) override;
 };
 
 
-class TripleVersionsIteratorCombined {
+class TripleVersionsIteratorCombined: public TripleVersionsIterator {
 private:
-    size_t index;
-    std::vector<TripleVersionsString> triples;
+    TripleComparator* comparator;
+    std::set<TripleVersions*, TripleComparator> triples;
+    std::set<TripleVersions*, TripleComparator>::iterator triples_it;
+
 public:
-    TripleVersionsIteratorCombined();
-    void append_iterator(TripleVersionsIterator* iterator, std::shared_ptr<DictionaryManager> dict);
-    bool next(TripleVersionsString* triple_versions);
-    size_t get_count();
-    TripleVersionsIteratorCombined* offset(int offset);
+    TripleVersionsIteratorCombined(TripleComponentOrder order, const std::vector<TripleVersionsIterator*>& iterators);
+    ~TripleVersionsIteratorCombined() override;
+    bool next(TripleVersions* triple_versions) override;
+    size_t get_count() override;
+    TripleVersionsIteratorCombined* offset(int offset) override;
+};
+
+
+class TripleVersionsIteratorMerged: public TripleVersionsIterator {
+private:
+    TripleVersionsIterator* it1;
+    TripleVersionsIterator* it2;
+    TripleVersions* t1;
+    TripleVersions* t2;
+    bool status1;
+    bool status2;
+    TripleComparator* comparator;
+
+public:
+    TripleVersionsIteratorMerged(TripleVersionsIterator* iterator1, TripleVersionsIterator* iterator2, TripleComponentOrder triple_order);
+    ~TripleVersionsIteratorMerged() override;
+    bool next(TripleVersions* triple_versions) override;
+    size_t get_count() override;
+    TripleVersionsIteratorMerged* offset(int offset) override;
 };
 
 #endif //TPFPATCH_STORE_TRIPLEVERSIONITERATOR_H

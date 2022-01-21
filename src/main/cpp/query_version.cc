@@ -39,11 +39,11 @@ int main(int argc, char** argv) {
     cerr << "Count: " << count.first << (count.second == EXACT ? "" : " (estimate)") << endl;
 
     TripleVersionsIteratorCombined* it = controller.get_version(triple_pattern, offset);
-    TripleVersionsString triple_versions;
+    TripleVersions triple_versions;
     while (it->next(&triple_versions)) {
         std::stringstream vect;
         std::copy(triple_versions.get_versions()->begin(), triple_versions.get_versions()->end(), std::ostream_iterator<int>(vect, " "));
-        cout << triple_versions.get_triple()->to_string() << " :: [ " << vect.str() << "]" << endl;
+        cout << triple_versions.get_triple()->to_string(*(triple_versions.get_dictionary())) << " :: [ " << vect.str() << "]" << endl;
     }
     delete it;
 
