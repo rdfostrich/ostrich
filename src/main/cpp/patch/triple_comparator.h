@@ -23,8 +23,10 @@ private:
 
     std::shared_ptr<DictionaryManager> dict1;
     std::shared_ptr<DictionaryManager> dict2;
-public:
+
     TripleComparator(triplecomp comp1, triplecomp comp2, triplecomp comp3, std::shared_ptr<DictionaryManager> dict1 = nullptr, std::shared_ptr<DictionaryManager> dict2 = nullptr);
+
+public:
     int compare(const Triple& triple1, const Triple& triple2) const;
     int compare(const Triple& triple1, const Triple& triple2, std::shared_ptr<DictionaryManager> dict1, std::shared_ptr<DictionaryManager> dict2) const;
 
