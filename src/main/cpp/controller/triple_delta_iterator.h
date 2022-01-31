@@ -145,4 +145,24 @@ public:
 };
 
 
+
+class PlainDiffDeltaIterator: public TripleDeltaIterator {
+private:
+    TripleIterator* it_v1;
+    TripleIterator* it_v2;
+    bool status1;
+    bool status2;
+    Triple* triple1;
+    Triple* triple2;
+    std::shared_ptr<DictionaryManager> dict1;
+    std::shared_ptr<DictionaryManager> dict2;
+    TripleComparator* comparator;
+
+public:
+    PlainDiffDeltaIterator(TripleIterator* it1, TripleIterator* it2, std::shared_ptr<DictionaryManager> dict1, std::shared_ptr<DictionaryManager> dict2);
+    ~PlainDiffDeltaIterator() override;
+    bool next(TripleDelta* triple) override;
+};
+
+
 #endif //TPFPATCH_STORE_TRIPLEDELTAITERATOR_H

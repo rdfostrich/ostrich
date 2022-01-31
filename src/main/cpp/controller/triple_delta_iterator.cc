@@ -422,7 +422,7 @@ AutoSnapshotDiffIterator::AutoSnapshotDiffIterator(const StringTriple &triple_pa
     size_t est = hdt_it->estimatedNumResults();
     delete hdt_it;
     // TODO: refine the heuristic
-    bool use_iterative = distance <= patch_tree_manager->get_cache_max_size(); // || est > 1000;
+    bool use_iterative = distance <= 3; // || est > 1000;
     if (use_iterative) {
         internal_it = new IterativeSnapshotDiffIterator(triple_pattern, snapshot_manager, patch_tree_manager, snapshot_id_1, snapshot_id_2);
     } else {
@@ -438,3 +438,62 @@ bool AutoSnapshotDiffIterator::next(TripleDelta *triple) {
     return internal_it->next(triple);
 }
 
+
+PlainDiffDeltaIterator::PlainDiffDeltaIterator(TripleIterator *it1, TripleIterator *it2,
+                                               std::shared_ptr<DictionaryManager> dict1,
+                                               std::shared_ptr<DictionaryManager> dict2) : it_v1(it1), it_v2(it2),
+                                                                                           dict1(dict1), dict2(dict2),
+                                                                                           triple1(new Triple),
+                                                                                           triple2(new Triple),
+                                                                                           comparator(TripleComparator::get_triple_comparator(SPO, dict1, dict2)) {
+    status1 = it_v1->next(triple1);
+    status2 = it_v2->next(triple2);
+}
+
+PlainDiffDeltaIterator::~PlainDiffDeltaIterator() {
+    delete it_v1;
+    delete it_v2;
+    delete triple1;
+    delete triple2;
+}
+
+bool PlainDiffDeltaIterator::next(TripleDelta *triple) {
+    auto emit_triple = [=](Triple* source, bool is_addition, std::shared_ptr<DictionaryManager> dict) {
+        triple->get_triple()->set_subject(source->get_subject());
+        triple->get_triple()->set_predicate(source->get_predicate());
+        triple->get_triple()->set_object(source->get_object());
+        triple->set_addition(is_addition);
+        triple->set_dictionary(dict);
+    };
+
+    if (!status1 && !status2) {
+        return false;
+    }
+    if (!status1 && status2) {
+        emit_triple(triple2, true, dict2);
+        status2 = it_v2->next(triple2);
+        return true;
+    }
+    if (status1 && !status2) {
+        emit_triple(triple1, false, dict1);
+        status1 = it_v1->next(triple1);
+        return true;
+    }
+    int comp = comparator->compare(*triple1, *triple2);
+    if (comp == 0) {  // Triple exist in both version, we skip
+        status1 = it_v1->next(triple1);
+        status2 = it_v2->next(triple2);
+        return next(triple);
+    }
+    if (comp < 0) { // Triple from v1 don't exist in v2, it's a deletion
+        emit_triple(triple1, false, dict1);
+        status1 = it_v1->next(triple1);
+        return true;
+    }
+    if (comp > 0) { // Triple from v2 don't exist in v1, it's an addition
+        emit_triple(triple2, true, dict2);
+        status2 = it_v2->next(triple2);
+        return true;
+    }
+    return false;
+}
