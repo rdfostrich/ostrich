@@ -413,117 +413,93 @@ TripleDeltaIterator* Controller::get_delta_materialized(const Triple &triple_pat
     return nullptr;
 }
 
+
 TripleDeltaIterator* Controller::get_delta_materialized(const StringTriple &triple_pattern, int offset, int patch_id_start,
                                                         int patch_id_end) const {
+
+    auto single_delta_query = [this, triple_pattern](int start_id, int end_id, std::shared_ptr<DictionaryManager> dict, bool sort = false) {
+        TripleDeltaIterator* return_it;
+        int patch_tree_id = patchTreeManager->get_patch_tree_id(end_id);
+        std::shared_ptr<PatchTree> patch_tree = patchTreeManager->get_patch_tree(patch_tree_id, dict);
+        Triple tp = triple_pattern.get_as_triple(dict);
+        if(patch_tree == nullptr) {
+            return_it = new EmptyTripleDeltaIterator();
+        } else {
+            int snapshot_id = snapshotManager->get_latest_snapshot(start_id);
+            // start_id = patch
+            if (start_id != snapshot_id) {
+                if (TripleStore::is_default_tree(tp)) {
+                    return_it = new FowardDiffPatchTripleDeltaIterator<PatchTreeDeletionValue>(patch_tree, tp, start_id, end_id, dict);
+                } else {
+                    TripleDeltaIterator* tmp_it = new FowardDiffPatchTripleDeltaIterator<PatchTreeDeletionValueReduced>(patch_tree, tp, start_id, end_id, dict);
+                    if (sort) {
+                        return_it = new SortedTripleDeltaIterator(tmp_it, SPO);
+                    } else {
+                        return_it = tmp_it;
+                    }
+                }
+            // start_id = snapshot
+            } else {
+                if (TripleStore::is_default_tree(tp)) {
+                    return_it = new ForwardPatchTripleDeltaIterator<PatchTreeDeletionValue>(patch_tree, tp, end_id, dict);
+                } else {
+                    TripleDeltaIterator* tmp_it = new ForwardPatchTripleDeltaIterator<PatchTreeDeletionValueReduced>(patch_tree, tp, end_id, dict);
+                    if (sort) {
+                        return_it = new SortedTripleDeltaIterator(tmp_it, SPO);
+                    } else {
+                        return_it = tmp_it;
+                    }
+                }
+            }
+        }
+        return return_it;
+    };
+
     if (patch_id_end <= patch_id_start) {
         return new EmptyTripleDeltaIterator();
     }
 
-    // Find the snapshot
-    int snapshot_id_start = get_snapshot_manager()->get_latest_snapshot(patch_id_start);
-    int snapshot_id_end = get_snapshot_manager()->get_latest_snapshot(patch_id_end);
+    // Find the snapshots
+    int snapshot_id_start = snapshotManager->get_latest_snapshot(patch_id_start);
+    int snapshot_id_end = snapshotManager->get_latest_snapshot(patch_id_end);
     if (snapshot_id_start < 0 || snapshot_id_end < 0) {
         return new EmptyTripleDeltaIterator();
     }
 
+    // Get the dictionaries
     std::shared_ptr<DictionaryManager> dict_start = snapshotManager->get_dictionary_manager(snapshot_id_start);
     std::shared_ptr<DictionaryManager> dict_end = snapshotManager->get_dictionary_manager(snapshot_id_end);
 
-    // start = snapshot, end = snapshot
-    if(snapshot_id_start == patch_id_start && snapshot_id_end == patch_id_end) {
-        return (new AutoSnapshotDiffIterator(triple_pattern, snapshotManager, patchTreeManager, snapshot_id_start, snapshot_id_end))->offset(offset);
+    // Both patches are in the same delta chain
+    if (snapshot_id_start == snapshot_id_end) {
+        return (single_delta_query(patch_id_start, patch_id_end, dict_end))->offset(offset);
     }
 
-    // start = snapshot, end = patch
-    if(snapshot_id_start == patch_id_start && snapshot_id_end != patch_id_end) {
-        int patchtree_id_end = get_patch_tree_manager()->get_patch_tree_id(patch_id_end);
-        std::shared_ptr<PatchTree> patchTree = get_patch_tree_manager()->get_patch_tree(patchtree_id_end, dict_end);
-        Triple tp = triple_pattern.get_as_triple(dict_end);
-        if (snapshot_id_start == snapshot_id_end) {
-            // Return iterator for the end patch relative to the start snapshot
-            if(patchTree == nullptr) {
-                throw std::invalid_argument("Could not find the given end patch id");
-            }
-            if (TripleStore::is_default_tree(tp)) {
-                return (new ForwardPatchTripleDeltaIterator<PatchTreeDeletionValue>(patchTree, tp, patch_id_end, dict_end))->offset(offset);
-            } else {
-                return (new ForwardPatchTripleDeltaIterator<PatchTreeDeletionValueReduced>(patchTree, tp, patch_id_end, dict_end))->offset(offset);
-            }
-        } else {
-            auto snap_diff = new AutoSnapshotDiffIterator(triple_pattern, snapshotManager, patchTreeManager, snapshot_id_start, snapshot_id_end);
-            bool is_spo = TripleStore::is_default_tree(tp);
-            TripleDeltaIterator* last_dc_dm;
-            if (is_spo) {
-                last_dc_dm = new ForwardPatchTripleDeltaIterator<PatchTreeDeletionValue>(patchTree, tp, patch_id_end, dict_end);
-            } else {
-                auto tmp_it = new ForwardPatchTripleDeltaIterator<PatchTreeDeletionValueReduced>(patchTree, tp, patch_id_end, dict_end);
-                last_dc_dm = new SortedTripleDeltaIterator(tmp_it, SPO);
-                delete tmp_it;
-            }
-            return (new MergeDiffIterator(snap_diff, last_dc_dm))->offset(offset);
-        }
+    auto snapshot_diff_it = new AutoSnapshotDiffIterator(triple_pattern, snapshotManager, patchTreeManager, snapshot_id_start, snapshot_id_end);
+    TripleDeltaIterator* delta_it_end = nullptr;
+    TripleDeltaIterator* intermediate_it = nullptr;
+
+    // start = snapshot and end = snapshot
+    if (patch_id_start == snapshot_id_start && patch_id_end == snapshot_id_end) {
+        return snapshot_diff_it->offset(offset);
+    }
+    // start = patch
+    if (patch_id_start != snapshot_id_start) {
+        TripleDeltaIterator* delta_it_start = single_delta_query(snapshot_id_start, patch_id_start, dict_start, true);
+        intermediate_it = new MergeDiffIteratorCase2(delta_it_start, snapshot_diff_it);
+    }
+    // end = patch
+    if (patch_id_end != snapshot_id_end) {
+        delta_it_end = single_delta_query(snapshot_id_end, patch_id_end, dict_end, true);
     }
 
-    // start = patch, end = snapshot
-    if(snapshot_id_start != patch_id_start && snapshot_id_end == patch_id_end) {
-        Triple tp = triple_pattern.get_as_triple(dict_start);
-        bool is_spo = TripleStore::is_default_tree(tp);
-        int patchtree_id_start = get_patch_tree_manager()->get_patch_tree_id(patch_id_start);
-        std::shared_ptr<PatchTree> patchTree = get_patch_tree_manager()->get_patch_tree(patch_id_start, dict_start);
-        TripleDeltaIterator* last_dc_dm;
-        if (is_spo) {
-            last_dc_dm = new ForwardPatchTripleDeltaIterator<PatchTreeDeletionValue>(patchTree, tp, patch_id_start, dict_start);
-        } else {
-            auto tmp_it = new ForwardPatchTripleDeltaIterator<PatchTreeDeletionValueReduced>(patchTree, tp, patch_id_start, dict_start);
-            last_dc_dm = new SortedTripleDeltaIterator(tmp_it, SPO);
-            delete tmp_it;
+    if (intermediate_it) {
+        if (patch_id_end != snapshot_id_end) {
+            return (new MergeDiffIterator(intermediate_it, delta_it_end))->offset(offset);
         }
-        auto snap_diff = new AutoSnapshotDiffIterator(triple_pattern, snapshotManager, patchTreeManager, snapshot_id_start, snapshot_id_end);
-        return (new MergeDiffIteratorCase2(last_dc_dm, snap_diff))->offset(offset);
+        return intermediate_it->offset(offset);
     }
-
-    // start = patch, end = patch
-    if(snapshot_id_start != patch_id_start && snapshot_id_end != patch_id_end) {
-        if (snapshot_id_start == snapshot_id_end) {
-            Triple tp = triple_pattern.get_as_triple(dict_end);
-            // Return diff between two patches relative to the same snapshot
-            int patchtree_id_end = get_patch_tree_manager()->get_patch_tree_id(patch_id_end);
-            std::shared_ptr<PatchTree> patchTree = get_patch_tree_manager()->get_patch_tree(patchtree_id_end, dict_end);
-            if(patchTree == nullptr) {
-                throw std::invalid_argument("Could not find the given end patch id");
-            }
-            if (TripleStore::is_default_tree(tp)) {
-                return (new FowardDiffPatchTripleDeltaIterator<PatchTreeDeletionValue>(patchTree, tp, patch_id_start, patch_id_end, dict_end))->offset(offset);
-            } else {
-                return (new FowardDiffPatchTripleDeltaIterator<PatchTreeDeletionValueReduced>(patchTree, tp, patch_id_start, patch_id_end, dict_end))->offset(offset);
-            }
-        } else {
-            Triple tp_start = triple_pattern.get_as_triple(dict_start);
-            Triple tp_end = triple_pattern.get_as_triple(dict_end);
-            bool is_spo = TripleStore::is_default_tree(tp_start);
-            int patchtree_id_start = get_patch_tree_manager()->get_patch_tree_id(patch_id_start);
-            int patchtree_id_end = get_patch_tree_manager()->get_patch_tree_id(patch_id_end);
-            std::shared_ptr<PatchTree> patchtree_start = get_patch_tree_manager()->get_patch_tree(patchtree_id_start, dict_start);
-            std::shared_ptr<PatchTree> patchtree_end = get_patch_tree_manager()->get_patch_tree(patchtree_id_end, dict_end);
-            TripleDeltaIterator* first_dc_dm;
-            TripleDeltaIterator* last_dc_dm;
-            if (is_spo) {
-                first_dc_dm = new ForwardPatchTripleDeltaIterator<PatchTreeDeletionValue>(patchtree_start, tp_start, patch_id_start, dict_start);
-                last_dc_dm = new ForwardPatchTripleDeltaIterator<PatchTreeDeletionValue>(patchtree_end, tp_end, patch_id_end, dict_end);
-            } else {
-                auto tmp_it = new ForwardPatchTripleDeltaIterator<PatchTreeDeletionValueReduced>(patchtree_start, tp_start, patch_id_start, dict_start);
-                first_dc_dm = new SortedTripleDeltaIterator(tmp_it, SPO);
-                delete tmp_it;
-                auto tmp_it2 = new ForwardPatchTripleDeltaIterator<PatchTreeDeletionValueReduced>(patchtree_end, tp_end, patch_id_end, dict_end);
-                last_dc_dm = new SortedTripleDeltaIterator(tmp_it2, SPO);
-                delete tmp_it2;
-            }
-            auto snap_diff = new AutoSnapshotDiffIterator(triple_pattern, snapshotManager, patchTreeManager, snapshot_id_start, snapshot_id_end);
-            TripleDeltaIterator* intermediate_diff = new MergeDiffIteratorCase2(first_dc_dm, snap_diff);
-            return (new MergeDiffIterator(intermediate_diff, last_dc_dm))->offset(offset);
-        }
-    }
-    return nullptr;
+    return (new MergeDiffIterator(snapshot_diff_it, delta_it_end))->offset(offset);
 }
 
 
