@@ -55,8 +55,8 @@ public:
      * @param offset A certain offset the iterator should start with.
      * @param patch_id The patch id for which triples should be returned.
      */
-    TripleVersionsIteratorCombined* get_version(const StringTriple &triple_pattern, int offset) const;
-    PatchTreeTripleVersionsIterator* get_version(const Triple &triple_pattern, int offset) const;
+    TripleVersionsIterator* get_version(const StringTriple &triple_pattern, int offset) const;
+    TripleVersionsIterator* get_version(const Triple &triple_pattern, int offset) const;
     std::pair<size_t, ResultEstimationType> get_version_count(const Triple& triple_pattern, bool allowEstimates = false) const;
     std::pair<size_t, ResultEstimationType> get_version_count(const StringTriple& triple_pattern, bool allowEstimates = false) const;
     size_t get_version_count_estimated(const Triple& triple_pattern) const;

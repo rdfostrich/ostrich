@@ -38,7 +38,7 @@ int main(int argc, char** argv) {
     std::pair<size_t, ResultEstimationType> count = controller.get_version_count(triple_pattern, true);
     cerr << "Count: " << count.first << (count.second == EXACT ? "" : " (estimate)") << endl;
 
-    TripleVersionsIteratorCombined* it = controller.get_version(triple_pattern, offset);
+    TripleVersionsIterator* it = controller.get_version(triple_pattern, offset);
     TripleVersions triple_versions;
     while (it->next(&triple_versions)) {
         std::stringstream vect;
