@@ -208,7 +208,7 @@ long long Evaluator::measure_lookup_version(Dictionary& dict, Triple triple_patt
     for (int i = 0; i < replications; i++) {
         int limit_l = limit;
         StopWatch st;
-        PatchTreeTripleVersionsIterator* ti = controller->get_version(triple_pattern, offset);
+        TripleVersionsIterator* ti = controller->get_version(triple_pattern, offset);
         TripleVersions t;
         while((limit_l == -2 || limit_l-- > 0) && ti->next(&t)) {
             t.get_triple()->get_subject(dict);
@@ -514,7 +514,7 @@ long long BearEvaluatorMS::measure_lookup_version(const StringTriple& triple_pat
     for (int i = 0; i < replications; i++) {
         int limit_l = limit;
         StopWatch st;
-        TripleVersionsIteratorCombined* ti = controller->get_version(triple_pattern, offset);
+        TripleVersionsIterator* ti = controller->get_version(triple_pattern, offset);
         TripleVersions t;
         while((limit_l == -2 || limit_l-- > 0) && ti->next(&t)) {
             t.get_triple()->get_subject();
