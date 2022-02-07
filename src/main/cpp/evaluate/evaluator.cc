@@ -326,8 +326,7 @@ void BearEvaluatorMS::test_lookup(string s, string p, string o, int replications
 //        for(int j = 0; j < i; j++) {
         for(int j = 0; j <= 1; j++) {
             int result_count1 = 0;
-//            long dcount = measure_count_delta_materialized(triple_pattern, j, i, replications);
-            long dcount = 0;
+            long dcount = measure_count_delta_materialized(triple_pattern, j, i, replications);
             long d1 = measure_lookup_delta_materialized(triple_pattern, offset, j, i, limit, replications, result_count1);
             cout << "" << j << "," << i << "," << offset << "," << limit << "," << dcount << "," << d1 << "," << result_count1 << endl;
         }
@@ -547,14 +546,14 @@ BearEvaluatorMS::measure_lookup_delta_materialized(const StringTriple &triple_pa
         int limit_l = limit;
         StopWatch st;
         TripleDeltaIterator *ti = controller->get_delta_materialized(triple_pattern, offset, patch_id_start,
-                                                                     patch_id_end);
+                                                                     patch_id_end, true);
         TripleDelta t;
         while ((limit_l == -2 || limit_l-- > 0) && ti->next(&t)) {
             t.get_triple()->get_subject(*(t.get_dictionary()));
             t.get_triple()->get_predicate(*(t.get_dictionary()));
             t.get_triple()->get_object(*(t.get_dictionary()));
             result_count++;
-        };
+        }
         delete ti;
         total += st.stopReal();
     }
