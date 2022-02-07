@@ -237,7 +237,7 @@ TripleDeltaIterator* Controller::get_delta_materialized(const Triple &triple_pat
 }
 
 TripleDeltaIterator* Controller::get_delta_materialized(const StringTriple &triple_pattern, int offset, int patch_id_start,
-                                                        int patch_id_end) const {
+                                                        int patch_id_end, bool use_plain_diff) const {
 
     auto single_delta_query = [this, triple_pattern](int start_id, int end_id, std::shared_ptr<DictionaryManager> dict, bool sort = false) {
         TripleDeltaIterator* return_it;
@@ -305,6 +305,13 @@ TripleDeltaIterator* Controller::get_delta_materialized(const StringTriple &trip
     if (patch_id_start == snapshot_id_start && patch_id_end == snapshot_id_end) {
         return snapshot_diff_it->offset(offset);
     }
+
+    if (use_plain_diff) {
+        TripleIterator* it1 = get_version_materialized(triple_pattern, 0, patch_id_start);
+        TripleIterator* it2 = get_version_materialized(triple_pattern, 0, patch_id_end);
+        return (new PlainDiffDeltaIterator(it1, it2, dict_start, dict_end))->offset(offset);
+    }
+
     // start = patch
     if (patch_id_start != snapshot_id_start) {
         TripleDeltaIterator* delta_it_start = single_delta_query(snapshot_id_start, patch_id_start, dict_start, true);
