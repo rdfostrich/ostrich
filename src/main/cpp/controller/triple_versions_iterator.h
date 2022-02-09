@@ -68,4 +68,17 @@ public:
     TripleVersionsIteratorMerged* offset(int offset) override;
 };
 
+
+class SortedTripleVersionsIterator: public TripleVersionsIterator {
+private:
+    TripleComparator* comparator;
+    std::vector<TripleVersions*> triples;
+public:
+    SortedTripleVersionsIterator(TripleVersionsIterator* iterator, TripleComparator* comparator);
+    ~SortedTripleVersionsIterator() override;
+    bool next(TripleVersions* triple_versions) override;
+    size_t get_count() override;
+    TripleVersionsIteratorMerged* offset(int offset) override;
+};
+
 #endif //TPFPATCH_STORE_TRIPLEVERSIONITERATOR_H

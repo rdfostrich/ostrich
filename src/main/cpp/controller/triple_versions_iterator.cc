@@ -157,12 +157,13 @@ TripleVersionsIteratorMerged::TripleVersionsIteratorMerged(TripleVersionsIterato
 }
 
 bool TripleVersionsIteratorMerged::next(TripleVersions *triple_versions) {
-    auto emit_triple = [=](const Triple* triple, const std::vector<int>* versions) {
-            triple_versions->get_triple()->set_subject(triple->get_subject());
-            triple_versions->get_triple()->set_predicate(triple->get_predicate());
-            triple_versions->get_triple()->set_object(triple->get_object());
-            triple_versions->get_versions()->clear();
-            triple_versions->get_versions()->insert(triple_versions->get_versions()->begin(), versions->cbegin(), versions->cend());
+    auto emit_triple = [=](const Triple* triple, const std::vector<int>* versions, std::shared_ptr<DictionaryManager> dict) {
+        triple_versions->get_triple()->set_subject(triple->get_subject());
+        triple_versions->get_triple()->set_predicate(triple->get_predicate());
+        triple_versions->get_triple()->set_object(triple->get_object());
+        triple_versions->get_versions()->clear();
+        triple_versions->get_versions()->insert(triple_versions->get_versions()->begin(), versions->cbegin(), versions->cend());
+        triple_versions->set_dictionary(dict);
     };
     auto merge_versions = [](const std::vector<int>* v1, const std::vector<int>* v2) {
         std::vector<int> v;
@@ -182,28 +183,28 @@ bool TripleVersionsIteratorMerged::next(TripleVersions *triple_versions) {
         return false;
     }
     if (status1 && !status2) {
-        emit_triple(t1->get_triple(), t1->get_versions());
+        emit_triple(t1->get_triple(), t1->get_versions(), t1->get_dictionary());
         status1 = it1->next(t1);
         return true;
     }
     if (!status1 && status2) {
-        emit_triple(t2->get_triple(), t2->get_versions());
+        emit_triple(t2->get_triple(), t2->get_versions(), t2->get_dictionary());
         status2 = it2->next(t2);
         return true;
     }
     int comp = comparator->compare(*(t1->get_triple()), *(t2->get_triple()));
     if (comp < 0) {
-        emit_triple(t1->get_triple(), t1->get_versions());
+        emit_triple(t1->get_triple(), t1->get_versions(), t1->get_dictionary());
         status1 = it1->next(t1);
         return true;
     }
     if (comp > 0) {
-        emit_triple(t2->get_triple(), t2->get_versions());
+        emit_triple(t2->get_triple(), t2->get_versions(), t2->get_dictionary());
         status2 = it2->next(t2);
         return true;
     }
     std::vector<int> v = merge_versions(t1->get_versions(), t2->get_versions());
-    emit_triple(t1->get_triple(), &v);
+    emit_triple(t1->get_triple(), &v, t1->get_dictionary());
     status1 = it1->next(t1);
     status2 = it2->next(t2);
     return true;
