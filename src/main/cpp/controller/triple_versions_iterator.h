@@ -73,12 +73,13 @@ class SortedTripleVersionsIterator: public TripleVersionsIterator {
 private:
     TripleComparator* comparator;
     std::vector<TripleVersions*> triples;
+    size_t pos;
 public:
-    SortedTripleVersionsIterator(TripleVersionsIterator* iterator, TripleComparator* comparator);
+    SortedTripleVersionsIterator(TripleVersionsIterator* iterator, TripleComponentOrder order);
     ~SortedTripleVersionsIterator() override;
     bool next(TripleVersions* triple_versions) override;
     size_t get_count() override;
-    TripleVersionsIteratorMerged* offset(int offset) override;
+    SortedTripleVersionsIterator* offset(int offset) override;
 };
 
 #endif //TPFPATCH_STORE_TRIPLEVERSIONITERATOR_H

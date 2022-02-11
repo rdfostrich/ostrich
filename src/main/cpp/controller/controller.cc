@@ -402,62 +402,70 @@ TripleVersionsIterator* Controller::get_version(const Triple &triple_pattern, in
     return get_version(st, offset);
 }
 
-//TripleVersionsIterator *Controller::get_version(const StringTriple &triple_pattern, int offset) const {
-//    std::vector<TripleVersionsIterator*> iterators;
-//    for (const auto& it: snapshotManager->get_snapshots()) {
-//        std::shared_ptr<DictionaryManager> dict = snapshotManager->get_dictionary_manager(it.first);
-//        Triple pattern = triple_pattern.get_as_triple(dict);
-//        std::shared_ptr<HDT> snapshot = snapshotManager->get_snapshot(it.first);
-//        IteratorTripleID* snapshot_it = SnapshotManager::search_with_offset(snapshot, pattern, 0);
-//        int patch_tree_id = patchTreeManager->get_patch_tree_id(it.first+1);
-//        std::shared_ptr<PatchTree> patchTree = patchTreeManager->get_patch_tree(patch_tree_id, dict);
-//
-//        iterators.push_back(new PatchTreeTripleVersionsIterator(pattern, snapshot_it, patchTree, it.first, dict));
-//    }
-//    auto it_version = new TripleVersionsIteratorCombined(SPO, iterators);
-//    for (auto it: iterators) delete it;
-//    return it_version->offset(offset);
-//}
-
 TripleVersionsIterator *Controller::get_version(const StringTriple &triple_pattern, int offset) const {
     std::vector<TripleVersionsIterator*> iterators;
-    for (const auto& snapshot_id: snapshotManager->get_snapshots()) {
-        std::shared_ptr<DictionaryManager> dict = snapshotManager->get_dictionary_manager(snapshot_id.first);
+    for (const auto& it: snapshotManager->get_snapshots()) {
+        std::shared_ptr<DictionaryManager> dict = snapshotManager->get_dictionary_manager(it.first);
         Triple pattern = triple_pattern.get_as_triple(dict);
-        bool is_spo = TripleStore::get_query_order(pattern) == SPO;
-        std::shared_ptr<HDT> snapshot = snapshotManager->get_snapshot(snapshot_id.first);
+        std::shared_ptr<HDT> snapshot = snapshotManager->get_snapshot(it.first);
         IteratorTripleID* snapshot_it = SnapshotManager::search_with_offset(snapshot, pattern, 0);
-        int patch_tree_id = patchTreeManager->get_patch_tree_id(snapshot_id.first + 1);
+        int patch_tree_id = patchTreeManager->get_patch_tree_id(it.first+1);
         std::shared_ptr<PatchTree> patchTree = patchTreeManager->get_patch_tree(patch_tree_id, dict);
-        auto it = new PatchTreeTripleVersionsIterator(pattern, snapshot_it, patchTree, snapshot_id.first, dict);
-        if (!is_spo) {
-        }
-        iterators.push_back(it);
+
+        iterators.push_back(new PatchTreeTripleVersionsIterator(pattern, snapshot_it, patchTree, it.first, dict));
     }
-    if (iterators.size() < 2) {
-        auto vit = iterators.begin();
-        return (*vit)->offset(offset);
-    }
-    auto it = iterators.end();
-    it--;
-    // First two iteration
-    TripleVersionsIterator* ite = (*it);
-    it--;
-    TripleVersionsIterator* itm = new TripleVersionsIteratorMerged((*it), ite, SPO);
-    if (it != iterators.begin()) {
-        it--;
-        // All intermediate iteration
-        while (it != iterators.begin()) {
-            TripleVersionsIterator* tmp = new TripleVersionsIteratorMerged((*it), itm, SPO);
-            itm = tmp;
-            it--;
-        }
-        // Last iteration
-        TripleVersionsIterator* tmp = new TripleVersionsIteratorMerged((*it), itm, SPO);
-        itm = tmp;
-    }
-    return itm->offset(offset);
+    auto it_version = new TripleVersionsIteratorCombined(SPO, iterators);
+    for (auto it: iterators) delete it;
+    return it_version->offset(offset);
 }
+
+//TripleVersionsIterator *Controller::get_version(const StringTriple &triple_pattern, int offset) const {
+//    std::vector<TripleVersionsIterator*> iterators;
+//    TripleComponentOrder order = TripleStore::get_query_order(triple_pattern);
+//    for (const auto& snapshot_id: snapshotManager->get_snapshots()) {
+//        std::shared_ptr<DictionaryManager> dict = snapshotManager->get_dictionary_manager(snapshot_id.first);
+//        Triple pattern = triple_pattern.get_as_triple(dict);
+//        std::shared_ptr<HDT> snapshot = snapshotManager->get_snapshot(snapshot_id.first);
+//        IteratorTripleID* snapshot_it = SnapshotManager::search_with_offset(snapshot, pattern, 0);
+//        int patch_tree_id = patchTreeManager->get_patch_tree_id(snapshot_id.first + 1);
+//        std::shared_ptr<PatchTree> patchTree = patchTreeManager->get_patch_tree(patch_tree_id, dict);
+//        auto it = new PatchTreeTripleVersionsIterator(pattern, snapshot_it, patchTree, snapshot_id.first, dict);
+//        iterators.push_back(it);
+//    }
+//    if (iterators.size() < 2) {
+//        auto vit = iterators.begin();
+//        return (*vit)->offset(offset);
+//    }
+//    // Here sort all iterators in SPO ?
+//    // ----------------------------
+//    // ----------------------------
+//    if (order != SPO) {
+//        order = SPO;
+//        for (auto& iterator : iterators) {
+//            auto it = new SortedTripleVersionsIterator(iterator, SPO);
+//            iterator = it;
+//        }
+//    }
+//    auto it = iterators.end();
+//    it--;
+//    // First two iteration
+//    TripleVersionsIterator* ite = (*it);
+//    it--;
+//    TripleVersionsIterator* itm = new TripleVersionsIteratorMerged((*it), ite, order);
+//    if (it != iterators.begin()) {
+//        it--;
+//        // All intermediate iteration
+//        while (it != iterators.begin()) {
+//            TripleVersionsIterator* tmp = new TripleVersionsIteratorMerged((*it), itm, order);
+//            itm = tmp;
+//            it--;
+//        }
+//        // Last iteration
+//        TripleVersionsIterator* tmp = new TripleVersionsIteratorMerged((*it), itm, order);
+//        itm = tmp;
+//    }
+//    return itm->offset(offset);
+//}
 
 bool Controller::append(PatchElementIterator* patch_it, int patch_id, std::shared_ptr<DictionaryManager> dict, bool check_uniqueness, ProgressListener* progressListener) {
     // Detect if we need to construct a new patchTree (when last patch triggered a new snapshot)

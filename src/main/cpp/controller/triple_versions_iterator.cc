@@ -168,6 +168,8 @@ bool TripleVersionsIteratorMerged::next(TripleVersions *triple_versions) {
     auto merge_versions = [](const std::vector<int>* v1, const std::vector<int>* v2) {
         std::vector<int> v;
         std::merge(v1->cbegin(), v1->cend(), v2->cbegin(), v2->cend(), std::back_inserter(v));
+        auto erase_it = std::unique(v.begin(), v.end());
+        v.erase(erase_it, v.end());
         return std::move(v);
     };
     if (!status1 && it1) {
@@ -228,5 +230,50 @@ size_t TripleVersionsIteratorMerged::get_count() {
 TripleVersionsIteratorMerged *TripleVersionsIteratorMerged::offset(int offset) {
     TripleVersions tv;
     while(offset-- > 0 && next(&tv));
+    return this;
+}
+
+
+SortedTripleVersionsIterator::SortedTripleVersionsIterator(TripleVersionsIterator *iterator,
+                                                           TripleComponentOrder order): comparator(TripleComparator::get_triple_comparator(order)), pos(0) {
+    TripleVersions tv;
+    while(iterator->next(&tv)) {
+        auto t = new Triple(tv.get_triple()->get_subject(), tv.get_triple()->get_predicate(), tv.get_triple()->get_object());
+        auto v = new std::vector<int>;
+        v->reserve(tv.get_versions()->size());
+        v->insert(v->begin(), tv.get_versions()->begin(), tv.get_versions()->end());
+        triples.push_back(new TripleVersions(t, v, tv.get_dictionary()));
+    }
+    std::sort(triples.begin(), triples.end(), *comparator);
+}
+
+SortedTripleVersionsIterator::~SortedTripleVersionsIterator() {
+    for (auto t: triples) {
+        delete t;
+    }
+    delete comparator;
+}
+
+bool SortedTripleVersionsIterator::next(TripleVersions *triple_versions) {
+    if (pos >= triples.size()) {
+        return false;
+    }
+    TripleVersions* t = triples[pos];
+    triple_versions->get_triple()->set_subject(t->get_triple()->get_subject());
+    triple_versions->get_triple()->set_predicate(t->get_triple()->get_predicate());
+    triple_versions->get_triple()->set_object(t->get_triple()->get_object());
+    triple_versions->get_versions()->clear();
+    triple_versions->get_versions()->insert(triple_versions->get_versions()->begin(), t->get_versions()->begin(), t->get_versions()->end());
+    triple_versions->set_dictionary(t->get_dictionary());
+    pos++;
+    return true;
+}
+
+size_t SortedTripleVersionsIterator::get_count() {
+    return triples.size();
+}
+
+SortedTripleVersionsIterator *SortedTripleVersionsIterator::offset(int offset) {
+    pos += offset;
     return this;
 }
