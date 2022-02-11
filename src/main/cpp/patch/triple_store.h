@@ -103,6 +103,14 @@ public:
         return SPO;
     }
 
+    static inline TripleComponentOrder get_query_order(const StringTriple& triple_pattern) {
+        size_t s = triple_pattern.get_subject().empty() ? 0 : 1;
+        size_t p = triple_pattern.get_predicate().empty() ? 0 : 1;
+        size_t o = triple_pattern.get_object().empty() ? 0 : 1;
+
+        return get_query_order(Triple(s, p, o));
+    }
+
 };
 
 #endif //TPFPATCH_STORE_TRIPLE_STORE_H
