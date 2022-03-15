@@ -4,6 +4,7 @@
 #include "../snapshot/combined_triple_iterator.h"
 #include "../simpleprogresslistener.h"
 #include <sys/stat.h>
+#include <numeric>
 
 #define BASEURI "<http://example.org>"
 
@@ -22,12 +23,14 @@ Controller::Controller(string basePath, SnapshotCreationStrategy *strategy, int8
 
     // Get the metadata for snapshot creation
     init_strategy_metadata();
+    open_metadata_database(basePath);
 }
 
 Controller::~Controller() {
     delete patchTreeManager;
     delete snapshotManager;
     delete metadata;
+    close_metadata_database();
 }
 
 size_t Controller::get_version_materialized_count_estimated(const Triple& triple_pattern, int patch_id) const {
@@ -297,6 +300,12 @@ TripleDeltaIterator* Controller::get_delta_materialized(const StringTriple &trip
         return (single_delta_query(patch_id_start, patch_id_end, dict_end))->offset(offset);
     }
 
+    if (use_plain_diff) {
+        TripleIterator* it1 = get_version_materialized(triple_pattern, 0, patch_id_start);
+        TripleIterator* it2 = get_version_materialized(triple_pattern, 0, patch_id_end);
+        return (new PlainDiffDeltaIterator(it1, it2, dict_start, dict_end))->offset(offset);
+    }
+
     auto snapshot_diff_it = new AutoSnapshotDiffIterator(triple_pattern, snapshotManager, patchTreeManager, snapshot_id_start, snapshot_id_end);
     TripleDeltaIterator* delta_it_end = nullptr;
     TripleDeltaIterator* intermediate_it = nullptr;
@@ -304,12 +313,6 @@ TripleDeltaIterator* Controller::get_delta_materialized(const StringTriple &trip
     // start = snapshot and end = snapshot
     if (patch_id_start == snapshot_id_start && patch_id_end == snapshot_id_end) {
         return snapshot_diff_it->offset(offset);
-    }
-
-    if (use_plain_diff) {
-        TripleIterator* it1 = get_version_materialized(triple_pattern, 0, patch_id_start);
-        TripleIterator* it2 = get_version_materialized(triple_pattern, 0, patch_id_end);
-        return (new PlainDiffDeltaIterator(it1, it2, dict_start, dict_end))->offset(offset);
     }
 
     // start = patch
@@ -473,16 +476,33 @@ bool Controller::append(PatchElementIterator* patch_it, int patch_id, std::share
     int patch_tree_id = patchTreeManager->get_patch_tree_id(patch_id);
     if (snapshot_id >= patch_tree_id) {
         patchTreeManager->construct_next_patch_tree(patch_id, dict);
+        patch_tree_id = patchTreeManager->get_patch_tree_id(patch_id);
     }
 
     // Ingest as a regular delta
+    auto istart = std::chrono::high_resolution_clock::now();
     bool status = patchTreeManager->append(patch_it, patch_id, dict, check_uniqueness, progressListener);
+    auto istop = std::chrono::high_resolution_clock::now();
+    auto iduration = std::chrono::duration_cast<std::chrono::nanoseconds>(istop - istart);
+    add_ingestion_time(snapshot_id, iduration.count());
+
+    std::shared_ptr<PatchTree> pt = patchTreeManager->get_patch_tree(patch_tree_id, dict);
+    Triple tp("", "", "", dict);
+
+    // Fill the metadata struct for strategy
+    metadata->patch_id = patch_id;
+    metadata->cur_delta_size = patch_it->getPassed();
+    metadata->cur_agg_delta_size = pt->addition_count(patch_id, tp) + pt->deletion_count(tp, patch_id).first;
+    add_delta_size(snapshot_id, patch_it->getPassed());
+    metadata->median_delta_size = get_median_delta_size(snapshot_id);
+    metadata->mean_delta_size = get_mean_delta_size(snapshot_id);
+    metadata->last_snapshot_size = get_version_materialized_count(tp, snapshot_id, true).first;
+    metadata->ingestion_times = get_ingestion_times(snapshot_id);
 
     // If we need to create a new snapshot:
     // - We do a VM query on the current patch_id
     // - We use the result of the query to make a new snapshot
     // - (optional) we delete the current patch_id in the patch_tree ?
-    metadata->patch_id = patch_id;
     bool create_snapshot = strategy != nullptr && strategy->doCreate(*metadata);
     if (create_snapshot) {
         NOTIFYMSG(progressListener, "\nCreating snapshot from patch...\n");
@@ -500,11 +520,10 @@ bool Controller::append(PatchElementIterator* patch_it, int patch_id, std::share
         snapshotManager->create_snapshot(patch_id, &vec_it, BASEURI, progressListener);
         std::cout.clear();
     }
-//    update_strategy_metadata();
     return status;
 }
 
-bool Controller::append(const PatchSorted& patch, int patch_id,std::shared_ptr<DictionaryManager> dict, bool check_uniqueness,
+bool Controller::append(const PatchSorted& patch, int patch_id, std::shared_ptr<DictionaryManager> dict, bool check_uniqueness,
                         ProgressListener *progressListener) {
     PatchElementIteratorVector* it = new PatchElementIteratorVector(&patch.get_vector());
     bool ret = append(it, patch_id, dict, check_uniqueness, progressListener);
@@ -529,7 +548,7 @@ std::shared_ptr<DictionaryManager> Controller::get_dictionary_manager(int patch_
     return get_snapshot_manager()->get_dictionary_manager(snapshot_id);
 }
 
-int Controller::get_max_patch_id() {
+int Controller::get_max_patch_id() const {
     int snapshot_id = get_snapshot_manager()->get_max_snapshot_id();
     get_snapshot_manager()->get_snapshot(snapshot_id); // Make sure our first snapshot is loaded, otherwise KC might get intro trouble while reorganising since it needs the dict for that.
     int max_patch_id = get_patch_tree_manager()->get_max_patch_id(get_snapshot_manager()->get_dictionary_manager(snapshot_id));
@@ -588,6 +607,9 @@ void Controller::cleanup(string basePath, Controller* controller) {
     for(it2=patchMetadataToDelete.begin(); it2!=patchMetadataToDelete.end(); ++it2) {
         std::remove((basePath + METADATA_FILENAME_BASE(*it2)).c_str());
     }
+
+    // Delete strategy metadata database
+    std::remove((basePath + "ingestion_metadata.kch").c_str());
 }
 
 PatchBuilder* Controller::new_patch_bulk() {
@@ -633,7 +655,11 @@ bool Controller::ingest(const std::vector<std::pair<IteratorTripleString *, bool
     if (first) {
         NOTIFYMSG(progressListener, "\nCreating snapshot...\n");
         std::cout.setstate(std::ios_base::failbit); // Disable cout info from HDT
+        auto istart = std::chrono::high_resolution_clock::now();
         std::shared_ptr<HDT> hdt = snapshotManager->create_snapshot(patch_id, it_snapshot, BASEURI, progressListener);
+        auto istop = std::chrono::high_resolution_clock::now();
+        auto iduration = std::chrono::duration_cast<std::chrono::nanoseconds>(istop - istart);
+        add_ingestion_time(patch_id, iduration.count());
         std::cout.clear();
         added = hdt->getTriples()->getNumberOfElements();
         delete it_snapshot;
@@ -678,3 +704,96 @@ void Controller::update_strategy_metadata() {
 CreationStrategyMetadata *Controller::get_strategy_metadata() {
     return metadata;
 }
+
+bool Controller::open_metadata_database(const std::string& path) {
+    metadata_store = new kyotocabinet::HashDB;
+    bool status = metadata_store->open(path + "ingestion_metadata.kch", kyotocabinet::HashDB::OWRITER | kyotocabinet::HashDB::OCREATE);
+    return status;
+}
+
+bool Controller::close_metadata_database() {
+    bool status = metadata_store->close();
+    if (status) {
+        delete metadata_store;
+    }
+    return status;
+}
+
+std::vector<size_t> Controller::get_delta_sizes(int snapshot_id) {
+    std::string key = "patchtree_deltas_" + std::to_string(snapshot_id);
+    size_t vs;
+    char* val = metadata_store->get(key.c_str(), key.size(), &vs);
+    std::vector<size_t> sizes;
+    for(int i=0; i<vs; i+=sizeof(size_t)) {
+        size_t tmp;
+        std::memcpy(&tmp, val+i, sizeof(size_t));
+        sizes.push_back(tmp);
+    }
+    delete[] val;
+    return sizes;
+}
+
+void Controller::add_delta_size(int snapshot_id, size_t size) {
+    std::vector<size_t> current_sizes = get_delta_sizes(snapshot_id);
+    current_sizes.push_back(size);
+    size_t buffer_size = sizeof(size_t) * current_sizes.size();
+    char* s_buf = new char[buffer_size];
+    char* s_buf_p = s_buf;
+    for (size_t s: current_sizes) {
+        std::memcpy(s_buf_p, &s, sizeof(size_t));
+        s_buf_p += sizeof(size_t);
+    }
+    std::string key = "patchtree_deltas_" + std::to_string(snapshot_id);
+    bool status = metadata_store->set(key.c_str(), key.size(), s_buf, buffer_size);
+    delete[] s_buf;
+}
+
+size_t Controller::get_median_delta_size(int snapshot_id) {
+    std::vector<size_t> current_sizes = get_delta_sizes(snapshot_id);
+    bool is_even = current_sizes.size() % 2 == 0;
+    size_t middle = current_sizes.size() / 2;
+    std::nth_element(current_sizes.begin(), current_sizes.begin()+middle, current_sizes.end());
+    if (is_even) {
+        auto middle2 = std::max_element(current_sizes.begin(), current_sizes.begin()+middle);
+        return (current_sizes[middle] + *middle2)/2;
+    }
+    return current_sizes[middle];
+}
+
+size_t Controller::get_mean_delta_size(int snapshot_id) {
+    std::vector<size_t> current_sizes = get_delta_sizes(snapshot_id);
+    return std::accumulate(current_sizes.begin(), current_sizes.end(), 0ULL) / current_sizes.size();
+}
+
+std::vector<uint64_t> Controller::get_ingestion_times(int snapshot_id) {
+    std::string key = "ingestion_times_" + std::to_string(snapshot_id);
+    size_t vs;
+    char* val = metadata_store->get(key.c_str(), key.size(), &vs);
+    std::vector<uint64_t> times;
+    for(int i=0; i<vs; i+=sizeof(uint64_t)) {
+        uint64_t tmp;
+        std::memcpy(&tmp, val+i, sizeof(uint64_t));
+        times.push_back(tmp);
+    }
+    delete[] val;
+    return times;
+}
+
+void Controller::add_ingestion_time(int snapshot_id, uint64_t time) {
+    std::vector<uint64_t> current_times = get_ingestion_times(snapshot_id);
+    current_times.push_back(time);
+    size_t buffer_size = sizeof(uint64_t) * current_times.size();
+    char* t_buf = new char[buffer_size];
+    char* t_buf_c = t_buf;
+    for (uint64_t t: current_times) {
+        std::memcpy(t_buf_c, &t, sizeof(uint64_t));
+        t_buf_c += sizeof(uint64_t);
+    }
+    std::string key = "ingestion_times_" + std::to_string(snapshot_id);
+    bool status = metadata_store->set(key.c_str(), key.size(), t_buf, buffer_size);
+    delete[] t_buf;
+}
+
+
+
+

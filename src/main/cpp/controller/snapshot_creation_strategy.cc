@@ -1,3 +1,4 @@
+#include <string>
 #include "snapshot_creation_strategy.h"
 
 
@@ -19,3 +20,45 @@ bool CreateSnapshotEveryN::doCreate(const CreationStrategyMetadata &metadata) co
 CreateSnapshotEveryN::CreateSnapshotEveryN(unsigned step): step(step) {}
 
 CreateSnapshotEveryN::CreateSnapshotEveryN(): step(5) {}
+
+
+SizeCreationStrategy::SizeCreationStrategy(): threshold(10.0) {}
+
+SizeCreationStrategy::SizeCreationStrategy(double threshold): threshold(threshold) {}
+
+bool SizeCreationStrategy::doCreate(const CreationStrategyMetadata &metadata) const {
+    return ((double) metadata.cur_agg_delta_size / (double) metadata.mean_delta_size) > threshold;
+}
+
+
+TimeCreationStrategy::TimeCreationStrategy(): ratio(3.0) {}
+
+TimeCreationStrategy::TimeCreationStrategy(double ratio): ratio(ratio) {}
+
+bool TimeCreationStrategy::doCreate(const CreationStrategyMetadata &metadata) const {
+    if (metadata.ingestion_times.size() < 3) {
+        return false;
+    }
+    uint64_t last = metadata.ingestion_times[metadata.ingestion_times.size()-1];
+    uint64_t first = metadata.ingestion_times[1];  // time to ingest the first patch (snapshot ingestion is always much faster, so not really useful)
+    return ((double) last / (double) first) > ratio;
+}
+
+
+SnapshotCreationStrategy *SnapshotCreationStrategy::get_strategy(const std::string& strategy, const std::string& param) {
+    if (strategy == "interval") {
+        unsigned interval = std::stoul(param);
+        return new CreateSnapshotEveryN(interval);
+    }
+    if (strategy == "size") {
+        double threshold = std::stod(param);
+        return new SizeCreationStrategy(threshold);
+    }
+    if (strategy == "time") {
+        double ratio = std::stod(param);
+        return new TimeCreationStrategy(ratio);
+    }
+    return nullptr;
+}
+
+

@@ -74,9 +74,9 @@ void test_lookups_for_queries_ms(BearEvaluatorMS &evaluator, string queriesFileP
 int main(int argc, char *argv[]) {
     if (argc < 4 || argc > 8) {
         std::cerr << "Usage: " << argv[0] << " ingest|ingest-query|query " << std::endl;
-        std::cerr << "\tcmd \"ingest\": snapshot_interval path_to_patches start_index end_index" << std::endl;
+        std::cerr << "\tcmd \"ingest\": strategy strategy_parameter path_to_patches start_index end_index" << std::endl;
         std::cerr
-                << "\tcmd \"ingest-query\": snapshot_interval path_to_patches start_index end_index path_to_queries_file replications"
+                << "\tcmd \"ingest-query\": strategy strategy_parameter path_to_patches start_index end_index path_to_queries_file replications"
                 << std::endl;
         std::cerr << "\tcmd \"query\": path_to_queries_file replications" << std::endl;
         return 1;
@@ -86,18 +86,12 @@ int main(int argc, char *argv[]) {
     SimpleProgressListener* listener = nullptr;
 
     if (std::strcmp("ingest", argv[1]) == 0 || std::strcmp("ingest-query", argv[1]) == 0) {
-        SnapshotCreationStrategy *strategy = nullptr;
-        unsigned snapshot_interval = std::stoul(argv[2]);
-        if (snapshot_interval == 0) {
-            strategy = new NeverCreateSnapshot;
-        } else if (snapshot_interval == 1) {
-            strategy = new AlwaysCreateSnapshot;
-        } else {
-            strategy = new CreateSnapshotEveryN(snapshot_interval);
-        }
-        evaluator.init("./", argv[3], strategy, stoi(argv[4]), stoi(argv[5]), listener);
+        std::string strategy_type = argv[2];
+        std::string strategy_param = argv[3];
+        SnapshotCreationStrategy *strategy = SnapshotCreationStrategy::get_strategy(strategy_type, strategy_param);
+        evaluator.init("./", argv[4], strategy, stoi(argv[5]), stoi(argv[6]), listener);
         if (std::strcmp("ingest-query", argv[1]) == 0) {
-            test_lookups_for_queries_ms(evaluator, ((std::string) argv[6]), stoi(argv[7]));
+            test_lookups_for_queries_ms(evaluator, ((std::string) argv[7]), stoi(argv[8]));
         }
         delete strategy;
     } else if (std::strcmp("query", argv[1]) == 0) {

@@ -4,6 +4,7 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
+#include <atomic>
 #include "patch_element.h"
 
 class PatchElementIterator {
@@ -12,6 +13,7 @@ public:
     virtual ~PatchElementIterator() = 0;
     virtual bool next(PatchElement* element) = 0;
     virtual void goToStart() = 0;
+    virtual size_t getPassed() = 0;
 };
 
 class PatchElementIteratorTripleStrings : public PatchElementIterator {
@@ -19,37 +21,41 @@ protected:
     std::shared_ptr<DictionaryManager> dict;
     IteratorTripleString* it;
     bool additions;
+    size_t passed;
 public:
     PatchElementIteratorTripleStrings(std::shared_ptr<DictionaryManager> dict, IteratorTripleString* subIt, bool additions);
     ~PatchElementIteratorTripleStrings();
     bool next(PatchElement* element);
     void goToStart();
+    size_t getPassed() override;
 };
 
 class PatchElementIteratorCombined : public PatchElementIterator {
 protected:
     std::vector<PatchElementIterator*> iterators;
-    long passed;
+    size_t passed;
     PatchTreeKeyComparator comparator;
     std::vector<bool> iterators_buffer_valid;
     std::vector<PatchElement*> iterators_buffer;
 public:
     PatchElementIteratorCombined(PatchTreeKeyComparator comparator);
     ~PatchElementIteratorCombined();
-    bool next(PatchElement* element);
+    bool next(PatchElement* element) override;
     void appendIterator(PatchElementIterator* it);
-    long getPassed();
-    void goToStart();
+    size_t getPassed() override;
+    void goToStart() override;
 };
 
 class PatchElementIteratorVector : public PatchElementIterator {
 protected:
     const std::vector<PatchElement>* elements;
     std::vector<PatchElement>::const_iterator it;
+    size_t passed;
 public:
     PatchElementIteratorVector(const std::vector<PatchElement>* elements);
-    bool next(PatchElement* element);
-    void goToStart();
+    bool next(PatchElement* element) override;
+    void goToStart() override;
+    size_t getPassed() override;
 };
 
 class PatchElementIteratorBuffered : public PatchElementIterator {
@@ -64,13 +70,15 @@ protected:
     std::mutex lock_thread_fill;
     std::mutex lock_thread_nonempty;
     std::thread thread;
+    std::atomic<size_t> passed;
 protected:
     void fill_buffer();
 public:
     PatchElementIteratorBuffered(PatchElementIterator* it, unsigned long buffer_size);
-    ~PatchElementIteratorBuffered();
-    bool next(PatchElement* element);
-    void goToStart();
+    ~PatchElementIteratorBuffered() override;
+    bool next(PatchElement* element) override;
+    void goToStart() override;
+    size_t getPassed() override;
 };
 
 class IteratorTripleStringVector : public IteratorTripleString {
@@ -79,9 +87,9 @@ protected:
     std::vector<TripleString>::const_iterator it;
 public:
     IteratorTripleStringVector(const std::vector<TripleString>* elements);
-    bool hasNext();
-    TripleString *next();
-    void goToStart();
+    bool hasNext() override;
+    TripleString *next() override;
+    void goToStart() override;
 };
 
 #endif //TPFPATCH_STORE_PATCH_ELEMENT_ITERATOR_H
