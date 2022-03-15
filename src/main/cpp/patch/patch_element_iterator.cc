@@ -5,7 +5,7 @@ PatchElementIterator::PatchElementIterator() = default;
 PatchElementIterator::~PatchElementIterator() = default;
 
 PatchElementIteratorTripleStrings::PatchElementIteratorTripleStrings(std::shared_ptr<DictionaryManager> dict, IteratorTripleString* it, bool additions)
-        : dict(dict), it(it), additions(additions) {}
+        : dict(dict), it(it), additions(additions), passed(0) {}
 
 PatchElementIteratorTripleStrings::~PatchElementIteratorTripleStrings() {
     delete it;
@@ -17,6 +17,7 @@ bool PatchElementIteratorTripleStrings::next(PatchElement* element) {
         element->set_triple(
                 Triple(tripleString->getSubject(), tripleString->getPredicate(), tripleString->getObject(), dict));
         element->set_addition(additions);
+        passed++;
         return true;
     }
     return false;
@@ -24,6 +25,10 @@ bool PatchElementIteratorTripleStrings::next(PatchElement* element) {
 
 void PatchElementIteratorTripleStrings::goToStart() {
     it->goToStart();
+}
+
+size_t PatchElementIteratorTripleStrings::getPassed() {
+    return passed;
 }
 
 PatchElementIteratorCombined::PatchElementIteratorCombined(PatchTreeKeyComparator comparator) : iterators(), passed(0), comparator(comparator) {}
@@ -63,7 +68,7 @@ void PatchElementIteratorCombined::appendIterator(PatchElementIterator *it) {
     iterators_buffer_valid.push_back(false);
 }
 
-long PatchElementIteratorCombined::getPassed() {
+size_t PatchElementIteratorCombined::getPassed() {
     return passed;
 }
 
@@ -73,7 +78,7 @@ void PatchElementIteratorCombined::goToStart() {
     }
 }
 
-PatchElementIteratorVector::PatchElementIteratorVector(const std::vector<PatchElement>* elements) : elements(elements) {
+PatchElementIteratorVector::PatchElementIteratorVector(const std::vector<PatchElement>* elements) : elements(elements), passed(0) {
     goToStart();
 }
 
@@ -82,6 +87,7 @@ bool PatchElementIteratorVector::next(PatchElement* element) {
         element->set_triple(it->get_triple());
         element->set_addition(it->is_addition());
         it++;
+        passed++;
         return true;
     }
     return false;
@@ -91,8 +97,12 @@ void PatchElementIteratorVector::goToStart() {
     it = elements->begin();
 }
 
+size_t PatchElementIteratorVector::getPassed() {
+    return passed;
+}
+
 PatchElementIteratorBuffered::PatchElementIteratorBuffered(PatchElementIterator* it, unsigned long buffer_size)
-        : it(it), buffer_size(buffer_size), ended(false) {
+        : it(it), buffer_size(buffer_size), ended(false), passed(0) {
     thread = std::thread(std::bind(&PatchElementIteratorBuffered::fill_buffer, this));
     buffer_trigger_fill.notify_all();
 }
@@ -115,6 +125,7 @@ bool PatchElementIteratorBuffered::next(PatchElement* element) {
         if (!ended && buffer.size() < buffer_size / 2) {
             buffer_trigger_fill.notify_all();
         }
+        passed++;
         return true;
     }
     return false;
@@ -162,6 +173,10 @@ PatchElementIteratorBuffered::~PatchElementIteratorBuffered() {
     shutdown_thread = true;
     buffer_trigger_fill.notify_all(); // Because the fill-buffer thread could still be waiting! (avoids deadlock)
     thread.join();
+}
+
+size_t PatchElementIteratorBuffered::getPassed() {
+    return passed;
 }
 
 IteratorTripleStringVector::IteratorTripleStringVector(const std::vector<TripleString>* elements) : elements(elements) {

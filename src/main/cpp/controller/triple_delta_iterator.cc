@@ -421,13 +421,10 @@ AutoSnapshotDiffIterator::AutoSnapshotDiffIterator(const StringTriple &triple_pa
     auto hdt_it = s2->search(tp);
     size_t est = hdt_it->estimatedNumResults();
     delete hdt_it;
-    // TODO: refine the heuristic
-    bool use_iterative = distance <= 1; // || est > 1000;
-    if (use_iterative) {
-        internal_it = new IterativeSnapshotDiffIterator(triple_pattern, snapshot_manager, patch_tree_manager, snapshot_id_1, snapshot_id_2);
-    } else {
-        internal_it = new SnapshotDiffIterator(triple_pattern, snapshot_manager, snapshot_id_1, snapshot_id_2);
+    if (distance <= 1) {
+        // use precomputed deltas
     }
+    internal_it = new SnapshotDiffIterator(triple_pattern, snapshot_manager, snapshot_id_1, snapshot_id_2);
 }
 
 AutoSnapshotDiffIterator::~AutoSnapshotDiffIterator() {

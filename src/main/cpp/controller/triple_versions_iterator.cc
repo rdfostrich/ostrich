@@ -93,12 +93,12 @@ TripleVersionsIteratorCombined::TripleVersionsIteratorCombined(TripleComponentOr
     for (auto it: iterators) {
         TripleVersions t;
         while (it->next(&t)) {
-            Triple* tmp = new Triple;
+            auto* tmp = new Triple;
             tmp->set_subject(t.get_triple()->get_subject());
             tmp->set_predicate(t.get_triple()->get_predicate());
             tmp->set_object(t.get_triple()->get_object());
-            std::vector<int>* v = new std::vector<int>(*(t.get_versions()));
-            TripleVersions* tv = new TripleVersions(tmp, v, t.get_dictionary());
+            auto* v = new std::vector<int>(*(t.get_versions()));
+            auto* tv = new TripleVersions(tmp, v, t.get_dictionary());
             auto pos = triples.find(tv);
             if (pos != triples.end()) {
                 std::vector<int> nv;
@@ -163,8 +163,9 @@ bool TripleVersionsIteratorMerged::next(TripleVersions *triple_versions) {
         triple_versions->get_triple()->set_object(triple->get_object());
         triple_versions->get_versions()->clear();
         triple_versions->get_versions()->insert(triple_versions->get_versions()->begin(), versions->cbegin(), versions->cend());
-        triple_versions->set_dictionary(dict);
+        triple_versions->set_dictionary(std::move(dict));
     };
+
     auto merge_versions = [](const std::vector<int>* v1, const std::vector<int>* v2) {
         std::vector<int> v;
         std::merge(v1->cbegin(), v1->cend(), v2->cbegin(), v2->cend(), std::back_inserter(v));
@@ -172,11 +173,12 @@ bool TripleVersionsIteratorMerged::next(TripleVersions *triple_versions) {
         v.erase(erase_it, v.end());
         return std::move(v);
     };
-    if (!status1 && it1) {
+
+    if (!status1 && it1 != nullptr) {
         delete it1;
         it1 = nullptr;
     }
-    if (!status2 && it2) {
+    if (!status2 && it2 != nullptr) {
         delete it2;
         it2 = nullptr;
     }
@@ -223,13 +225,17 @@ TripleVersionsIteratorMerged::~TripleVersionsIteratorMerged() {
 size_t TripleVersionsIteratorMerged::get_count() {
     size_t count = 0;
     TripleVersions tv;
-    while (next(&tv)) count++;
+    while (next(&tv)) {
+        count++;
+    } 
     return count;
 }
 
 TripleVersionsIteratorMerged *TripleVersionsIteratorMerged::offset(int offset) {
     TripleVersions tv;
-    while(offset-- > 0 && next(&tv));
+    while(offset > 0 && next(&tv)) {
+        offset--;
+    }
     return this;
 }
 

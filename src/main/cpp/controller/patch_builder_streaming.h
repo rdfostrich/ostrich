@@ -64,6 +64,8 @@ public:
      * @return self
      */
     PatchBuilderStreaming* deletion(const TripleString& triple);
+
+    size_t getPassed() override;
 };
 
 

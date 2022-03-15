@@ -546,7 +546,7 @@ BearEvaluatorMS::measure_lookup_delta_materialized(const StringTriple &triple_pa
         int limit_l = limit;
         StopWatch st;
         TripleDeltaIterator *ti = controller->get_delta_materialized(triple_pattern, offset, patch_id_start,
-                                                                     patch_id_end, true);
+                                                                     patch_id_end, false);
         TripleDelta t;
         while ((limit_l == -2 || limit_l-- > 0) && ti->next(&t)) {
             t.get_triple()->get_subject(*(t.get_dictionary()));

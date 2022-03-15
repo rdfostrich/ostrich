@@ -15,7 +15,7 @@ using namespace std;
 
 int main(int argc, char** argv) {
     if (argc < 2) {
-        cerr << "ERROR: Insert command must be invoked as '[-v] [-s int] patch_id [+|- file_1.nt [file_2.nt [...]]]*' " << endl;
+        cerr << "ERROR: Insert command must be invoked as '[-v] [-s string int|float] patch_id [+|- file_1.nt [file_2.nt [...]]]*' " << endl;
         return 1;
     }
 
@@ -25,27 +25,18 @@ int main(int argc, char** argv) {
     param_offset += 1;
     ProgressListener* progressListener = verbose ? new SimpleProgressListener() : nullptr;
 
+    SnapshotCreationStrategy* strategy = nullptr;
     bool has_strat = std::string(argv[1 + param_offset]) == "-s";
-    unsigned strat_value = 0;
     if (has_strat) {
         param_offset += 1;
-        strat_value = std::stoul(argv[1 + param_offset]);
+        std::string strat_name = argv[1 + param_offset];
         param_offset += 1;
+        std::string strat_param = argv[1 + param_offset];
+        param_offset += 1;
+        strategy = SnapshotCreationStrategy::get_strategy(strat_name, strat_param);
     }
 
     // Load the store
-
-    // Should be moved into a strategy factory ?
-    SnapshotCreationStrategy* strategy = nullptr;
-    if (has_strat) {
-        if (strat_value == 0) {
-            strategy = new NeverCreateSnapshot;
-        } else if (strat_value == 1) {
-            strategy = new AlwaysCreateSnapshot;
-        } else {
-            strategy = new CreateSnapshotEveryN(strat_value);
-        }
-    }
 
     Controller controller("./", strategy, TreeDB::TCOMPRESS);
 

@@ -97,3 +97,7 @@ bool PatchBuilderStreaming::hasPrevious() {
 TripleString *PatchBuilderStreaming::previous() {
     throw std::invalid_argument("Previous not supported in streaming patch builder.");
 }
+
+size_t PatchBuilderStreaming::getPassed() {
+    return 0;
+}
