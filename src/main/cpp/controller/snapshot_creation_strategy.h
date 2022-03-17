@@ -3,14 +3,13 @@
 
 #include <vector>
 
+
 struct CreationStrategyMetadata {
-    int num_version = 0;
     int patch_id = 0;
-    size_t cur_delta_size = 0;
-    size_t cur_agg_delta_size = 0;
-    size_t median_delta_size = 0;
-    size_t mean_delta_size = 0;
+    std::vector<size_t> delta_sizes;
+    std::vector<size_t> agg_delta_sizes;
     size_t last_snapshot_size = 0;
+    size_t current_version_size = 0;
     std::vector<uint64_t> ingestion_times;
 };
 
@@ -59,12 +58,33 @@ public:
 };
 
 
+// Alternate size strategy where the ratio is computed between the size of the snapshot and the snapshot and the size of the aggregated delta
+class SizeCreationStrategy2: public SnapshotCreationStrategy {
+private:
+    double threshold;
+public:
+    SizeCreationStrategy2();
+    explicit SizeCreationStrategy2(double threshold);
+    bool doCreate(const CreationStrategyMetadata &metadata) const override;
+};
+
+
 class TimeCreationStrategy: public SnapshotCreationStrategy {
 private:
     double ratio;
 public:
     TimeCreationStrategy();
     explicit TimeCreationStrategy(double ratio);
+    bool doCreate(const CreationStrategyMetadata& metadata) const override;
+};
+
+
+class ChangeRatioCreationStrategy: public SnapshotCreationStrategy {
+private:
+    double threshold;
+public:
+    ChangeRatioCreationStrategy();
+    explicit ChangeRatioCreationStrategy(double threshold);
     bool doCreate(const CreationStrategyMetadata& metadata) const override;
 };
 
