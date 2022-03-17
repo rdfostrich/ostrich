@@ -147,21 +147,19 @@ public:
      */
     std::vector<size_t> get_delta_sizes(int snapshot_id);
     void add_delta_size(int snapshot_id, size_t size);
+
     /**
-     * Get the median size of the deltas in the patchtree after the given snapshot id
+     * Get the aggregated size of the deltas in the patchtree after the given snapshot id
      * @param snapshot_id the id of the reference snapshot
-     * @return the median size
+     * @return a vector containing the sizes
      */
-    size_t get_median_delta_size(int snapshot_id);
-    /**
-     * Get the mean size of the deltas in the patchtree after the given snapshot id
-     * @param snapshot_id the id of the reference snapshot
-     * @return the mean size
-     */
-    size_t get_mean_delta_size(int snapshot_id);
+    std::vector<size_t> get_agg_delta_sizes(int snapshot_id);
+    void add_agg_delta_size(int snapshot_id, size_t size);
 
     std::vector<uint64_t> get_ingestion_times(int snapshot_id);
     void add_ingestion_time(int snapshot_id, uint64_t time);
+
+
 
 };
 

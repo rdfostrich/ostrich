@@ -491,12 +491,14 @@ bool Controller::append(PatchElementIterator* patch_it, int patch_id, std::share
 
     // Fill the metadata struct for strategy
     metadata->patch_id = patch_id;
-    metadata->cur_delta_size = patch_it->getPassed();
-    metadata->cur_agg_delta_size = pt->addition_count(patch_id, tp) + pt->deletion_count(tp, patch_id).first;
     add_delta_size(snapshot_id, patch_it->getPassed());
-    metadata->median_delta_size = get_median_delta_size(snapshot_id);
-    metadata->mean_delta_size = get_mean_delta_size(snapshot_id);
+    size_t add_count = pt->addition_count(patch_id, tp);
+    size_t del_count = pt->deletion_count(tp, patch_id).first;
+    add_agg_delta_size(snapshot_id, add_count + del_count);
     metadata->last_snapshot_size = get_version_materialized_count(tp, snapshot_id, true).first;
+    metadata->delta_sizes = get_delta_sizes(snapshot_id);
+    metadata->agg_delta_sizes = get_agg_delta_sizes(snapshot_id);
+    metadata->current_version_size = metadata->last_snapshot_size - del_count + add_count;
     metadata->ingestion_times = get_ingestion_times(snapshot_id);
 
     // If we need to create a new snapshot:
@@ -679,7 +681,7 @@ bool Controller::ingest(const std::vector<std::pair<IteratorTripleString *, bool
 
 void Controller::init_strategy_metadata() {
     metadata = new CreationStrategyMetadata;
-    metadata->num_version = get_number_versions();
+//    metadata->num_version = get_number_versions();
     metadata->patch_id = -1;
 }
 
@@ -697,7 +699,7 @@ int Controller::get_number_versions() {
 }
 
 void Controller::update_strategy_metadata() {
-    metadata->num_version = get_number_versions();
+//    metadata->num_version = get_number_versions();
     metadata->patch_id = -1;
 }
 
@@ -748,23 +750,6 @@ void Controller::add_delta_size(int snapshot_id, size_t size) {
     delete[] s_buf;
 }
 
-size_t Controller::get_median_delta_size(int snapshot_id) {
-    std::vector<size_t> current_sizes = get_delta_sizes(snapshot_id);
-    bool is_even = current_sizes.size() % 2 == 0;
-    size_t middle = current_sizes.size() / 2;
-    std::nth_element(current_sizes.begin(), current_sizes.begin()+middle, current_sizes.end());
-    if (is_even) {
-        auto middle2 = std::max_element(current_sizes.begin(), current_sizes.begin()+middle);
-        return (current_sizes[middle] + *middle2)/2;
-    }
-    return current_sizes[middle];
-}
-
-size_t Controller::get_mean_delta_size(int snapshot_id) {
-    std::vector<size_t> current_sizes = get_delta_sizes(snapshot_id);
-    return std::accumulate(current_sizes.begin(), current_sizes.end(), 0ULL) / current_sizes.size();
-}
-
 std::vector<uint64_t> Controller::get_ingestion_times(int snapshot_id) {
     std::string key = "ingestion_times_" + std::to_string(snapshot_id);
     size_t vs;
@@ -792,6 +777,35 @@ void Controller::add_ingestion_time(int snapshot_id, uint64_t time) {
     std::string key = "ingestion_times_" + std::to_string(snapshot_id);
     bool status = metadata_store->set(key.c_str(), key.size(), t_buf, buffer_size);
     delete[] t_buf;
+}
+
+std::vector<size_t> Controller::get_agg_delta_sizes(int snapshot_id) {
+    std::string key = "patchtree_agg_deltas_" + std::to_string(snapshot_id);
+    size_t vs;
+    char* val = metadata_store->get(key.c_str(), key.size(), &vs);
+    std::vector<uint64_t> deltas;
+    for(int i=0; i<vs; i+=sizeof(uint64_t)) {
+        uint64_t tmp;
+        std::memcpy(&tmp, val+i, sizeof(uint64_t));
+        deltas.push_back(tmp);
+    }
+    delete[] val;
+    return deltas;
+}
+
+void Controller::add_agg_delta_size(int snapshot_id, size_t size) {
+    std::vector<size_t> current_deltas = get_agg_delta_sizes(snapshot_id);
+    current_deltas.push_back(size);
+    size_t buffer_size = sizeof(size_t) * current_deltas.size();
+    char* d_buf = new char[buffer_size];
+    char* d_buf_t = d_buf;
+    for (size_t t: current_deltas) {
+        std::memcpy(d_buf_t, &t, sizeof(size_t));
+        d_buf_t += sizeof(size_t);
+    }
+    std::string key = "patchtree_agg_deltas_" + std::to_string(snapshot_id);
+    bool status = metadata_store->set(key.c_str(), key.size(), d_buf, buffer_size);
+    delete[] d_buf;
 }
 
 
