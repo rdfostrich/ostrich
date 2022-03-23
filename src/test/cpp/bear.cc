@@ -88,7 +88,8 @@ int main(int argc, char *argv[]) {
     if (std::strcmp("ingest", argv[1]) == 0 || std::strcmp("ingest-query", argv[1]) == 0) {
         std::string strategy_type = argv[2];
         std::string strategy_param = argv[3];
-        SnapshotCreationStrategy *strategy = SnapshotCreationStrategy::get_strategy(strategy_type, strategy_param);
+        //SnapshotCreationStrategy *strategy = SnapshotCreationStrategy::get_strategy(strategy_type, strategy_param);
+        SnapshotCreationStrategy* strategy = SnapshotCreationStrategy::get_composite_strategy(strategy_type, strategy_param);
         evaluator.init("./", argv[4], strategy, stoi(argv[5]), stoi(argv[6]), listener);
         if (std::strcmp("ingest-query", argv[1]) == 0) {
             test_lookups_for_queries_ms(evaluator, ((std::string) argv[7]), stoi(argv[8]));

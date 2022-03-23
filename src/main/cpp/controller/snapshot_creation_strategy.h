@@ -11,6 +11,7 @@ struct CreationStrategyMetadata {
     size_t last_snapshot_size = 0;
     size_t current_version_size = 0;
     std::vector<uint64_t> ingestion_times;
+    std::vector<double> change_ratios;
 };
 
 
@@ -21,6 +22,8 @@ public:
     virtual ~SnapshotCreationStrategy() = default;
 
     static SnapshotCreationStrategy* get_strategy(const std::string& strategy, const std::string& param);
+    static void split_parameters(const std::string& str, const std::string& delimiter, std::vector<std::string>& tokens);
+    static SnapshotCreationStrategy* get_composite_strategy(const std::string& strategy_names, const std::string& strategy_params);
 };
 
 
@@ -38,6 +41,7 @@ public:
 };
 
 
+// Strategy creating new snapshots at periodic rate
 class CreateSnapshotEveryN: public SnapshotCreationStrategy {
 private:
     unsigned step;
@@ -48,6 +52,7 @@ public:
 };
 
 
+// Size strategy where the ratio is computed between the size of the aggregated delta and the size of the mean delta in the DC
 class SizeCreationStrategy: public SnapshotCreationStrategy {
 private:
     double threshold;
@@ -58,7 +63,7 @@ public:
 };
 
 
-// Alternate size strategy where the ratio is computed between the size of the snapshot and the snapshot and the size of the aggregated delta
+// Size strategy where the ratio is computed between the size of the snapshot and the size of the aggregated delta
 class SizeCreationStrategy2: public SnapshotCreationStrategy {
 private:
     double threshold;
@@ -69,6 +74,7 @@ public:
 };
 
 
+// Time strategy where the threshold is base on the increase between the ingestion of the first delta and the current delta
 class TimeCreationStrategy: public SnapshotCreationStrategy {
 private:
     double ratio;
@@ -79,12 +85,41 @@ public:
 };
 
 
+// Size strategy using the change ratio between the initial version of a DC and current version
 class ChangeRatioCreationStrategy: public SnapshotCreationStrategy {
 private:
     double threshold;
 public:
     ChangeRatioCreationStrategy();
     explicit ChangeRatioCreationStrategy(double threshold);
+    bool doCreate(const CreationStrategyMetadata& metadata) const override;
+};
+
+
+class CompositeSnapshotStrategy: public SnapshotCreationStrategy {
+public:
+    virtual void add_strategy(SnapshotCreationStrategy* strategy) = 0;
+    bool doCreate(const CreationStrategyMetadata& metadata) const override = 0;
+};
+
+class OR_CompositeSnapshotStrategy: public CompositeSnapshotStrategy {
+private:
+    std::vector<SnapshotCreationStrategy*> strategies;
+
+public:
+    ~OR_CompositeSnapshotStrategy() override;
+    void add_strategy(SnapshotCreationStrategy* strategy) override;
+    bool doCreate(const CreationStrategyMetadata& metadata) const override;
+};
+
+
+class AND_CompositeSnapshotStrategy: public CompositeSnapshotStrategy {
+private:
+    std::vector<SnapshotCreationStrategy*> strategies;
+
+public:
+    ~AND_CompositeSnapshotStrategy() override;
+    void add_strategy(SnapshotCreationStrategy* strategy) override;
     bool doCreate(const CreationStrategyMetadata& metadata) const override;
 };
 

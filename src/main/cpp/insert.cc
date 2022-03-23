@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
         param_offset += 1;
         std::string strat_param = argv[1 + param_offset];
         param_offset += 1;
-        strategy = SnapshotCreationStrategy::get_strategy(strat_name, strat_param);
+        strategy = SnapshotCreationStrategy::get_composite_strategy(strat_name, strat_param);
     }
 
     // Load the store

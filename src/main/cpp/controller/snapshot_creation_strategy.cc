@@ -60,6 +60,21 @@ bool SizeCreationStrategy2::doCreate(const CreationStrategyMetadata &metadata) c
 }
 
 
+void SnapshotCreationStrategy::split_parameters(const std::string& str, const std::string& delimiter, std::vector<std::string>& tokens) {
+    size_t prev = 0, pos = 0;
+    do {
+        pos = str.find(delimiter, prev);
+        if (pos == std::string::npos) {
+            pos = str.length();
+        }
+        std::string token = str.substr(prev, pos-prev);
+        if (!token.empty()) {
+            tokens.push_back(token);
+        }
+        prev = pos + delimiter.length();
+    } while (pos < str.length() && prev < str.length());
+}
+
 SnapshotCreationStrategy *SnapshotCreationStrategy::get_strategy(const std::string& strategy, const std::string& param) {
     if (strategy == "interval") {
         unsigned interval = std::stoul(param);
@@ -84,16 +99,78 @@ SnapshotCreationStrategy *SnapshotCreationStrategy::get_strategy(const std::stri
     return nullptr;
 }
 
+SnapshotCreationStrategy *SnapshotCreationStrategy::get_composite_strategy(const std::string &strategy_names,
+                                                                           const std::string &strategy_params) {
+    std::vector<std::string> op;
+    split_parameters(strategy_names, "_", op);
+    if (op.size() > 1) {
+        CompositeSnapshotStrategy* strat;
+        if (op[0] == "and") {
+            strat = new AND_CompositeSnapshotStrategy;
+        } else {
+            strat = new OR_CompositeSnapshotStrategy;
+        }
+        std::vector<std::string> s_names, parameters;
+        split_parameters(op[1], "-", s_names);
+        split_parameters(strategy_params, "-", parameters);
+        if (!s_names.empty() && !parameters.empty()) {
+            if (s_names.size() == parameters.size()) {
+                for (int i = 0; i < s_names.size(); i++) {
+                    strat->add_strategy(get_strategy(s_names[i], parameters[i]));
+                }
+                return strat;
+            }
+        }
+        delete strat;
+        return nullptr;
+    } else {
+        return get_strategy(strategy_names, strategy_params);
+    }
+}
+
 
 ChangeRatioCreationStrategy::ChangeRatioCreationStrategy(): threshold(5.0) {}
 
 ChangeRatioCreationStrategy::ChangeRatioCreationStrategy(double threshold): threshold(threshold) {}
 
 bool ChangeRatioCreationStrategy::doCreate(const CreationStrategyMetadata &metadata) const {
-    double current_agg_delta_size = metadata.agg_delta_sizes[metadata.agg_delta_sizes.size()-1];
-    double size_union = metadata.last_snapshot_size + metadata.current_version_size;
-    double cr = (current_agg_delta_size/size_union)*100;
+    double cr = metadata.change_ratios[metadata.change_ratios.size()-1] * 100;
     return cr > threshold;
 }
 
+
+OR_CompositeSnapshotStrategy::~OR_CompositeSnapshotStrategy() {
+    for (auto s: strategies)
+        delete s;
+}
+
+void OR_CompositeSnapshotStrategy::add_strategy(SnapshotCreationStrategy *strategy) {
+    strategies.push_back(strategy);
+}
+
+bool OR_CompositeSnapshotStrategy::doCreate(const CreationStrategyMetadata &metadata) const {
+    bool create = false;
+    for (auto s: strategies) {
+        create = create || s->doCreate(metadata);
+    }
+    return create;
+}
+
+
+AND_CompositeSnapshotStrategy::~AND_CompositeSnapshotStrategy() {
+    for (auto s: strategies)
+        delete s;
+}
+
+void AND_CompositeSnapshotStrategy::add_strategy(SnapshotCreationStrategy *strategy) {
+    strategies.push_back(strategy);
+}
+
+bool AND_CompositeSnapshotStrategy::doCreate(const CreationStrategyMetadata &metadata) const {
+    bool create = true;
+    for (auto s: strategies) {
+        create = create && s->doCreate(metadata);
+    }
+    return create;
+}
 
