@@ -23,14 +23,14 @@ Controller::Controller(string basePath, SnapshotCreationStrategy *strategy, int8
 
     // Get the metadata for snapshot creation
     init_strategy_metadata();
-    open_metadata_database(basePath);
+    metadata_manager = new MetadataManager(basePath);
 }
 
 Controller::~Controller() {
     delete patchTreeManager;
     delete snapshotManager;
     delete metadata;
-    close_metadata_database();
+    delete metadata_manager;
 }
 
 size_t Controller::get_version_materialized_count_estimated(const Triple& triple_pattern, int patch_id) const {
@@ -484,22 +484,23 @@ bool Controller::append(PatchElementIterator* patch_it, int patch_id, std::share
     bool status = patchTreeManager->append(patch_it, patch_id, dict, check_uniqueness, progressListener);
     auto istop = std::chrono::high_resolution_clock::now();
     auto iduration = std::chrono::duration_cast<std::chrono::nanoseconds>(istop - istart);
-    add_ingestion_time(snapshot_id, iduration.count());
+    metadata->ingestion_times = metadata_manager->store_uint64("ingest-time", snapshot_id, iduration.count());
 
     std::shared_ptr<PatchTree> pt = patchTreeManager->get_patch_tree(patch_tree_id, dict);
     Triple tp("", "", "", dict);
 
     // Fill the metadata struct for strategy
     metadata->patch_id = patch_id;
-    add_delta_size(snapshot_id, patch_it->getPassed());
+    metadata->delta_sizes = metadata_manager->store_uint64("delta-size", snapshot_id, patch_it->getPassed());
     size_t add_count = pt->addition_count(patch_id, tp);
     size_t del_count = pt->deletion_count(tp, patch_id).first;
-    add_agg_delta_size(snapshot_id, add_count + del_count);
+    metadata->agg_delta_sizes = metadata_manager->store_uint64("agg-delta-size", snapshot_id, add_count + del_count);
     metadata->last_snapshot_size = get_version_materialized_count(tp, snapshot_id, true).first;
-    metadata->delta_sizes = get_delta_sizes(snapshot_id);
-    metadata->agg_delta_sizes = get_agg_delta_sizes(snapshot_id);
     metadata->current_version_size = metadata->last_snapshot_size - del_count + add_count;
-    metadata->ingestion_times = get_ingestion_times(snapshot_id);
+    double ag = add_count + del_count;
+    double su = metadata->last_snapshot_size + ag;
+    double change_ratio = ag/su;
+    metadata->change_ratios = metadata_manager->store_double("change-ratio", snapshot_id, change_ratio);
 
     // If we need to create a new snapshot:
     // - We do a VM query on the current patch_id
@@ -507,6 +508,7 @@ bool Controller::append(PatchElementIterator* patch_it, int patch_id, std::share
     // - (optional) we delete the current patch_id in the patch_tree ?
     bool create_snapshot = strategy != nullptr && strategy->doCreate(*metadata);
     if (create_snapshot) {
+        std::cerr << "NEW SNAPSHOT" << std::endl;
         NOTIFYMSG(progressListener, "\nCreating snapshot from patch...\n");
         NOTIFYMSG(progressListener, "\nMaterializing version ...\n");
         TripleIterator* triples_vm = get_version_materialized(Triple("", "", "", dict), 0, patch_id);
@@ -661,7 +663,7 @@ bool Controller::ingest(const std::vector<std::pair<IteratorTripleString *, bool
         std::shared_ptr<HDT> hdt = snapshotManager->create_snapshot(patch_id, it_snapshot, BASEURI, progressListener);
         auto istop = std::chrono::high_resolution_clock::now();
         auto iduration = std::chrono::duration_cast<std::chrono::nanoseconds>(istop - istart);
-        add_ingestion_time(patch_id, iduration.count());
+        metadata_manager->store_uint64("ingest-time", patch_id, iduration.count());
         std::cout.clear();
         added = hdt->getTriples()->getNumberOfElements();
         delete it_snapshot;
@@ -706,108 +708,3 @@ void Controller::update_strategy_metadata() {
 CreationStrategyMetadata *Controller::get_strategy_metadata() {
     return metadata;
 }
-
-bool Controller::open_metadata_database(const std::string& path) {
-    metadata_store = new kyotocabinet::HashDB;
-    bool status = metadata_store->open(path + "ingestion_metadata.kch", kyotocabinet::HashDB::OWRITER | kyotocabinet::HashDB::OCREATE);
-    return status;
-}
-
-bool Controller::close_metadata_database() {
-    bool status = metadata_store->close();
-    if (status) {
-        delete metadata_store;
-    }
-    return status;
-}
-
-std::vector<size_t> Controller::get_delta_sizes(int snapshot_id) {
-    std::string key = "patchtree_deltas_" + std::to_string(snapshot_id);
-    size_t vs;
-    char* val = metadata_store->get(key.c_str(), key.size(), &vs);
-    std::vector<size_t> sizes;
-    for(int i=0; i<vs; i+=sizeof(size_t)) {
-        size_t tmp;
-        std::memcpy(&tmp, val+i, sizeof(size_t));
-        sizes.push_back(tmp);
-    }
-    delete[] val;
-    return sizes;
-}
-
-void Controller::add_delta_size(int snapshot_id, size_t size) {
-    std::vector<size_t> current_sizes = get_delta_sizes(snapshot_id);
-    current_sizes.push_back(size);
-    size_t buffer_size = sizeof(size_t) * current_sizes.size();
-    char* s_buf = new char[buffer_size];
-    char* s_buf_p = s_buf;
-    for (size_t s: current_sizes) {
-        std::memcpy(s_buf_p, &s, sizeof(size_t));
-        s_buf_p += sizeof(size_t);
-    }
-    std::string key = "patchtree_deltas_" + std::to_string(snapshot_id);
-    bool status = metadata_store->set(key.c_str(), key.size(), s_buf, buffer_size);
-    delete[] s_buf;
-}
-
-std::vector<uint64_t> Controller::get_ingestion_times(int snapshot_id) {
-    std::string key = "ingestion_times_" + std::to_string(snapshot_id);
-    size_t vs;
-    char* val = metadata_store->get(key.c_str(), key.size(), &vs);
-    std::vector<uint64_t> times;
-    for(int i=0; i<vs; i+=sizeof(uint64_t)) {
-        uint64_t tmp;
-        std::memcpy(&tmp, val+i, sizeof(uint64_t));
-        times.push_back(tmp);
-    }
-    delete[] val;
-    return times;
-}
-
-void Controller::add_ingestion_time(int snapshot_id, uint64_t time) {
-    std::vector<uint64_t> current_times = get_ingestion_times(snapshot_id);
-    current_times.push_back(time);
-    size_t buffer_size = sizeof(uint64_t) * current_times.size();
-    char* t_buf = new char[buffer_size];
-    char* t_buf_c = t_buf;
-    for (uint64_t t: current_times) {
-        std::memcpy(t_buf_c, &t, sizeof(uint64_t));
-        t_buf_c += sizeof(uint64_t);
-    }
-    std::string key = "ingestion_times_" + std::to_string(snapshot_id);
-    bool status = metadata_store->set(key.c_str(), key.size(), t_buf, buffer_size);
-    delete[] t_buf;
-}
-
-std::vector<size_t> Controller::get_agg_delta_sizes(int snapshot_id) {
-    std::string key = "patchtree_agg_deltas_" + std::to_string(snapshot_id);
-    size_t vs;
-    char* val = metadata_store->get(key.c_str(), key.size(), &vs);
-    std::vector<uint64_t> deltas;
-    for(int i=0; i<vs; i+=sizeof(uint64_t)) {
-        uint64_t tmp;
-        std::memcpy(&tmp, val+i, sizeof(uint64_t));
-        deltas.push_back(tmp);
-    }
-    delete[] val;
-    return deltas;
-}
-
-void Controller::add_agg_delta_size(int snapshot_id, size_t size) {
-    std::vector<size_t> current_deltas = get_agg_delta_sizes(snapshot_id);
-    current_deltas.push_back(size);
-    size_t buffer_size = sizeof(size_t) * current_deltas.size();
-    char* d_buf = new char[buffer_size];
-    char* d_buf_t = d_buf;
-    for (size_t t: current_deltas) {
-        std::memcpy(d_buf_t, &t, sizeof(size_t));
-        d_buf_t += sizeof(size_t);
-    }
-    std::string key = "patchtree_agg_deltas_" + std::to_string(snapshot_id);
-    bool status = metadata_store->set(key.c_str(), key.size(), d_buf, buffer_size);
-    delete[] d_buf;
-}
-
-
-
-

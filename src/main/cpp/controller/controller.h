@@ -9,6 +9,7 @@
 #include "triple_delta_iterator.h"
 #include "triple_versions_iterator.h"
 #include "snapshot_creation_strategy.h"
+#include "metadata_manager.h"
 
 
 class Controller {
@@ -18,7 +19,7 @@ private:
     SnapshotCreationStrategy* strategy;
     CreationStrategyMetadata* metadata;
 
-    kyotocabinet::HashDB* metadata_store;
+    MetadataManager* metadata_manager;
 
 public:
     explicit Controller(string basePath, int8_t kc_opts = 0, bool readonly = false, size_t cache_size = 4);
@@ -135,31 +136,6 @@ public:
     * @return if ingestion has succeeded
     */
     bool ingest(const std::vector<std::pair<IteratorTripleString*, bool>>& files, int patch_id, ProgressListener* progressListener = nullptr);
-
-    // Metadata and statistics
-    bool open_metadata_database(const std::string& path);
-    bool close_metadata_database();
-
-    /**
-     * Get the non-aggregated size of the deltas in the patchtree after the given snapshot id
-     * @param snapshot_id the id of the reference snapshot
-     * @return a vector containing the sizes
-     */
-    std::vector<size_t> get_delta_sizes(int snapshot_id);
-    void add_delta_size(int snapshot_id, size_t size);
-
-    /**
-     * Get the aggregated size of the deltas in the patchtree after the given snapshot id
-     * @param snapshot_id the id of the reference snapshot
-     * @return a vector containing the sizes
-     */
-    std::vector<size_t> get_agg_delta_sizes(int snapshot_id);
-    void add_agg_delta_size(int snapshot_id, size_t size);
-
-    std::vector<uint64_t> get_ingestion_times(int snapshot_id);
-    void add_ingestion_time(int snapshot_id, uint64_t time);
-
-
 
 };
 
