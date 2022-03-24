@@ -414,7 +414,6 @@ AutoSnapshotDiffIterator::AutoSnapshotDiffIterator(const StringTriple &triple_pa
     if (it1 == snapshots.end() || it2 == snapshots.end()) {
         throw std::runtime_error("could not find the snapshots to compute diff");
     }
-
     // Heuristic
     size_t distance = std::distance(it1, it2);
     TripleString tp(triple_pattern.get_subject(), triple_pattern.get_predicate(), triple_pattern.get_object());
@@ -422,7 +421,15 @@ AutoSnapshotDiffIterator::AutoSnapshotDiffIterator(const StringTriple &triple_pa
     size_t est = hdt_it->estimatedNumResults();
     delete hdt_it;
     if (distance <= 1) {
-        // use precomputed deltas
+        std::shared_ptr<DictionaryManager> dict = snapshot_manager->get_dictionary_manager(min_id);
+        Triple ttp = triple_pattern.get_as_triple(dict);
+        std::shared_ptr<PatchTree> patch_tree = patch_tree_manager->get_patch_tree(patch_tree_manager->get_patch_tree_id(max_id), dict);
+        if (TripleStore::is_default_tree(ttp)) {
+            internal_it = new FowardDiffPatchTripleDeltaIterator<PatchTreeDeletionValue>(patch_tree, ttp, min_id, max_id, dict);
+        } else {
+            TripleDeltaIterator* tmp_it = new FowardDiffPatchTripleDeltaIterator<PatchTreeDeletionValue>(patch_tree, ttp, min_id, max_id, dict);
+            internal_it = new SortedTripleDeltaIterator(tmp_it, SPO);
+        }
     }
     internal_it = new SnapshotDiffIterator(triple_pattern, snapshot_manager, snapshot_id_1, snapshot_id_2);
 }
