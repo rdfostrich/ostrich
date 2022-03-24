@@ -31,15 +31,15 @@ private:
 protected:
     void threaded_insert();
 public:
-    PatchBuilderStreaming(Controller* controller, int patch_id = -1, bool check_uniqueness = false, ProgressListener* progressListener = NULL);
-    ~PatchBuilderStreaming();
-    bool next(PatchElement* element);
-    void goToStart();
+    explicit PatchBuilderStreaming(Controller* controller, int patch_id = -1, bool check_uniqueness = false, ProgressListener* progressListener = NULL);
+    ~PatchBuilderStreaming() override;
+    bool next(PatchElement* element) override;
+    void goToStart() override;
 
-    bool hasNext();
-    TripleString *next();
-    bool hasPrevious();
-    TripleString *previous();
+    bool hasNext() override;
+    TripleString *next() override;
+    bool hasPrevious() override;
+    TripleString *previous() override;
     /**
      * Finish the stream
      * @param progressListener The progress listener

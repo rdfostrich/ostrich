@@ -24,9 +24,9 @@ protected:
     size_t passed;
 public:
     PatchElementIteratorTripleStrings(std::shared_ptr<DictionaryManager> dict, IteratorTripleString* subIt, bool additions);
-    ~PatchElementIteratorTripleStrings();
-    bool next(PatchElement* element);
-    void goToStart();
+    ~PatchElementIteratorTripleStrings() override;
+    bool next(PatchElement* element) override;
+    void goToStart() override;
     size_t getPassed() override;
 };
 
@@ -38,8 +38,8 @@ protected:
     std::vector<bool> iterators_buffer_valid;
     std::vector<PatchElement*> iterators_buffer;
 public:
-    PatchElementIteratorCombined(PatchTreeKeyComparator comparator);
-    ~PatchElementIteratorCombined();
+    explicit PatchElementIteratorCombined(PatchTreeKeyComparator comparator);
+    ~PatchElementIteratorCombined() override;
     bool next(PatchElement* element) override;
     void appendIterator(PatchElementIterator* it);
     size_t getPassed() override;
@@ -52,7 +52,7 @@ protected:
     std::vector<PatchElement>::const_iterator it;
     size_t passed;
 public:
-    PatchElementIteratorVector(const std::vector<PatchElement>* elements);
+    explicit PatchElementIteratorVector(const std::vector<PatchElement>* elements);
     bool next(PatchElement* element) override;
     void goToStart() override;
     size_t getPassed() override;
@@ -86,7 +86,7 @@ protected:
     const std::vector<TripleString>* elements;
     std::vector<TripleString>::const_iterator it;
 public:
-    IteratorTripleStringVector(const std::vector<TripleString>* elements);
+    explicit IteratorTripleStringVector(const std::vector<TripleString>* elements);
     bool hasNext() override;
     TripleString *next() override;
     void goToStart() override;
