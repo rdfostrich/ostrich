@@ -96,6 +96,10 @@ SnapshotCreationStrategy *SnapshotCreationStrategy::get_strategy(const std::stri
         double threshold = std::stod(param);
         return new ChangeRatioCreationStrategy(threshold);
     }
+    if (strategy == "aggchange") {
+        double threshold = std::stod(param);
+        return new AggregatedChangeRatioStrategy(threshold);
+    }
     return nullptr;
 }
 
@@ -174,3 +178,12 @@ bool AND_CompositeSnapshotStrategy::doCreate(const CreationStrategyMetadata &met
     return create;
 }
 
+
+AggregatedChangeRatioStrategy::AggregatedChangeRatioStrategy(): threshold(50.0) {}
+
+AggregatedChangeRatioStrategy::AggregatedChangeRatioStrategy(double threshold): threshold(threshold) {}
+
+bool AggregatedChangeRatioStrategy::doCreate(const CreationStrategyMetadata &metadata) const {
+    double sum = std::accumulate(metadata.change_ratios.begin(), metadata.change_ratios.end(), 0.0);
+    return sum >= threshold;
+}

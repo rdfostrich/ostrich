@@ -4,7 +4,6 @@
 #include "../snapshot/combined_triple_iterator.h"
 #include "../simpleprogresslistener.h"
 #include <sys/stat.h>
-#include <numeric>
 
 #define BASEURI "<http://example.org>"
 
@@ -508,7 +507,6 @@ bool Controller::append(PatchElementIterator* patch_it, int patch_id, std::share
     // - (optional) we delete the current patch_id in the patch_tree ?
     bool create_snapshot = strategy != nullptr && strategy->doCreate(*metadata);
     if (create_snapshot) {
-        std::cerr << "NEW SNAPSHOT" << std::endl;
         NOTIFYMSG(progressListener, "\nCreating snapshot from patch...\n");
         NOTIFYMSG(progressListener, "\nMaterializing version ...\n");
         TripleIterator* triples_vm = get_version_materialized(Triple("", "", "", dict), 0, patch_id);
