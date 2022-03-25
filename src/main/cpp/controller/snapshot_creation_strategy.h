@@ -95,6 +95,15 @@ public:
     bool doCreate(const CreationStrategyMetadata& metadata) const override;
 };
 
+class AggregatedChangeRatioStrategy: public SnapshotCreationStrategy {
+private:
+    double threshold;
+public:
+    AggregatedChangeRatioStrategy();
+    explicit AggregatedChangeRatioStrategy(double threshold);
+    bool doCreate(const CreationStrategyMetadata& metadata) const override;
+};
+
 
 class CompositeSnapshotStrategy: public SnapshotCreationStrategy {
 public:
