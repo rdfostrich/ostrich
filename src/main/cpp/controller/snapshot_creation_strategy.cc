@@ -133,12 +133,12 @@ SnapshotCreationStrategy *SnapshotCreationStrategy::get_composite_strategy(const
 }
 
 
-ChangeRatioCreationStrategy::ChangeRatioCreationStrategy(): threshold(5.0) {}
+ChangeRatioCreationStrategy::ChangeRatioCreationStrategy(): threshold(0.05) {}
 
 ChangeRatioCreationStrategy::ChangeRatioCreationStrategy(double threshold): threshold(threshold) {}
 
 bool ChangeRatioCreationStrategy::doCreate(const CreationStrategyMetadata &metadata) const {
-    double cr = metadata.change_ratios[metadata.change_ratios.size()-1] * 100;
+    double cr = metadata.change_ratios[metadata.change_ratios.size()-1];
     return cr > threshold;
 }
 
@@ -179,7 +179,7 @@ bool AND_CompositeSnapshotStrategy::doCreate(const CreationStrategyMetadata &met
 }
 
 
-AggregatedChangeRatioStrategy::AggregatedChangeRatioStrategy(): threshold(50.0) {}
+AggregatedChangeRatioStrategy::AggregatedChangeRatioStrategy(): threshold(0.5) {}
 
 AggregatedChangeRatioStrategy::AggregatedChangeRatioStrategy(double threshold): threshold(threshold) {}
 
