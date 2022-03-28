@@ -100,6 +100,9 @@ SnapshotCreationStrategy *SnapshotCreationStrategy::get_strategy(const std::stri
         double threshold = std::stod(param);
         return new AggregatedChangeRatioStrategy(threshold);
     }
+    if (strategy == "never") {
+        return new NeverCreateSnapshot;
+    }
     return nullptr;
 }
 
