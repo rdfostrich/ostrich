@@ -188,14 +188,16 @@ std::pair<size_t, ResultEstimationType> Controller::get_delta_materialized_count
     if (allowEstimates) {
         int snapshot_id_start = get_snapshot_manager()->get_latest_snapshot(patch_id_start);
         int snapshot_id_end = get_snapshot_manager()->get_latest_snapshot(patch_id_end);
-        std::map<int, std::shared_ptr<HDT>> snapshots = snapshotManager->get_snapshots();
-        std::map<int, std::shared_ptr<PatchTree>> patch_trees = patchTreeManager->get_patch_trees();
-        auto it1 = snapshots.find(snapshot_id_start);
-        auto it2 = snapshots.find(snapshot_id_end);
-        std::vector<int> snapshots_ids = {it1->first};
-        while (it1 != it2) {
-            it1++;
+        std::vector<int> snapshots_ids;
+        {
+            std::map<int, std::shared_ptr<HDT>> snapshots = snapshotManager->get_snapshots();
+            auto it1 = snapshots.find(snapshot_id_start);
+            auto it2 = snapshots.find(snapshot_id_end);
             snapshots_ids.push_back(it1->first);
+            while (it1 != it2) {
+                it1++;
+                snapshots_ids.push_back(it1->first);
+            }
         }
         size_t count = 0;
         // the patch_id_start is a patch not a snapshot
@@ -406,68 +408,25 @@ TripleVersionsIterator* Controller::get_version(const Triple &triple_pattern, in
 
 TripleVersionsIterator *Controller::get_version(const StringTriple &triple_pattern, int offset) const {
     std::vector<TripleVersionsIterator*> iterators;
+    std::vector<int> snapshots_id;
     for (const auto& it: snapshotManager->get_snapshots()) {
-        std::shared_ptr<DictionaryManager> dict = snapshotManager->get_dictionary_manager(it.first);
+        snapshots_id.push_back(it.first);
+    }
+    for (int id: snapshots_id) {
+        std::shared_ptr<DictionaryManager> dict = snapshotManager->get_dictionary_manager(id);
         Triple pattern = triple_pattern.get_as_triple(dict);
-        std::shared_ptr<HDT> snapshot = snapshotManager->get_snapshot(it.first);
+        std::shared_ptr<HDT> snapshot = snapshotManager->get_snapshot(id);
         IteratorTripleID* snapshot_it = SnapshotManager::search_with_offset(snapshot, pattern, 0);
-        int patch_tree_id = patchTreeManager->get_patch_tree_id(it.first+1);
+        int patch_tree_id = patchTreeManager->get_patch_tree_id(id+1);
         std::shared_ptr<PatchTree> patchTree = patchTreeManager->get_patch_tree(patch_tree_id, dict);
 
-        iterators.push_back(new PatchTreeTripleVersionsIterator(pattern, snapshot_it, patchTree, it.first, dict));
+        iterators.push_back(new PatchTreeTripleVersionsIterator(pattern, snapshot_it, patchTree, id, dict));
     }
     auto it_version = new TripleVersionsIteratorCombined(SPO, iterators);
     for (auto it: iterators) delete it;
     return it_version->offset(offset);
 }
 
-//TripleVersionsIterator *Controller::get_version(const StringTriple &triple_pattern, int offset) const {
-//    std::vector<TripleVersionsIterator*> iterators;
-//    TripleComponentOrder order = TripleStore::get_query_order(triple_pattern);
-//    for (const auto& snapshot_id: snapshotManager->get_snapshots()) {
-//        std::shared_ptr<DictionaryManager> dict = snapshotManager->get_dictionary_manager(snapshot_id.first);
-//        Triple pattern = triple_pattern.get_as_triple(dict);
-//        std::shared_ptr<HDT> snapshot = snapshotManager->get_snapshot(snapshot_id.first);
-//        IteratorTripleID* snapshot_it = SnapshotManager::search_with_offset(snapshot, pattern, 0);
-//        int patch_tree_id = patchTreeManager->get_patch_tree_id(snapshot_id.first + 1);
-//        std::shared_ptr<PatchTree> patchTree = patchTreeManager->get_patch_tree(patch_tree_id, dict);
-//        auto it = new PatchTreeTripleVersionsIterator(pattern, snapshot_it, patchTree, snapshot_id.first, dict);
-//        iterators.push_back(it);
-//    }
-//    if (iterators.size() < 2) {
-//        auto vit = iterators.begin();
-//        return (*vit)->offset(offset);
-//    }
-//    // Here sort all iterators in SPO ?
-//    // ----------------------------
-//    // ----------------------------
-//    if (order != SPO) {
-//        order = SPO;
-//        for (auto& iterator : iterators) {
-//            auto it = new SortedTripleVersionsIterator(iterator, SPO);
-//            iterator = it;
-//        }
-//    }
-//    auto it = iterators.end();
-//    it--;
-//    // First two iteration
-//    TripleVersionsIterator* ite = (*it);
-//    it--;
-//    TripleVersionsIterator* itm = new TripleVersionsIteratorMerged((*it), ite, order);
-//    if (it != iterators.begin()) {
-//        it--;
-//        // All intermediate iteration
-//        while (it != iterators.begin()) {
-//            TripleVersionsIterator* tmp = new TripleVersionsIteratorMerged((*it), itm, order);
-//            itm = tmp;
-//            it--;
-//        }
-//        // Last iteration
-//        TripleVersionsIterator* tmp = new TripleVersionsIteratorMerged((*it), itm, order);
-//        itm = tmp;
-//    }
-//    return itm->offset(offset);
-//}
 
 bool Controller::append(PatchElementIterator* patch_it, int patch_id, std::shared_ptr<DictionaryManager> dict, bool check_uniqueness, ProgressListener* progressListener) {
     // Detect if we need to construct a new patchTree (when last patch triggered a new snapshot)

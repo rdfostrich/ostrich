@@ -295,7 +295,7 @@ void BearEvaluatorMS::init(string basePath, string patchesBasePatch, SnapshotCre
 }
 
 void BearEvaluatorMS::init_readonly(string basePath) {
-    controller = new Controller(basePath, TreeDB::TCOMPRESS, true, 128);
+    controller = new Controller(basePath, TreeDB::TCOMPRESS, true, 32);
     patch_count = controller->get_number_versions();
 
     auto itp = controller->get_patch_tree_manager()->get_patch_trees().cend();
