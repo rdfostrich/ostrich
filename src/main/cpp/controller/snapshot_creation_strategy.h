@@ -111,6 +111,7 @@ public:
     bool doCreate(const CreationStrategyMetadata& metadata) const override = 0;
 };
 
+
 class OR_CompositeSnapshotStrategy: public CompositeSnapshotStrategy {
 private:
     std::vector<SnapshotCreationStrategy*> strategies;
