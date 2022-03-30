@@ -1,6 +1,5 @@
 #include <string>
 #include <numeric>
-#include <iostream>
 #include "snapshot_creation_strategy.h"
 
 
@@ -143,7 +142,6 @@ ChangeRatioCreationStrategy::ChangeRatioCreationStrategy(double threshold): thre
 
 bool ChangeRatioCreationStrategy::doCreate(const CreationStrategyMetadata &metadata) const {
     double cr = metadata.change_ratios[metadata.change_ratios.size()-1];
-    std::cerr << cr << std::endl;
     return cr > threshold;
 }
 
@@ -190,6 +188,5 @@ AggregatedChangeRatioStrategy::AggregatedChangeRatioStrategy(double threshold): 
 
 bool AggregatedChangeRatioStrategy::doCreate(const CreationStrategyMetadata &metadata) const {
     double sum = std::accumulate(metadata.change_ratios.begin(), metadata.change_ratios.end(), 0.0);
-    std::cerr << sum << std::endl;
     return sum >= threshold;
 }

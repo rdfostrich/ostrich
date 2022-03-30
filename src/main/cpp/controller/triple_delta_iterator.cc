@@ -344,21 +344,24 @@ bool MergeDiffIteratorCase2::next(TripleDelta *triple) {
 IterativeSnapshotDiffIterator::IterativeSnapshotDiffIterator(const StringTriple& triple_pattern, SnapshotManager *snapshot_manager,
                                                              PatchTreeManager *patch_tree_manager, int snapshot_id_1,
                                                              int snapshot_id_2): internal_it(nullptr) {
-    std::map<int, std::shared_ptr<HDT>> snapshots = snapshot_manager->get_snapshots();
-    std::map<int, std::shared_ptr<PatchTree>> patch_trees = patch_tree_manager->get_patch_trees();
+
     int min_id = std::min(snapshot_id_1, snapshot_id_2);
     int max_id = std::max(snapshot_id_1, snapshot_id_2);
-    auto it1 = snapshots.find(min_id);
-    auto it2 = snapshots.find(max_id);
-    if (it1 == snapshots.end() || it2 == snapshots.end()) {
-        throw std::runtime_error("could not find the snapshots to compute diff");
-    }
     std::vector<int> snapshots_ids;
-    while (it1 != it2) {
+    {
+        std::map<int, std::shared_ptr<HDT>> snapshots = snapshot_manager->get_snapshots();
+        auto it1 = snapshots.find(min_id);
+        auto it2 = snapshots.find(max_id);
+        if (it1 == snapshots.end() || it2 == snapshots.end()) {
+            throw std::runtime_error("could not find the snapshots to compute diff");
+        }
+
+        while (it1 != it2) {
+            snapshots_ids.push_back(it1->first);
+            it1++;
+        }
         snapshots_ids.push_back(it1->first);
-        it1++;
     }
-    snapshots_ids.push_back(it1->first);
     TripleDeltaIterator* start_it = nullptr;
     MergeDiffIterator* it = nullptr;
     for (int i = 1; i < snapshots_ids.size(); i++) {
@@ -403,23 +406,20 @@ AutoSnapshotDiffIterator::AutoSnapshotDiffIterator(const StringTriple &triple_pa
                                                    SnapshotManager *snapshot_manager,
                                                    PatchTreeManager *patch_tree_manager, int snapshot_id_1,
                                                    int snapshot_id_2) {
-    std::map<int, std::shared_ptr<HDT>> snapshots = snapshot_manager->get_snapshots();
-    std::map<int, std::shared_ptr<PatchTree>> patch_trees = patch_tree_manager->get_patch_trees();
     int min_id = std::min(snapshot_id_1, snapshot_id_2);
     int max_id = std::max(snapshot_id_1, snapshot_id_2);
-    std::shared_ptr<HDT> s1 = snapshot_manager->get_snapshot(min_id);
-    std::shared_ptr<HDT> s2 = snapshot_manager->get_snapshot(max_id);
-    auto it1 = snapshots.find(min_id);
-    auto it2 = snapshots.find(max_id);
-    if (it1 == snapshots.end() || it2 == snapshots.end()) {
-        throw std::runtime_error("could not find the snapshots to compute diff");
+    size_t distance = 0;
+    {
+        std::map<int, std::shared_ptr<HDT>> snapshots = snapshot_manager->get_snapshots();
+        auto it1 = snapshots.find(min_id);
+        auto it2 = snapshots.find(max_id);
+        if (it1 == snapshots.end() || it2 == snapshots.end()) {
+            throw std::runtime_error("could not find the snapshots to compute diff");
+        }
+        // Heuristic
+        distance = std::distance(it1, it2);
     }
-    // Heuristic
-    size_t distance = std::distance(it1, it2);
     TripleString tp(triple_pattern.get_subject(), triple_pattern.get_predicate(), triple_pattern.get_object());
-    auto hdt_it = s2->search(tp);
-    size_t est = hdt_it->estimatedNumResults();
-    delete hdt_it;
     if (distance <= 1) {
         std::shared_ptr<DictionaryManager> dict = snapshot_manager->get_dictionary_manager(min_id);
         Triple ttp = triple_pattern.get_as_triple(dict);
