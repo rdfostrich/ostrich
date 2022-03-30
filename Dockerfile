@@ -38,7 +38,7 @@ COPY run-debug.sh /opt/ostrich/run-debug.sh
 # RUN cd /opt/ostrich/deps/hdt/hdt-lib && sed -i "s/#KYOTO_SUPPORT=true/KYOTO_SUPPORT=true/" Makefile
 
 RUN mkdir /opt/ostrich/build
-RUN cd /opt/ostrich/build && cmake .. -Wno-deprecated
+RUN cd /opt/ostrich/build && cmake -DCMAKE_BUILD_TYPE=Release .. -Wno-deprecated
 RUN cd /opt/ostrich/build && make
 
 WORKDIR /var/evalrun
