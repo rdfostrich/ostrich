@@ -407,11 +407,11 @@ TripleVersionsIterator* Controller::get_version(const Triple &triple_pattern, in
 }
 
 TripleVersionsIterator *Controller::get_version(const StringTriple &triple_pattern, int offset) const {
-    std::vector<TripleVersionsIterator*> iterators;
     std::vector<int> snapshots_id;
     for (const auto& it: snapshotManager->get_snapshots()) {
         snapshots_id.push_back(it.first);
     }
+    auto it_version = new TripleVersionsIteratorCombined(SPO);
     for (int id: snapshots_id) {
         std::shared_ptr<DictionaryManager> dict = snapshotManager->get_dictionary_manager(id);
         Triple pattern = triple_pattern.get_as_triple(dict);
@@ -419,11 +419,10 @@ TripleVersionsIterator *Controller::get_version(const StringTriple &triple_patte
         IteratorTripleID* snapshot_it = SnapshotManager::search_with_offset(snapshot, pattern, 0);
         int patch_tree_id = patchTreeManager->get_patch_tree_id(id+1);
         std::shared_ptr<PatchTree> patchTree = patchTreeManager->get_patch_tree(patch_tree_id, dict);
-
-        iterators.push_back(new PatchTreeTripleVersionsIterator(pattern, snapshot_it, patchTree, id, dict));
+        auto it = new PatchTreeTripleVersionsIterator(pattern, snapshot_it, patchTree, id, dict);
+        it_version->add_iterator(it);
+        delete it;
     }
-    auto it_version = new TripleVersionsIteratorCombined(SPO, iterators);
-    for (auto it: iterators) delete it;
     return it_version->offset(offset);
 }
 

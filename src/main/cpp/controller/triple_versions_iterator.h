@@ -42,8 +42,15 @@ private:
     std::set<TripleVersions*, TripleComparator>::iterator triples_it;
 
 public:
-    TripleVersionsIteratorCombined(TripleComponentOrder order, const std::vector<TripleVersionsIterator*>& iterators);
+    explicit TripleVersionsIteratorCombined(TripleComponentOrder order);
     ~TripleVersionsIteratorCombined() override;
+    /**
+     * Add an iterator
+     * reset the internal position of the TripleVersionsIteratorCombined
+     * consume all triples in the iterator
+     * @param it the iterator to add
+     */
+    void add_iterator(TripleVersionsIterator* it);
     bool next(TripleVersions* triple_versions) override;
     size_t get_count() override;
     TripleVersionsIteratorCombined* offset(int offset) override;
