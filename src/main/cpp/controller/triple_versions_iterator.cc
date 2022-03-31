@@ -89,32 +89,7 @@ PatchTreeTripleVersionsIterator* PatchTreeTripleVersionsIterator::offset(int off
 }
 
 
-TripleVersionsIteratorCombined::TripleVersionsIteratorCombined(TripleComponentOrder order, const std::vector<TripleVersionsIterator*>& iterators) : comparator(TripleComparator::get_triple_comparator(order)), triples(*comparator) {
-    for (auto it: iterators) {
-        TripleVersions t;
-        while (it->next(&t)) {
-            auto* tmp = new Triple;
-            tmp->set_subject(t.get_triple()->get_subject());
-            tmp->set_predicate(t.get_triple()->get_predicate());
-            tmp->set_object(t.get_triple()->get_object());
-            auto* v = new std::vector<int>(*(t.get_versions()));
-            auto* tv = new TripleVersions(tmp, v, t.get_dictionary());
-            auto pos = triples.find(tv);
-            if (pos != triples.end()) {
-                std::vector<int> nv;
-                nv.reserve(std::max((*pos)->get_versions()->size(), t.get_versions()->size()));
-                std::merge(t.get_versions()->begin(), t.get_versions()->end(), (*pos)->get_versions()->begin(), (*pos)->get_versions()->end(), std::back_inserter(nv));
-                auto erase_it = std::unique(nv.begin(), nv.end());
-                nv.erase(erase_it, nv.end());
-                (*pos)->get_versions()->clear();
-                (*pos)->get_versions()->insert((*pos)->get_versions()->begin(), nv.begin(), nv.end());
-            } else {
-                triples.insert(tv);
-            }
-        }
-    }
-    triples_it = triples.begin();
-}
+TripleVersionsIteratorCombined::TripleVersionsIteratorCombined(TripleComponentOrder order) : comparator(TripleComparator::get_triple_comparator(order)), triples(*comparator) {}
 
 bool TripleVersionsIteratorCombined::next(TripleVersions *triple_versions) {
     if (triples_it == triples.end())
@@ -146,6 +121,30 @@ TripleVersionsIteratorCombined::~TripleVersionsIteratorCombined() {
     delete comparator;
 }
 
+void TripleVersionsIteratorCombined::add_iterator(TripleVersionsIterator *it) {
+    TripleVersions t;
+    while (it->next(&t)) {
+        auto pos = triples.find(&t);
+        if (pos != triples.end()) {
+            std::vector<int> nv;
+            nv.reserve(std::max((*pos)->get_versions()->size(), t.get_versions()->size()));
+            std::merge(t.get_versions()->begin(), t.get_versions()->end(), (*pos)->get_versions()->begin(), (*pos)->get_versions()->end(), std::back_inserter(nv));
+            auto erase_it = std::unique(nv.begin(), nv.end());
+            nv.erase(erase_it, nv.end());
+            (*pos)->get_versions()->clear();
+            (*pos)->get_versions()->insert((*pos)->get_versions()->begin(), nv.begin(), nv.end());
+        } else {
+            auto* tmp = new Triple;
+            tmp->set_subject(t.get_triple()->get_subject());
+            tmp->set_predicate(t.get_triple()->get_predicate());
+            tmp->set_object(t.get_triple()->get_object());
+            auto* v = new std::vector<int>(*(t.get_versions()));
+            auto* tv = new TripleVersions(tmp, v, t.get_dictionary());
+            triples.insert(tv);
+        }
+    }
+    triples_it = triples.begin();
+}
 
 
 TripleVersionsIteratorMerged::TripleVersionsIteratorMerged(TripleVersionsIterator *iterator1,
