@@ -12,7 +12,7 @@
 using namespace std;
 using namespace kyotocabinet;
 
-vector<string> split(string data, string token) {
+vector<string> split(string data, const string& token) {
     vector<string> output;
     size_t pos = string::npos; // size_t to avoid improbable overflow
     do {
@@ -34,7 +34,7 @@ string remove_brackets(string element) {
     return element;
 }
 
-void test_lookups_for_queries(Evaluator &evaluator, string queriesFilePath, int replications) {
+void test_lookups_for_queries(Evaluator &evaluator, const string& queriesFilePath, int replications) {
     std::ifstream queriesFile(queriesFilePath);
     std::string line;
     cout << "---QUERIES START: " << queriesFilePath << "---" << endl;
@@ -45,14 +45,14 @@ void test_lookups_for_queries(Evaluator &evaluator, string queriesFilePath, int 
                 remove_brackets(line_split[1]),
                 remove_brackets(line_split[2]),
                 replications,
-                line_split.size() > 4 ? std::atoi(line_split[3].c_str()) : 0, // offset
-                line_split.size() > 4 ? std::atoi(line_split[4].c_str()) : -2 // limit
+                line_split.size() > 4 ? std::stoi(line_split[3]) : 0, // offset
+                line_split.size() > 4 ? std::stoi(line_split[4]) : -2 // limit
         );
     }
     cout << "---QUERIES END---" << endl;
 }
 
-void test_lookups_for_queries_ms(BearEvaluatorMS &evaluator, string queriesFilePath, int replications) {
+void test_lookups_for_queries_ms(BearEvaluatorMS &evaluator, const string& queriesFilePath, int replications) {
     std::ifstream queriesFile(queriesFilePath);
     std::string line;
     cout << "---QUERIES START: " << queriesFilePath << "---" << endl;
@@ -88,7 +88,6 @@ int main(int argc, char *argv[]) {
     if (std::strcmp("ingest", argv[1]) == 0 || std::strcmp("ingest-query", argv[1]) == 0) {
         std::string strategy_type = argv[2];
         std::string strategy_param = argv[3];
-        //SnapshotCreationStrategy *strategy = SnapshotCreationStrategy::get_strategy(strategy_type, strategy_param);
         SnapshotCreationStrategy* strategy = SnapshotCreationStrategy::get_composite_strategy(strategy_type, strategy_param);
         evaluator.init("./", argv[4], strategy, stoi(argv[5]), stoi(argv[6]), listener);
         if (std::strcmp("ingest-query", argv[1]) == 0) {
