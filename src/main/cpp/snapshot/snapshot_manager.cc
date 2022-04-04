@@ -109,8 +109,12 @@ const std::map<int, std::shared_ptr<HDT>>& SnapshotManager::detect_snapshots() {
     return loaded_snapshots;
 }
 
-const std::map<int, std::shared_ptr<HDT>>& SnapshotManager::get_snapshots() {
-    return this->loaded_snapshots;
+std::vector<int> SnapshotManager::get_snapshots_ids() const {
+    std::vector<int> ids;
+    for (const auto& kv: loaded_snapshots) {
+        ids.push_back(kv.first);
+    }
+    return ids;
 }
 
 IteratorTripleID* SnapshotManager::search_with_offset(std::shared_ptr<HDT> hdt, const Triple& triple_pattern, long offset) {
@@ -200,3 +204,4 @@ void SnapshotManager::update_cache_internal(int accessed_id, int iterations) {
 void SnapshotManager::set_cache_max_size(size_t new_size) {
     max_loaded_snapshots = std::max((size_t)2, new_size);
 }
+

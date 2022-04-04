@@ -189,15 +189,13 @@ std::pair<size_t, ResultEstimationType> Controller::get_delta_materialized_count
         int snapshot_id_start = get_snapshot_manager()->get_latest_snapshot(patch_id_start);
         int snapshot_id_end = get_snapshot_manager()->get_latest_snapshot(patch_id_end);
         std::vector<int> snapshots_ids;
-        {
-            std::map<int, std::shared_ptr<HDT>> snapshots = snapshotManager->get_snapshots();
-            auto it1 = snapshots.find(snapshot_id_start);
-            auto it2 = snapshots.find(snapshot_id_end);
-            snapshots_ids.push_back(it1->first);
-            while (it1 != it2) {
-                it1++;
-                snapshots_ids.push_back(it1->first);
-            }
+        std::vector<int> snapshots = snapshotManager->get_snapshots_ids();
+        auto it1 = std::find(snapshots.begin(), snapshots.end(), snapshot_id_start);
+        auto it2 = std::find(snapshots.begin(), snapshots.end(), snapshot_id_end);
+        snapshots_ids.push_back(*it1);
+        while (it1 != it2) {
+            it1++;
+            snapshots_ids.push_back(*it1);
         }
         size_t count = 0;
         // the patch_id_start is a patch not a snapshot
@@ -347,16 +345,16 @@ std::pair<size_t, ResultEstimationType> Controller::get_version_count(const Stri
     // This is due to triples being duplicated in multiple delta chains that can not be filtered out when only doing estimates.
     ResultEstimationType estimation_type_used = hdt::EXACT;
     size_t count = 0;
-    auto snapshots = snapshotManager->get_snapshots();
+    std::vector<int> snapshots = snapshotManager->get_snapshots_ids();
     if (!allowEstimates && snapshots.size() > 1) {
         TripleVersionsIterator* it = get_version(triple_pattern, 0);
         count = it->get_count();
         delete it;
     } else {
-        for (const auto& snapshot: snapshots) {
-            std::shared_ptr<DictionaryManager> dict = snapshotManager->get_dictionary_manager(snapshot.first);
+        for (int snapshot: snapshots) {
+            std::shared_ptr<DictionaryManager> dict = snapshotManager->get_dictionary_manager(snapshot);
             Triple pattern = triple_pattern.get_as_triple(dict);
-            std::shared_ptr<HDT> hdt = snapshotManager->get_snapshot(snapshot.first);  // by using get_snapshot, we make sure it's loaded before use
+            std::shared_ptr<HDT> hdt = snapshotManager->get_snapshot(snapshot);  // by using get_snapshot, we make sure it's loaded before use
             IteratorTripleID *snapshot_it = SnapshotManager::search_with_offset(hdt, pattern, 0);
             size_t c = snapshot_it->estimatedNumResults();
             ResultEstimationType tmp_est_type = snapshot_it->numResultEstimation();
@@ -374,12 +372,12 @@ std::pair<size_t, ResultEstimationType> Controller::get_version_count(const Stri
 
             // Count the additions for all versions
             // We get the ID of the next patch_tree (after the current snapshot)
-            int patch_tree_id = patchTreeManager->get_patch_tree_id(snapshot.first+1);;
+            int patch_tree_id = patchTreeManager->get_patch_tree_id(snapshot+1);;
             if (patch_tree_id > -1) {
                 std::shared_ptr<PatchTree> patchTree = patchTreeManager->get_patch_tree(patch_tree_id, dict);
                 if (patchTree != nullptr) {
                     if (allowEstimates) {
-                        count += patchTree->addition_count(snapshot.first, pattern);
+                        count += patchTree->addition_count(snapshot, pattern);
                     } else {
                         auto it = patchTree->addition_iterator(pattern);
                         Triple t;
@@ -407,10 +405,7 @@ TripleVersionsIterator* Controller::get_version(const Triple &triple_pattern, in
 }
 
 TripleVersionsIterator *Controller::get_version(const StringTriple &triple_pattern, int offset) const {
-    std::vector<int> snapshots_id;
-    for (const auto& it: snapshotManager->get_snapshots()) {
-        snapshots_id.push_back(it.first);
-    }
+    std::vector<int> snapshots_id = snapshotManager->get_snapshots_ids();
     auto it_version = new TripleVersionsIteratorCombined(SPO);
     for (int id: snapshots_id) {
         std::shared_ptr<DictionaryManager> dict = snapshotManager->get_dictionary_manager(id);
@@ -425,7 +420,6 @@ TripleVersionsIterator *Controller::get_version(const StringTriple &triple_patte
     }
     return it_version->offset(offset);
 }
-
 
 bool Controller::append(PatchElementIterator* patch_it, int patch_id, std::shared_ptr<DictionaryManager> dict, bool check_uniqueness, ProgressListener* progressListener) {
     // Detect if we need to construct a new patchTree (when last patch triggered a new snapshot)
@@ -520,11 +514,11 @@ int Controller::get_max_patch_id() const {
 
 void Controller::cleanup(string basePath, Controller* controller) {
     // Delete patch files
-    std::map<int, std::shared_ptr<PatchTree>> patches = controller->get_patch_tree_manager()->get_patch_trees();
+    std::vector<int> patches = controller->get_patch_tree_manager()->get_patch_trees_ids();
     auto itP = patches.begin();
     std::list<int> patchMetadataToDelete;
     while(itP != patches.end()) {
-        int id = itP->first;
+        int id = *itP;
         std::remove((basePath + PATCHTREE_FILENAME(id, "spo_deletions")).c_str());
         std::remove((basePath + PATCHTREE_FILENAME(id, "pos_deletions")).c_str());
         std::remove((basePath + PATCHTREE_FILENAME(id, "pso_deletions")).c_str());
@@ -542,11 +536,11 @@ void Controller::cleanup(string basePath, Controller* controller) {
     }
 
     // Delete snapshot files
-    std::map<int, std::shared_ptr<HDT>> snapshots = controller->get_snapshot_manager()->get_snapshots();
+    std::vector<int> snapshots = controller->get_snapshot_manager()->get_snapshots_ids();
     auto itS = snapshots.begin();
     std::list<int> patchDictsToDelete;
     while(itS != snapshots.end()) {
-        int id = itS->first;
+        int id = *itS;
         std::remove((basePath + SNAPSHOT_FILENAME_BASE(id)).c_str());
         std::remove((basePath + SNAPSHOT_FILENAME_BASE(id) + ".index.v1-1").c_str());
 

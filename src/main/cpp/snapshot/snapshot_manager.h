@@ -70,11 +70,13 @@ public:
      * @return The found patch trees
      */
     const std::map<int, std::shared_ptr<HDT>>& detect_snapshots();
+
     /**
-     * Get the internal snapshot mapping.
-     * @return The snapshots
+     * Get the ids of the available snapshots
+     * @return the ids
      */
-    const std::map<int,  std::shared_ptr<HDT>>& get_snapshots();
+    std::vector<int> get_snapshots_ids() const;
+
     /**
      * Search the given triple pattern in the given hdt file with a certain offset.
      * @param hdt A hdt file

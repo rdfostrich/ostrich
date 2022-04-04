@@ -25,11 +25,11 @@ protected:
     }
 
     virtual void TearDown() {
-        std::map<int, std::shared_ptr<HDT>> patches = snapshotManager->get_snapshots();
+        std::vector<int> patches = snapshotManager->get_snapshots_ids();
         auto it = patches.begin();
         std::list<int> patchDictsToDelete;
         while(it != patches.end()) {
-            int id = it->first;
+            int id = *it;
             std::remove((TESTPATH + SNAPSHOT_FILENAME_BASE(id)).c_str());
             std::remove((TESTPATH + SNAPSHOT_FILENAME_BASE(id) + ".index.v1-1").c_str());
             patchDictsToDelete.push_back(id);

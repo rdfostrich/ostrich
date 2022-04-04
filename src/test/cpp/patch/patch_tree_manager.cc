@@ -22,11 +22,11 @@ protected:
 
     virtual void TearDown() {
         // Delete patch files
-        std::map<int, std::shared_ptr<PatchTree>> patches = patchTreeManager->get_patch_trees();
+        std::vector<int> patches = patchTreeManager->get_patch_trees_ids();
         auto itP = patches.begin();
         std::list<int> patchMetadataToDelete;
         while(itP != patches.end()) {
-            int id = itP->first;
+            int id = *itP;
             std::remove((TESTPATH + PATCHTREE_FILENAME(id, "spo_deletions")).c_str());
             std::remove((TESTPATH + PATCHTREE_FILENAME(id, "pos_deletions")).c_str());
             std::remove((TESTPATH + PATCHTREE_FILENAME(id, "pso_deletions")).c_str());
