@@ -253,6 +253,7 @@ SortedTripleDeltaIterator::SortedTripleDeltaIterator(TripleDeltaIterator *iterat
         td = new TripleDelta;
     }
     delete td;
+    delete iterator;
     TripleComparator* comparator = TripleComparator::get_triple_comparator(order);
     if (!std::is_sorted(triples.begin(), triples.end(), *comparator))
         std::sort(triples.begin(), triples.end(), *comparator);
@@ -348,20 +349,18 @@ IterativeSnapshotDiffIterator::IterativeSnapshotDiffIterator(const StringTriple&
     int min_id = std::min(snapshot_id_1, snapshot_id_2);
     int max_id = std::max(snapshot_id_1, snapshot_id_2);
     std::vector<int> snapshots_ids;
-    {
-        std::map<int, std::shared_ptr<HDT>> snapshots = snapshot_manager->get_snapshots();
-        auto it1 = snapshots.find(min_id);
-        auto it2 = snapshots.find(max_id);
-        if (it1 == snapshots.end() || it2 == snapshots.end()) {
-            throw std::runtime_error("could not find the snapshots to compute diff");
-        }
-
-        while (it1 != it2) {
-            snapshots_ids.push_back(it1->first);
-            it1++;
-        }
-        snapshots_ids.push_back(it1->first);
+    std::vector<int> snapshots = snapshot_manager->get_snapshots_ids();
+    auto it1 = std::find(snapshots.begin(), snapshots.end(), min_id);
+    auto it2 = std::find(snapshots.begin(), snapshots.end(), max_id);
+    if (it1 == snapshots.end() || it2 == snapshots.end()) {
+        throw std::runtime_error("could not find the snapshots to compute diff");
     }
+    while (it1 != it2) {
+        snapshots_ids.push_back(*it1);
+        it1++;
+    }
+    snapshots_ids.push_back(*it1);
+
     TripleDeltaIterator* start_it = nullptr;
     MergeDiffIterator* it = nullptr;
     for (int i = 1; i < snapshots_ids.size(); i++) {
@@ -408,30 +407,27 @@ AutoSnapshotDiffIterator::AutoSnapshotDiffIterator(const StringTriple &triple_pa
                                                    int snapshot_id_2) {
     int min_id = std::min(snapshot_id_1, snapshot_id_2);
     int max_id = std::max(snapshot_id_1, snapshot_id_2);
-    size_t distance = 0;
-    {
-        std::map<int, std::shared_ptr<HDT>> snapshots = snapshot_manager->get_snapshots();
-        auto it1 = snapshots.find(min_id);
-        auto it2 = snapshots.find(max_id);
-        if (it1 == snapshots.end() || it2 == snapshots.end()) {
-            throw std::runtime_error("could not find the snapshots to compute diff");
-        }
-        // Heuristic
-        distance = std::distance(it1, it2);
+    std::vector<int> snapshots = snapshot_manager->get_snapshots_ids();
+    auto it1 = std::find(snapshots.begin(), snapshots.end(), min_id);
+    auto it2 = std::find(snapshots.begin(), snapshots.end(), max_id);
+    if (it1 == snapshots.end() || it2 == snapshots.end()) {
+        throw std::runtime_error("could not find the snapshots to compute diff");
     }
+    size_t distance = std::distance(it1, it2);
     TripleString tp(triple_pattern.get_subject(), triple_pattern.get_predicate(), triple_pattern.get_object());
     if (distance <= 1) {
         std::shared_ptr<DictionaryManager> dict = snapshot_manager->get_dictionary_manager(min_id);
         Triple ttp = triple_pattern.get_as_triple(dict);
         std::shared_ptr<PatchTree> patch_tree = patch_tree_manager->get_patch_tree(patch_tree_manager->get_patch_tree_id(max_id), dict);
         if (TripleStore::is_default_tree(ttp)) {
-            internal_it = new FowardDiffPatchTripleDeltaIterator<PatchTreeDeletionValue>(patch_tree, ttp, min_id, max_id, dict);
+            internal_it = new ForwardPatchTripleDeltaIterator<PatchTreeDeletionValue>(patch_tree, ttp, max_id, dict);
         } else {
-            TripleDeltaIterator* tmp_it = new FowardDiffPatchTripleDeltaIterator<PatchTreeDeletionValue>(patch_tree, ttp, min_id, max_id, dict);
+            TripleDeltaIterator* tmp_it = new ForwardPatchTripleDeltaIterator<PatchTreeDeletionValueReduced>(patch_tree, ttp, max_id, dict);
             internal_it = new SortedTripleDeltaIterator(tmp_it, SPO);
         }
+    } else {
+        internal_it = new SnapshotDiffIterator(triple_pattern, snapshot_manager, snapshot_id_1, snapshot_id_2);
     }
-    internal_it = new SnapshotDiffIterator(triple_pattern, snapshot_manager, snapshot_id_1, snapshot_id_2);
 }
 
 AutoSnapshotDiffIterator::~AutoSnapshotDiffIterator() {

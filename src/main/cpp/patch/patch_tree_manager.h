@@ -51,11 +51,13 @@ public:
      */
     //std::map<int, PatchTree*> detect_patch_trees() const;
     const std::map<int, std::shared_ptr<PatchTree>>& detect_patch_trees();
+
     /**
-     * Get the internal patch tree mapping.
-     * @return The patch trees
+     * Get the ids of the patch trees
+     * @return a vector of ids
      */
-    const std::map<int, std::shared_ptr<PatchTree>>& get_patch_trees() const;
+    std::vector<int> get_patch_trees_ids() const;
+
     /**
      * Load the corresponding patch tree in memory.
      * @param patch_id_start The id of the patchtree to load, which is the id of the first patch in this tree.

@@ -101,10 +101,10 @@ void Evaluator::populate_controller_with_version(int patch_id, string path, Prog
 std::ifstream::pos_type Evaluator::patchstore_size(Controller* controller) {
     long size = 0;
 
-    std::map<int, std::shared_ptr<PatchTree>> patches = controller->get_patch_tree_manager()->get_patch_trees();
+    std::vector<int> patches = controller->get_patch_tree_manager()->get_patch_trees_ids();
     auto itP = patches.begin();
     while(itP != patches.end()) {
-        int id = itP->first;
+        int id = *itP;
         size += filesize(PATCHTREE_FILENAME(id, "spo_deletions"));
         size += filesize(PATCHTREE_FILENAME(id, "pos_deletions"));
         size += filesize(PATCHTREE_FILENAME(id, "pso_deletions"));
@@ -119,11 +119,11 @@ std::ifstream::pos_type Evaluator::patchstore_size(Controller* controller) {
         itP++;
     }
 
-    std::map<int, std::shared_ptr<HDT>> snapshots = controller->get_snapshot_manager()->get_snapshots();
+    std::vector<int> snapshots = controller->get_snapshot_manager()->get_snapshots_ids();
     controller->get_snapshot_manager()->get_dictionary_manager(0)->save();
     auto itS = snapshots.begin();
     while(itS != snapshots.end()) {
-        int id = itS->first;
+        int id = *itS;
         size += filesize(SNAPSHOT_FILENAME_BASE(id));
         size += filesize((SNAPSHOT_FILENAME_BASE(id) + ".index.v1.1"));
         size += filesize((PATCHDICT_FILENAME_BASE(id)));
@@ -298,12 +298,13 @@ void BearEvaluatorMS::init_readonly(string basePath) {
     controller = new Controller(basePath, TreeDB::TCOMPRESS, true, 32);
     patch_count = controller->get_number_versions();
 
-    auto itp = controller->get_patch_tree_manager()->get_patch_trees().cend();
+    std::vector<int> ids = controller->get_patch_tree_manager()->get_patch_trees_ids();
+    auto itp = ids.cend();
     itp--;
-    for (; itp != controller->get_patch_tree_manager()->get_patch_trees().cbegin(); itp--) {
-        int snapshot_id = controller->get_snapshot_manager()->get_latest_snapshot(itp->first);
+    for (; itp != ids.cbegin(); itp--) {
+        int snapshot_id = controller->get_snapshot_manager()->get_latest_snapshot(*itp);
         controller->get_snapshot_manager()->load_snapshot(snapshot_id);
-        controller->get_patch_tree_manager()->load_patch_tree(itp->first, controller->get_dictionary_manager(itp->first));
+        controller->get_patch_tree_manager()->load_patch_tree(*itp, controller->get_dictionary_manager(*itp));
     }
 }
 
@@ -420,10 +421,11 @@ void BearEvaluatorMS::populate_controller_with_version(int patch_id, string path
 std::ifstream::pos_type BearEvaluatorMS::patchstore_size(Controller *controller) {
     long size = 0;
 
-    std::map<int, std::shared_ptr<PatchTree>> patches = controller->get_patch_tree_manager()->get_patch_trees();
+    //std::map<int, std::shared_ptr<PatchTree>> patches = controller->get_patch_tree_manager()->get_patch_trees();
+    std::vector<int> patches = controller->get_patch_tree_manager()->get_patch_trees_ids();
     auto itP = patches.begin();
     while(itP != patches.end()) {
-        int id = itP->first;
+        int id = *itP;
         size += filesize(PATCHTREE_FILENAME(id, "spo_deletions"));
         size += filesize(PATCHTREE_FILENAME(id, "pos_deletions"));
         size += filesize(PATCHTREE_FILENAME(id, "pso_deletions"));
@@ -438,11 +440,11 @@ std::ifstream::pos_type BearEvaluatorMS::patchstore_size(Controller *controller)
         itP++;
     }
 
-    std::map<int, std::shared_ptr<HDT>> snapshots = controller->get_snapshot_manager()->get_snapshots();
+    std::vector<int> snapshots = controller->get_snapshot_manager()->get_snapshots_ids();
     auto itS = snapshots.begin();
     while(itS != snapshots.end()) {
-        controller->get_snapshot_manager()->get_dictionary_manager(itS->first)->save();
-        int id = itS->first;
+        controller->get_snapshot_manager()->get_dictionary_manager(*itS)->save();
+        int id = *itS;
         size += filesize(SNAPSHOT_FILENAME_BASE(id));
         size += filesize((SNAPSHOT_FILENAME_BASE(id) + ".index.v1.1"));
         size += filesize((PATCHDICT_FILENAME_BASE(id)));

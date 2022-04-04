@@ -56,8 +56,17 @@ const std::map<int, std::shared_ptr<PatchTree>>& PatchTreeManager::detect_patch_
     return loaded_patchtrees;
 }
 
-const std::map<int, std::shared_ptr<PatchTree>>& PatchTreeManager::get_patch_trees() const {
-    return this->loaded_patchtrees;
+//const std::map<int, std::shared_ptr<PatchTree>>& PatchTreeManager::get_patch_trees() const {
+//    return this->loaded_patchtrees;
+//}
+
+std::vector<int> PatchTreeManager::get_patch_trees_ids() const {
+    std::vector<int> ids;
+    ids.reserve(loaded_patchtrees.size());
+    for (const auto& kv: loaded_patchtrees) {
+        ids.push_back(kv.first);
+    }
+    return ids;
 }
 
 std::shared_ptr<PatchTree> PatchTreeManager::load_patch_tree(int patch_id_start, std::shared_ptr<DictionaryManager> dict) {

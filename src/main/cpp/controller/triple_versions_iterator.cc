@@ -119,6 +119,9 @@ TripleVersionsIteratorCombined *TripleVersionsIteratorCombined::offset(int offse
 
 TripleVersionsIteratorCombined::~TripleVersionsIteratorCombined() {
     delete comparator;
+    for (auto t: triples) {
+        delete t;
+    }
 }
 
 void TripleVersionsIteratorCombined::add_iterator(TripleVersionsIterator *it) {
