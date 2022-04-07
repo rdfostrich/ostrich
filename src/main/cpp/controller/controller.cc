@@ -90,7 +90,6 @@ TripleIterator* Controller::get_version_materialized(const StringTriple &triple_
     // Find the snapshot
     int snapshot_id = get_snapshot_manager()->get_latest_snapshot(patch_id);
     if(snapshot_id < 0) {
-        //throw std::invalid_argument("No snapshot was found for version " + std::to_string(patch_id));
         return new EmptyTripleIterator();
     }
     std::shared_ptr<HDT> snapshot = get_snapshot_manager()->get_snapshot(snapshot_id);
@@ -184,19 +183,12 @@ std::pair<size_t, ResultEstimationType> Controller::get_delta_materialized_count
     return get_delta_materialized_count(st, patch_id_start, patch_id_end, allowEstimates);
 }
 
+
 std::pair<size_t, ResultEstimationType> Controller::get_delta_materialized_count(const StringTriple &triple_pattern, int patch_id_start, int patch_id_end, bool allowEstimates) const {
     if (allowEstimates) {
-        int snapshot_id_start = get_snapshot_manager()->get_latest_snapshot(patch_id_start);
-        int snapshot_id_end = get_snapshot_manager()->get_latest_snapshot(patch_id_end);
-        std::vector<int> snapshots_ids;
-        std::vector<int> snapshots = snapshotManager->get_snapshots_ids();
-        auto it1 = std::find(snapshots.begin(), snapshots.end(), snapshot_id_start);
-        auto it2 = std::find(snapshots.begin(), snapshots.end(), snapshot_id_end);
-        snapshots_ids.push_back(*it1);
-        while (it1 != it2) {
-            it1++;
-            snapshots_ids.push_back(*it1);
-        }
+        int snapshot_id_start = snapshotManager->get_latest_snapshot(patch_id_start);
+        int snapshot_id_end = snapshotManager->get_latest_snapshot(patch_id_end);
+
         size_t count = 0;
         // the patch_id_start is a patch not a snapshot
         if (patch_id_start > snapshot_id_start) {
@@ -207,12 +199,18 @@ std::pair<size_t, ResultEstimationType> Controller::get_delta_materialized_count
             count += pt->deletion_count(tp, patch_id_start).first + pt->addition_count(patch_id_start, tp);
         }
         // We count for intermediary delta chains
-        for (int i = 1; i < snapshots_ids.size(); i++) {
-            int id = patchTreeManager->get_patch_tree_id(snapshots_ids[i]);
-            std::shared_ptr<DictionaryManager> dict = snapshotManager->get_dictionary_manager(snapshots_ids[i-1]);
-            std::shared_ptr<PatchTree> pt = patchTreeManager->get_patch_tree(id, dict);
-            Triple tp = triple_pattern.get_as_triple(dict);
-            count += pt->deletion_count(tp, snapshots_ids[i]).first + pt->addition_count(snapshots_ids[i], tp);
+        if (snapshot_id_start != snapshot_id_end) {
+            Dictionary* d1 = snapshotManager->get_dictionary_manager(snapshot_id_start)->getHdtDict();
+            Triple t1 = triple_pattern.get_as_triple(snapshotManager->get_dictionary_manager(snapshot_id_start));
+            Triple t2 = triple_pattern.get_as_triple(snapshotManager->get_dictionary_manager(snapshot_id_end));
+            std::shared_ptr<HDT> snapshot_start = snapshotManager->get_snapshot(snapshot_id_start);
+            std::shared_ptr<HDT> snapshot_end = snapshotManager->get_snapshot(snapshot_id_end);
+            IteratorTripleID* it1 = SnapshotManager::search_with_offset(snapshot_start, t1, 0);
+            count += it1->estimatedNumResults();
+            IteratorTripleID* it2 = SnapshotManager::search_with_offset(snapshot_end, t2, 0);
+            count += it2->estimatedNumResults();
+            delete it1;
+            delete it2;
         }
         // the patch_id_end is a patch not a snapshot
         if (patch_id_end > snapshot_id_end) {
