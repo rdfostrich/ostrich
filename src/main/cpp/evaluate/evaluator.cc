@@ -294,18 +294,26 @@ void BearEvaluatorMS::init(string basePath, string patchesBasePatch, SnapshotCre
 //    cout << "---INSERTION END---" << endl;
 }
 
-void BearEvaluatorMS::init_readonly(string basePath) {
+void BearEvaluatorMS::init_readonly(string basePath, bool warmup) {
     controller = new Controller(basePath, TreeDB::TCOMPRESS, true, 32);
     patch_count = controller->get_number_versions();
 
-    std::vector<int> ids = controller->get_patch_tree_manager()->get_patch_trees_ids();
-    auto itp = ids.cend();
-    itp--;
-    for (; itp != ids.cbegin(); itp--) {
-        int snapshot_id = controller->get_snapshot_manager()->get_latest_snapshot(*itp);
-        controller->get_snapshot_manager()->load_snapshot(snapshot_id);
-        controller->get_patch_tree_manager()->load_patch_tree(*itp, controller->get_dictionary_manager(*itp));
+    if (warmup) {
+        StringTriple pattern("", "", "");
+        for (int i=0; i<patch_count; i++) {
+            int snapshot_id = controller->get_snapshot_manager()->get_latest_snapshot(i);
+            std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(snapshot_id);
+            TripleIterator* tmp_ti = controller->get_version_materialized(pattern, 0, i);
+            Triple t;
+            while (tmp_ti->next(&t)) {
+                t.get_subject(*dict);
+                t.get_predicate(*dict);
+                t.get_object(*dict);
+            }
+            delete tmp_ti;
+        }
     }
+
 }
 
 void BearEvaluatorMS::test_lookup(string s, string p, string o, int replications, int offset, int limit) {
