@@ -316,7 +316,8 @@ void BearEvaluatorMS::test_lookup(string s, string p, string o, int replications
     cout << "patch,offset,limit,count-ms,lookup-mus,results" << endl;
     for(int i = 0; i < patch_count; i++) {
         int result_count1 = 0;
-        long dcount = measure_count_version_materialized(triple_pattern, i, replications);
+        //long dcount = measure_count_version_materialized(triple_pattern, i, replications);
+        long dcount = 0;
         long d1 = measure_lookup_version_materialized(triple_pattern, offset, i, limit, replications, result_count1);
         cout << "" << i << "," << offset << "," << limit << "," << dcount << "," << d1 << "," << result_count1 << endl;
     }
@@ -336,7 +337,8 @@ void BearEvaluatorMS::test_lookup(string s, string p, string o, int replications
     cout << "--- ---VERSION" << endl;
     cout << "offset,limit,count-ms,lookup-mus,results" << endl;
     int result_count1 = 0;
-    long dcount = measure_count_version(triple_pattern, replications);
+    //long dcount = measure_count_version(triple_pattern, replications);
+    long dcount = 0;
     long d1 = measure_lookup_version(triple_pattern, offset, limit, replications, result_count1);
     cout << "" << offset << "," << limit << "," << dcount << "," << d1 << "," << result_count1 << endl;
 }
@@ -470,13 +472,23 @@ BearEvaluatorMS::measure_lookup_version_materialized(const StringTriple& triple_
     controller->get_snapshot_manager()->load_snapshot(snapshot_id);
     std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(snapshot_id);
 
+    // Warmup
+    TripleIterator* tmp_ti = controller->get_version_materialized(triple_pattern, offset, patch_id);
+    Triple t;
+    while (tmp_ti->next(&t)) {
+        t.get_subject(*dict);
+        t.get_predicate(*dict);
+        t.get_object(*dict);
+    }
+    delete tmp_ti;
+
+    // Query
     long long total = 0;
     for (int i = 0; i < replications; i++) {
         int limit_l = limit;
         StopWatch st;
         TripleIterator* ti = controller->get_version_materialized(triple_pattern, offset, patch_id);
         // Dummy loop over iterator
-        Triple t;
         while((limit_l == -2 || limit_l-- > 0) && ti->next(&t)) {
             t.get_subject(*dict);
             t.get_predicate(*dict);
@@ -511,12 +523,23 @@ BearEvaluatorMS::measure_count_version_materialized(const StringTriple& triple_p
 
 long long BearEvaluatorMS::measure_lookup_version(const StringTriple& triple_pattern, int offset, int limit, int replications,
                                                   int &result_count) {
+
+    // Warmup
+    TripleVersionsIterator* tmp_ti = controller->get_version(triple_pattern, offset);
+    TripleVersions t;
+    while(tmp_ti->next(&t)) {
+        t.get_triple()->get_subject();
+        t.get_triple()->get_predicate();
+        t.get_triple()->get_object();
+    }
+    delete tmp_ti;
+
+    // Query
     long long total = 0;
     for (int i = 0; i < replications; i++) {
         int limit_l = limit;
         StopWatch st;
         TripleVersionsIterator* ti = controller->get_version(triple_pattern, offset);
-        TripleVersions t;
         while((limit_l == -2 || limit_l-- > 0) && ti->next(&t)) {
             t.get_triple()->get_subject();
             t.get_triple()->get_predicate();
@@ -543,13 +566,24 @@ long long BearEvaluatorMS::measure_count_version(const StringTriple& triple_patt
 long long
 BearEvaluatorMS::measure_lookup_delta_materialized(const StringTriple &triple_pattern, int offset, int patch_id_start,
                                                    int patch_id_end, int limit, int replications, int &result_count) {
+
+    // Warmup
+    TripleDeltaIterator *tmp_ti = controller->get_delta_materialized(triple_pattern, offset, patch_id_start, patch_id_end, false);
+    TripleDelta t;
+    while(tmp_ti->next(&t)) {
+        t.get_triple()->get_subject(*(t.get_dictionary()));
+        t.get_triple()->get_predicate(*(t.get_dictionary()));
+        t.get_triple()->get_object(*(t.get_dictionary()));
+    }
+    delete tmp_ti;
+
+    // Query
     long long total = 0;
     for (int i = 0; i < replications; i++) {
         int limit_l = limit;
         StopWatch st;
         TripleDeltaIterator *ti = controller->get_delta_materialized(triple_pattern, offset, patch_id_start,
                                                                      patch_id_end, false);
-        TripleDelta t;
         while ((limit_l == -2 || limit_l-- > 0) && ti->next(&t)) {
             t.get_triple()->get_subject(*(t.get_dictionary()));
             t.get_triple()->get_predicate(*(t.get_dictionary()));
