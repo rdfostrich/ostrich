@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
         }
         delete strategy;
     } else if (std::strcmp("query", argv[1]) == 0) {
-        evaluator.init_readonly("./");
+        evaluator.init_readonly("./", false);
         test_lookups_for_queries_ms(evaluator, ((std::string) argv[2]), stoi(argv[3]));
     }
 
