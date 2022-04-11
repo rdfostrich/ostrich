@@ -281,7 +281,7 @@ void BearEvaluatorMS::init(string basePath, string patchesBasePatch, SnapshotCre
 //    cout << "---INSERTION START---" << endl;
 //    cout << "version,added,durationms,rate,accsize" << endl;
     DIR *dir;
-    if ((dir = opendir(patchesBasePatch.c_str())) != NULL) {
+    if ((dir = opendir(patchesBasePatch.c_str())) != nullptr) {
         for (int i = startIndex; i <= endIndex; i++) {
             string versionname = to_string(i);
             NOTIFYMSG(progressListener, ("Version " + versionname + "\n").c_str());
@@ -313,7 +313,6 @@ void BearEvaluatorMS::init_readonly(string basePath, bool warmup) {
             delete tmp_ti;
         }
     }
-
 }
 
 void BearEvaluatorMS::test_lookup(string s, string p, string o, int replications, int offset, int limit) {

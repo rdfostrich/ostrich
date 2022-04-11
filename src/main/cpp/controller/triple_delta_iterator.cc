@@ -159,42 +159,9 @@ SnapshotDiffIterator::~SnapshotDiffIterator() {
 
 
 MergeDiffIterator::MergeDiffIterator(TripleDeltaIterator *iterator_1, TripleDeltaIterator *iterator_2) : it1(iterator_1),
-        it2(iterator_2), triple1(new TripleDelta), triple2(new TripleDelta) {
+        it2(iterator_2), triple1(new TripleDelta), triple2(new TripleDelta), comparator(TripleComparator::get_triple_comparator(SPO)) {
     status1 = it1->next(triple1);
     status2 = it2->next(triple2);
-}
-
-int compare_triple_delta(TripleDelta *td1, TripleDelta *td2) {
-    size_t max_id = (size_t) -1;
-    size_t mask = 1ULL << (8 * sizeof(size_t) - 1);
-    bool is_same_dict = td1->get_dictionary() == td2->get_dictionary();
-    std::shared_ptr<DictionaryManager> dict1 = td1->get_dictionary() ? td1->get_dictionary() : td2->get_dictionary();
-    std::shared_ptr<DictionaryManager> dict2 = td2->get_dictionary() ? td2->get_dictionary() : td1->get_dictionary();
-    int s_comp;
-    if (is_same_dict && !(td1->get_triple()->get_subject() & mask) && !(td2->get_triple()->get_subject() & mask)) {
-        s_comp = dict1->compareComponent(td1->get_triple()->get_subject(), td2->get_triple()->get_subject(), SUBJECT);
-    } else {
-        s_comp = td1->get_triple()->get_subject(*dict1).compare(td2->get_triple()->get_subject(*dict2));
-    }
-    if (s_comp == 0) {
-        int p_comp;
-        if (is_same_dict && !(td1->get_triple()->get_predicate() & mask) && !(td2->get_triple()->get_predicate() & mask)) {
-            p_comp = dict1->compareComponent(td1->get_triple()->get_predicate(), td2->get_triple()->get_predicate(), PREDICATE);
-        } else {
-            p_comp = td1->get_triple()->get_predicate(*dict1).compare(td2->get_triple()->get_predicate(*dict2));
-        }
-        if (p_comp == 0) {
-            int o_comp;
-            if (is_same_dict && !(td1->get_triple()->get_object() & mask) && !(td2->get_triple()->get_object() & mask)) {
-                o_comp = dict1->compareComponent(td1->get_triple()->get_object(), td2->get_triple()->get_object(), OBJECT);
-            } else {
-                o_comp = td1->get_triple()->get_object(*dict1).compare(td2->get_triple()->get_object(*dict2));
-            }
-            return o_comp;
-        }
-        return p_comp;
-    }
-    return s_comp;
 }
 
 bool MergeDiffIterator::next(TripleDelta *triple) {
@@ -207,7 +174,7 @@ bool MergeDiffIterator::next(TripleDelta *triple) {
     };
 
     if (status1 && status2) {
-        int comp = compare_triple_delta(triple1, triple2);
+        int comp = comparator->compare(triple1, triple2);
         if (comp == 0) {  // It's the same triple (SPO)
             if (triple2->is_addition()) {
                 emit_triple(triple2, triple, true);
@@ -243,6 +210,7 @@ MergeDiffIterator::~MergeDiffIterator() {
     delete it2;
     delete triple1;
     delete triple2;
+    delete comparator;
 }
 
 
@@ -281,7 +249,7 @@ SortedTripleDeltaIterator::~SortedTripleDeltaIterator() {
 
 
 MergeDiffIteratorCase2::MergeDiffIteratorCase2(TripleDeltaIterator *iterator_1, TripleDeltaIterator *iterator_2):
-    it1(iterator_1), it2(iterator_2), triple1(new TripleDelta), triple2(new TripleDelta)
+    it1(iterator_1), it2(iterator_2), triple1(new TripleDelta), triple2(new TripleDelta), comparator(TripleComparator::get_triple_comparator(SPO))
 {
     status1 = it1->next(triple1);
     status2 = it2->next(triple2);
@@ -292,6 +260,7 @@ MergeDiffIteratorCase2::~MergeDiffIteratorCase2() {
     delete it2;
     delete triple1;
     delete triple2;
+    delete comparator;
 }
 
 bool MergeDiffIteratorCase2::next(TripleDelta *triple) {
@@ -304,7 +273,7 @@ bool MergeDiffIteratorCase2::next(TripleDelta *triple) {
     };
 
     if (status1 && status2) {
-        int comp = compare_triple_delta(triple1, triple2);
+        int comp = comparator->compare(triple1, triple2);
         if (comp == 0) {  // It's the same triple (SPO)
             if (triple1->is_addition() != triple2->is_addition()) {
                 emit_triple(triple2, triple, triple2->is_addition());
@@ -422,8 +391,7 @@ AutoSnapshotDiffIterator::AutoSnapshotDiffIterator(const StringTriple &triple_pa
         if (TripleStore::is_default_tree(ttp)) {
             internal_it = new ForwardPatchTripleDeltaIterator<PatchTreeDeletionValue>(patch_tree, ttp, max_id, dict);
         } else {
-            TripleDeltaIterator* tmp_it = new ForwardPatchTripleDeltaIterator<PatchTreeDeletionValueReduced>(patch_tree, ttp, max_id, dict);
-            internal_it = new SortedTripleDeltaIterator(tmp_it, SPO);
+            internal_it = new ForwardPatchTripleDeltaIterator<PatchTreeDeletionValueReduced>(patch_tree, ttp, max_id, dict);
         }
     } else {
         internal_it = new SnapshotDiffIterator(triple_pattern, snapshot_manager, snapshot_id_1, snapshot_id_2);

@@ -108,8 +108,6 @@ public:
 };
 
 
-int compare_triple_delta(TripleDelta *td1, TripleDelta *td2);
-
 // Assume that the input iterators are sorted
 class MergeDiffIterator: public TripleDeltaIterator {
 private:
@@ -119,6 +117,8 @@ private:
     bool status2;
     TripleDelta* triple1;
     TripleDelta* triple2;
+
+    TripleComparator* comparator;
 
 public:
     MergeDiffIterator(TripleDeltaIterator* iterator_1, TripleDeltaIterator* iterator_2);
@@ -138,6 +138,8 @@ private:
     TripleDelta* triple1;
     TripleDelta* triple2;
 
+    TripleComparator* comparator;
+
 public:
     MergeDiffIteratorCase2(TripleDeltaIterator* iterator_1, TripleDeltaIterator* iterator_2);
     ~MergeDiffIteratorCase2() override;
@@ -156,6 +158,7 @@ private:
     Triple* triple2;
     std::shared_ptr<DictionaryManager> dict1;
     std::shared_ptr<DictionaryManager> dict2;
+
     TripleComparator* comparator;
 
 public:
