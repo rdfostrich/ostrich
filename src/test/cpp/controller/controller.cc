@@ -1621,6 +1621,15 @@ TEST_F(ControllerMSTest, GetDeltaMaterializedOrderMS) {
             ->addition(TripleString("<a>", "<b>", "<h>"))
             ->commit();
 
+    controller->new_patch_bulk()
+            ->addition(TripleString("<n>", "<b>", "<a>"))
+            ->commit();
+
+    controller->new_patch_bulk()
+            ->addition(TripleString("<n>", "<b>", "<c>"))
+            ->addition(TripleString("<b>", "<b>", "<b>"))
+            ->commit();
+
 
     // Expected version 0:
     // <a> <b> <a>
@@ -1643,6 +1652,25 @@ TEST_F(ControllerMSTest, GetDeltaMaterializedOrderMS) {
     // <a> <b> <e>
     // <a> <b> <g>
     // <a> <b> <h>
+
+    // Expected version 4:
+    // <a> <b> <a>
+    // <a> <b> <d>
+    // <a> <b> <e>
+    // <a> <b> <g>
+    // <a> <b> <h>
+    // <n> <b> <a>
+
+    // Expected version 5:
+    // <a> <b> <a>
+    // <a> <b> <d>
+    // <a> <b> <e>
+    // <a> <b> <g>
+    // <a> <b> <h>
+    // <b> <b> <b>
+    // <n> <b> <a>
+    // <n> <b> <c>
+
 
     TripleDelta t;
 
@@ -1683,6 +1711,91 @@ TEST_F(ControllerMSTest, GetDeltaMaterializedOrderMS) {
 
     ASSERT_EQ(false, it1->next(&t)) << "Iterator should be finished";
 
+
+    ASSERT_EQ(6, controller->get_delta_materialized_count(StringTriple("", "<b>", ""), 0, 3).first) << "Count is incorrect";
+    TripleDeltaIterator* it2 = controller->get_delta_materialized(StringTriple("", "<b>", ""), 0, 0, 3);
+
+    ASSERT_EQ(true, it2->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <b> <b>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(false, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it2->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <b> <c>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(false, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it2->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <b> <d>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it2->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <b> <e>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it2->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <b> <g>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it2->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <b> <h>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(false, it2->next(&t)) << "Iterator should be finished";
+
+
+    ASSERT_EQ(9, controller->get_delta_materialized_count(StringTriple("", "<b>", ""), 0, 5).first) << "Count is incorrect";
+    TripleDeltaIterator* it3 = controller->get_delta_materialized(StringTriple("", "<b>", ""), 0, 0, 5);
+
+    ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <b> <b>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(false, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <b> <c>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(false, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <b> <d>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <b> <e>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <b> <g>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <b> <h>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<b> <b> <b>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<n> <b> <a>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<n> <b> <c>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(false, it3->next(&t)) << "Iterator should be finished";
+
+
+    TripleDeltaIterator* it4 = controller->get_delta_materialized(StringTriple("", "<b>", ""), 0, 4, 5);
+    ASSERT_EQ(2, controller->get_delta_materialized_count(StringTriple("", "<b>", ""), 4, 5).first) << "Count is incorrect";
+
+    ASSERT_EQ(true, it4->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<b> <b> <b>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it4->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<n> <b> <c>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(false, it4->next(&t)) << "Iterator should be finished";
 }
 
 

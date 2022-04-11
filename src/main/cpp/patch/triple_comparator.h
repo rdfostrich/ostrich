@@ -29,6 +29,7 @@ private:
 public:
     int compare(const Triple& triple1, const Triple& triple2) const;
     int compare(const Triple& triple1, const Triple& triple2, std::shared_ptr<DictionaryManager> dict1, std::shared_ptr<DictionaryManager> dict2) const;
+    int compare(const TripleDelta* triple1, const TripleDelta* triple2) const;
 
     bool operator()(const Triple& triple1, const Triple& triple2) const;
     bool operator()(const TripleVersions* triple1, const TripleVersions* triple2) const;

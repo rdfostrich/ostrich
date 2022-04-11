@@ -314,12 +314,12 @@ TripleDeltaIterator* Controller::get_delta_materialized(const StringTriple &trip
 
     // start = patch
     if (patch_id_start != snapshot_id_start) {
-        TripleDeltaIterator* delta_it_start = single_delta_query(snapshot_id_start, patch_id_start, dict_start, true);
+        TripleDeltaIterator* delta_it_start = single_delta_query(snapshot_id_start, patch_id_start, dict_start, false);
         intermediate_it = new MergeDiffIteratorCase2(delta_it_start, snapshot_diff_it);
     }
     // end = patch
     if (patch_id_end != snapshot_id_end) {
-        delta_it_end = single_delta_query(snapshot_id_end, patch_id_end, dict_end, true);
+        delta_it_end = single_delta_query(snapshot_id_end, patch_id_end, dict_end, false);
     }
 
     if (intermediate_it) {
