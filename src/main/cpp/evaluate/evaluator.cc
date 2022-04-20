@@ -331,13 +331,15 @@ void BearEvaluatorMS::test_lookup(string s, string p, string o, int replications
 
     cout << "--- ---DELTA MATERIALIZED" << endl;
     cout << "patch_start,patch_end,offset,limit,count-ms,lookup-mus,results" << endl;
-    for(int i = 0; i < patch_count; i++) {
+    for(int i = 1; i < patch_count; i++) {
         for(int j = 0; j <= 1; j++) {
-            int result_count1 = 0;
-            //long dcount = measure_count_delta_materialized(triple_pattern, j, i, replications);
-            long dcount = 0;
-            long d1 = measure_lookup_delta_materialized(triple_pattern, offset, j, i, limit, replications, result_count1);
-            cout << "" << j << "," << i << "," << offset << "," << limit << "," << dcount << "," << d1 << "," << result_count1 << endl;
+            if (i > j) {
+                int result_count1 = 0;
+                //long dcount = measure_count_delta_materialized(triple_pattern, j, i, replications);
+                long dcount = 0;
+                long d1 = measure_lookup_delta_materialized(triple_pattern, offset, j, i, limit, replications, result_count1);
+                cout << "" << j << "," << i << "," << offset << "," << limit << "," << dcount << "," << d1 << "," << result_count1 << endl;
+            }
         }
     }
 
@@ -480,14 +482,16 @@ BearEvaluatorMS::measure_lookup_version_materialized(const StringTriple& triple_
     std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(snapshot_id);
 
     // Warmup
-    TripleIterator* tmp_ti = controller->get_version_materialized(triple_pattern, offset, patch_id);
     Triple t;
-    while (tmp_ti->next(&t)) {
-        t.get_subject(*dict);
-        t.get_predicate(*dict);
-        t.get_object(*dict);
+    for (int i = 0; i < replications; i++) {
+        TripleIterator *tmp_ti = controller->get_version_materialized(triple_pattern, offset, patch_id);
+        while (tmp_ti->next(&t)) {
+            t.get_subject(*dict);
+            t.get_predicate(*dict);
+            t.get_object(*dict);
+        }
+        delete tmp_ti;
     }
-    delete tmp_ti;
 
     // Query
     long long total = 0;
@@ -532,14 +536,16 @@ long long BearEvaluatorMS::measure_lookup_version(const StringTriple& triple_pat
                                                   int &result_count) {
 
     // Warmup
-    TripleVersionsIterator* tmp_ti = controller->get_version(triple_pattern, offset);
     TripleVersions t;
-    while(tmp_ti->next(&t)) {
-        t.get_triple()->get_subject();
-        t.get_triple()->get_predicate();
-        t.get_triple()->get_object();
+    for (int i = 0; i < replications; i++) {
+        TripleVersionsIterator* tmp_ti = controller->get_version(triple_pattern, offset);
+        while(tmp_ti->next(&t)) {
+            t.get_triple()->get_subject();
+            t.get_triple()->get_predicate();
+            t.get_triple()->get_object();
+        }
+        delete tmp_ti;
     }
-    delete tmp_ti;
 
     // Query
     long long total = 0;
@@ -574,15 +580,18 @@ long long
 BearEvaluatorMS::measure_lookup_delta_materialized(const StringTriple &triple_pattern, int offset, int patch_id_start,
                                                    int patch_id_end, int limit, int replications, int &result_count) {
 
-    // Warmup
-    TripleDeltaIterator *tmp_ti = controller->get_delta_materialized(triple_pattern, offset, patch_id_start, patch_id_end, false);
     TripleDelta t;
-    while(tmp_ti->next(&t)) {
-        t.get_triple()->get_subject(*(t.get_dictionary()));
-        t.get_triple()->get_predicate(*(t.get_dictionary()));
-        t.get_triple()->get_object(*(t.get_dictionary()));
+    // Warmup
+    for (int i = 0; i < replications; i++) {
+        TripleDeltaIterator *tmp_ti = controller->get_delta_materialized(triple_pattern, offset, patch_id_start,
+                                                                         patch_id_end, false);
+        while (tmp_ti->next(&t)) {
+            t.get_triple()->get_subject(*(t.get_dictionary()));
+            t.get_triple()->get_predicate(*(t.get_dictionary()));
+            t.get_triple()->get_object(*(t.get_dictionary()));
+        }
+        delete tmp_ti;
     }
-    delete tmp_ti;
 
     // Query
     long long total = 0;

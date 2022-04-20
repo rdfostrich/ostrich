@@ -64,7 +64,7 @@ void test_lookups_for_queries_ms(BearEvaluatorMS &evaluator, const string& queri
                 remove_brackets(line_split[2]),
                 replications,
                 line_split.size() > 4 ? std::stoi(line_split[3]) : 0, // offset
-                line_split.size() > 4 ? std::stoi(line_split[4]) : -2 // limit
+                -2 // limit
         );
     }
     cout << "---QUERIES END---" << endl;

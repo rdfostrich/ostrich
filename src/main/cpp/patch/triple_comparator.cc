@@ -63,16 +63,23 @@ int TripleComparator::compare(const Triple &triple1, const Triple &triple2) cons
     return comp;
 }
 
-int TripleComparator::compare(const Triple &triple1, const Triple &triple2, std::shared_ptr<DictionaryManager> dict1,
-                              std::shared_ptr<DictionaryManager> dict2) const {
-    int comp = comp1(triple1, triple2, dict1, dict2);
+int TripleComparator::compare(const Triple &triple1, const Triple &triple2, std::shared_ptr<DictionaryManager> dict_1,
+                              std::shared_ptr<DictionaryManager> dict_2) const {
+    int comp = comp1(triple1, triple2, dict_1, dict_2);
     if(comp == 0) {
-        comp = comp2(triple1, triple2, dict1, dict2);
+        comp = comp2(triple1, triple2, dict_1, dict_2);
         if(comp == 0) {
-            comp = comp3(triple1, triple2, dict1, dict2);
+            comp = comp3(triple1, triple2, dict_1, dict_2);
         }
     }
     return comp;
+}
+
+int TripleComparator::compare(const TripleID &triple1, const TripleID &triple2, std::shared_ptr<DictionaryManager> dict_1,
+                          std::shared_ptr<DictionaryManager> dict_2) const {
+    Triple t1(triple1.getSubject(), triple1.getPredicate(), triple1.getObject());
+    Triple t2(triple2.getSubject(), triple2.getPredicate(), triple2.getObject());
+    return compare(t1, t2, std::move(dict_1), std::move(dict_2));
 }
 
 int TripleComparator::compare(const TripleDelta *triple1, const TripleDelta *triple2) const {
@@ -118,3 +125,4 @@ TripleComparator* TripleComparator::get_triple_comparator(TripleComponentOrder o
     }
     return new TripleComparator(subject_comparator, predicate_comparator, object_comparator, dict1, dict2);
 }
+
