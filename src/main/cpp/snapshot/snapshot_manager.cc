@@ -124,8 +124,14 @@ IteratorTripleID* SnapshotManager::search_with_offset(std::shared_ptr<HDT> hdt, 
         IteratorTripleID* it = hdt->getTriples()->search(tripleId);
         if(it->canGoTo()) {
             try {
-                it->goTo(offset);
-                offset = 0;
+                // If we goTo() with offset == 0, and HDT internal iterator is a MiddleWaveletIterator
+                // the iterator position is adjusted to the wrong position (we should use goToStart() instead for this kind of iterator)
+                // it is unclear if it is the intended behavior in HDT or if it is a bug with the MiddleWaveletIterator
+                // So we don't goTo() if offset == 0, as it is not needed anyway
+                if (offset != 0) {
+                    it->goTo(offset);
+                    offset = 0;
+                }
             } catch (std::exception& e) {}
         }
         while(offset-- > 0 && it->hasNext()) it->next();

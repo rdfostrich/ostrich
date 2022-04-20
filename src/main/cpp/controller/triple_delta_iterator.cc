@@ -77,40 +77,29 @@ template class FowardDiffPatchTripleDeltaIterator<PatchTreeDeletionValueReduced>
 
 
 SnapshotDiffIterator::SnapshotDiffIterator(const StringTriple &triple_pattern, SnapshotManager *manager, int snapshot_1,
-                                           int snapshot_2): t1(nullptr), t2(nullptr) {
+                                           int snapshot_2): t1(nullptr), t2(nullptr), comparator(TripleComparator::get_triple_comparator(SPO)) {
     std::shared_ptr<HDT> snap_1 = manager->get_snapshot(snapshot_1);
     dict1 = manager->get_dictionary_manager(snapshot_1);
     std::shared_ptr<HDT> snap_2 = manager->get_snapshot(snapshot_2);
     dict2 = manager->get_dictionary_manager(snapshot_2);
     if (snap_1 && snap_2) {
-        TripleString tp(triple_pattern.get_subject(), triple_pattern.get_predicate(), triple_pattern.get_object());
-        snapshot_it_1 = snap_1->search(tp);
-        snapshot_it_2 = snap_2->search(tp);
+        Triple tp1 = triple_pattern.get_as_triple(dict1);
+        Triple tp2 = triple_pattern.get_as_triple(dict2);
+        snapshot_it_1 = SnapshotManager::search_with_offset(snap_1, tp1, 0);
+        snapshot_it_2 = SnapshotManager::search_with_offset(snap_2, tp2, 0);
         if (snapshot_it_1->hasNext()) t1 = snapshot_it_1->next();
         if (snapshot_it_2->hasNext()) t2 = snapshot_it_2->next();
     }
-}
-
-int SnapshotDiffIterator::compare_ts(TripleString *ts1, TripleString *ts2) {
-    int s_comp = ts1->getSubject().compare(ts2->getSubject());
-    if (s_comp == 0) {
-        int p_comp = ts1->getPredicate().compare(ts2->getPredicate());
-        if (p_comp == 0) {
-            return ts1->getObject().compare(ts2->getObject());
-        }
-        return p_comp;
-    }
-    return s_comp;
 }
 
 bool SnapshotDiffIterator::next(TripleDelta *triple) {
     auto emit_triple = [=](bool is_addition) {
         Triple* tmp_t;
         if (!is_addition) {
-            tmp_t = new Triple(t1->getSubject(), t1->getPredicate(), t1->getObject(), dict1);
+            tmp_t = new Triple(t1->getSubject(), t1->getPredicate(), t1->getObject());
             triple->set_dictionary(dict1);
         } else {
-            tmp_t = new Triple(t2->getSubject(), t2->getPredicate(), t2->getObject(), dict2);
+            tmp_t = new Triple(t2->getSubject(), t2->getPredicate(), t2->getObject());
             triple->set_dictionary(dict2);
         }
         triple->get_triple()->set_subject(tmp_t->get_subject());
@@ -121,11 +110,25 @@ bool SnapshotDiffIterator::next(TripleDelta *triple) {
     };
 
     if (t1 && t2) {
-        int comp = compare_ts(t1, t2);
+        int comp = comparator->compare(*t1, *t2, dict1, dict2);
         if (comp == 0) {
-            t1 = snapshot_it_1->hasNext() ? snapshot_it_1->next() : nullptr;
-            t2 = snapshot_it_2->hasNext() ? snapshot_it_2->next() : nullptr;
-            return next(triple);
+            while (comp == 0 && t1 && t2) {
+                t1 = snapshot_it_1->hasNext() ? snapshot_it_1->next() : nullptr;
+                t2 = snapshot_it_2->hasNext() ? snapshot_it_2->next() : nullptr;
+                if (t1 && t2) {
+                    comp = comparator->compare(*t1, *t2, dict1, dict2);
+                }
+            }
+            if (comp < 0 || (t1 && !t2)) {
+                emit_triple(false);
+                t1 = snapshot_it_1->hasNext() ? snapshot_it_1->next() : nullptr;
+            } else if (comp > 0 || (!t1 && t2)) {
+                emit_triple(true);
+                t2 = snapshot_it_2->hasNext() ? snapshot_it_2->next() : nullptr;
+            } else {
+                return false;
+            }
+            return true;
         } else if (comp < 0) {
             // t1 is a deletion
             emit_triple(false);
@@ -155,6 +158,7 @@ SnapshotDiffIterator::~SnapshotDiffIterator() {
     delete snapshot_it_2;
     delete t1;
     delete t2;
+    delete comparator;
 }
 
 
@@ -281,9 +285,23 @@ bool MergeDiffIteratorCase2::next(TripleDelta *triple) {
                 status2 = it2->next(triple2);
                 return true;
             } else {
-                status1 = it1->next(triple1);
-                status2 = it2->next(triple2);
-                return next(triple);
+                while (comp == 0 && status1 && status2) {
+                    status1 = it1->next(triple1);
+                    status2 = it2->next(triple2);
+                    if (status1 && status2) {
+                        comp = comparator->compare(triple1, triple2);
+                    }
+                }
+                if (comp < 0 || (status1 && !status2)) {
+                    emit_triple(triple1, triple, !triple1->is_addition());
+                    status1 = it1->next(triple1);
+                } else if (comp > 0 || (!status1 && status2)) {
+                    emit_triple(triple2, triple, triple2->is_addition());
+                    status2 = it2->next(triple2);
+                } else {
+                    return false;
+                }
+                return true;
             }
         } else if (comp < 0) {
             // The triple from set 1 does not exist in set 2

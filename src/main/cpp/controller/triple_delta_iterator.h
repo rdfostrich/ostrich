@@ -54,15 +54,15 @@ public:
 // This should always be the case with our system
 class SnapshotDiffIterator: public TripleDeltaIterator {
 private:
-    IteratorTripleString* snapshot_it_1;
-    IteratorTripleString* snapshot_it_2;
-    TripleString* t1;
-    TripleString* t2;
+    IteratorTripleID* snapshot_it_1;
+    IteratorTripleID* snapshot_it_2;
+    TripleID* t1;
+    TripleID* t2;
 
     std::shared_ptr<DictionaryManager> dict1;
     std::shared_ptr<DictionaryManager> dict2;
 
-    static int compare_ts(TripleString* ts1, TripleString* ts2);
+    TripleComparator* comparator;
 
 public:
     SnapshotDiffIterator(const StringTriple& triple_pattern, SnapshotManager* manager , int snapshot_1, int snapshot_2);

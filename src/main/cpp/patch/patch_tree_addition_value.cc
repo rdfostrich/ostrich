@@ -1,7 +1,6 @@
 #include <cstring>
 #include <string>
-#include <stdlib.h>
-#include <iostream>
+#include <cstdlib>
 #include "patch_tree_addition_value.h"
 
 PatchTreeAdditionValue::PatchTreeAdditionValue() : patches(), local_changes() {}
