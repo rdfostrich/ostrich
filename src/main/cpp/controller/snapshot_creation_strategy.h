@@ -9,7 +9,7 @@ struct CreationStrategyMetadata {
     std::vector<size_t> delta_sizes;
     std::vector<size_t> agg_delta_sizes;
     size_t last_snapshot_size = 0;
-    size_t current_version_size = 0;
+    std::vector<uint64_t> version_sizes;
     std::vector<uint64_t> ingestion_times;
     std::vector<double> change_ratios;
     std::vector<double> loc_change_ratios;
