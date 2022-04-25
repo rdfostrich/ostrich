@@ -450,6 +450,13 @@ bool Controller::append(PatchElementIterator* patch_it, int patch_id, std::share
     double su = metadata->last_snapshot_size + ag;
     double change_ratio = ag/su;
     metadata->change_ratios = metadata_manager->store_double("change-ratio", snapshot_id, change_ratio);
+    if (metadata->agg_delta_sizes.size() > 1) {
+        uint64_t prev_agg_delta = metadata->agg_delta_sizes[metadata->agg_delta_sizes.size()-2];
+        double loc_cr = (double) patch_it->getPassed() / (metadata->last_snapshot_size + prev_agg_delta + patch_it->getPassed());
+        metadata->loc_change_ratios = metadata_manager->store_double("local-change-ratio", snapshot_id, loc_cr);
+    } else {
+        metadata->loc_change_ratios = metadata_manager->store_double("local-change-ratio", snapshot_id, 0.0);
+    }
 
     // If we need to create a new snapshot:
     // - We do a VM query on the current patch_id
