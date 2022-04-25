@@ -439,20 +439,22 @@ bool Controller::append(PatchElementIterator* patch_it, int patch_id, std::share
     Triple tp("", "", "", dict);
 
     // Fill the metadata struct for strategy
+    // Maybe move it to its own separate function later ?
     metadata->patch_id = patch_id;
     metadata->delta_sizes = metadata_manager->store_uint64("delta-size", snapshot_id, patch_it->getPassed());
     size_t add_count = pt->addition_count(patch_id, tp);
     size_t del_count = pt->deletion_count(tp, patch_id).first;
     metadata->agg_delta_sizes = metadata_manager->store_uint64("agg-delta-size", snapshot_id, add_count + del_count);
     metadata->last_snapshot_size = get_version_materialized_count(tp, snapshot_id, true).first;
-    metadata->current_version_size = metadata->last_snapshot_size - del_count + add_count;
+    metadata->version_sizes = metadata_manager->store_uint64("version-sizes", snapshot_id, metadata->last_snapshot_size - del_count + add_count);
     double ag = add_count + del_count;
     double su = metadata->last_snapshot_size + ag;
     double change_ratio = ag/su;
     metadata->change_ratios = metadata_manager->store_double("change-ratio", snapshot_id, change_ratio);
     if (metadata->agg_delta_sizes.size() > 1) {
         uint64_t prev_agg_delta = metadata->agg_delta_sizes[metadata->agg_delta_sizes.size()-2];
-        double loc_cr = (double) patch_it->getPassed() / (metadata->last_snapshot_size + prev_agg_delta + patch_it->getPassed());
+        uint64_t prev_ver_size = metadata->version_sizes[metadata->version_sizes.size()-2];
+        double loc_cr = (double) patch_it->getPassed() / (prev_ver_size + patch_it->getPassed());
         metadata->loc_change_ratios = metadata_manager->store_double("local-change-ratio", snapshot_id, loc_cr);
     } else {
         metadata->loc_change_ratios = metadata_manager->store_double("local-change-ratio", snapshot_id, 0.0);
