@@ -100,6 +100,10 @@ SnapshotCreationStrategy *SnapshotCreationStrategy::get_strategy(const std::stri
         double threshold = std::stod(param);
         return new AggregatedChangeRatioStrategy(threshold);
     }
+    if (strategy == "locaggchange") {
+        double threshold = std::stod(param);
+        return new LocalAggregatedChangeRatioStrategy(threshold);
+    }
     if (strategy == "never") {
         return new NeverCreateSnapshot;
     }
@@ -182,11 +186,21 @@ bool AND_CompositeSnapshotStrategy::doCreate(const CreationStrategyMetadata &met
 }
 
 
-AggregatedChangeRatioStrategy::AggregatedChangeRatioStrategy(): threshold(0.5) {}
+AggregatedChangeRatioStrategy::AggregatedChangeRatioStrategy(): threshold(1.5) {}
 
 AggregatedChangeRatioStrategy::AggregatedChangeRatioStrategy(double threshold): threshold(threshold) {}
 
 bool AggregatedChangeRatioStrategy::doCreate(const CreationStrategyMetadata &metadata) const {
     double sum = std::accumulate(metadata.change_ratios.begin(), metadata.change_ratios.end(), 0.0);
+    return sum >= threshold;
+}
+
+
+LocalAggregatedChangeRatioStrategy::LocalAggregatedChangeRatioStrategy(): threshold(0.5) {}
+
+LocalAggregatedChangeRatioStrategy::LocalAggregatedChangeRatioStrategy(double threshold): threshold(threshold) {}
+
+bool LocalAggregatedChangeRatioStrategy::doCreate(const CreationStrategyMetadata &metadata) const {
+    double sum = std::accumulate(metadata.loc_change_ratios.begin(), metadata.loc_change_ratios.end(), 0.0);
     return sum >= threshold;
 }

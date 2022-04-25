@@ -12,6 +12,7 @@ struct CreationStrategyMetadata {
     size_t current_version_size = 0;
     std::vector<uint64_t> ingestion_times;
     std::vector<double> change_ratios;
+    std::vector<double> loc_change_ratios;
 };
 
 
@@ -95,12 +96,25 @@ public:
     bool doCreate(const CreationStrategyMetadata& metadata) const override;
 };
 
+
+// Size strategy using the sum of change ratios between the initial version of a DC and current version
 class AggregatedChangeRatioStrategy: public SnapshotCreationStrategy {
 private:
     double threshold;
 public:
     AggregatedChangeRatioStrategy();
     explicit AggregatedChangeRatioStrategy(double threshold);
+    bool doCreate(const CreationStrategyMetadata& metadata) const override;
+};
+
+
+// Same as AggregatedChangeRatioStrategy but with change ratio computed between consecutive versions
+class LocalAggregatedChangeRatioStrategy: public SnapshotCreationStrategy {
+private:
+    double threshold;
+public:
+    LocalAggregatedChangeRatioStrategy();
+    explicit LocalAggregatedChangeRatioStrategy(double threshold);
     bool doCreate(const CreationStrategyMetadata& metadata) const override;
 };
 
