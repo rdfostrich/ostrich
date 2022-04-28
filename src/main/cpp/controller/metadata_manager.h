@@ -10,7 +10,7 @@ private:
     kyotocabinet::HashDB* database;
 
 public:
-    explicit MetadataManager(const std::string& path);
+    explicit MetadataManager(const std::string& path, bool compress = false);
     ~MetadataManager();
 
     std::vector<uint64_t> store_uint64(const std::string& prefix, int id, uint64_t value);

@@ -22,7 +22,7 @@ Controller::Controller(string basePath, SnapshotCreationStrategy *strategy, int8
 
     // Get the metadata for snapshot creation
     init_strategy_metadata();
-    metadata_manager = new MetadataManager(basePath);
+    metadata_manager = new MetadataManager(basePath, false);
 }
 
 Controller::~Controller() {
@@ -303,7 +303,7 @@ TripleDeltaIterator* Controller::get_delta_materialized(const StringTriple &trip
         return (new PlainDiffDeltaIterator(it1, it2, dict_start, dict_end))->offset(offset);
     }
 
-    auto snapshot_diff_it = new AutoSnapshotDiffIterator(triple_pattern, snapshotManager, patchTreeManager, snapshot_id_start, snapshot_id_end);
+    TripleDeltaIterator* snapshot_diff_it = new AutoSnapshotDiffIterator(triple_pattern, snapshotManager, patchTreeManager, snapshot_id_start, snapshot_id_end);
     TripleDeltaIterator* delta_it_end = nullptr;
     TripleDeltaIterator* intermediate_it = nullptr;
 
@@ -328,6 +328,15 @@ TripleDeltaIterator* Controller::get_delta_materialized(const StringTriple &trip
         }
         return intermediate_it->offset(offset);
     }
+
+    // Test if HDT is going to emit in SPO order
+    // HDT seems to always emit in SPO order, unless dealing with ??O or ?PO patterns
+    Triple t = triple_pattern.get_as_triple(dict_start);
+    TripleID tid(t.get_subject(), t.get_predicate(), t.get_object());
+    if (tid.getPatternString() =="??O" || tid.getPatternString() =="?PO") {
+        snapshot_diff_it = new SortedTripleDeltaIterator(snapshot_diff_it, SPO);
+    }
+
     return (new MergeDiffIterator(snapshot_diff_it, delta_it_end))->offset(offset);
 }
 
@@ -448,7 +457,7 @@ bool Controller::append(PatchElementIterator* patch_it, int patch_id, std::share
     metadata->last_snapshot_size = get_version_materialized_count(tp, snapshot_id, true).first;
     metadata->version_sizes = metadata_manager->store_uint64("version-sizes", snapshot_id, metadata->last_snapshot_size - del_count + add_count);
     double ag = add_count + del_count;
-    double su = metadata->last_snapshot_size + ag;
+    double su = metadata->last_snapshot_size + add_count;
     double change_ratio = ag/su;
     metadata->change_ratios = metadata_manager->store_double("change-ratio", snapshot_id, change_ratio);
     if (metadata->agg_delta_sizes.size() > 1) {

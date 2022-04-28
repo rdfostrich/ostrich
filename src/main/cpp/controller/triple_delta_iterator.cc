@@ -179,7 +179,7 @@ bool MergeDiffIterator::next(TripleDelta *triple) {
 
     if (status1 && status2) {
         int comp = comparator->compare(triple1, triple2);
-        if (comp == 0) {  // It's the same triple (SPO)
+        if (comp == 0) {
             if (triple2->is_addition()) {
                 emit_triple(triple2, triple, true);
             } else {

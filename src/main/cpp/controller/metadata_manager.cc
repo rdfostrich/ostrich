@@ -1,7 +1,10 @@
 #include "metadata_manager.h"
 
-MetadataManager::MetadataManager(const std::string& path) {
+MetadataManager::MetadataManager(const std::string& path, bool compress) {
     database = new kyotocabinet::HashDB;
+    if (compress) {
+        database->tune_options(kyotocabinet::HashDB::TCOMPRESS);
+    }
     bool status = database->open(path + "ingestion_metadata.kch", kyotocabinet::HashDB::OWRITER | kyotocabinet::HashDB::OCREATE);
     if (!status) {
         std::string err_msg = "cannot open metadata store ";
@@ -13,9 +16,13 @@ MetadataManager::MetadataManager(const std::string& path) {
 
 MetadataManager::~MetadataManager() {
     bool status = database->close();
-    if (status) {
-        delete database;
+    if (!status) {
+        std::string err_msg = "cannot close metadata store ";
+        err_msg.append(" error: ");
+        err_msg.append(database->error().name());
+        std::cerr << err_msg << std::endl;
     }
+    delete database;
 }
 
 std::vector<uint64_t> MetadataManager::store_uint64(const std::string& prefix, int id, uint64_t value) {
