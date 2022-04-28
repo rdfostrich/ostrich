@@ -47,6 +47,8 @@ private:
     Controller* controller;
     std::string ic_path;
     std::string file_prefix;
+
+    static long long int compute_median(std::vector<unsigned long long int> values) ;
 public:
     void init(string basePath, string patchesBasePatch, SnapshotCreationStrategy* strategy, int startIndex, int endIndex, ProgressListener* progressListener = NULL);
     void init_readonly(string basePath, bool warmup = false);

@@ -624,4 +624,14 @@ long long BearEvaluatorMS::measure_count_delta_materialized(const StringTriple &
     return total / replications;
 }
 
+long long int BearEvaluatorMS::compute_median(std::vector<unsigned long long int> values) {
+    const auto middle = values.begin() + values.size() / 2;
+    std::nth_element(values.begin(), middle, values.end());
+    if (values.size() % 2 == 0) {
+        const auto left_middle = std::max_element(values.begin(), middle);
+        return (*middle + *left_middle) / 2;
+    }
+    return *middle;
+}
+
 
