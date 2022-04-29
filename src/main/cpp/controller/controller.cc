@@ -445,10 +445,10 @@ bool Controller::append(PatchElementIterator* patch_it, int patch_id, std::share
     metadata->ingestion_times = metadata_manager->store_uint64("ingest-time", snapshot_id, iduration.count());
 
     std::shared_ptr<PatchTree> pt = patchTreeManager->get_patch_tree(patch_tree_id, dict);
-    Triple tp("", "", "", dict);
 
     // Fill the metadata struct for strategy
     // Maybe move it to its own separate function later ?
+    Triple tp("", "", "", dict);
     metadata->patch_id = patch_id;
     metadata->delta_sizes = metadata_manager->store_uint64("delta-size", snapshot_id, patch_it->getPassed());
     size_t add_count = pt->addition_count(patch_id, tp);
