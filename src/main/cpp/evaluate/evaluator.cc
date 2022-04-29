@@ -320,18 +320,18 @@ void BearEvaluatorMS::test_lookup(string s, string p, string o, int replications
     cout << "---PATTERN START: " << triple_pattern.to_string() << endl;
 
     cout << "--- ---VERSION MATERIALIZED" << endl;
-    cout << "patch,offset,limit,count-ms,lookup-mus,median-mus,results" << endl;
+    cout << "patch,offset,limit,count-ms,median-mus,lookup-mus,results" << endl;
     for(int i = 0; i < patch_count; i++) {
         int result_count1 = 0;
         //uint64_t dcount = measure_count_version_materialized(triple_pattern, i, replications);
         uint64_t dcount = 0;
         uint64_t median_t;
         uint64_t d1 = measure_lookup_version_materialized(triple_pattern, offset, i, limit, replications, result_count1, median_t);
-        cout << "" << i << "," << offset << "," << limit << "," << dcount << "," << d1 << "," << median_t << "," << result_count1 << endl;
+        cout << "" << i << "," << offset << "," << limit << "," << dcount << "," << median_t << "," << d1 << "," << result_count1 << endl;
     }
 
     cout << "--- ---DELTA MATERIALIZED" << endl;
-    cout << "patch_start,patch_end,offset,limit,count-ms,lookup-mus,median-mus,results" << endl;
+    cout << "patch_start,patch_end,offset,limit,count-ms,median-mus,lookup-mus,results" << endl;
     for(int i = 1; i < patch_count; i++) {
         for(int j = 0; j <= 1; j++) {
             if (i > j) {
@@ -340,19 +340,19 @@ void BearEvaluatorMS::test_lookup(string s, string p, string o, int replications
                 long dcount = 0;
                 uint64_t median_t;
                 uint64_t d1 = measure_lookup_delta_materialized(triple_pattern, offset, j, i, limit, replications, result_count1, median_t);
-                cout << "" << j << "," << i << "," << offset << "," << limit << "," << dcount << "," << d1 << "," << median_t << "," << result_count1 << endl;
+                cout << "" << j << "," << i << "," << offset << "," << limit << "," << dcount << "," << median_t << "," << d1 << "," << result_count1 << endl;
             }
         }
     }
 
     cout << "--- ---VERSION" << endl;
-    cout << "offset,limit,count-ms,lookup-mus,median-mus,results" << endl;
+    cout << "offset,limit,count-ms,median-mus,lookup-mus,results" << endl;
     int result_count1 = 0;
     //uint64_t dcount = measure_count_version(triple_pattern, replications);
     uint64_t dcount = 0;
     uint64_t median_t;
     uint64_t d1 = measure_lookup_version(triple_pattern, offset, limit, replications, result_count1, median_t);
-    cout << "" << offset << "," << limit << "," << dcount << "," << d1 << "," << median_t << "," << result_count1 << endl;
+    cout << "" << offset << "," << limit << "," << dcount << "," << median_t << "," << d1 << "," << result_count1 << endl;
 }
 
 void BearEvaluatorMS::cleanup_controller() {
