@@ -320,36 +320,39 @@ void BearEvaluatorMS::test_lookup(string s, string p, string o, int replications
     cout << "---PATTERN START: " << triple_pattern.to_string() << endl;
 
     cout << "--- ---VERSION MATERIALIZED" << endl;
-    cout << "patch,offset,limit,count-ms,lookup-mus,results" << endl;
+    cout << "patch,offset,limit,count-ms,lookup-mus,median-mus,results" << endl;
     for(int i = 0; i < patch_count; i++) {
         int result_count1 = 0;
-        //long dcount = measure_count_version_materialized(triple_pattern, i, replications);
-        long dcount = 0;
-        long d1 = measure_lookup_version_materialized(triple_pattern, offset, i, limit, replications, result_count1);
-        cout << "" << i << "," << offset << "," << limit << "," << dcount << "," << d1 << "," << result_count1 << endl;
+        //uint64_t dcount = measure_count_version_materialized(triple_pattern, i, replications);
+        uint64_t dcount = 0;
+        uint64_t median_t;
+        uint64_t d1 = measure_lookup_version_materialized(triple_pattern, offset, i, limit, replications, result_count1, median_t);
+        cout << "" << i << "," << offset << "," << limit << "," << dcount << "," << d1 << "," << median_t << "," << result_count1 << endl;
     }
 
     cout << "--- ---DELTA MATERIALIZED" << endl;
-    cout << "patch_start,patch_end,offset,limit,count-ms,lookup-mus,results" << endl;
+    cout << "patch_start,patch_end,offset,limit,count-ms,lookup-mus,median-mus,results" << endl;
     for(int i = 1; i < patch_count; i++) {
         for(int j = 0; j <= 1; j++) {
             if (i > j) {
                 int result_count1 = 0;
-                //long dcount = measure_count_delta_materialized(triple_pattern, j, i, replications);
+                //uint64_t dcount = measure_count_delta_materialized(triple_pattern, j, i, replications);
                 long dcount = 0;
-                long d1 = measure_lookup_delta_materialized(triple_pattern, offset, j, i, limit, replications, result_count1);
-                cout << "" << j << "," << i << "," << offset << "," << limit << "," << dcount << "," << d1 << "," << result_count1 << endl;
+                uint64_t median_t;
+                uint64_t d1 = measure_lookup_delta_materialized(triple_pattern, offset, j, i, limit, replications, result_count1, median_t);
+                cout << "" << j << "," << i << "," << offset << "," << limit << "," << dcount << "," << d1 << "," << median_t << "," << result_count1 << endl;
             }
         }
     }
 
     cout << "--- ---VERSION" << endl;
-    cout << "offset,limit,count-ms,lookup-mus,results" << endl;
+    cout << "offset,limit,count-ms,lookup-mus,median-mus,results" << endl;
     int result_count1 = 0;
-    //long dcount = measure_count_version(triple_pattern, replications);
-    long dcount = 0;
-    long d1 = measure_lookup_version(triple_pattern, offset, limit, replications, result_count1);
-    cout << "" << offset << "," << limit << "," << dcount << "," << d1 << "," << result_count1 << endl;
+    //uint64_t dcount = measure_count_version(triple_pattern, replications);
+    uint64_t dcount = 0;
+    uint64_t median_t;
+    uint64_t d1 = measure_lookup_version(triple_pattern, offset, limit, replications, result_count1, median_t);
+    cout << "" << offset << "," << limit << "," << dcount << "," << d1 << "," << median_t << "," << result_count1 << endl;
 }
 
 void BearEvaluatorMS::cleanup_controller() {
@@ -419,9 +422,9 @@ void BearEvaluatorMS::populate_controller_with_version(int patch_id, string path
         added = it_patch->getPassed();
     }
 
-    long long duration = st.stopReal() / 1000;
+    uint64_t duration = st.stopReal() / 1000;
     if (duration == 0) duration = 1; // Avoid division by 0
-    long long rate = added / duration;
+    uint64_t rate = added / duration;
     std::ifstream::pos_type accsize = patchstore_size(controller);
     cout << patch_id << "," << added << "," << duration << "," << rate << "," << accsize << endl;
 
@@ -473,9 +476,9 @@ IteratorTripleString *BearEvaluatorMS::get_from_file(const string& file) {
     return new RDFParserNtriples(file.c_str(), NTRIPLES);
 }
 
-long long
+uint64_t
 BearEvaluatorMS::measure_lookup_version_materialized(const StringTriple& triple_pattern, int offset, int patch_id, int limit,
-                                                     int replications, int &result_count) {
+                                                     int replications, int &result_count, uint64_t& median_t) {
 
     int snapshot_id = controller->get_snapshot_manager()->get_latest_snapshot(patch_id);
     controller->get_snapshot_manager()->load_snapshot(snapshot_id);
@@ -494,7 +497,8 @@ BearEvaluatorMS::measure_lookup_version_materialized(const StringTriple& triple_
     }
 
     // Query
-    long long total = 0;
+    std::vector<uint64_t> times;
+    uint64_t total = 0;
     for (int i = 0; i < replications; i++) {
         int limit_l = limit;
         StopWatch st;
@@ -507,14 +511,17 @@ BearEvaluatorMS::measure_lookup_version_materialized(const StringTriple& triple_
             result_count++;
         }
         delete ti;
-        total += st.stopReal();
+        uint64_t time = st.stopReal();
+        times.push_back(time);
+        total += time;
     }
+    median_t = compute_median(times);
     result_count /= replications;
     return total / replications;
 }
 
-long long
-BearEvaluatorMS::measure_count_version_materialized(const StringTriple& triple_pattern, int patch_id, int replications) {
+uint64_t
+BearEvaluatorMS::measure_count_version_materialized(const StringTriple& triple_pattern, int patch_id, int replications, uint64_t& median_t) {
     // We ensure that the needed snapshot (and patchtree) are loaded prior to querying
     int snapshot_id = controller->get_snapshot_manager()->get_latest_snapshot(patch_id);
     controller->get_snapshot_manager()->load_snapshot(snapshot_id);
@@ -523,17 +530,21 @@ BearEvaluatorMS::measure_count_version_materialized(const StringTriple& triple_p
         controller->get_patch_tree_manager()->load_patch_tree(patchtree_id, controller->get_dictionary_manager(patch_id));
     }
 
-    long long total = 0;
+    std::vector<uint64_t> times;
+    uint64_t total = 0;
     for (int i = 0; i < replications; i++) {
         StopWatch st;
         std::pair<size_t, ResultEstimationType> count = controller->get_version_materialized_count(triple_pattern, patch_id, true);
-        total += st.stopReal();
+        uint64_t time = st.stopReal();
+        times.push_back(time);
+        total += time;
     }
+    median_t = compute_median(times);
     return total / replications;
 }
 
-long long BearEvaluatorMS::measure_lookup_version(const StringTriple& triple_pattern, int offset, int limit, int replications,
-                                                  int &result_count) {
+uint64_t BearEvaluatorMS::measure_lookup_version(const StringTriple& triple_pattern, int offset, int limit, int replications,
+                                                  int &result_count, uint64_t& median_t) {
 
     // Warmup
     TripleVersions t;
@@ -548,7 +559,8 @@ long long BearEvaluatorMS::measure_lookup_version(const StringTriple& triple_pat
     }
 
     // Query
-    long long total = 0;
+    std::vector<uint64_t> times;
+    uint64_t total = 0;
     for (int i = 0; i < replications; i++) {
         int limit_l = limit;
         StopWatch st;
@@ -560,25 +572,31 @@ long long BearEvaluatorMS::measure_lookup_version(const StringTriple& triple_pat
             result_count++;
         }
         delete ti;
-        total += st.stopReal();
+        uint64_t time = st.stopReal();
+        times.push_back(time);
+        total += time;
     }
     result_count /= replications;
     return total / replications;
 }
 
-long long BearEvaluatorMS::measure_count_version(const StringTriple& triple_pattern, int replications) {
-    long long total = 0;
+uint64_t BearEvaluatorMS::measure_count_version(const StringTriple& triple_pattern, int replications, uint64_t& median_t) {
+    std::vector<uint64_t> times;
+    uint64_t total = 0;
     for (int i = 0; i < replications; i++) {
         StopWatch st;
         std::pair<size_t, ResultEstimationType> count = controller->get_version_count(triple_pattern, true);
-        total += st.stopReal();
+        uint64_t time = st.stopReal();
+        times.push_back(time);
+        total += time;
     }
+    median_t = compute_median(times);
     return total / replications;
 }
 
-long long
+uint64_t
 BearEvaluatorMS::measure_lookup_delta_materialized(const StringTriple &triple_pattern, int offset, int patch_id_start,
-                                                   int patch_id_end, int limit, int replications, int &result_count) {
+                                                   int patch_id_end, int limit, int replications, int &result_count, uint64_t& median_t) {
 
     TripleDelta t;
     // Warmup
@@ -594,7 +612,8 @@ BearEvaluatorMS::measure_lookup_delta_materialized(const StringTriple &triple_pa
     }
 
     // Query
-    long long total = 0;
+    std::vector<uint64_t> times;
+    uint64_t total = 0;
     for (int i = 0; i < replications; i++) {
         int limit_l = limit;
         StopWatch st;
@@ -607,24 +626,34 @@ BearEvaluatorMS::measure_lookup_delta_materialized(const StringTriple &triple_pa
             result_count++;
         }
         delete ti;
-        total += st.stopReal();
+        uint64_t time = st.stopReal();
+        times.push_back(time);
+        total += time;
     }
+    median_t = compute_median(times);
     result_count /= replications;
     return total / replications;
 }
 
-long long BearEvaluatorMS::measure_count_delta_materialized(const StringTriple &triple_pattern, int patch_id_start,
-                                                            int patch_id_end, int replications) {
-    long long total = 0;
+uint64_t BearEvaluatorMS::measure_count_delta_materialized(const StringTriple &triple_pattern, int patch_id_start,
+                                                            int patch_id_end, int replications, uint64_t& median_t) {
+    std::vector<uint64_t> times;
+    uint64_t total = 0;
     for (int i = 0; i < replications; i++) {
         StopWatch st;
         std::pair<size_t, ResultEstimationType> count = controller->get_delta_materialized_count(triple_pattern, patch_id_start, patch_id_end, true);
-        total += st.stopReal();
+        uint64_t time = st.stopReal();
+        times.push_back(time);
+        total += time;
     }
+    median_t = compute_median(times);
     return total / replications;
 }
 
-long long int BearEvaluatorMS::compute_median(std::vector<unsigned long long int> values) {
+uint64_t BearEvaluatorMS::compute_median(std::vector<uint64_t> values) {
+    if (values.size() == 1) {
+        return values[0];
+    }
     const auto middle = values.begin() + values.size() / 2;
     std::nth_element(values.begin(), middle, values.end());
     if (values.size() % 2 == 0) {
@@ -633,5 +662,3 @@ long long int BearEvaluatorMS::compute_median(std::vector<unsigned long long int
     }
     return *middle;
 }
-
-
