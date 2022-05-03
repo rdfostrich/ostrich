@@ -600,7 +600,7 @@ BearEvaluatorMS::measure_lookup_delta_materialized(const StringTriple &triple_pa
 
     TripleDelta t;
     // Warmup
-    for (int i = 0; i < replications; i++) {
+    for (int i = 0; i < replications*2; i++) {
         TripleDeltaIterator *tmp_ti = controller->get_delta_materialized(triple_pattern, offset, patch_id_start,
                                                                          patch_id_end, false);
         while (tmp_ti->next(&t)) {
@@ -630,6 +630,7 @@ BearEvaluatorMS::measure_lookup_delta_materialized(const StringTriple &triple_pa
         times.push_back(time);
         total += time;
     }
+
     median_t = compute_median(times);
     result_count /= replications;
     return total / replications;

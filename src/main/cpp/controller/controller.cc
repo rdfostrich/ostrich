@@ -441,7 +441,7 @@ bool Controller::append(PatchElementIterator* patch_it, int patch_id, std::share
     auto istart = std::chrono::high_resolution_clock::now();
     bool status = patchTreeManager->append(patch_it, patch_id, dict, check_uniqueness, progressListener);
     auto istop = std::chrono::high_resolution_clock::now();
-    auto iduration = std::chrono::duration_cast<std::chrono::nanoseconds>(istop - istart);
+    auto iduration = std::chrono::duration_cast<std::chrono::milliseconds>(istop - istart);
     metadata->ingestion_times = metadata_manager->store_uint64("ingest-time", snapshot_id, iduration.count());
 
     std::shared_ptr<PatchTree> pt = patchTreeManager->get_patch_tree(patch_tree_id, dict);
@@ -628,7 +628,7 @@ bool Controller::ingest(const std::vector<std::pair<IteratorTripleString *, bool
         auto istart = std::chrono::high_resolution_clock::now();
         std::shared_ptr<HDT> hdt = snapshotManager->create_snapshot(patch_id, it_snapshot, BASEURI, progressListener);
         auto istop = std::chrono::high_resolution_clock::now();
-        auto iduration = std::chrono::duration_cast<std::chrono::nanoseconds>(istop - istart);
+        auto iduration = std::chrono::duration_cast<std::chrono::milliseconds>(istop - istart);
         metadata_manager->store_uint64("ingest-time", patch_id, iduration.count());
         std::cout.clear();
         added = hdt->getTriples()->getNumberOfElements();
