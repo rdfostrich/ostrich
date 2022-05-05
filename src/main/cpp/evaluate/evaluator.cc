@@ -323,8 +323,8 @@ void BearEvaluatorMS::test_lookup(string s, string p, string o, int replications
     cout << "patch,offset,limit,count-ms,median-mus,lookup-mus,results" << endl;
     for(int i = 0; i < patch_count; i++) {
         int result_count1 = 0;
-        //uint64_t dcount = measure_count_version_materialized(triple_pattern, i, replications);
-        uint64_t dcount = 0;
+        uint64_t median_c;
+        uint64_t dcount = measure_count_version_materialized(triple_pattern, i, replications, median_c);
         uint64_t median_t;
         uint64_t d1 = measure_lookup_version_materialized(triple_pattern, offset, i, limit, replications, result_count1, median_t);
         cout << "" << i << "," << offset << "," << limit << "," << dcount << "," << median_t << "," << d1 << "," << result_count1 << endl;
@@ -336,8 +336,8 @@ void BearEvaluatorMS::test_lookup(string s, string p, string o, int replications
         for(int j = 0; j <= 1; j++) {
             if (i > j) {
                 int result_count1 = 0;
-                //uint64_t dcount = measure_count_delta_materialized(triple_pattern, j, i, replications);
-                long dcount = 0;
+                uint64_t median_c;
+                uint64_t dcount = measure_count_delta_materialized(triple_pattern, j, i, replications, median_c);
                 uint64_t median_t;
                 uint64_t d1 = measure_lookup_delta_materialized(triple_pattern, offset, j, i, limit, replications, result_count1, median_t);
                 cout << "" << j << "," << i << "," << offset << "," << limit << "," << dcount << "," << median_t << "," << d1 << "," << result_count1 << endl;
@@ -348,8 +348,8 @@ void BearEvaluatorMS::test_lookup(string s, string p, string o, int replications
     cout << "--- ---VERSION" << endl;
     cout << "offset,limit,count-ms,median-mus,lookup-mus,results" << endl;
     int result_count1 = 0;
-    //uint64_t dcount = measure_count_version(triple_pattern, replications);
-    uint64_t dcount = 0;
+    uint64_t median_c;
+    uint64_t dcount = measure_count_version(triple_pattern, replications, median_c);
     uint64_t median_t;
     uint64_t d1 = measure_lookup_version(triple_pattern, offset, limit, replications, result_count1, median_t);
     cout << "" << offset << "," << limit << "," << dcount << "," << median_t << "," << d1 << "," << result_count1 << endl;
@@ -435,7 +435,6 @@ void BearEvaluatorMS::populate_controller_with_version(int patch_id, string path
 std::ifstream::pos_type BearEvaluatorMS::patchstore_size(Controller *controller) {
     long size = 0;
 
-    //std::map<int, std::shared_ptr<PatchTree>> patches = controller->get_patch_tree_manager()->get_patch_trees();
     std::vector<int> patches = controller->get_patch_tree_manager()->get_patch_trees_ids();
     auto itP = patches.begin();
     while(itP != patches.end()) {
@@ -600,7 +599,7 @@ BearEvaluatorMS::measure_lookup_delta_materialized(const StringTriple &triple_pa
 
     TripleDelta t;
     // Warmup
-    for (int i = 0; i < replications*2; i++) {
+    for (int i = 0; i < replications; i++) {
         TripleDeltaIterator *tmp_ti = controller->get_delta_materialized(triple_pattern, offset, patch_id_start,
                                                                          patch_id_end, false);
         while (tmp_ti->next(&t)) {
