@@ -180,13 +180,22 @@ bool MergeDiffIterator::next(TripleDelta *triple) {
     if (status1 && status2) {
         int comp = comparator->compare(triple1, triple2);
         if (comp == 0) {
-            if (triple2->is_addition()) {
-                emit_triple(triple2, triple, true);
-            } else {
-                emit_triple(triple2, triple, false);
+            while (comp == 0 && status1 && status2) {
+                status1 = it1->next(triple1);
+                status2 = it2->next(triple2);
+                if (status1 && status2) {
+                    comp = comparator->compare(triple1, triple2);
+                }
             }
-            status1 = it1->next(triple1);
-            status2 = it2->next(triple2);
+            if (comp < 0 || (status1 && !triple2)) {
+                emit_triple(triple1, triple, triple1->is_addition());
+                status1 = it1->next(triple1);
+            } else if (comp > 0 || (!status1 && status2)) {
+                emit_triple(triple2, triple, triple2->is_addition());
+                status2 = it2->next(triple2);
+            } else {
+                return false;
+            }
             return true;
         } else if (comp < 0) {
             emit_triple(triple1, triple, triple1->is_addition());
