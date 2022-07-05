@@ -100,7 +100,9 @@ const std::map<int, std::shared_ptr<HDT>>& SnapshotManager::detect_snapshots() {
                 if (base_match.size() == 2) {
                     std::ssub_match base_sub_match = base_match[1];
                     std::string base = (std::string) base_sub_match.str();
-                    loaded_snapshots[std::stoi(base)] = nullptr; // Don't load the actual file, we do this lazily
+                    int snapshot_id = std::stoi(base);
+                    loaded_snapshots[snapshot_id] = nullptr; // Don't load the actual file, we do this lazily
+                    loaded_dictionaries[snapshot_id] = nullptr; // We create a slot for the snapshot's dictionary
                 }
             }
         }
