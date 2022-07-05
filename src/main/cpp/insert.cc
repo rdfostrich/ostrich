@@ -22,7 +22,9 @@ int main(int argc, char** argv) {
     int param_offset = 0;
 
     bool verbose = std::string(argv[1]) == "-v";
-    param_offset += 1;
+    if (verbose) {
+        param_offset += 1;
+    }
     ProgressListener* progressListener = verbose ? new SimpleProgressListener() : nullptr;
 
     SnapshotCreationStrategy* strategy = nullptr;
