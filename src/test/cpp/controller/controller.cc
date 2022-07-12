@@ -1980,6 +1980,80 @@ TEST_F(ControllerTest, GetDeltaMaterializedPatchPatch) {
     ASSERT_EQ(false, it2_d->next(&t)) << "Iterator should be finished";
 }
 
+TEST_F(ControllerMSTest, EdgeCaseGetDeltaMaterializedMS) {
+    controller->new_patch_bulk()
+            ->addition(TripleString("<a>", "<a>", "\"a\"^^<http://example.org/literal>"))
+            ->addition(TripleString("<a>", "<a>", "\"b\"^^<http://example.org/literal>"))
+            ->addition(TripleString("<a>", "<b>", "<a>"))
+            ->addition(TripleString("<a>", "<b>", "<c>"))
+            ->addition(TripleString("<a>", "<b>", "<d>"))
+            ->addition(TripleString("<a>", "<b>", "<f>"))
+            ->addition(TripleString("<a>", "<b>", "<z>"))
+            ->addition(TripleString("<c>", "<c>", "<c>"))
+            ->commit();
+
+    controller->new_patch_bulk()
+            ->deletion(TripleString("<a>", "<a>", "\"b\"^^<http://example.org/literal>"))
+            ->addition(TripleString("<a>", "<a>", "\"z\"^^<http://example.org/literal>"))
+            ->deletion(TripleString("<a>", "<b>", "<a>"))
+            ->addition(TripleString("<a>", "<b>", "<g>"))
+            ->deletion(TripleString("<a>", "<b>", "<z>"))
+            ->addition(TripleString("<f>", "<f>", "<f>"))
+            ->addition(TripleString("<z>", "<z>", "<z>"))
+            ->commit();
+
+    controller->new_patch_bulk()
+            ->deletion(TripleString("<a>", "<a>", "\"z\"^^<http://example.org/literal>"))
+            ->deletion(TripleString("<f>", "<f>", "<f>"))
+            ->addition(TripleString("<f>", "<r>", "<s>"))
+            ->addition(TripleString("<q>", "<q>", "<q>"))
+            ->addition(TripleString("<r>", "<r>", "<r>"))
+            ->commit();
+
+    controller->new_patch_bulk()
+            ->deletion(TripleString("<z>", "<z>", "<z>"))
+            ->addition(TripleString("<z>", "<z>", "\"z\"^^<http://example.org/literal>"))
+            ->commit();
+
+    TripleDelta t;
+
+    ASSERT_EQ(7, controller->get_delta_materialized_count(StringTriple("", "", ""), 1, 3, false).first) << "Count is incorrect";
+    TripleDeltaIterator* it0 = controller->get_delta_materialized(StringTriple("", "", ""), 0, 1, 3);
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> \"z\"^^<http://example.org/literal>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(false, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<f> <f> <f>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(false, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<f> <r> <s>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<q> <q> <q>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<r> <r> <r>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<z> <z> \"z\"^^<http://example.org/literal>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<z> <z> <z>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(false, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(false, it0->next(&t)) << "Iterator should be finished";
+
+    // TODO: test between 0 and 3
+    // TODO: test between 0 and 2
+}
+
 TEST_F(ControllerTest, EdgeCaseGetDeltaMaterialized1) {
     /*
      * Test if DM between two patches is correct.
