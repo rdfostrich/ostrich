@@ -24,7 +24,5 @@ jobs:
                   mkdir build
                   cd build
                   cmake -DCMAKE_BUILD_TYPE=Debug .. -Wno-deprecated
-                  make -j
-            - run: |
-                  cd build
-                  ./ostrich_test
+                  make -j ostrich_test
+            - run: ./build/ostrich_test
