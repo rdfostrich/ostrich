@@ -206,7 +206,7 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, Prog
 
             // Add patch id to the current addition triple
             if (addition_value.get_patch_id_at(0) <= patch_id // Skip this addition if our current patch id lies before the first patch id for A
-                && addition_value.get_patchvalue_index(patch_id) < 0) { // Don't re-insert when already present for this patch id
+                && !addition_value.is_patch_id(patch_id)) { // Don't re-insert when already present for this patch id
                 addition_value.add(patch_id);
                 tripleStore->insertAdditionSingle(&addition_key, &addition_value, cursor_additions);
             }

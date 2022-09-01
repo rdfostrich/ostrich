@@ -1,6 +1,5 @@
 #include <cstring>
 #include <string>
-#include <iostream>
 
 #include "patch_tree_deletion_value.h"
 

@@ -2,7 +2,7 @@
 
 template <class DV>
 PatchTreeValueBase<DV>::PatchTreeValueBase() : addition(new PatchTreeAdditionValue()), deletion(new DV()),
-                                   has_addition(false), has_deletion(false) {}
+                                               has_addition(false), has_deletion(false) {}
 
 template <class DV>
 PatchTreeValueBase<DV>::~PatchTreeValueBase() {
