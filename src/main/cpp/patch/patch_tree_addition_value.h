@@ -79,6 +79,13 @@ protected:
     IntervalList<int> local_changes;
     int max_patch_id;
 public:
+//    PatchTreeAdditionValue();
+    /**
+     * Construct a new AdditionValue with a specified max id.
+     * This is needed in order to conduct correct get_size and get_patch_id_at operations
+     * This is due to the fact that the last interval is stored unbound, so we need to know where it actually stops.
+     * @param max_patch_id the outer bound of the values stored
+     */
     explicit PatchTreeAdditionValue(int max_patch_id);
     /**
      * Add the given patch id.
@@ -86,6 +93,12 @@ public:
      * @return true if the internal representation changed (thus needing a disk rewrite)
      */
     bool add(int patch_id);
+    /**
+     * Add the given patch id as a standalone value.
+     * @param patch_id
+     * @return true if the internal representation changed (thus needing a disk rewrite)
+     */
+    bool add_unique(int patch_id);
     /**
      * Mark the patch id as a deletion. Mark the end of an interval in the internal representation.
      * @param patch_id the patch id to mark as deleted
@@ -98,6 +111,12 @@ public:
      * @return If the given patch id is present
      */
     bool is_patch_id(int patch_id) const;
+    /**
+     * Get the index of the given patch in this value list.
+     * @param patch_id The id of the patch to find
+     * @return The index of the given patch in this value list. -1 if not found.
+     */
+    long get_patchvalue_index(int patch_id) const;
     /**
      * Get a patch id by position.
      * @param i The index to check the patch id for
@@ -113,6 +132,7 @@ public:
      * @param patch_id The id of the patch to set
      */
     bool set_local_change(int patch_id);
+    bool set_local_change_unique(int patch_id);
     bool unset_local_change(int patch_id);
     /**
      * Check if this element is an element (+) relative to the given patch itself,

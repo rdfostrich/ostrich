@@ -13,7 +13,11 @@ protected:
     bool has_addition;
     bool has_deletion;
 public:
+#ifdef COMPRESSED_TREE_VALUES
+    explicit PatchTreeValueBase(int max_patch_id);
+#else
     PatchTreeValueBase();
+#endif
     ~PatchTreeValueBase();
 
     /**

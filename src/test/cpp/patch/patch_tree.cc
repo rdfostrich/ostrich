@@ -59,7 +59,11 @@ TEST_F(PatchTreeTest, AppendUnsafeContains) {
     PatchTreeKey iteratorKey = Triple("s1", "p1", "o1", dict);
     PatchTreeIterator it = patchTree->iterator(&iteratorKey);
     PatchTreeKey key;
+#ifdef COMPRESSED_TREE_VALUES
+    PatchTreeValue value(patchTree->get_max_patch_id()+1);
+#else
     PatchTreeValue value;
+#endif
 
     ASSERT_EQ(true, it.next(&key, &value)) << "Iterator does not contain an element after append";
     ASSERT_EQ("s1 p1 o1.", key.to_string(*dict)) << "Found key is incorrect";
@@ -145,6 +149,7 @@ TEST_F(PatchTreeTest, AppendRemove) {
 TEST_F(PatchTreeTest, RepeatAppendRemove1) {
     for(int i = 0; i < 10; i++) {
         PatchSorted patch(dict);
+        bool is_add = i % 2;
         patch.add(PatchElement(Triple("a", "a", "a", dict), i % 2));
         ASSERT_EQ(true, patchTree->append(patch, i)) << "Appending a patch failed at an iteration";
     }
@@ -198,7 +203,11 @@ TEST_F(PatchTreeTest, IteratorOrder) {
     PatchTreeKey iteratorKey = Triple("a", "a", "a", dict);
     PatchTreeIterator it = patchTree->iterator(&iteratorKey); // Iterate starting from the given triple.
     PatchTreeKey key;
+#ifdef COMPRESSED_TREE_VALUES
+    PatchTreeValue value(patchTree->get_max_patch_id()+1);
+#else
     PatchTreeValue value;
+#endif
 
     ASSERT_EQ(true, it.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("a p o.", key.to_string(*dict)) << "First key is incorrect";
@@ -262,7 +271,11 @@ TEST_F(PatchTreeTest, PatchIterator) {
     PatchTreeKey iteratorKey = Triple("s", "a", "o", dict);
     PatchTreeIterator it = patchTree->iterator(&iteratorKey, 2, false); // Iterate over all elements of patch 2 starting from "s a o."
     PatchTreeKey key;
+#ifdef COMPRESSED_TREE_VALUES
+    PatchTreeValue value(patchTree->get_max_patch_id()+1);
+#else
     PatchTreeValue value;
+#endif
 
     ASSERT_EQ(true, it.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("s a o.", key.to_string(*dict)) << "Fourth key is incorrect";
@@ -312,7 +325,11 @@ TEST_F(PatchTreeTest, OffsetFilteredPatchIterator) {
 
     PatchTreeIterator it = patchTree->iterator(2, false); // Iterate over all elements of patch only 2
     PatchTreeKey key;
+#ifdef COMPRESSED_TREE_VALUES
+    PatchTreeValue value(patchTree->get_max_patch_id()+1);
+#else
     PatchTreeValue value;
+#endif
 
     ASSERT_EQ(true, it.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("a p o.", key.to_string(*dict)) << "First key is incorrect";
@@ -624,7 +641,11 @@ TEST_F(PatchTreeTest, RelativePatchPositions) {
 
     PatchTreeIterator it = patchTree->iterator(1, false); // Iterate over all elements of patch 1
     PatchTreeKey key;
+#ifdef COMPRESSED_TREE_VALUES
+    PatchTreeValue value(patchTree->get_max_patch_id()+1);
+#else
     PatchTreeValue value;
+#endif
 
     // Expected order for patch 1:
     // a b c +
@@ -785,7 +806,11 @@ TEST_F(PatchTreeTest, RelativePatchPositions2) {
 
     PatchTreeIterator it1 = patchTree->iterator(1, false); // Iterate over all elements of patch 1
     PatchTreeKey key;
+#ifdef COMPRESSED_TREE_VALUES
+    PatchTreeValue value(patchTree->get_max_patch_id()+1);
+#else
     PatchTreeValue value;
+#endif
 
     // Expected order for patch 1:
     // a a a -

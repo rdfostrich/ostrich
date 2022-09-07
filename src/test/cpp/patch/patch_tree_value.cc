@@ -3,7 +3,11 @@
 #include "../../../main/cpp/patch/patch_tree.h"
 
 TEST(PatchTreeValueTest, Empty) {
+#ifdef COMPRESSED_TREE_VALUES
+    PatchTreeValue value(1);
+#else
     PatchTreeValue value;
+#endif
 
     ASSERT_EQ(false, value.is_addition(0, true)) << "An non-initialized value must not be an addition";
     ASSERT_EQ(false, value.is_addition(1, true)) << "An non-initialized value must not be an addition";
@@ -20,7 +24,11 @@ TEST(PatchTreeValueTest, Empty) {
 }
 
 TEST(PatchTreeValueTest, Addition1) {
+#ifdef COMPRESSED_TREE_VALUES
+    PatchTreeValue value(0);
+#else
     PatchTreeValue value;
+#endif
 
     value.set_addition(true);
     value.get_addition()->add(0);
@@ -41,7 +49,11 @@ TEST(PatchTreeValueTest, Addition1) {
 }
 
 TEST(PatchTreeValueTest, Addition2) {
+#ifdef COMPRESSED_TREE_VALUES
+    PatchTreeValue value(2);
+#else
     PatchTreeValue value;
+#endif
 
     value.set_addition(true);
     value.get_addition()->add(1);

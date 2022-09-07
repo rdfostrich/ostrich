@@ -21,8 +21,15 @@ class PatchTreeTripleIterator : public TripleIterator {
 protected:
     PatchTreeIterator* it;
     Triple triple_pattern;
+#ifdef COMPRESSED_TREE_VALUES
+    int max_patch_id;
+#endif
 public:
+#ifdef COMPRESSED_TREE_VALUES
+    PatchTreeTripleIterator(PatchTreeIterator* it, Triple triple_pattern, int max_patch_id);
+#else
     PatchTreeTripleIterator(PatchTreeIterator* it, Triple triple_pattern);
+#endif
     ~PatchTreeTripleIterator();
     bool next(Triple* triple);
 };

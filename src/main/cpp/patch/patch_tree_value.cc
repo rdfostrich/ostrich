@@ -1,8 +1,14 @@
 #include "patch_tree_value.h"
 
+#ifdef COMPRESSED_TREE_VALUES
+template <class DV>
+PatchTreeValueBase<DV>::PatchTreeValueBase(int max_patch_id) : addition(new PatchTreeAdditionValue(max_patch_id)), deletion(new DV()),
+                                               has_addition(false), has_deletion(false) {}
+#else
 template <class DV>
 PatchTreeValueBase<DV>::PatchTreeValueBase() : addition(new PatchTreeAdditionValue()), deletion(new DV()),
                                                has_addition(false), has_deletion(false) {}
+#endif
 
 template <class DV>
 PatchTreeValueBase<DV>::~PatchTreeValueBase() {

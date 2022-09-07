@@ -59,8 +59,11 @@ bool PatchTreeTripleVersionsIterator::next(TripleVersions* triple_versions) {
     if (addition_it == nullptr) {
         addition_it = patchTree->addition_iterator(triple_pattern);
     }
-
+#ifdef COMPRESSED_TREE_VALUES
+    PatchTreeAdditionValue value(patchTree->get_max_patch_id());
+#else
     PatchTreeAdditionValue value;
+#endif
     while (addition_it->next_addition(triple_versions->get_triple(), &value)) {
         // Skip if FIRST this addition has a local change for its first patch id,
         // because in that case the triple was originally part of the snapshot, so it's already emitted.

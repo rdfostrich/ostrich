@@ -148,7 +148,11 @@ void TripleStore::insertAdditionSingle(const PatchTreeKey* key, const PatchTreeA
 
 void TripleStore::insertAdditionSingle(const PatchTreeKey* key, int patch_id, bool local_change, bool ignore_existing, DB::Cursor* cursor) {
     // Look up the value for the given triple key in the tree.
+#ifdef COMPRESSED_TREE_VALUES
+    PatchTreeAdditionValue value(patch_id);
+#else
     PatchTreeAdditionValue value;
+#endif
     if (!ignore_existing) {
         // We assume that are indexes are sane, we only check one of them
         size_t key_size, value_size;

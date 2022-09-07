@@ -1,6 +1,5 @@
 #include <cstring>
 #include <string>
-#include <cstdlib>
 #include <limits>
 #include "patch_tree_addition_value.h"
 
@@ -115,18 +114,48 @@ void PatchTreeAdditionValue::deserialize(const char *data, size_t size) {
 
 PatchTreeAdditionValue::PatchTreeAdditionValue(int max_patch_id) : patches(std::numeric_limits<int>::max()),
                                                    local_changes(std::numeric_limits<int>::max()),
-                                                   max_patch_id(max_patch_id) {}
+                                                   max_patch_id(max_patch_id+1) {}
 
 bool PatchTreeAdditionValue::add(int patch_id) {
+    if (patch_id >= max_patch_id) {
+        max_patch_id = patch_id+1;
+    }
     return patches.addition(patch_id);
 }
 
+bool PatchTreeAdditionValue::add_unique(int patch_id) {
+    if (patch_id >= max_patch_id) {
+        max_patch_id = patch_id+1;
+    }
+    bool hs = patches.lone_addition(patch_id);
+    return hs;
+}
+
 bool PatchTreeAdditionValue::del(int patch_id) {
+    if (patch_id >= max_patch_id) {
+        max_patch_id = patch_id+1;
+    }
     return patches.deletion(patch_id);
 }
 
 bool PatchTreeAdditionValue::is_patch_id(int patch_id) const {
-    return patches.is_in(patch_id);
+    if (patch_id >= 0 && patch_id < max_patch_id) {
+        return patches.is_in(patch_id);
+    }
+    return false;
+}
+
+long PatchTreeAdditionValue::get_patchvalue_index(int patch_id) const {
+    int count = 0;
+    for (auto inter: patches.get_internal_representation()) {
+        int max_value = inter.second == patches.get_max_value() ? max_patch_id : inter.second;
+        int range = max_value - inter.first;
+        if (inter.first <= patch_id && patch_id < max_value) {
+            return count + (patch_id - inter.first);
+        }
+        count += range;
+    }
+    return -1;
 }
 
 int PatchTreeAdditionValue::get_patch_id_at(long i) const {
@@ -154,6 +183,11 @@ long PatchTreeAdditionValue::get_size() const {
 
 bool PatchTreeAdditionValue::set_local_change(int patch_id) {
     return local_changes.addition(patch_id);
+}
+
+bool PatchTreeAdditionValue::set_local_change_unique(int patch_id) {
+    bool hs = local_changes.lone_addition(patch_id);
+    return hs;
 }
 
 bool PatchTreeAdditionValue::unset_local_change(int patch_id) {
@@ -195,14 +229,14 @@ const char *PatchTreeAdditionValue::serialize(size_t *size) const {
 void PatchTreeAdditionValue::deserialize(const char *data, size_t size) {
     size_t patches_size;
     std::memcpy(&patches_size, data, sizeof(size_t));
-    size_t local_change_size = size - patches_size;
+    size_t local_change_size = size - patches_size - sizeof(size_t);
     patches.deserialize(data+sizeof(size_t), patches_size);
     if (local_change_size > 0) {
         local_changes.deserialize(data+sizeof(size_t)+patches_size, local_change_size);
+    } else {
+        local_changes.clear();
     }
-    delete[] data;
 }
-
 
 #endif
 

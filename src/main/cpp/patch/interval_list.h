@@ -6,7 +6,7 @@
 #include <cstring>
 
 /*
- * This class represent an ordered list of discrete elements comparable with '==' and '<'.
+ * This class represent an ordered list of discrete elements supporting '==', '<', and '+' operators
  * The representation is compressed such that only intervals of values are stored.
  * Works preferably with trivial types which can be fully copied with memcpy() for serialization
  */
@@ -62,6 +62,22 @@ public:
         }
         return has_changed;
     }
+
+    /**
+     * Add the element as a single value
+     * @param element
+     * @return
+     */
+    bool lone_addition(T element) {
+        bool hs = false;
+        auto inter = get_interval(element);
+        if (inter.first == max && inter.second == max) {  // the value don't exist in an existing interval
+            intervals[element] = element+1;
+            hs = true;
+        }
+        return hs;
+    }
+
     /**
      * Delete element from the list (which possibly mark the end of an interval)
      * @param element the deleted element
@@ -91,11 +107,34 @@ public:
      */
     [[nodiscard]] bool is_in(T element) const {
         auto pos = intervals.lower_bound(element);
-        if (pos == intervals.end() || element < pos->first) {
+        if (pos == intervals.end()) {
+            if (pos == intervals.begin()) {
+                return false;
+            }
+            pos--;
+        } else if (element < pos->first) {
             pos--;
         }
-        return element < pos->second;
+        return pos->first <= element && element < pos->second;
     }
+    /**
+     * Return the interval in the internal representation that contain the value
+     * @param element the value to search for
+     * @return
+     */
+    std::pair<T,T> get_interval(T element) const {
+        auto pos = intervals.lower_bound(element);
+        if (pos == intervals.end()) {
+            if (pos == intervals.begin()) {
+                return std::make_pair(max,max);
+            }
+            pos--;
+        }
+        if (element < pos->first) pos--;
+        if (pos->second < element) return std::make_pair(max,max);
+        return std::make_pair(pos->first, pos->second);
+    }
+
     /**
      * Give access to a const version of the interval data
      * @return the data
@@ -142,6 +181,13 @@ public:
             i += sizeof(T);
             intervals.insert(std::make_pair(s, e));
         }
+    }
+
+    /**
+     * Clear the data contained in the structure
+     */
+    void clear() {
+        intervals.clear();
     }
 
     std::string to_string() const {

@@ -227,11 +227,11 @@ public:
     /**
      * @return The largest patch id that is currently available.
      */
-    const int get_max_patch_id();
+    int get_max_patch_id() const;
     /**
      * @return The smallest patch id that is currently available.
      */
-    const int get_min_patch_id();
+    int get_min_patch_id() const;
 protected:
     void write_metadata();
     void read_metadata();
