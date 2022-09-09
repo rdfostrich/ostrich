@@ -198,6 +198,10 @@ public:
         return s;
     }
 
+    void set_max_value(T value) {
+        max = value;
+    }
+
 };
 
 #endif //OSTRICH_INTERVAL_LIST_H

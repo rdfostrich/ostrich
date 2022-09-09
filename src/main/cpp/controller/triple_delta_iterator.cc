@@ -28,7 +28,7 @@ ForwardPatchTripleDeltaIterator<DV>::ForwardPatchTripleDeltaIterator(std::shared
     it->set_filter_local_changes(true);
     it->set_early_break(true);
     it->set_squash_equal_addition_deletion(true);
-#ifdef COMPRESSED_TREE_VALUES
+#ifdef COMPRESSED_ADD_VALUES
     value = new PatchTreeValueBase<DV>(patchTree->get_max_patch_id());
 #else
     value = new PatchTreeValueBase<DV>();

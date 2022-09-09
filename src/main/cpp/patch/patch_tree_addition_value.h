@@ -6,9 +6,9 @@
 #include <cstddef>
 #include "interval_list.h"
 
-#define COMPRESSED_TREE_VALUES
+#define COMPRESSED_ADD_VALUES
 
-#ifndef COMPRESSED_TREE_VALUES
+#ifndef COMPRESSED_ADD_VALUES
 class PatchTreeAdditionValue {
 protected:
     std::vector<int> patches;

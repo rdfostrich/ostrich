@@ -59,7 +59,7 @@ bool PatchTreeTripleVersionsIterator::next(TripleVersions* triple_versions) {
     if (addition_it == nullptr) {
         addition_it = patchTree->addition_iterator(triple_pattern);
     }
-#ifdef COMPRESSED_TREE_VALUES
+#ifdef COMPRESSED_ADD_VALUES
     PatchTreeAdditionValue value(patchTree->get_max_patch_id());
 #else
     PatchTreeAdditionValue value;

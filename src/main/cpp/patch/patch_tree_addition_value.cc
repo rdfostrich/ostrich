@@ -4,7 +4,7 @@
 #include "patch_tree_addition_value.h"
 
 
-#ifndef COMPRESSED_TREE_VALUES
+#ifndef COMPRESSED_ADD_VALUES
 PatchTreeAdditionValue::PatchTreeAdditionValue() : patches(), local_changes() {}
 
 void PatchTreeAdditionValue::add(int patch_id) {

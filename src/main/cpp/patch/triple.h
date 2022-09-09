@@ -7,9 +7,6 @@
 #include <Dictionary.hpp>
 #include "../dictionary/dictionary_manager.h"
 
-using namespace std;
-using namespace hdt;
-
 // A Triple holds a subject, predicate and object
 class Triple {
 protected:

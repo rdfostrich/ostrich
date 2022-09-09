@@ -3,7 +3,7 @@
 #include "../../../main/cpp/patch/patch_tree.h"
 
 TEST(PatchTreeValueTest, Empty) {
-#ifdef COMPRESSED_TREE_VALUES
+#ifdef COMPRESSED_ADD_VALUES
     PatchTreeValue value(1);
 #else
     PatchTreeValue value;
@@ -24,7 +24,7 @@ TEST(PatchTreeValueTest, Empty) {
 }
 
 TEST(PatchTreeValueTest, Addition1) {
-#ifdef COMPRESSED_TREE_VALUES
+#ifdef COMPRESSED_ADD_VALUES
     PatchTreeValue value(0);
 #else
     PatchTreeValue value;
@@ -49,7 +49,7 @@ TEST(PatchTreeValueTest, Addition1) {
 }
 
 TEST(PatchTreeValueTest, Addition2) {
-#ifdef COMPRESSED_TREE_VALUES
+#ifdef COMPRESSED_ADD_VALUES
     PatchTreeValue value(2);
 #else
     PatchTreeValue value;

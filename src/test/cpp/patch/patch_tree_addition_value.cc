@@ -2,7 +2,7 @@
 
 #include "../../../main/cpp/patch/patch_tree_addition_value.h"
 
-#ifdef COMPRESSED_TREE_VALUES
+#ifdef COMPRESSED_ADD_VALUES
 TEST(PatchTreeAdditionValueTest, ToString) {
     PatchTreeAdditionValue value(10);
     value.add_unique(0);
@@ -36,7 +36,7 @@ TEST(PatchTreeAdditionValueTest, ToString) {
 }
 #endif
 
-#ifdef COMPRESSED_TREE_VALUES
+#ifdef COMPRESSED_ADD_VALUES
 TEST(PatchTreeAdditionValueTest, Lookup) {
     PatchTreeAdditionValue value(10);
     value.add_unique(0);
@@ -98,7 +98,7 @@ TEST(PatchTreeAdditionValueTest, Lookup) {
 }
 #endif
 
-#ifdef COMPRESSED_TREE_VALUES
+#ifdef COMPRESSED_ADD_VALUES
 TEST(PatchTreeAdditionValueTest, Serialization) {
     PatchTreeAdditionValue valueIn(10);
     valueIn.add_unique(0);

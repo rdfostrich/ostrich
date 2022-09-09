@@ -113,7 +113,7 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, Prog
     const char *kbp, *vbp;
     size_t ksp, vsp;
     PatchTreeDeletionValue deletion_value;
-#ifndef COMPRESSED_TREE_VALUES
+#ifndef COMPRESSED_ADD_VALUES
     PatchTreeAdditionValue addition_value;
 #else
     PatchTreeAdditionValue addition_value(max_patch_id);
@@ -211,7 +211,7 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, Prog
             // Add patch id to the current addition triple
             if (addition_value.get_patch_id_at(0) <= patch_id // Skip this addition if our current patch id lies before the first patch id for A
                 && !addition_value.is_patch_id(patch_id)) { // Don't re-insert when already present for this patch id
-#ifndef COMPRESSED_TREE_VALUES
+#ifndef COMPRESSED_ADD_VALUES
                 addition_value.add(patch_id);
                 tripleStore->insertAdditionSingle(&addition_key, &addition_value, cursor_additions);
 #else
@@ -265,7 +265,7 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, Prog
 
             if (!patch_element.is_addition()) {
                 // Add deletion as local change
-#ifdef COMPRESSED_TREE_VALUES
+#ifdef COMPRESSED_ADD_VALUES
                 bool has_changed = addition_value.del(patch_id);
                 has_changed |= addition_value.unset_local_change(patch_id);
                 if (has_changed)
@@ -274,7 +274,7 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, Prog
                 tripleStore->insertDeletionSingle(&patch_element.get_triple(), PatchPositions(), patch_id, true, true);
             } else {
                 // Carry over previous addition value
-#ifndef COMPRESSED_TREE_VALUES
+#ifndef COMPRESSED_ADD_VALUES
                 bool was_local_change = addition_value.is_local_change(patch_id);
                 addition_value.add(patch_id);
                 if (was_local_change) addition_value.set_local_change(patch_id);
@@ -330,7 +330,7 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, Prog
 
             if (!addition_value.is_local_change(addition_value.get_patch_id_at(0))) tripleStore->increment_addition_counts(0, addition_key);
             if (add_addition) {
-#ifndef COMPRESSED_TREE_VALUES
+#ifndef COMPRESSED_ADD_VALUES
                 addition_value.add(patch_id);
                 if (is_local_change) addition_value.set_local_change(patch_id);
                 tripleStore->insertAdditionSingle(&addition_key, &addition_value, cursor_additions);
@@ -351,7 +351,7 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, Prog
                 deletion_value.add(deletion_value_element);
                 PatchTreeDeletionValueReduced deletion_value_reduced = deletion_value.to_reduced();
                 tripleStore->insertDeletionSingle(&deletion_key, &deletion_value, &deletion_value_reduced, cursor_deletions);
-#ifdef COMPRESSED_TREE_VALUES
+#ifdef COMPRESSED_ADD_VALUES
                 bool has_changed = addition_value.del(patch_id);
                 if (addition_value.is_local_change(patch_id))
                     has_changed |= addition_value.unset_local_change(patch_id);
@@ -450,7 +450,7 @@ bool PatchTree::contains_addition(const PatchElement& patch_element, int patch_i
     bool ret = raw_value != nullptr;
     if(ret) {
         // After that, we have to deserialize the value and check if it exists for the given patch.
-#ifdef COMPRESSED_TREE_VALUES
+#ifdef COMPRESSED_ADD_VALUES
         PatchTreeAdditionValue value(max_patch_id);
 #else
         PatchTreeAdditionValue value;
@@ -486,7 +486,7 @@ void PatchTree::reconstruct_to_patch(Patch* patch, int patch_id, bool ignore_loc
     PatchTreeIterator it = iterator(patch_id, false);
     it.set_filter_local_changes(ignore_local_changes);
     PatchTreeKey key;
-#ifdef COMPRESSED_TREE_VALUES
+#ifdef COMPRESSED_ADD_VALUES
     PatchTreeValue value(max_patch_id);
 #else
     PatchTreeValue value;
@@ -713,7 +713,7 @@ PatchTreeTripleIterator* PatchTree::addition_iterator_from(long offset, int patc
     it->set_filter_local_changes(true);
     // TODO: If this this ridiculous loop becomes too inefficient, make an offset map
     PatchTreeKey key;
-#ifdef COMPRESSED_TREE_VALUES
+#ifdef COMPRESSED_ADD_VALUES
     PatchTreeAdditionValue value(max_patch_id);
 #else
     PatchTreeAdditionValue value;
@@ -724,7 +724,7 @@ PatchTreeTripleIterator* PatchTree::addition_iterator_from(long offset, int patc
         it->getAdditionCursor()->jump_back();
     }
     while(offset-- > 0 && it->next_addition(&key, &value));
-#ifdef COMPRESSED_TREE_VALUES
+#ifdef COMPRESSED_ADD_VALUES
     return new PatchTreeTripleIterator(it, triple_pattern, max_patch_id);
 #else
     return new PatchTreeTripleIterator(it, triple_pattern);
@@ -748,7 +748,7 @@ PatchPosition PatchTree::addition_count(int patch_id, const Triple& triple_patte
         // This means that the count was too low to be stored in the count db, so we count manually.
         PatchTreeTripleIterator* it;
         if (!patch_id) {
-#ifdef COMPRESSED_TREE_VALUES
+#ifdef COMPRESSED_ADD_VALUES
             it = new PatchTreeTripleIterator(addition_iterator(triple_pattern), triple_pattern, max_patch_id);
 #else
             it = new PatchTreeTripleIterator(addition_iterator(triple_pattern), triple_pattern);
@@ -771,7 +771,7 @@ PatchTreeAdditionValue* PatchTree::get_addition_value(const Triple &triple) cons
     const char* vbp = tripleStore->getDefaultAdditionsTree()->get(kbp, ksp, &vsp);
     free((char*) kbp);
     if (vbp != nullptr) {
-#ifdef COMPRESSED_TREE_VALUES
+#ifdef COMPRESSED_ADD_VALUES
         PatchTreeAdditionValue* value = new PatchTreeAdditionValue(max_patch_id);
 #else
         PatchTreeAdditionValue* value = new PatchTreeAdditionValue();

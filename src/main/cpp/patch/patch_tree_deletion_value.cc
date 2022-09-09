@@ -3,7 +3,6 @@
 
 #include "patch_tree_deletion_value.h"
 
-using namespace std;
 
 int PatchTreeDeletionValueElementBase::get_patch_id() const {
     return patch_id;
@@ -29,6 +28,7 @@ string PatchTreeDeletionValueElementBase::to_string() const {
     return std::to_string(get_patch_id());
 }
 
+#ifndef COMPRESSED_DEL_VALUES
 template <class T>
 PatchTreeDeletionValueBase<T>::PatchTreeDeletionValueBase() {}
 
@@ -120,6 +120,78 @@ void PatchTreeDeletionValueBase<T>::deserialize(const char* data, size_t size) {
         std::memcpy(&elements.data()[i], &data[i * sizeof(T)], sizeof(T));
     }
 }
+#else
+template <class T>
+PatchTreeDeletionValueBase<T>::PatchTreeDeletionValueBase(int max_patch_id): max_patch_id(max_patch_id+1) {}
+
+template <class T>
+bool PatchTreeDeletionValueBase<T>::add(const T& element) {
+    return elements.addition(element);
+}
+
+template <class T>
+bool PatchTreeDeletionValueBase<T>::del(const T& element) {
+    return elements.deletion(element);
+}
+
+template <class T>
+long PatchTreeDeletionValueBase<T>::get_patchvalue_index(int patch_id) const {
+    return elements.get_index(patch_id);
+}
+
+template <class T>
+long PatchTreeDeletionValueBase<T>::get_size() const {
+    return elements.size();
+}
+
+template <class T>
+const T& PatchTreeDeletionValueBase<T>::get_patch(long element) const {
+    return elements.get_element_at(element);
+}
+
+template <class T>
+const T& PatchTreeDeletionValueBase<T>::get(int patch_id) const {
+    long index = get_patchvalue_index(patch_id);
+    long size = elements.size();
+    if(index < 0 || index >= size) {
+        return get_patch(size - 1);
+    }
+    return get_patch(index);
+}
+
+template <class T>
+bool PatchTreeDeletionValueBase<T>::is_local_change(int patch_id) const {
+    if (get_size() == 0) return false;
+    long index = get_patchvalue_index(patch_id);
+    if (index >= 0) {
+        return get_patch(patch_id).is_local_change();
+    }
+    return false;
+}
+
+template <class T>
+string PatchTreeDeletionValueBase<T>::to_string() const {
+    string ret = "{";
+    bool separator = false;
+    for(int i = 0; i < elements.size(); i++) {
+        if(separator) ret += ",";
+        separator = true;
+        ret += elements.get_element_at(i).to_string();
+    }
+    ret += "}";
+    return ret;
+}
+
+template <class T>
+const char* PatchTreeDeletionValueBase<T>::serialize(size_t* size) const {
+    // TODO
+}
+
+template <class T>
+void PatchTreeDeletionValueBase<T>::deserialize(const char* data, size_t size) {
+    // TODO
+}
+#endif
 
 template class PatchTreeDeletionValueBase<PatchTreeDeletionValueElement>;
 template class PatchTreeDeletionValueBase<PatchTreeDeletionValueElementBase>;

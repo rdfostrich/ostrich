@@ -9,7 +9,7 @@ bool EmptyTripleIterator::next(Triple *triple) {
     return false;
 }
 
-#ifdef COMPRESSED_TREE_VALUES
+#ifdef COMPRESSED_ADD_VALUES
 PatchTreeTripleIterator::PatchTreeTripleIterator(PatchTreeIterator* it, Triple triple_pattern, int max_patch_id)
         : it(it), triple_pattern(triple_pattern), max_patch_id(max_patch_id) {}
 #else
@@ -23,7 +23,7 @@ PatchTreeTripleIterator::~PatchTreeTripleIterator() {
 
 bool PatchTreeTripleIterator::next(Triple *triple) {
     PatchTreeKey key;
-#ifdef COMPRESSED_TREE_VALUES
+#ifdef COMPRESSED_ADD_VALUES
     PatchTreeAdditionValue value(max_patch_id);
 #else
     PatchTreeAdditionValue value;

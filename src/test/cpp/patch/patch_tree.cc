@@ -59,7 +59,7 @@ TEST_F(PatchTreeTest, AppendUnsafeContains) {
     PatchTreeKey iteratorKey = Triple("s1", "p1", "o1", dict);
     PatchTreeIterator it = patchTree->iterator(&iteratorKey);
     PatchTreeKey key;
-#ifdef COMPRESSED_TREE_VALUES
+#ifdef COMPRESSED_ADD_VALUES
     PatchTreeValue value(patchTree->get_max_patch_id()+1);
 #else
     PatchTreeValue value;
@@ -203,7 +203,7 @@ TEST_F(PatchTreeTest, IteratorOrder) {
     PatchTreeKey iteratorKey = Triple("a", "a", "a", dict);
     PatchTreeIterator it = patchTree->iterator(&iteratorKey); // Iterate starting from the given triple.
     PatchTreeKey key;
-#ifdef COMPRESSED_TREE_VALUES
+#ifdef COMPRESSED_ADD_VALUES
     PatchTreeValue value(patchTree->get_max_patch_id()+1);
 #else
     PatchTreeValue value;
@@ -271,7 +271,7 @@ TEST_F(PatchTreeTest, PatchIterator) {
     PatchTreeKey iteratorKey = Triple("s", "a", "o", dict);
     PatchTreeIterator it = patchTree->iterator(&iteratorKey, 2, false); // Iterate over all elements of patch 2 starting from "s a o."
     PatchTreeKey key;
-#ifdef COMPRESSED_TREE_VALUES
+#ifdef COMPRESSED_ADD_VALUES
     PatchTreeValue value(patchTree->get_max_patch_id()+1);
 #else
     PatchTreeValue value;
@@ -325,7 +325,7 @@ TEST_F(PatchTreeTest, OffsetFilteredPatchIterator) {
 
     PatchTreeIterator it = patchTree->iterator(2, false); // Iterate over all elements of patch only 2
     PatchTreeKey key;
-#ifdef COMPRESSED_TREE_VALUES
+#ifdef COMPRESSED_ADD_VALUES
     PatchTreeValue value(patchTree->get_max_patch_id()+1);
 #else
     PatchTreeValue value;
@@ -641,7 +641,7 @@ TEST_F(PatchTreeTest, RelativePatchPositions) {
 
     PatchTreeIterator it = patchTree->iterator(1, false); // Iterate over all elements of patch 1
     PatchTreeKey key;
-#ifdef COMPRESSED_TREE_VALUES
+#ifdef COMPRESSED_ADD_VALUES
     PatchTreeValue value(patchTree->get_max_patch_id()+1);
 #else
     PatchTreeValue value;
@@ -806,7 +806,7 @@ TEST_F(PatchTreeTest, RelativePatchPositions2) {
 
     PatchTreeIterator it1 = patchTree->iterator(1, false); // Iterate over all elements of patch 1
     PatchTreeKey key;
-#ifdef COMPRESSED_TREE_VALUES
+#ifdef COMPRESSED_ADD_VALUES
     PatchTreeValue value(patchTree->get_max_patch_id()+1);
 #else
     PatchTreeValue value;

@@ -388,7 +388,7 @@ std::pair<size_t, ResultEstimationType> Controller::get_version_count(const Stri
                     } else {
                         auto it = patchTree->addition_iterator(pattern);
                         Triple t;
-#ifdef COMPRESSED_TREE_VALUES
+#ifdef COMPRESSED_ADD_VALUES
                         PatchTreeValueBase<PatchTreeDeletionValue> del_val(patchTree->get_max_patch_id());
 #else
                         PatchTreeValueBase<PatchTreeDeletionValue> del_val;
