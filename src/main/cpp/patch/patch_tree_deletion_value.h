@@ -4,6 +4,7 @@
 #include <string>
 #include <cstddef>
 #include <vector>
+#include <memory>
 #include "triple.h"
 #include "interval_list.h"
 
@@ -22,12 +23,25 @@ typedef struct PatchPositions {
     PatchPosition _p_;
     PatchPosition __o;
     PatchPosition ___;
+
     PatchPositions() : sp_(-1), s_o(-1), s__(-1), _po(-1), _p_(-1), __o(-1), ___(-1) {}
+
     PatchPositions(PatchPosition sp_, PatchPosition s_o, PatchPosition s__, PatchPosition _po,
                    PatchPosition _p_, PatchPosition __o, PatchPosition ___)
             : sp_(sp_), s_o(s_o), s__(s__), _po(_po), _p_(_p_), __o(__o), ___(___) {}
-    string to_string() const {
-        string ret = "{";
+
+    PatchPositions(const PatchPositions& other) {
+        sp_ = other.sp_;
+        s_o = other.s_o;
+        s__ = other.s__;
+        _po = other._po;
+        _p_ = other._p_;
+        __o = other.__o;
+        ___ = other.___;
+    }
+
+    std::string to_string() const {
+        std::string ret = "{";
         ret += " " + std::to_string(sp_);
         ret += " " + std::to_string(s_o);
         ret += " " + std::to_string(s__);
@@ -38,20 +52,22 @@ typedef struct PatchPositions {
         ret += " }";
         return ret;
     }
-    PatchPosition get_by_pattern(const Triple& triple_pattern) const {
+
+    PatchPosition get_by_pattern(const Triple &triple_pattern) const {
         bool s = triple_pattern.get_subject() > 0;
         bool p = triple_pattern.get_predicate() > 0;
         bool o = triple_pattern.get_object() > 0;
-        if(s & p & o) return 0;
-        if(s & p & !o) return sp_;
-        if(s & !p & o) return s_o;
-        if(s & !p & !o) return s__;
-        if(!s & p & o) return _po;
-        if(!s & p & !o) return _p_;
-        if(!s & !p & o) return __o;
+        if (s & p & o) return 0;
+        if (s & p & !o) return sp_;
+        if (s & !p & o) return s_o;
+        if (s & !p & !o) return s__;
+        if (!s & p & o) return _po;
+        if (!s & p & !o) return _p_;
+        if (!s & !p & o) return __o;
         /*if(!s & !p & !o)*/ return ___;
     }
-    bool operator == (const PatchPositions &rhs) const {
+
+    bool operator==(const PatchPositions &rhs) const {
         return this->sp_ == rhs.sp_
                && this->s_o == rhs.s_o
                && this->s__ == rhs.s__
@@ -60,23 +76,26 @@ typedef struct PatchPositions {
                && this->__o == rhs.__o
                && this->___ == rhs.___;
     }
-    bool operator != (const PatchPositions &rhs) const {
+
+    bool operator!=(const PatchPositions &rhs) const {
         return !this->operator==(rhs);
     }
 } PatchPositions;
 
 // A PatchTreeDeletionValueElement contains a patch id, a relative patch position and
-// an indication whether or not this is an addition or deletion.
+// an indication whether this is an addition or deletion.
 class PatchTreeDeletionValueElementBase {
 protected:
     int patch_id;
     bool local_change;
 public:
     int get_patch_id() const;
+
     /**
      * Mark this patch element as being a local change.
      */
     void set_local_change();
+
     /**
      * Check if this element is an element (+/-) relative to this patch itself,
      * For example in the series [t1+ t1- t1+], the element at index 1 is a local change,
@@ -84,34 +103,78 @@ public:
      * @return If it is a local change.
      */
     bool is_local_change() const;
+
     /**
      * @return The string representation.
      */
     string to_string() const;
+
     PatchTreeDeletionValueElementBase() : patch_id(-1), local_change(false) {} // Required for vector#resize
-    PatchTreeDeletionValueElementBase(int patch_id) :
+
+    explicit PatchTreeDeletionValueElementBase(int patch_id) :
             patch_id(patch_id), local_change(false) {}
+
     PatchTreeDeletionValueElementBase(int patch_id, bool local_change) :
             patch_id(patch_id), local_change(local_change) {}
-    bool operator < (const PatchTreeDeletionValueElementBase &rhs) const { return patch_id < rhs.patch_id; }
+
+    // Ugly, but required to make the interval deletion_value templated code work
+    PatchTreeDeletionValueElementBase(int patch_id, bool local_change, const PatchPositions& p) :
+            patch_id(patch_id), local_change(local_change) {}
+
+    bool operator<(const PatchTreeDeletionValueElementBase &rhs) const { return patch_id < rhs.patch_id; }
+
+    bool operator==(const PatchTreeDeletionValueElementBase &rhs) const {
+        return patch_id == rhs.patch_id && local_change == rhs.local_change;
+    }
+
+    static bool has_positions() {
+        return false;
+    }
+
+    /**
+     * Dummy function to make the new interval deletion value code compile
+     * @return nothing important
+     */
+    static PatchPositions get_patch_positions() {
+        return {};
+    }
+
 };
 
 // A PatchTreeDeletionValueElement contains a patch id, a relative patch position and
-// an indication whether or not this is an addition or deletion.
+// an indication whether this is an addition or deletion.
 class PatchTreeDeletionValueElement : public PatchTreeDeletionValueElementBase {
 protected:
     PatchPositions patch_positions;
 public:
-    const PatchPositions& get_patch_positions() const;
+    const PatchPositions &get_patch_positions() const;
+
     /**
      * @return The string representation.
      */
-    string to_string() const;
+    std::string to_string() const;
+
     PatchTreeDeletionValueElement() : patch_positions(PatchPositions()) {} // Required for vector#resize
+
     PatchTreeDeletionValueElement(int patch_id, PatchPositions patch_positions) :
             PatchTreeDeletionValueElementBase(patch_id), patch_positions(patch_positions) {}
-    PatchTreeDeletionValueElement(int patch_id) :
+
+    explicit PatchTreeDeletionValueElement(int patch_id) :
             PatchTreeDeletionValueElementBase(patch_id), patch_positions(PatchPositions()) {}
+
+    PatchTreeDeletionValueElement(int patch_id, bool local_change) :
+            PatchTreeDeletionValueElementBase(patch_id, local_change), patch_positions(PatchPositions()) {}
+
+    PatchTreeDeletionValueElement(int patch_id, bool local_change, PatchPositions patch_positions) :
+            PatchTreeDeletionValueElementBase(patch_id, local_change), patch_positions(patch_positions) {}
+
+    bool operator==(const PatchTreeDeletionValueElement &rhs) const {
+        return patch_id == rhs.patch_id && local_change == rhs.local_change && patch_positions == rhs.patch_positions;
+    }
+
+    static bool has_positions() {
+        return true;
+    }
 };
 
 
@@ -266,7 +329,7 @@ private:
         return has_changed;
     }
 
-    bool delete_positions(I patch_id, P positions) {
+    bool delete_positions(I patch_id) {
         if (positions_map.empty()) {
             return false;
         }
@@ -285,6 +348,30 @@ private:
         return false;
     }
 
+    P* get_position(I patch_id, I outer_limit) const {
+        int index = 0;
+        for (auto inter: positions_map) {
+            I max_value = inter.second.first == max ? outer_limit : inter.second.first;
+            if (patch_id <= inter.first && patch_id < max_value) {
+                return new P(inter.second.second);
+            }
+        }
+        return nullptr;
+    }
+
+    std::unique_ptr<P> get_position_at(long i, I outer_limit) const {
+        int index = 0;
+        for (auto inter: positions_map) {
+            int max_value = inter.second.first == max ? outer_limit : inter.second.first;
+            int range = max_value - inter.first;
+            if (i < index + range) {
+                return std::unique_ptr<P>(new P(inter.second.second));
+            }
+            index += range;
+        }
+        return nullptr;
+    }
+
 public:
     explicit DVIntervalList() : max(std::numeric_limits<I>::max()),
                                            patches(max),
@@ -294,54 +381,53 @@ public:
      * Add new element to the list
      * @param element the new element
      */
-
-    bool addition(const T& element, P *positions) {
+    bool addition(const T& element) {
         I patch = element.get_patch_id();
         bool has_changed = patches.addition(patch);
         if (element.is_local_change()) {
             has_changed |= local_changes.addition(patch);
         }
-        if (positions != nullptr)
-            has_changed |= insert_positions(element.get_patch_id(), *positions);
+        if (element.has_positions()) {
+            has_changed |= insert_positions(element.get_patch_id(), element.get_patch_positions());
+        }
         return has_changed;
     }
 
-    bool addition(const PatchTreeDeletionValueElement& element) {
-        return addition(element, &element.get_patch_positions());
-    }
-
-    bool addition(const PatchTreeDeletionValueElementBase& element) {
-        return addition(element, nullptr);
-    }
-
-    bool deletion(const T& element, P *positions) {
+    bool deletion(const T& element) {
         I patch = element.get_patch_id();
         bool has_changed = patches.deletion(patch);
         if (element.is_local_change()) {
             has_changed |= local_changes.deletion(patch);
         }
-        if (positions != nullptr)
-            has_changed |= delete_positions(element.get_patch_id(), *positions);
+        if (element.has_positions()) {
+            has_changed |= delete_positions(element.get_patch_id());
+        }
         return has_changed;
     }
 
-    bool deletion(const PatchTreeDeletionValueElement& element) {
-        return deletion(element, &element.get_patch_positions());
+    long get_index(I patch_id, I outer_patch_limit) const {
+        return patches.get_index(patch_id, outer_patch_limit);
     }
 
-    bool deletion(const PatchTreeDeletionValueElementBase& element) {
-        return deletion(element, nullptr);
+    long size(I outer_patch_limit) const {
+        return patches.get_size(outer_patch_limit);
     }
 
-    long get_index(I patch_id) const {
+    T get_element_at(long index, I outer_patch_limit) const {
+        I patch_id = patches.get_element_at(index, outer_patch_limit);
+        I local_change = local_changes.get_element_at(index, outer_patch_limit);
+        std::unique_ptr<P> positions = get_position_at(index, outer_patch_limit);
+        if (positions == nullptr) {
+            return T(patch_id, local_change);
+        }
+        return T(patch_id, local_change, *positions);
+    }
+
+    std::pair<const char*, size_t> serialize() const {
         // TODO
     }
 
-    long size() const {
-        // TODO
-    }
-
-    const T& get_element_at(long index) const {
+    void deserialize(const char *data, size_t size) {
         // TODO
     }
 
@@ -376,12 +462,12 @@ public:
      * @param element The element index in this value list. This can be the result of get_patchvalue_index().
      * @return The patch.
      */
-    const T& get_patch(long element) const;
+    T get_patch(long element) const;
     /**
      * @param patch_id The patch id
      * @return The patch.
      */
-    const T& get(int patch_id) const;
+    T get(int patch_id) const;
     /**
      * Check if this element is an element (-) relative to the given patch itself,
      * For example in the series [t1+ t1- t1+], the element at index 1 is a local change,

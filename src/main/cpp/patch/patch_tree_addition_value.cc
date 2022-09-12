@@ -146,39 +146,16 @@ bool PatchTreeAdditionValue::is_patch_id(int patch_id) const {
 }
 
 long PatchTreeAdditionValue::get_patchvalue_index(int patch_id) const {
-    int count = 0;
-    for (auto inter: patches.get_internal_representation()) {
-        int max_value = inter.second == patches.get_max_value() ? max_patch_id : inter.second;
-        int range = max_value - inter.first;
-        if (inter.first <= patch_id && patch_id < max_value) {
-            return count + (patch_id - inter.first);
-        }
-        count += range;
-    }
-    return -1;
+    return patches.get_index(patch_id, max_patch_id);
 }
 
 int PatchTreeAdditionValue::get_patch_id_at(long i) const {
-    int index = 0;
-    for (auto inter: patches.get_internal_representation()) {
-        int max_value = inter.second == patches.get_max_value() ? max_patch_id : inter.second;
-        int range = max_value - inter.first;
-        if (i < index + range) {
-            return inter.first + (i - index);
-        }
-        index += range;
-    }
-    return -1;
+    int p = patches.get_element_at(i, max_patch_id);
+    return p == patches.get_max_value() ? -1 : p;
 }
 
 long PatchTreeAdditionValue::get_size() const {
-    int size = 0;
-    for (auto inter: patches.get_internal_representation()) {
-        int max_value = inter.second == patches.get_max_value() ? max_patch_id : inter.second;
-        int range = max_value - inter.first;
-        size += range;
-    }
-    return size;
+    return patches.get_size(max_patch_id);
 }
 
 bool PatchTreeAdditionValue::set_local_change(int patch_id) {
@@ -186,8 +163,7 @@ bool PatchTreeAdditionValue::set_local_change(int patch_id) {
 }
 
 bool PatchTreeAdditionValue::set_local_change_unique(int patch_id) {
-    bool hs = local_changes.lone_addition(patch_id);
-    return hs;
+    return local_changes.lone_addition(patch_id);
 }
 
 bool PatchTreeAdditionValue::unset_local_change(int patch_id) {

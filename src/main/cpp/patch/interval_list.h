@@ -135,17 +135,63 @@ public:
         return std::make_pair(pos->first, pos->second);
     }
 
-    /**
-     * Give access to a const version of the interval data
-     * @return the data
-     */
-    [[nodiscard]] const std::map<T, T>& get_internal_representation() const {
-        return intervals;
-    }
-
     T get_max_value() const {
         return max;
     }
+
+    /**
+     * Get the index of the value in the "virtual" value vector
+     * @param value the value to look for
+     * @param outer_limit the maximum value stored, instead of the infinite limit of open intervals
+     * @return the index or -1 the value do not exist
+     */
+    long get_index(T value, T outer_limit) const {
+        int count = 0;
+        for (auto inter: intervals) {
+            int max_value = inter.second == max ? outer_limit : inter.second;
+            int range = max_value - inter.first;
+            if (inter.first <= value && value < max_value) {
+                return count + (value - inter.first);
+            }
+            count += range;
+        }
+        return -1;
+    }
+
+    /**
+     * Get the element at the given index in the "virtual" value vector
+     * @param i the desired index
+     * @param outer_limit the maximum value stored, instead of the infinite limit of open intervals
+     * @return the element at the index or "max" if not found
+     */
+    T get_element_at(long i, T outer_limit) const {
+        int index = 0;
+        for (auto inter: intervals) {
+            int max_value = inter.second == max ? outer_limit : inter.second;
+            int range = max_value - inter.first;
+            if (i < index + range) {
+                return inter.first + (i - index);
+            }
+            index += range;
+        }
+        return max;
+    }
+
+    /**
+     * Get the size of the "virtual" value vector
+     * @param outer_limit the maximum value stored, instead of the infinite limit of open intervals
+     * @return the size
+     */
+    long get_size(T outer_limit) const {
+        int size = 0;
+        for (auto inter: intervals) {
+            int max_value = inter.second == max ? outer_limit : inter.second;
+            int range = max_value - inter.first;
+            size += range;
+        }
+        return size;
+    }
+
     /**
      * Serialize the data into a byte stream
      * @return pair (data, size)
@@ -165,6 +211,7 @@ public:
         }
         return std::make_pair(nullptr, 0);
     }
+
     /**
      * Load the data from a byte stream
      * @param data

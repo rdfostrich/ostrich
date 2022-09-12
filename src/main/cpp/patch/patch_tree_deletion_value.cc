@@ -136,23 +136,23 @@ bool PatchTreeDeletionValueBase<T>::del(const T& element) {
 
 template <class T>
 long PatchTreeDeletionValueBase<T>::get_patchvalue_index(int patch_id) const {
-    return elements.get_index(patch_id);
+    return elements.get_index(patch_id, max_patch_id);
 }
 
 template <class T>
 long PatchTreeDeletionValueBase<T>::get_size() const {
-    return elements.size();
+    return elements.size(max_patch_id);
 }
 
 template <class T>
-const T& PatchTreeDeletionValueBase<T>::get_patch(long element) const {
-    return elements.get_element_at(element);
+T PatchTreeDeletionValueBase<T>::get_patch(long element) const {
+    return elements.get_element_at(element, max_patch_id);
 }
 
 template <class T>
-const T& PatchTreeDeletionValueBase<T>::get(int patch_id) const {
+T PatchTreeDeletionValueBase<T>::get(int patch_id) const {
     long index = get_patchvalue_index(patch_id);
-    long size = elements.size();
+    long size = elements.size(max_patch_id);
     if(index < 0 || index >= size) {
         return get_patch(size - 1);
     }
@@ -173,10 +173,10 @@ template <class T>
 string PatchTreeDeletionValueBase<T>::to_string() const {
     string ret = "{";
     bool separator = false;
-    for(int i = 0; i < elements.size(); i++) {
+    for(int i = 0; i < elements.size(max_patch_id); i++) {
         if(separator) ret += ",";
         separator = true;
-        ret += elements.get_element_at(i).to_string();
+        ret += elements.get_element_at(i, max_patch_id).to_string();
     }
     ret += "}";
     return ret;
@@ -184,12 +184,14 @@ string PatchTreeDeletionValueBase<T>::to_string() const {
 
 template <class T>
 const char* PatchTreeDeletionValueBase<T>::serialize(size_t* size) const {
-    // TODO
+    auto data = elements.serialize();
+    *size = data.second;
+    return data.first;
 }
 
 template <class T>
 void PatchTreeDeletionValueBase<T>::deserialize(const char* data, size_t size) {
-    // TODO
+    elements.deserialize(data, size);
 }
 #endif
 
