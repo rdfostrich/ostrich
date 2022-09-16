@@ -201,7 +201,11 @@ void TripleStore::insertDeletionSingle(const PatchTreeKey* key, const PatchTreeD
 }
 
 void TripleStore::insertDeletionSingle(const PatchTreeKey* key, const PatchPositions& patch_positions, int patch_id, bool local_change, bool ignore_existing, DB::Cursor* cursor) {
+#ifdef COMPRESSED_DEL_VALUES
+    PatchTreeDeletionValue deletion_value(patch_id);
+#else
     PatchTreeDeletionValue deletion_value;
+#endif
     if (!ignore_existing) {
         size_t key_size, value_size;
         const char *raw_key = key->serialize(&key_size);

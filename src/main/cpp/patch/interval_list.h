@@ -147,7 +147,7 @@ public:
      */
     long get_index(T value, T outer_limit) const {
         int count = 0;
-        for (auto inter: intervals) {
+        for (auto& inter: intervals) {
             int max_value = inter.second == max ? outer_limit : inter.second;
             int range = max_value - inter.first;
             if (inter.first <= value && value < max_value) {
@@ -166,7 +166,7 @@ public:
      */
     T get_element_at(long i, T outer_limit) const {
         int index = 0;
-        for (auto inter: intervals) {
+        for (auto& inter: intervals) {
             int max_value = inter.second == max ? outer_limit : inter.second;
             int range = max_value - inter.first;
             if (i < index + range) {
@@ -184,7 +184,7 @@ public:
      */
     long get_size(T outer_limit) const {
         int size = 0;
-        for (auto inter: intervals) {
+        for (auto& inter: intervals) {
             int max_value = inter.second == max ? outer_limit : inter.second;
             int range = max_value - inter.first;
             size += range;
@@ -201,7 +201,7 @@ public:
         if (size > 0) {
             char* data = new char[size];
             char* p = data;
-            for (auto t: intervals) {
+            for (auto& t: intervals) {
                 std::memcpy(p, &(t.first), sizeof(T));
                 p += sizeof(T);
                 std::memcpy(p, &(t.second), sizeof(T));
@@ -239,7 +239,7 @@ public:
 
     std::string to_string() const {
         std::string s;
-        for (auto kv: intervals) {
+        for (auto& kv: intervals) {
             s += "(" + std::to_string(kv.first) + "," + std::to_string(kv.second) + ") ";
         }
         return s;

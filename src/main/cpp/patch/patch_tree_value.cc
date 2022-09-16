@@ -1,9 +1,19 @@
 #include "patch_tree_value.h"
 
+#if defined(COMPRESSED_ADD_VALUES) || defined(COMPRESSED_DEL_VALUES)
+template<class DV>
+PatchTreeValueBase<DV>::PatchTreeValueBase(int max_patch_id) :
 #ifdef COMPRESSED_ADD_VALUES
-template <class DV>
-PatchTreeValueBase<DV>::PatchTreeValueBase(int max_patch_id) : addition(new PatchTreeAdditionValue(max_patch_id)), deletion(new DV()),
-                                               has_addition(false), has_deletion(false) {}
+                                                               addition(new PatchTreeAdditionValue(max_patch_id)),
+#else
+                                                               addition(new PatchTreeAdditionValue()),
+#endif
+#ifdef COMPRESSED_DEL_VALUES
+                                                               deletion(new DV(max_patch_id)),
+#else
+                                                               deletion(new DV()),
+#endif
+                                                               has_addition(false), has_deletion(false) {}
 #else
 template <class DV>
 PatchTreeValueBase<DV>::PatchTreeValueBase() : addition(new PatchTreeAdditionValue()), deletion(new DV()),

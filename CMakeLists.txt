@@ -73,7 +73,7 @@ set(TEST_FILES
         src/test/cpp/patch/patch_tree.cc
         src/test/cpp/patch/patch_tree_manager.cc
         src/test/cpp/dictionary/dictionary_manager.cc
-        src/test/cpp/snapshot/snapshot_manager.cc)
+        src/test/cpp/snapshot/snapshot_manager.cc src/test/cpp/patch/interval_list.cc)
 
 add_library(ostrich STATIC ${HDT_FILES} ${COMMON_FILES})
 

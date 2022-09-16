@@ -112,11 +112,16 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, Prog
 
     const char *kbp, *vbp;
     size_t ksp, vsp;
-    PatchTreeDeletionValue deletion_value;
-#ifndef COMPRESSED_ADD_VALUES
-    PatchTreeAdditionValue addition_value;
+
+#ifdef COMPRESSED_DEL_VALUES
+    PatchTreeDeletionValue deletion_value(max_patch_id);
 #else
+    PatchTreeDeletionValue deletion_value;
+#endif
+#ifdef COMPRESSED_ADD_VALUES
     PatchTreeAdditionValue addition_value(max_patch_id);
+#else
+    PatchTreeAdditionValue addition_value;
 #endif
     PatchTreeKey deletion_key, addition_key;
     PatchElement patch_element(Triple(0, 0, 0), true);
@@ -197,9 +202,17 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, Prog
                 long patch_value_index;
                 if ((patch_value_index = deletion_value.get_patchvalue_index(patch_id)) < 0
                     || deletion_value.get_patch(patch_value_index).get_patch_positions() != patch_positions) { // Don't re-insert when already present for this patch id, except when patch positions have changed
+#ifdef COMPRESSED_DEL_VALUES
+                    bool has_changed = deletion_value.add(PatchTreeDeletionValueElement(patch_id, patch_positions));
+                    PatchTreeDeletionValueReduced deletion_value_reduced = deletion_value.to_reduced();
+                    if (has_changed) {
+                        tripleStore->insertDeletionSingle(&deletion_key, &deletion_value, &deletion_value_reduced, cursor_deletions);
+                    }
+#else
                     deletion_value.add(PatchTreeDeletionValueElement(patch_id, patch_positions));
                     PatchTreeDeletionValueReduced deletion_value_reduced = deletion_value.to_reduced();
                     tripleStore->insertDeletionSingle(&deletion_key, &deletion_value, &deletion_value_reduced, cursor_deletions);
+#endif
                 }
             }
         } else if (P_GT_A && A_LT_D) { // A < P && A < D
@@ -211,13 +224,14 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, Prog
             // Add patch id to the current addition triple
             if (addition_value.get_patch_id_at(0) <= patch_id // Skip this addition if our current patch id lies before the first patch id for A
                 && !addition_value.is_patch_id(patch_id)) { // Don't re-insert when already present for this patch id
-#ifndef COMPRESSED_ADD_VALUES
+#ifdef COMPRESSED_ADD_VALUES
+                bool has_changed = addition_value.add(patch_id);
+                if (has_changed) {
+                    tripleStore->insertAdditionSingle(&addition_key, &addition_value, cursor_additions);
+                }
+#else
                 addition_value.add(patch_id);
                 tripleStore->insertAdditionSingle(&addition_key, &addition_value, cursor_additions);
-#else
-                bool has_changed = addition_value.add(patch_id);
-                if (has_changed)
-                    tripleStore->insertAdditionSingle(&addition_key, &addition_value, cursor_additions);
 #endif
             }
             if (!addition_value.is_local_change(patch_id)) tripleStore->increment_addition_counts(patch_id, addition_key);
@@ -245,9 +259,28 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, Prog
 
             if (patch_element.is_addition()) {
                 // Add addition as local change
+#ifdef COMPRESSED_DEL_VALUES
+                bool has_changed = deletion_value.del(patch_id);
+                if (has_changed) {
+                    PatchTreeDeletionValueReduced deletion_value_reduced = deletion_value.to_reduced();
+                    tripleStore->insertDeletionSingle(&deletion_key, &deletion_value, &deletion_value_reduced, cursor_deletions);
+                }
+#endif
                 tripleStore->insertAdditionSingle(&patch_element.get_triple(), patch_id, true, true);
             } else {
                 // Carry over previous deletion value
+#ifdef COMPRESSED_DEL_VALUES
+                bool was_local_change = deletion_value.is_local_change(patch_id);
+                PatchPositions patch_positions = was_local_change ?
+                                                 PatchPositions() : Patch::positions(patch_element.get_triple(), sp_, s_o, s__, _po, _p_, __o, ___);
+                PatchTreeDeletionValueElement element = PatchTreeDeletionValueElement(patch_id, patch_positions);
+                if (was_local_change) element.set_local_change();
+                bool has_changed = deletion_value.add(element);
+                if (has_changed) {
+                    PatchTreeDeletionValueReduced deletion_value_reduced = deletion_value.to_reduced();
+                    tripleStore->insertDeletionSingle(&deletion_key, &deletion_value, &deletion_value_reduced, cursor_deletions);
+                }
+#else
                 bool was_local_change = deletion_value.is_local_change(patch_id);
                 PatchPositions patch_positions = was_local_change ?
                                                  PatchPositions() : Patch::positions(patch_element.get_triple(), sp_, s_o, s__, _po, _p_, __o, ___);
@@ -256,6 +289,7 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, Prog
                 deletion_value.add(element);
                 PatchTreeDeletionValueReduced deletion_value_reduced = deletion_value.to_reduced();
                 tripleStore->insertDeletionSingle(&deletion_key, &deletion_value, &deletion_value_reduced, cursor_deletions);
+#endif
             }
         } else if (P_EQ_A && P_LT_D) { // P = A && P < D
             // local change P, A
@@ -268,8 +302,9 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, Prog
 #ifdef COMPRESSED_ADD_VALUES
                 bool has_changed = addition_value.del(patch_id);
                 has_changed |= addition_value.unset_local_change(patch_id);
-                if (has_changed)
+                if (has_changed) {
                     tripleStore->insertAdditionSingle(&addition_key, &addition_value, cursor_additions);
+                }
 #endif
                 tripleStore->insertDeletionSingle(&patch_element.get_triple(), PatchPositions(), patch_id, true, true);
             } else {
@@ -302,6 +337,8 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, Prog
 
             int largest_patch_id_addition = addition_value.get_patch_id_at(addition_value.get_size() - 1);
             int largest_patch_id_deletion = deletion_value.get_patch(deletion_value.get_size() - 1).get_patch_id();
+            bool ila = addition_value.is_local_change(patch_id);
+            bool ild = deletion_value.is_local_change(patch_id);
             bool is_local_change = largest_patch_id_addition < largest_patch_id_deletion ? deletion_value.is_local_change(patch_id) : addition_value.is_local_change(patch_id);
             bool add_addition = largest_patch_id_addition > largest_patch_id_deletion;
             bool add_deletion = largest_patch_id_deletion > largest_patch_id_addition;
@@ -330,20 +367,38 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, Prog
 
             if (!addition_value.is_local_change(addition_value.get_patch_id_at(0))) tripleStore->increment_addition_counts(0, addition_key);
             if (add_addition) {
-#ifndef COMPRESSED_ADD_VALUES
+#ifdef COMPRESSED_ADD_VALUES
+                bool has_changed_add = addition_value.add(patch_id);
+                if (is_local_change)
+                    has_changed_add |= addition_value.set_local_change(patch_id);
+                if (has_changed_add)
+                    tripleStore->insertAdditionSingle(&addition_key, &addition_value, cursor_additions);
+                if (!is_local_change) tripleStore->increment_addition_counts(patch_id, addition_key);
+#else
                 addition_value.add(patch_id);
                 if (is_local_change) addition_value.set_local_change(patch_id);
                 tripleStore->insertAdditionSingle(&addition_key, &addition_value, cursor_additions);
                 if (!is_local_change) tripleStore->increment_addition_counts(patch_id, addition_key);
-#else
-                bool has_changed = addition_value.add(patch_id);
-                if (is_local_change)
-                    has_changed |= addition_value.set_local_change(patch_id);
-                if (has_changed)
-                    tripleStore->insertAdditionSingle(&addition_key, &addition_value, cursor_additions);
-                if (!is_local_change) tripleStore->increment_addition_counts(patch_id, addition_key);
+#endif
+#ifdef COMPRESSED_DEL_VALUES
+                bool has_changed_del = deletion_value.del(patch_id);
+                if (has_changed_del) {
+                    PatchTreeDeletionValueReduced deletion_value_reduced = deletion_value.to_reduced();
+                    tripleStore->insertDeletionSingle(&deletion_key, &deletion_value, &deletion_value_reduced, cursor_deletions);
+                }
 #endif
             } else if (add_deletion) {
+#ifdef COMPRESSED_DEL_VALUES
+                PatchPositions patch_positions = is_local_change ?
+                                                 PatchPositions() : Patch::positions(patch_element.get_triple(), sp_, s_o, s__, _po, _p_, __o, ___);
+                PatchTreeDeletionValueElement deletion_value_element(patch_id, patch_positions);
+                if (is_local_change) deletion_value_element.set_local_change();
+                bool has_changed_del = deletion_value.add(deletion_value_element);
+                if (has_changed_del) {
+                    PatchTreeDeletionValueReduced deletion_value_reduced = deletion_value.to_reduced();
+                    tripleStore->insertDeletionSingle(&deletion_key, &deletion_value, &deletion_value_reduced, cursor_deletions);
+                }
+#else
                 PatchPositions patch_positions = is_local_change ?
                                                  PatchPositions() : Patch::positions(patch_element.get_triple(), sp_, s_o, s__, _po, _p_, __o, ___);
                 PatchTreeDeletionValueElement deletion_value_element(patch_id, patch_positions);
@@ -351,11 +406,12 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, Prog
                 deletion_value.add(deletion_value_element);
                 PatchTreeDeletionValueReduced deletion_value_reduced = deletion_value.to_reduced();
                 tripleStore->insertDeletionSingle(&deletion_key, &deletion_value, &deletion_value_reduced, cursor_deletions);
+#endif
 #ifdef COMPRESSED_ADD_VALUES
-                bool has_changed = addition_value.del(patch_id);
+                bool has_changed_add = addition_value.del(patch_id);
                 if (addition_value.is_local_change(patch_id))
-                    has_changed |= addition_value.unset_local_change(patch_id);
-                if (has_changed)
+                    has_changed_add |= addition_value.unset_local_change(patch_id);
+                if (has_changed_add)
                     tripleStore->insertAdditionSingle(&addition_key, &addition_value, cursor_additions);
 #endif
             } else {
@@ -473,7 +529,11 @@ bool PatchTree::contains_deletion(const PatchElement& patch_element, int patch_i
     bool ret = raw_value != nullptr;
     if(ret) {
         // After that, we have to deserialize the value and check if it exists for the given patch.
+#ifdef COMPRESSED_DEL_VALUES
+        PatchTreeDeletionValue value(max_patch_id);
+#else
         PatchTreeDeletionValue value;
+#endif
         value.deserialize(raw_value, value_size);
         delete[] raw_value;
         long i = value.get_patchvalue_index(patch_id);
@@ -486,7 +546,7 @@ void PatchTree::reconstruct_to_patch(Patch* patch, int patch_id, bool ignore_loc
     PatchTreeIterator it = iterator(patch_id, false);
     it.set_filter_local_changes(ignore_local_changes);
     PatchTreeKey key;
-#ifdef COMPRESSED_ADD_VALUES
+#if defined(COMPRESSED_ADD_VALUES) || defined(COMPRESSED_DEL_VALUES)
     PatchTreeValue value(max_patch_id);
 #else
     PatchTreeValue value;
@@ -589,7 +649,11 @@ std::pair<DV*, Triple> PatchTree::last_deletion_value(const Triple &triple_patte
     patchTreeIterator.set_reverse(true); // Because we start _after_ the last matching triple because of the jump_back.
 
     PatchTreeKey key;
+#ifdef COMPRESSED_DEL_VALUES
+    DV* value = new DV(max_patch_id);
+#else
     DV* value = new DV();
+#endif
     if(patchTreeIterator.next_deletion(&key, value, true)) {
         return std::make_pair(value, key);
     }
@@ -632,7 +696,7 @@ PositionedTripleIterator* PatchTree::deletion_iterator_from(const Triple& offset
     const char* data = offset.serialize(&size);
     cursor_deletions->jump(data, size);
     free((char*) data);
-    PatchTreeIterator* it = new PatchTreeIterator(cursor_deletions, NULL, get_spo_comparator());
+    PatchTreeIterator* it = new PatchTreeIterator(cursor_deletions, nullptr, get_spo_comparator());
     if (patch_id >= 0) it->set_patch_filter(patch_id, true);
     it->set_triple_pattern_filter(triple_pattern);
     it->set_filter_local_changes(true);
@@ -645,13 +709,17 @@ PatchTreeDeletionValue* PatchTree::get_deletion_value(const Triple &triple) cons
     const char* kbp = triple.serialize(&ksp);
     const char* vbp = tripleStore->getDefaultDeletionsTree()->get(kbp, ksp, &vsp);
     free((char*) kbp);
-    if (vbp != NULL) {
+    if (vbp != nullptr) {
+#ifdef COMPRESSED_DEL_VALUES
+        PatchTreeDeletionValue* value = new PatchTreeDeletionValue(max_patch_id);
+#else
         PatchTreeDeletionValue* value = new PatchTreeDeletionValue();
+#endif
         value->deserialize(vbp, vsp);
         delete[] vbp;
         return value;
     }
-    return NULL;
+    return nullptr;
 }
 
 template <class DV>
@@ -661,13 +729,13 @@ PatchTreeDeletionValueBase<DV>* PatchTree::get_deletion_value_after(const Triple
     DB::Cursor* cursor = tripleStore->getDeletionsTree(triple_pattern)->cursor();
     if (!cursor->jump(kbp, ksp)) {
         free((char*) kbp);
-        return NULL;
+        return nullptr;
     }
     const char *vbp;
     kbp = cursor->get(&ksp, &vbp, &vsp);
-    if (vbp == NULL) {
+    if (vbp == nullptr) {
         delete[] kbp;
-        return NULL;
+        return nullptr;
     }
 
     kbp = cursor->get(&ksp, &vbp, &vsp);
@@ -675,14 +743,22 @@ PatchTreeDeletionValueBase<DV>* PatchTree::get_deletion_value_after(const Triple
     triple.deserialize(kbp, ksp);
     if (!Triple::pattern_match_triple(triple, triple_pattern)) {
         delete[] kbp;
-        return NULL;
+        return nullptr;
     }
 
-    PatchTreeDeletionValueBase<DV>* deletion_value = NULL;
+    PatchTreeDeletionValueBase<DV>* deletion_value = nullptr;
     if (TripleStore::is_default_tree(triple_pattern)) {
+#ifdef COMPRESSED_DEL_VALUES
+        deletion_value = reinterpret_cast<PatchTreeDeletionValueBase<DV>*>(new PatchTreeDeletionValue(max_patch_id));
+#else
         deletion_value = reinterpret_cast<PatchTreeDeletionValueBase<DV>*>(new PatchTreeDeletionValue());
+#endif
     } else {
+#ifdef COMPRESSED_DEL_VALUES
+        deletion_value = reinterpret_cast<PatchTreeDeletionValueBase<DV>*>(new PatchTreeDeletionValueReduced(max_patch_id));
+#else
         deletion_value = reinterpret_cast<PatchTreeDeletionValueBase<DV>*>(new PatchTreeDeletionValueReduced());
+#endif
     }
     deletion_value->deserialize(vbp, vsp);
     delete[] kbp;
@@ -707,7 +783,7 @@ PatchTreeTripleIterator* PatchTree::addition_iterator_from(long offset, int patc
     const char* data = triple_pattern.serialize(&size);
     cursor->jump(data, size);
     free((char*) data);
-    PatchTreeIterator* it = new PatchTreeIterator(NULL, cursor, get_spo_comparator());
+    PatchTreeIterator* it = new PatchTreeIterator(nullptr, cursor, get_spo_comparator());
     it->set_patch_filter(patch_id, true);
     it->set_triple_pattern_filter(triple_pattern);
     it->set_filter_local_changes(true);
