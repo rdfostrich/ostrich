@@ -105,7 +105,7 @@ string PatchTreeDeletionValueBase<T>::to_string() const {
 template <class T>
 const char* PatchTreeDeletionValueBase<T>::serialize(size_t* size) const {
     *size = elements.size() * sizeof(T);
-    char* bytes = (char *) malloc(*size);
+    char* bytes = new char[*size];
     for(int i = 0; i < elements.size(); i++) {
         std::memcpy(&bytes[i * sizeof(T)], &elements[i], sizeof(T));
     }

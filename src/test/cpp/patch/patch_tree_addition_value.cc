@@ -120,7 +120,7 @@ TEST(PatchTreeAdditionValueTest, Serialization) {
     valueOut.deserialize(data, size);
 
     ASSERT_EQ(valueIn.to_string(), valueOut.to_string()) << "Serialization failed";
-    free((char*) data);
+    delete[] data;
 }
 #else
 TEST(PatchTreeAdditionValueTest, Serialization) {

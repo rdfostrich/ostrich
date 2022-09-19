@@ -288,7 +288,7 @@ bool PatchTreeIteratorBase<DV>::next(PatchTreeKey* key, PatchTreeValueBase<DV>* 
     // If needed, optimize
     data = (return_addition ? temp_key_addition : temp_key_deletion)->serialize(&size);
     key->deserialize(data, size);
-    free((char*) data);
+    delete[] data;
     return true;
 }
 

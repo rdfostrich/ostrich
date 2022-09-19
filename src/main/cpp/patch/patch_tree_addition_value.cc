@@ -71,7 +71,7 @@ const char *PatchTreeAdditionValue::serialize(size_t *size) const {
     size_t local_changes_size_bits = local_changes_size * sizeof(int);
 
     *size = size_t_size_bits + patches_size_bits + local_changes_size_bits;
-    char* bytes = (char *) malloc(*size);
+    char* bytes = new char[*size];
 
     // Append patches count
     std::memcpy(bytes, &patches_size, size_t_size_bits);

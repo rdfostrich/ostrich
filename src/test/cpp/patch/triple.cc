@@ -67,7 +67,7 @@ TEST(TripleTest, SerializationRaw) {
     tripleOut.deserialize(data, size);
 
     ASSERT_EQ(tripleIn.to_string(), tripleOut.to_string()) << "Serialization failed";
-    free((char*) data);
+    delete[] data;
 }
 
 TEST(TripleTest, Serialization) {
@@ -83,7 +83,7 @@ TEST(TripleTest, Serialization) {
     tripleOut.deserialize(data, size);
 
     ASSERT_EQ(tripleIn.to_string(*dict), tripleOut.to_string(*dict)) << "Serialization failed";
-    free((char*) data);
+    delete[] data;
 
     DictionaryManager::cleanup(TESTPATH, 0);
 }
@@ -101,7 +101,7 @@ TEST(TripleTest, SerializationLong) {
     tripleOut.deserialize(data, size);
 
     ASSERT_EQ(tripleIn.to_string(*dict), tripleOut.to_string(*dict)) << "Serialization failed";
-    free((char*) data);
+    delete[] data;
 
     DictionaryManager::cleanup(TESTPATH, 0);
 }
@@ -117,7 +117,7 @@ TEST(TripleTest, SerializationSize) {
 //    ASSERT_EQ(12, size) << "Serialization length is too high";
     size_t expected_size = 3 * sizeof(size_t);
     ASSERT_EQ(expected_size, size) << "Serialization length is too high";
-    free((char*) data);
+    delete[] data;
 
     DictionaryManager::cleanup(TESTPATH, 0);
 }

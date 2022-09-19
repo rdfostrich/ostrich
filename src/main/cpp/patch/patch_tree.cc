@@ -500,7 +500,7 @@ bool PatchTree::contains_addition(const PatchElement& patch_element, int patch_i
     size_t key_size, value_size;
     const char* raw_key = key.serialize(&key_size);
     const char* raw_value = tripleStore->getDefaultAdditionsTree()->get(raw_key, key_size, &value_size);
-    free((char*) raw_key);
+    delete[] raw_key;
 
     // First, we check if the key is present
     bool ret = raw_value != nullptr;
@@ -523,7 +523,7 @@ bool PatchTree::contains_deletion(const PatchElement& patch_element, int patch_i
     size_t key_size, value_size;
     const char* raw_key = key.serialize(&key_size);
     const char* raw_value = tripleStore->getDefaultDeletionsTree()->get(raw_key, key_size, &value_size);
-    free((char*) raw_key);
+    delete[] raw_key;
 
     // First, we check if the key is present
     bool ret = raw_value != nullptr;
@@ -578,7 +578,7 @@ PatchTreeIterator PatchTree::iterator(PatchTreeKey* key) const {
     const char* data = key->serialize(&size);
     cursor_deletions->jump(data, size);
     cursor_additions->jump(data, size);
-    free((char*) data);
+    delete[] data;
     PatchTreeIterator patchTreeIterator(cursor_deletions, cursor_additions, get_spo_comparator());
     return patchTreeIterator;
 }
@@ -600,7 +600,7 @@ PatchTreeIterator PatchTree::iterator(PatchTreeKey *key, int patch_id, bool exac
     const char* data = key->serialize(&size);
     cursor_deletions->jump(data, size);
     cursor_additions->jump(data, size);
-    free((char*) data);
+    delete[] data;
     PatchTreeIterator patchTreeIterator(cursor_deletions, cursor_additions, get_spo_comparator());
     patchTreeIterator.set_patch_filter(patch_id, exact);
     return patchTreeIterator;
@@ -614,7 +614,7 @@ PatchTreeIteratorBase<DV>* PatchTree::iterator(const Triple *triple_pattern) con
     const char* data = triple_pattern->serialize(&size);
     cursor_deletions->jump(data, size);
     cursor_additions->jump(data, size);
-    free((char*) data);
+    delete[] data;
     PatchTreeIteratorBase<DV>* patchTreeIterator = new PatchTreeIteratorBase<DV>(cursor_deletions, cursor_additions, get_spo_comparator());
     patchTreeIterator->set_triple_pattern_filter(*triple_pattern);
     return patchTreeIterator;
@@ -636,11 +636,11 @@ std::pair<DV*, Triple> PatchTree::last_deletion_value(const Triple &triple_patte
     bool hasJumped = cursor_deletions->jump_back(data, size);
     if (!hasJumped) {
         // A failure to jump means that there is no triple in the tree that matches the pattern, so we return count 0.
-        free((char*) data);
+        delete[] data;
         delete cursor_deletions;
         return std::make_pair((DV*) NULL, Triple());
     }
-    free((char*) data);
+    delete[] data;
 
     PatchTreeIteratorBase<DV> patchTreeIterator(cursor_deletions, NULL, get_spo_comparator());
     patchTreeIterator.set_patch_filter(patch_id, true);
@@ -695,7 +695,7 @@ PositionedTripleIterator* PatchTree::deletion_iterator_from(const Triple& offset
     size_t size;
     const char* data = offset.serialize(&size);
     cursor_deletions->jump(data, size);
-    free((char*) data);
+    delete[] data;
     PatchTreeIterator* it = new PatchTreeIterator(cursor_deletions, nullptr, get_spo_comparator());
     if (patch_id >= 0) it->set_patch_filter(patch_id, true);
     it->set_triple_pattern_filter(triple_pattern);
@@ -708,7 +708,7 @@ PatchTreeDeletionValue* PatchTree::get_deletion_value(const Triple &triple) cons
     size_t ksp, vsp;
     const char* kbp = triple.serialize(&ksp);
     const char* vbp = tripleStore->getDefaultDeletionsTree()->get(kbp, ksp, &vsp);
-    free((char*) kbp);
+    delete[] kbp;
     if (vbp != nullptr) {
 #ifdef COMPRESSED_DEL_VALUES
         PatchTreeDeletionValue* value = new PatchTreeDeletionValue(max_patch_id);
@@ -782,7 +782,7 @@ PatchTreeTripleIterator* PatchTree::addition_iterator_from(long offset, int patc
     size_t size;
     const char* data = triple_pattern.serialize(&size);
     cursor->jump(data, size);
-    free((char*) data);
+    delete[] data;
     PatchTreeIterator* it = new PatchTreeIterator(nullptr, cursor, get_spo_comparator());
     it->set_patch_filter(patch_id, true);
     it->set_triple_pattern_filter(triple_pattern);
@@ -812,7 +812,7 @@ PatchTreeIterator* PatchTree::addition_iterator(const Triple &triple_pattern) co
     size_t size;
     const char* data = triple_pattern.serialize(&size);
     cursor->jump(data, size);
-    free((char*) data);
+    delete[] data;
     PatchTreeIterator* it = new PatchTreeIterator(nullptr, cursor, get_spo_comparator());
     it->set_triple_pattern_filter(triple_pattern);
     return it;

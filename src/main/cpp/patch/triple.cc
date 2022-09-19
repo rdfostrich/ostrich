@@ -49,20 +49,20 @@ const string Triple::to_string(Dictionary& dict) const {
 }
 
 const char* Triple::serialize(size_t* size) const {
-  *size = sizeof(subject) + sizeof(predicate) + sizeof(object);
-  char* bytes = (char *) malloc(*size);
+    *size = sizeof(subject) + sizeof(predicate) + sizeof(object);
+    char* bytes = new char[*size];
 
-  memcpy(bytes, (char*)&subject, sizeof(subject));
-  memcpy(&bytes[sizeof(subject)], (char*)&predicate, sizeof(predicate));
-  memcpy(&bytes[sizeof(subject) + sizeof(predicate)], (char*)&object, sizeof(object));
+    memcpy(bytes, (char*)&subject, sizeof(subject));
+    memcpy(&bytes[sizeof(subject)], (char*)&predicate, sizeof(predicate));
+    memcpy(&bytes[sizeof(subject) + sizeof(predicate)], (char*)&object, sizeof(object));
 
-  return bytes;
+    return bytes;
 }
 
 void Triple::deserialize(const char* data, size_t size) {
-  memcpy(&subject, data,  sizeof(subject));
-  memcpy(&predicate, &data[sizeof(subject)],  sizeof(predicate));
-  memcpy(&object, &data[sizeof(subject) + sizeof(predicate)],  sizeof(object));
+    memcpy(&subject, data,  sizeof(subject));
+    memcpy(&predicate, &data[sizeof(subject)],  sizeof(predicate));
+    memcpy(&object, &data[sizeof(subject) + sizeof(predicate)],  sizeof(object));
 }
 
 void Triple::set_subject(size_t subject) {

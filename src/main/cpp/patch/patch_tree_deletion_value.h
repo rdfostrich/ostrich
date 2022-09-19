@@ -10,7 +10,6 @@
 
 #define COMPRESSED_DEL_VALUES
 
-
 typedef long PatchPosition;
 
 typedef struct PatchPositions {

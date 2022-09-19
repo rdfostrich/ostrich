@@ -66,7 +66,7 @@ TEST(PatchTreeDeletionValueTest, Serialization) {
     valueOut.deserialize(data, size);
 
     ASSERT_EQ(valueIn.to_string(), valueOut.to_string()) << "Serialization failed";
-    free((char*) data);
+    delete[] data;
 }
 
 //TEST(PatchTreeDeletionValueTest, SerializationSize) {
@@ -144,7 +144,7 @@ TEST(PatchTreeDeletionValueTest, Serialization) {
     valueOut.deserialize(data, size);
 
     ASSERT_EQ(valueIn.to_string(), valueOut.to_string()) << "Serialization failed";
-    free((char*) data);
+    delete[] data;
 }
 
 TEST(PatchTreeDeletionValueTest, SerializationSize) {
@@ -159,7 +159,7 @@ TEST(PatchTreeDeletionValueTest, SerializationSize) {
     const char* data = valueIn.serialize(&size);
 
     ASSERT_EQ(sizeof(PatchTreeDeletionValueElement) * 4, size) << "Serialization length is too high";
-    free((char*) data);
+    delete[] data;
 }
 
 #endif

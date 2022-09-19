@@ -134,8 +134,8 @@ void TripleStore::insertAdditionSingle(const PatchTreeKey* key, const PatchTreeA
     index_pos_additions->set(raw_key, key_size, raw_value, value_size);
     index_osp_additions->set(raw_key, key_size, raw_value, value_size);
 
-    free((char*) raw_key);
-    free((char*) raw_value);
+    delete[] raw_key;
+    delete[] raw_value;
 
     // Flush db to disk
     if (++flush_counter_additions > FLUSH_TRIPLES_COUNT) {
@@ -187,9 +187,9 @@ void TripleStore::insertDeletionSingle(const PatchTreeKey* key, const PatchTreeD
     index_pos_deletions->set(raw_key, key_size, raw_value_reduced, value_reduced_size);
     index_osp_deletions->set(raw_key, key_size, raw_value_reduced, value_reduced_size);
 
-    free((char*) raw_key);
-    free((char*) raw_value);
-    free((char*) raw_value_reduced);
+    delete[] raw_key;
+    delete[] raw_value;
+    delete[] raw_value_reduced;
 
     // Flush db to disk
     if (++flush_counter_deletions > FLUSH_TRIPLES_COUNT) {
