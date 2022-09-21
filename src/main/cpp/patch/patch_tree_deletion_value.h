@@ -184,7 +184,6 @@ public:
  * Templates:
  * T -> DeletionValueElement type
  * I -> Patches ID representation (int or something different in the future)
- * P -> PatchPosition class (for future delta PatchPosition ?)
  */
 template<class T, class I, class P>
 class DVIntervalList {
@@ -394,18 +393,258 @@ public:
         local_changes.deserialize(data_p, local_size);
         data_p += local_size;
 
-        if (position_size % (2*sizeof(I) + sizeof(P)) != 0) {
-            throw std::runtime_error("Error deserializing DVIntervalList, the size is incoherent");
-        }
-
+        auto it = positions_map.begin();
         for (size_t i = 0; i<position_size; i+=(2*sizeof(I) + sizeof(P))) {
             I s, e;
             std::memcpy(&s, data_p+i, sizeof(I));
             std::memcpy(&e, data_p+i+sizeof(I), sizeof(I));
             P p;
             std::memcpy(&p, data_p+i+2*sizeof(I), sizeof(P));
-            positions_map[s] = std::make_pair(e, p);
+            positions_map[s] = std::make_pair(e, std::move(p));
+            positions_map.emplace_hint(it, s, std::make_pair(e, std::move(p)));
+            it = positions_map.end();
         }
+    }
+
+};
+
+
+
+template<class T, class I>
+class DVIntervalListV2 {
+private:
+    I max;
+    IntervalList<I> patches;
+    IntervalList<I> local_changes;
+    std::vector<PatchPositions> position_vec;
+
+
+    std::pair<const char*, size_t> serialize_positions() const {
+        auto position_diff = [](const PatchPositions& first, const PatchPositions& second) {
+            uint8_t head = 0;
+            std::vector<PatchPosition> diff_values;
+
+            PatchPosition diff1 = first.sp_ - second.sp_;
+            head |= (bool)diff1 << 0;
+            if (diff1) diff_values.push_back(diff1);
+
+            PatchPosition diff2 = first.s_o - second.s_o;
+            head |= (bool)diff2 << 1;
+            if (diff2) diff_values.push_back(diff2);
+
+            PatchPosition diff3 = first.s__ - second.s__;
+            head |= (bool)diff3 << 2;
+            if (diff3) diff_values.push_back(diff3);
+
+            PatchPosition diff4 = first._po - second._po;
+            head |= (bool)diff4 << 3;
+            if (diff4) diff_values.push_back(diff4);
+
+            PatchPosition diff5 = first._p_ - second._p_;
+            head |= (bool)diff5 << 4;
+            if (diff5) diff_values.push_back(diff5);
+
+            PatchPosition diff6 = first.__o - second.__o;
+            head |= (bool)diff6 << 5;
+            if (diff6) diff_values.push_back(diff6);
+
+            PatchPosition diff7 = first.___ - second.___;
+            head |= (bool)diff7 << 6;
+            if (diff7) diff_values.push_back(diff7);
+
+            size_t size = sizeof(uint8_t) + diff_values.size()*sizeof(PatchPosition);
+            char* data = new char[size];
+            std::memcpy(data, &head, sizeof(uint8_t));
+            std::memcpy(data+sizeof(uint8_t), diff_values.data(), diff_values.size()*sizeof(PatchPosition));
+
+            return std::make_pair(size, data);
+        };
+        char* data = nullptr;
+        size_t size = 0;
+        if (position_vec.size() == 1) {
+            size = sizeof(PatchPositions);
+            data = new char[size];
+            std::memcpy(data, &position_vec[0], sizeof(PatchPositions));
+        } else if (position_vec.size() > 1) { // if more than 1 PatchPositions, we use delta-encoding
+            // We can't know before encoding the total size. PatchPositions + (>= 1 bytes)
+            size_t total_size = sizeof(PatchPositions);
+            std::vector<std::pair<size_t, char*>> data_vec;
+            data_vec.reserve(position_vec.size());
+            for (size_t i=1; i<position_vec.size(); i++) {  // Loop to perform delta encoding (i-1 & ith elements)
+                auto d = position_diff(position_vec[i-1], position_vec[i]);
+                total_size += d.first;
+                data_vec.push_back(d);
+            }
+            // We allocate the correct amount of memory
+            size = total_size;
+            data = new char[total_size];
+            std::memcpy(data, &position_vec[0], sizeof(PatchPositions)); // plain copy of 1st PatchPositions
+            char* data_p = data + sizeof(PatchPositions);
+            for (auto& p: data_vec) {  // loop to copy the "delta" PatchPositions
+                std::memcpy(data_p, p.second, p.first);
+                data_p += p.first;
+            }
+        }
+        return std::make_pair(data, size);
+    }
+
+    void deserialize_positions(const char* data, size_t size) {
+        auto position_undiff = [] (const char* data, const PatchPositions& prev, PatchPositions& pos) {
+            uint8_t head;
+            size_t offset = 0;
+            std::memcpy(&head, data+offset, sizeof(uint8_t));
+            offset += sizeof(uint8_t);
+            PatchPosition diff;
+            if (head & 1) {
+                std::memcpy(&diff, data+offset, sizeof(PatchPosition));
+                pos.sp_ = prev.sp_ + diff;
+                offset += sizeof(PatchPosition);
+            }
+            head >>= 1;
+            if (head & 1) {
+                std::memcpy(&diff, data+offset, sizeof(PatchPosition));
+                pos.s_o = prev.s_o + diff;
+                offset += sizeof(PatchPosition);
+            }
+            head >>= 1;
+            if (head & 1) {
+                std::memcpy(&diff, data+offset, sizeof(PatchPosition));
+                pos.s__ = prev.s__ + diff;
+                offset += sizeof(PatchPosition);
+            }
+            head >>= 1;
+            if (head & 1) {
+                std::memcpy(&diff, data+offset, sizeof(PatchPosition));
+                pos._po = prev._po + diff;
+                offset += sizeof(PatchPosition);
+            }
+            head >>= 1;
+            if (head & 1) {
+                std::memcpy(&diff, data+offset, sizeof(PatchPosition));
+                pos._p_ = prev._p_ + diff;
+                offset += sizeof(PatchPosition);
+            }
+            head >>= 1;
+            if (head & 1) {
+                std::memcpy(&diff, data+offset, sizeof(PatchPosition));
+                pos.__o = prev.__o + diff;
+                offset += sizeof(PatchPosition);
+            }
+            head >>= 1;
+            if (head & 1) {
+                std::memcpy(&diff, data+offset, sizeof(PatchPosition));
+                pos.___ = prev.___ + diff;
+                offset += sizeof(PatchPosition);
+            }
+            return offset;
+        };
+
+        position_vec.resize(1);
+        std::memcpy(&position_vec[0], data, sizeof(PatchPositions));
+        const char* data_p = data + sizeof(PatchPositions);
+        const PatchPositions& prev = position_vec[0];
+        while(data_p != data+size) {
+            position_vec.emplace_back();
+            data_p += position_undiff(data_p, prev, position_vec.back());
+        }
+    }
+
+public:
+    explicit DVIntervalListV2() : max(std::numeric_limits<I>::max()),
+                                  patches(max),
+                                  local_changes(max) {}
+
+    /**
+     * Add new element to the list
+     * @param element the new element
+     */
+    bool addition(const T& element) {
+        I patch = element.get_patch_id();
+        bool has_changed = patches.addition(patch);
+        if (element.is_local_change()) {
+            has_changed |= local_changes.addition(patch);
+        }
+        if (element.has_positions()) {
+            has_changed = true;
+            position_vec.push_back(element.get_patch_positions());
+        }
+        return has_changed;
+    }
+
+    bool deletion(I element, I outer_patch_limit) {
+        bool has_changed = false;
+        if (!position_vec.empty()) {
+            has_changed = true;
+            long index = patches.get_index(element, outer_patch_limit);
+            position_vec.erase(position_vec.begin()+index);
+        }
+        has_changed |= patches.deletion(element);
+        has_changed |= local_changes.deletion(element);
+        return has_changed;
+    }
+
+    long get_index(I patch_id, I outer_patch_limit) const {
+        return patches.get_index(patch_id, outer_patch_limit);
+    }
+
+    long size(I outer_patch_limit) const {
+        return patches.get_size(outer_patch_limit);
+    }
+
+    T get_element_at(long index, I outer_patch_limit) const {
+        I patch_id = patches.get_element_at(index, outer_patch_limit);
+        bool local_change = local_changes.is_in(patch_id);
+        if (position_vec.empty()) {
+            return T(patch_id, local_change);
+        }
+        return T(patch_id, local_change, position_vec[index]);
+    }
+
+    std::pair<const char*, size_t> serialize() const {
+        auto data_patches = patches.serialize();
+        auto data_local = local_changes.serialize();
+        auto data_positions = serialize_positions();
+        size_t size = 2 * sizeof(size_t) + data_patches.second + data_local.second + data_positions.second;
+        char* data = new char[size];
+        char* data_p = data;
+
+        std::memcpy(data_p, &data_patches.second, sizeof(size_t));
+        data_p += sizeof(size_t);
+
+        std::memcpy(data_p, &data_local.second, sizeof(size_t));
+        data_p += sizeof(size_t);
+
+        std::memcpy(data_p, data_patches.first, data_patches.second);
+        data_p += data_patches.second;
+        delete[] data_patches.first;
+
+        std::memcpy(data_p, data_local.first, data_local.second);
+        data_p += data_local.second;
+        delete[] data_local.first;
+
+        std::memcpy(data_p, data_positions.first, data_positions.second);
+        delete[] data_positions.first;
+
+        return std::make_pair(data, size);
+    }
+
+    void deserialize(const char *data, size_t size) {
+        const char* data_p = data;
+        size_t patches_size, local_size, position_size;
+        std::memcpy(&patches_size, data_p, sizeof(size_t));
+        data_p += sizeof(size_t);
+        std::memcpy(&local_size, data_p, sizeof(size_t));
+        data_p += sizeof(size_t);
+        position_size = size - local_size - patches_size - 2*sizeof(size_t);
+
+        patches.clear();
+        local_changes.clear();
+
+        patches.deserialize(data_p, patches_size);
+        data_p += patches_size;
+        local_changes.deserialize(data_p, local_size);
+        data_p += local_size;
+        deserialize_positions(data_p, position_size);
     }
 
 };
