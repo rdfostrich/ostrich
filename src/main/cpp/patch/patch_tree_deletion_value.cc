@@ -169,16 +169,6 @@ bool PatchTreeDeletionValueBase<T>::is_local_change(int patch_id) const {
     return get_patch(get_size()-1).is_local_change();
 }
 
-//template <class T>
-//bool PatchTreeDeletionValueBase<T>::was_local_change(int patch_id) const {
-//    if (get_size() == 0) return false;
-//    long index = get_patchvalue_index(patch_id);
-//    if (index > 0) {
-//        return get_patch(index-1).is_local_change();
-//    }
-//    return get_patch(get_size()-1).is_local_change();
-//}
-
 template <class T>
 string PatchTreeDeletionValueBase<T>::to_string() const {
     string ret = "{";
