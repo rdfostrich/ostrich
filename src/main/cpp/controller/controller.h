@@ -39,7 +39,7 @@ public:
     size_t get_version_materialized_count_estimated(const Triple& triple_pattern, int patch_id) const;
     /**
      * Get an addition/deletion iterator for all triples matching the given triple pattern with a certain offset
-     * in the list of all triples that have been added or removed from patch_id_start until patch_id_end.
+     * in the list of all triples that have been added or removed from patch_id until patch_id_end.
      * Triples are annotated with addition or deletion.
      * @param triple_pattern Only triples matching this pattern will be returned.
      * @param offset A certain offset the iterator should start with.

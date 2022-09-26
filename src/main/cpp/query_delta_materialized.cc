@@ -15,7 +15,7 @@ using namespace kyotocabinet;
 
 int main(int argc, char** argv) {
     if (argc < 6 || argc > 7) {
-        cerr << "ERROR: Query command must be invoked as 'patch_id_start patch_id_end subject predicate object [offset]' " << endl;
+        cerr << "ERROR: Query command must be invoked as 'patch_id patch_id_end subject predicate object [offset]' " << endl;
         return 1;
     }
 

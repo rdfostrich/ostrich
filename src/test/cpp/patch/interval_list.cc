@@ -186,8 +186,9 @@ TEST(IntervalListTest, EmptyDeletion) {
 
 // DeletionValue Interval List tests
 
+
 TEST(DVIntervalListTest, SimpleAddition1) {
-    DVIntervalList<PatchTreeDeletionValueElement, int, PatchPositions> dvl;
+    DVIntervalList<PatchTreeDeletionValueElement> dvl;
     PatchTreeDeletionValueElement pe(1);
     dvl.addition(pe);
     long index = dvl.get_index(1, 2);
@@ -195,7 +196,7 @@ TEST(DVIntervalListTest, SimpleAddition1) {
 }
 
 TEST(DVIntervalListTest, SimpleAddition2) {
-    DVIntervalList<PatchTreeDeletionValueElement, int, PatchPositions> dvl;
+    DVIntervalList<PatchTreeDeletionValueElement> dvl;
     PatchTreeDeletionValueElement pe(1);
     dvl.addition(pe);
     long index = dvl.get_index(1, 2);
@@ -204,198 +205,19 @@ TEST(DVIntervalListTest, SimpleAddition2) {
 }
 
 TEST(DVIntervalListTest, Addition1) {
-    DVIntervalList<PatchTreeDeletionValueElement, int, PatchPositions> dvl;
-    PatchTreeDeletionValueElement pe(1);
-    dvl.addition(pe);
+    DVIntervalList<PatchTreeDeletionValueElement> dvl;
+    dvl.addition(PatchTreeDeletionValueElement(1));
+    dvl.addition(PatchTreeDeletionValueElement(2));
+    dvl.addition(PatchTreeDeletionValueElement(3));
+    dvl.addition(PatchTreeDeletionValueElement(4));
     dvl.deletion(5);
-    PatchTreeDeletionValueElement pe3 = dvl.get_element_at(2, 6);
-    ASSERT_TRUE(pe.get_patch_positions() == pe3.get_patch_positions()) << "The elements should be equal";
+    PatchTreeDeletionValueElement pe1 = dvl.get_element_at(0, 5);
+    PatchTreeDeletionValueElement pe2 = dvl.get_element_at(2, 5);
+    ASSERT_TRUE(pe1.get_patch_positions() == pe2.get_patch_positions()) << "The elements should be equal";
 }
 
 TEST(DVIntervalListTest, Addition2) {
-    DVIntervalList<PatchTreeDeletionValueElement, int, PatchPositions> dvl;
-    PatchTreeDeletionValueElement pe(1);
-    dvl.addition(pe);
-    PatchTreeDeletionValueElement pe2(4, PatchPositions(0,2,3,4,5,6, 7));
-    dvl.addition(pe2);
-    PatchTreeDeletionValueElement pe3 = dvl.get_element_at(2, 6);
-    PatchTreeDeletionValueElement pe4 = dvl.get_element_at(4, 6);
-    ASSERT_TRUE(pe.get_patch_positions() == pe3.get_patch_positions()) << "The elements should be equal";
-    ASSERT_FALSE(pe.get_patch_positions() == pe4.get_patch_positions()) << "The elements should not be equal";
-}
-
-TEST(DVIntervalListTest, Addition3) {
-    DVIntervalList<PatchTreeDeletionValueElement, int, PatchPositions> dvl;
-    PatchTreeDeletionValueElement pe(1);
-    dvl.addition(pe);
-    dvl.deletion(4);
-    PatchTreeDeletionValueElement pe3 (3, PatchPositions(1,2,3,4,5,6,7));
-    dvl.addition(pe3);
-    PatchTreeDeletionValueElement pe4 = dvl.get_element_at(1, 6);
-    PatchTreeDeletionValueElement pe5 = dvl.get_element_at(2, 6);
-    ASSERT_TRUE(pe4.get_patch_positions() == pe.get_patch_positions());
-    ASSERT_TRUE(pe4.get_patch_positions() != pe5.get_patch_positions());
-}
-
-TEST(DVIntervalListTest, Serialization1) {
-    DVIntervalList<PatchTreeDeletionValueElement, int, PatchPositions> dvl;
-    PatchTreeDeletionValueElement pe(1);
-    dvl.addition(pe);
-    auto data = dvl.serialize();
-    DVIntervalList<PatchTreeDeletionValueElement, int, PatchPositions> dvl2;
-    dvl2.deserialize(data.first, data.second);
-    ASSERT_EQ(dvl.size(1), dvl2.size(1));
-    ASSERT_EQ(dvl.get_element_at(0,1), dvl2.get_element_at(0,1));
-    delete[] data.first;
-}
-
-TEST(DVIntervalListTest, Serialization2) {
-    DVIntervalList<PatchTreeDeletionValueElement, int, PatchPositions> dvl;
-    dvl.addition(PatchTreeDeletionValueElement(1));
-    dvl.addition(PatchTreeDeletionValueElement(2));
-    dvl.addition(PatchTreeDeletionValueElement(3));
-    dvl.addition(PatchTreeDeletionValueElement(4));
-    PatchTreeDeletionValueElement pe3 (5, PatchPositions(1,2,3,4,5,6,7));
-    dvl.addition(pe3);
-    auto data = dvl.serialize();
-    DVIntervalList<PatchTreeDeletionValueElement, int, PatchPositions> dvl2;
-    dvl2.deserialize(data.first, data.second);
-    ASSERT_EQ(dvl.size(5), dvl2.size(5));
-    ASSERT_EQ(dvl.get_element_at(0,5), dvl2.get_element_at(0,5));
-    ASSERT_EQ(dvl.get_element_at(0,5), dvl2.get_element_at(0,5));
-    ASSERT_EQ(dvl.get_element_at(1,5), dvl2.get_element_at(1,5));
-    ASSERT_EQ(dvl.get_element_at(2,5), dvl2.get_element_at(2,5));
-    ASSERT_EQ(dvl.get_element_at(3,5), dvl2.get_element_at(3,5));
-    ASSERT_EQ(dvl.get_element_at(4,5), dvl2.get_element_at(4,5));
-    delete[] data.first;
-}
-
-// TEST for V2 (delta PatchPositions encoding)
-
-TEST(DVIntervalListV2Test, SimpleAddition1) {
-    DVIntervalListV2<PatchTreeDeletionValueElement, int> dvl;
-    PatchTreeDeletionValueElement pe(1);
-    dvl.addition(pe, 2);
-    long index = dvl.get_index(1, 2);
-    ASSERT_TRUE(index == 0) << "The element's index should be 0";
-}
-
-TEST(DVIntervalListV2Test, SimpleAddition2) {
-    DVIntervalListV2<PatchTreeDeletionValueElement, int> dvl;
-    PatchTreeDeletionValueElement pe(1);
-    dvl.addition(pe, 2);
-    long index = dvl.get_index(1, 2);
-    PatchTreeDeletionValueElement pe2 = dvl.get_element_at(index, 2);
-    ASSERT_TRUE(pe == pe2) << "The elements should be equal";
-}
-
-TEST(DVIntervalListV2Test, Addition1) {
-    DVIntervalListV2<PatchTreeDeletionValueElement, int> dvl;
-    dvl.addition(PatchTreeDeletionValueElement(1), 2);
-    dvl.addition(PatchTreeDeletionValueElement(2), 3);
-    dvl.addition(PatchTreeDeletionValueElement(3), 4);
-    dvl.addition(PatchTreeDeletionValueElement(4), 5);
-    dvl.deletion(5, 6);
-    PatchTreeDeletionValueElement pe1 = dvl.get_element_at(0, 5);
-    PatchTreeDeletionValueElement pe2 = dvl.get_element_at(2, 5);
-    ASSERT_TRUE(pe1.get_patch_positions() == pe2.get_patch_positions()) << "The elements should be equal";
-}
-
-TEST(DVIntervalListV2Test, Addition2) {
-    DVIntervalListV2<PatchTreeDeletionValueElement, int> dvl;
-    PatchTreeDeletionValueElement pe(1);
-    dvl.addition(pe, 2);
-    dvl.addition(PatchTreeDeletionValueElement(2), 3);
-    dvl.addition(PatchTreeDeletionValueElement(3), 4);
-    PatchTreeDeletionValueElement pe2(4, PatchPositions(0,2,3,4,5,6, 7));
-    dvl.addition(pe2, 4);
-    PatchTreeDeletionValueElement pe3 = dvl.get_element_at(2, 4);
-    PatchTreeDeletionValueElement pe4 = dvl.get_element_at(4, 4);
-    ASSERT_TRUE(pe.get_patch_positions() == pe3.get_patch_positions()) << "The elements should be equal";
-    ASSERT_FALSE(pe.get_patch_positions() == pe4.get_patch_positions()) << "The elements should not be equal";
-}
-
-TEST(DVIntervalListV2Test, Addition3) {
-    DVIntervalListV2<PatchTreeDeletionValueElement, int> dvl;
-    PatchTreeDeletionValueElement pe(1);
-    dvl.addition(pe, 2);
-    dvl.addition(PatchTreeDeletionValueElement(2), 3);
-    dvl.addition(PatchTreeDeletionValueElement(3), 4);
-    dvl.deletion(4, 5);
-    PatchTreeDeletionValueElement pe3 (3, PatchPositions(1,2,3,4,5,6,7));
-    dvl.addition(pe3, 4);
-    PatchTreeDeletionValueElement pe4 = dvl.get_element_at(1, 5);
-    PatchTreeDeletionValueElement pe5 = dvl.get_element_at(2, 5);
-    ASSERT_TRUE(pe4.get_patch_positions() == pe.get_patch_positions());
-    ASSERT_TRUE(pe4.get_patch_positions() != pe5.get_patch_positions());
-}
-
-TEST(DVIntervalListV2Test, Serialization1) {
-    DVIntervalListV2<PatchTreeDeletionValueElement, int> dvl;
-    PatchTreeDeletionValueElement pe(1);
-    dvl.addition(pe, 2);
-    auto data = dvl.serialize();
-    DVIntervalList<PatchTreeDeletionValueElement, int, PatchPositions> dvl2;
-    dvl2.deserialize(data.first, data.second);
-    ASSERT_EQ(dvl.size(1), dvl2.size(1));
-    ASSERT_EQ(dvl.get_element_at(0,1), dvl2.get_element_at(0,1));
-    delete[] data.first;
-}
-
-TEST(DVIntervalListV2Test, Serialization2) {
-    DVIntervalListV2<PatchTreeDeletionValueElement, int> dvl;
-    dvl.addition(PatchTreeDeletionValueElement(1), 2);
-    dvl.addition(PatchTreeDeletionValueElement(2), 3);
-    dvl.addition(PatchTreeDeletionValueElement(3), 4);
-    dvl.addition(PatchTreeDeletionValueElement(4), 5);
-    PatchTreeDeletionValueElement pe3 (5, PatchPositions(1,2,3,4,5,6,7));
-    dvl.addition(pe3, 6);
-    auto data = dvl.serialize();
-    DVIntervalListV2<PatchTreeDeletionValueElement, int> dvl2;
-    dvl2.deserialize(data.first, data.second);
-    ASSERT_EQ(dvl.size(6), dvl2.size(6));
-    ASSERT_EQ(dvl.get_element_at(0,6), dvl2.get_element_at(0,6));
-    ASSERT_EQ(dvl.get_element_at(1,6), dvl2.get_element_at(1,6));
-    ASSERT_EQ(dvl.get_element_at(2,6), dvl2.get_element_at(2,6));
-    ASSERT_EQ(dvl.get_element_at(3,6), dvl2.get_element_at(3,6));
-    ASSERT_EQ(dvl.get_element_at(4,6), dvl2.get_element_at(4,6));
-    delete[] data.first;
-}
-
-
-// TEST V3
-
-TEST(DVIntervalListV3Test, SimpleAddition1) {
-    DVIntervalListV3<PatchTreeDeletionValueElement, int> dvl;
-    PatchTreeDeletionValueElement pe(1);
-    dvl.addition(pe);
-    long index = dvl.get_index(1, 2);
-    ASSERT_TRUE(index == 0) << "The element's index should be 0";
-}
-
-TEST(DVIntervalListV3Test, SimpleAddition2) {
-    DVIntervalListV3<PatchTreeDeletionValueElement, int> dvl;
-    PatchTreeDeletionValueElement pe(1);
-    dvl.addition(pe);
-    long index = dvl.get_index(1, 2);
-    PatchTreeDeletionValueElement pe2 = dvl.get_element_at(index, 2);
-    ASSERT_TRUE(pe == pe2) << "The elements should be equal";
-}
-
-TEST(DVIntervalListV3Test, Addition1) {
-    DVIntervalListV3<PatchTreeDeletionValueElement, int> dvl;
-    dvl.addition(PatchTreeDeletionValueElement(1));
-    dvl.addition(PatchTreeDeletionValueElement(2));
-    dvl.addition(PatchTreeDeletionValueElement(3));
-    dvl.addition(PatchTreeDeletionValueElement(4));
-    dvl.deletion(5, 5);
-    PatchTreeDeletionValueElement pe1 = dvl.get_element_at(0, 5);
-    PatchTreeDeletionValueElement pe2 = dvl.get_element_at(2, 5);
-    ASSERT_TRUE(pe1.get_patch_positions() == pe2.get_patch_positions()) << "The elements should be equal";
-}
-
-TEST(DVIntervalListV3Test, Addition2) {
-    DVIntervalListV3<PatchTreeDeletionValueElement, int> dvl;
+    DVIntervalList<PatchTreeDeletionValueElement> dvl;
     PatchTreeDeletionValueElement pe(1);
     dvl.addition(pe);
     dvl.addition(PatchTreeDeletionValueElement(2));
@@ -408,13 +230,13 @@ TEST(DVIntervalListV3Test, Addition2) {
     ASSERT_FALSE(pe.get_patch_positions() == pe4.get_patch_positions()) << "The elements should not be equal";
 }
 
-TEST(DVIntervalListV3Test, Addition3) {
-    DVIntervalListV3<PatchTreeDeletionValueElement, int> dvl;
+TEST(DVIntervalListTest, Addition3) {
+    DVIntervalList<PatchTreeDeletionValueElement> dvl;
     PatchTreeDeletionValueElement pe(1);
     dvl.addition(pe);
     dvl.addition(PatchTreeDeletionValueElement(2));
     dvl.addition(PatchTreeDeletionValueElement(3));
-    dvl.deletion(4, 4);
+    dvl.deletion(4);
     PatchTreeDeletionValueElement pe3 (3, PatchPositions(1,2,3,4,5,6,7));
     dvl.addition(pe3);
     PatchTreeDeletionValueElement pe4 = dvl.get_element_at(1, 4);
@@ -423,20 +245,20 @@ TEST(DVIntervalListV3Test, Addition3) {
     ASSERT_TRUE(pe4.get_patch_positions() != pe5.get_patch_positions());
 }
 
-TEST(DVIntervalListV3Test, Serialization1) {
-    DVIntervalListV3<PatchTreeDeletionValueElement, int> dvl;
+TEST(DVIntervalListTest, Serialization1) {
+    DVIntervalList<PatchTreeDeletionValueElement> dvl;
     PatchTreeDeletionValueElement pe(1);
     dvl.addition(pe);
     auto data = dvl.serialize();
-    DVIntervalListV3<PatchTreeDeletionValueElement, int> dvl2;
+    DVIntervalList<PatchTreeDeletionValueElement> dvl2;
     dvl2.deserialize(data.first, data.second);
     ASSERT_EQ(dvl.size(1), dvl2.size(1));
     ASSERT_EQ(dvl.get_element_at(0,1), dvl2.get_element_at(0,1));
     delete[] data.first;
 }
 
-TEST(DVIntervalListV3Test, Serialization2) {
-    DVIntervalListV3<PatchTreeDeletionValueElement, int> dvl;
+TEST(DVIntervalListTest, Serialization2) {
+    DVIntervalList<PatchTreeDeletionValueElement> dvl;
     dvl.addition(PatchTreeDeletionValueElement(1));
     dvl.addition(PatchTreeDeletionValueElement(2));
     dvl.addition(PatchTreeDeletionValueElement(3));
@@ -444,7 +266,7 @@ TEST(DVIntervalListV3Test, Serialization2) {
     PatchTreeDeletionValueElement pe3 (5, PatchPositions(1,2,3,4,5,6,7));
     dvl.addition(pe3);
     auto data = dvl.serialize();
-    DVIntervalListV3<PatchTreeDeletionValueElement, int> dvl2;
+    DVIntervalList<PatchTreeDeletionValueElement> dvl2;
     dvl2.deserialize(data.first, data.second);  // TODO 23-09-2022: fix this (probably bad deserialization)
     ASSERT_EQ(dvl.size(5), dvl2.size(5));
     ASSERT_EQ(dvl.get_element_at(0,6), dvl2.get_element_at(0,6));

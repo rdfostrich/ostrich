@@ -190,7 +190,7 @@ std::pair<size_t, ResultEstimationType> Controller::get_delta_materialized_count
         int snapshot_id_end = snapshotManager->get_latest_snapshot(patch_id_end);
 
         size_t count = 0;
-        // the patch_id_start is a patch not a snapshot
+        // the patch_id is a patch not a snapshot
         if (patch_id_start > snapshot_id_start) {
             int id = patchTreeManager->get_patch_tree_id(patch_id_start);
             std::shared_ptr<DictionaryManager> dict = snapshotManager->get_dictionary_manager(snapshot_id_start);

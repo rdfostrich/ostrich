@@ -337,8 +337,6 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, Prog
 
             int largest_patch_id_addition = addition_value.get_patch_id_at(addition_value.get_size() - 1);
             int largest_patch_id_deletion = deletion_value.get_patch(deletion_value.get_size() - 1).get_patch_id();
-            bool ila = addition_value.is_local_change(patch_id);
-            bool ild = deletion_value.is_local_change(patch_id);
             bool is_local_change = largest_patch_id_addition < largest_patch_id_deletion ? deletion_value.is_local_change(patch_id) : addition_value.is_local_change(patch_id);
             bool add_addition = largest_patch_id_addition > largest_patch_id_deletion;
             bool add_deletion = largest_patch_id_deletion > largest_patch_id_addition;
