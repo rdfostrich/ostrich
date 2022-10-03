@@ -1,7 +1,7 @@
-#include <sstream>
 #include <vector>
+#include <cstring>
 #include "triple.h"
-#include "patch_tree_key_comparator.h"
+#include "variable_size_integer.h"
 
 Triple::Triple() : subject(0), predicate(0), object(0) {}
 
@@ -16,53 +16,86 @@ Triple::Triple(const string& s, const string& p, const string& o, std::shared_pt
   object = !o.empty() ? dict->insert(const_cast<string&>(o), OBJECT) : 0;
 }
 
-const size_t Triple::get_subject() const {
+size_t Triple::get_subject() const {
     return subject;
 }
 
-const size_t Triple::get_predicate() const {
+size_t Triple::get_predicate() const {
     return predicate;
 }
 
-const size_t Triple::get_object() const {
+size_t Triple::get_object() const {
     return object;
 }
 
-const string Triple::get_subject(Dictionary& dict) const {
+string Triple::get_subject(Dictionary& dict) const {
     return dict.idToString(get_subject(), SUBJECT);
 }
 
-const string Triple::get_predicate(Dictionary& dict) const {
+string Triple::get_predicate(Dictionary& dict) const {
     return dict.idToString(get_predicate(), PREDICATE);
 }
 
-const string Triple::get_object(Dictionary& dict) const {
+string Triple::get_object(Dictionary& dict) const {
     return dict.idToString(get_object(), OBJECT);
 }
 
-const string Triple::to_string() const {
+string Triple::to_string() const {
     return std::to_string(get_subject()) + " " + std::to_string(get_predicate()) + " " + std::to_string(get_object()) + ".";
 }
 
-const string Triple::to_string(Dictionary& dict) const {
+string Triple::to_string(Dictionary& dict) const {
     return get_subject(dict) + " " + get_predicate(dict) + " " + get_object(dict) + ".";
 }
 
 const char* Triple::serialize(size_t* size) const {
-    *size = sizeof(subject) + sizeof(predicate) + sizeof(object);
-    char* bytes = new char[*size];
+#ifdef USE_VSI
+    size_t alloc_size = get_ULEB128_size<size_t>(std::numeric_limits<size_t>::max()) * 3;
+#else
+    size_t alloc_size = sizeof(subject) + sizeof(predicate) + sizeof(object);
+#endif
+    char* bytes = new char[alloc_size];
+#ifdef USE_VSI
+    size_t offset = 0;
+    std::vector<uint8_t> buffer;
 
-    memcpy(bytes, (char*)&subject, sizeof(subject));
-    memcpy(&bytes[sizeof(subject)], (char*)&predicate, sizeof(predicate));
-    memcpy(&bytes[sizeof(subject) + sizeof(predicate)], (char*)&object, sizeof(object));
+    encode_ULEB128<size_t>(subject, buffer);
+    std::memcpy(bytes, buffer.data(), buffer.size());
+    offset += buffer.size();
+    buffer.clear();
 
+    encode_ULEB128<size_t>(predicate, buffer);
+    std::memcpy(bytes+offset, buffer.data(), buffer.size());
+    offset += buffer.size();
+    buffer.clear();
+
+    encode_ULEB128<size_t>(object, buffer);
+    std::memcpy(bytes+offset, buffer.data(), buffer.size());
+    offset += buffer.size();
+    buffer.clear();
+    *size = offset;
+#else
+    std::memcpy(bytes, (char*)&subject, sizeof(subject));
+    std::memcpy(&bytes[sizeof(subject)], (char*)&predicate, sizeof(predicate));
+    std::memcpy(&bytes[sizeof(subject) + sizeof(predicate)], (char*)&object, sizeof(object));
+    *size = alloc_size;
+#endif
     return bytes;
 }
 
 void Triple::deserialize(const char* data, size_t size) {
-    memcpy(&subject, data,  sizeof(subject));
-    memcpy(&predicate, &data[sizeof(subject)],  sizeof(predicate));
-    memcpy(&object, &data[sizeof(subject) + sizeof(predicate)],  sizeof(object));
+#ifdef USE_VSI
+    size_t read_size, offset;
+    subject = decode_ULEB128<size_t>((const uint8_t*) data, &read_size);
+    offset = read_size;
+    predicate = decode_ULEB128<size_t>((const uint8_t*) data+offset, &read_size);
+    offset += read_size;
+    object = decode_ULEB128<size_t>((const uint8_t*) data+offset, &read_size);
+#else
+    std::memcpy(&subject, data,  sizeof(subject));
+    std::memcpy(&predicate, &data[sizeof(subject)],  sizeof(predicate));
+    std::memcpy(&object, &data[sizeof(subject) + sizeof(predicate)],  sizeof(object));
+#endif
 }
 
 void Triple::set_subject(size_t subject) {

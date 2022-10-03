@@ -78,6 +78,9 @@ set(TEST_FILES
         src/test/cpp/snapshot/snapshot_manager.cc src/test/cpp/patch/interval_list.cc)
 
 add_library(ostrich STATIC ${HDT_FILES} ${COMMON_FILES})
+target_compile_definitions(ostrich PUBLIC -DCOMPRESSED_ADD_VALUES -DCOMPRESSED_DEL_VALUES -DUSE_VSI)
+#target_compile_definitions(ostrich PUBLIC -DUSE_VSI)
+
 
 # Kyoto Cabinet dependencies
 find_library(LZMA lzma REQUIRED)

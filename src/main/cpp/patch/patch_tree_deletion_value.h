@@ -7,8 +7,7 @@
 #include <memory>
 #include "triple.h"
 #include "interval_list.h"
-
-#define COMPRESSED_DEL_VALUES
+#include "variable_size_integer.h"
 
 typedef long PatchPosition;
 
@@ -28,9 +27,6 @@ typedef struct PatchPositions {
     PatchPositions(PatchPosition sp_, PatchPosition s_o, PatchPosition s__, PatchPosition _po,
                    PatchPosition _p_, PatchPosition __o, PatchPosition ___)
             : sp_(sp_), s_o(s_o), s__(s__), _po(_po), _p_(_p_), __o(__o), ___(___) {}
-
-//    PatchPositions(const PatchPositions &other) = default;
-//    PatchPositions& operator=(const PatchPositions& other) = default;
 
     std::string to_string() const {
         std::string ret = "{";
@@ -72,6 +68,90 @@ typedef struct PatchPositions {
     bool operator!=(const PatchPositions &rhs) const {
         return !this->operator==(rhs);
     }
+
+    char* serialize(size_t* size) const {
+        *size = 0;
+        char* data = new char[max_serialization_size()];
+#ifdef USE_VSI
+        std::vector<uint8_t> buffer;
+
+        encode_SLEB128<PatchPosition>(this->sp_, buffer);
+        std::memcpy(data+*size, buffer.data(), buffer.size());
+        *size += buffer.size();
+        buffer.clear();
+
+        encode_SLEB128<PatchPosition>(this->s_o, buffer);
+        std::memcpy(data+*size, buffer.data(), buffer.size());
+        *size += buffer.size();
+        buffer.clear();
+
+        encode_SLEB128<PatchPosition>(this->s__, buffer);
+        std::memcpy(data+*size, buffer.data(), buffer.size());
+        *size += buffer.size();
+        buffer.clear();
+
+        encode_SLEB128<PatchPosition>(this->_po, buffer);
+        std::memcpy(data+*size, buffer.data(), buffer.size());
+        *size += buffer.size();
+        buffer.clear();
+
+        encode_SLEB128<PatchPosition>(this->_p_, buffer);
+        std::memcpy(data+*size, buffer.data(), buffer.size());
+        *size += buffer.size();
+        buffer.clear();
+
+        encode_SLEB128<PatchPosition>(this->__o, buffer);
+        std::memcpy(data+*size, buffer.data(), buffer.size());
+        *size += buffer.size();
+        buffer.clear();
+
+        encode_SLEB128<PatchPosition>(this->___, buffer);
+        std::memcpy(data+*size, buffer.data(), buffer.size());
+        *size += buffer.size();
+#else
+        std::memcpy(data, this, sizeof(PatchPositions));
+        *size = sizeof(PatchPositions);
+#endif
+        return data;
+    }
+
+    size_t deserialize(const char* data) {
+#ifdef USE_VSI
+        size_t decode_size = 0;
+        size_t offset = 0;
+        this->sp_ = decode_SLEB128<PatchPosition>((const uint8_t*)data, &decode_size);
+        offset += decode_size;
+
+        this->s_o = decode_SLEB128<PatchPosition>((const uint8_t*)data+offset, &decode_size);
+        offset += decode_size;
+
+        this->s__ = decode_SLEB128<PatchPosition>((const uint8_t*)data+offset, &decode_size);
+        offset += decode_size;
+
+        this->_po = decode_SLEB128<PatchPosition>((const uint8_t*)data+offset, &decode_size);
+        offset += decode_size;
+
+        this->_p_ = decode_SLEB128<PatchPosition>((const uint8_t*)data+offset, &decode_size);
+        offset += decode_size;
+
+        this->__o = decode_SLEB128<PatchPosition>((const uint8_t*)data+offset, &decode_size);
+        offset += decode_size;
+
+        this->___ = decode_SLEB128<PatchPosition>((const uint8_t*)data+offset);
+        offset += decode_size;
+        return offset;
+#else
+        std::memcpy(this, data, sizeof(PatchPositions));
+        return sizeof(PatchPositions);
+#endif
+    }
+
+    static size_t max_serialization_size() {
+        PatchPosition max = std::numeric_limits<PatchPosition>::max();
+        size_t bytes = get_SLEB128_size<PatchPosition>(max);
+        return 7 * bytes;
+    }
+
 } PatchPositions;
 
 // A PatchTreeDeletionValueElement contains a patch id, a relative patch position and
@@ -131,6 +211,8 @@ public:
         return {};
     }
 
+    virtual char* serialize(size_t* size) const;
+    virtual size_t deserialize(const char* data);
 };
 
 // A PatchTreeDeletionValueElement contains a patch id, a relative patch position and
@@ -167,6 +249,9 @@ public:
     static bool has_positions() {
         return true;
     }
+
+    char* serialize(size_t* size) const override;
+    size_t deserialize(const char* data) override;
 };
 
 
@@ -216,6 +301,8 @@ public:
 class DeltaPatchPositionsContainerBase: public PatchPositionsContainer {
 protected:
     std::vector<VerPatchPositions<int>> position_vec;
+
+    static inline size_t decode_diff(const char *data, PatchPosition &diff);
 
     static inline void delta_serialize_position_vec(const std::vector<VerPatchPositions<int>>& position_vec, char** data, size_t* size);
     static inline void delta_deserialize_position_vec(std::vector<VerPatchPositions<int>>& position_vec, const char* data, size_t size);

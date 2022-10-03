@@ -106,6 +106,7 @@ TEST(TripleTest, SerializationLong) {
     DictionaryManager::cleanup(TESTPATH, 0);
 }
 
+#ifndef USE_VSI
 TEST(TripleTest, SerializationSize) {
     std::shared_ptr<DictionaryManager> dict = std::make_shared<DictionaryManager>(TESTPATH, 0);
     Triple tripleIn("s1", "p1", "o1", dict);
@@ -121,3 +122,4 @@ TEST(TripleTest, SerializationSize) {
 
     DictionaryManager::cleanup(TESTPATH, 0);
 }
+#endif

@@ -636,7 +636,7 @@ std::pair<DV*, Triple> PatchTree::last_deletion_value(const Triple &triple_patte
         // A failure to jump means that there is no triple in the tree that matches the pattern, so we return count 0.
         delete[] data;
         delete cursor_deletions;
-        return std::make_pair((DV*) NULL, Triple());
+        return std::make_pair(nullptr, Triple());
     }
     delete[] data;
 
@@ -656,7 +656,7 @@ std::pair<DV*, Triple> PatchTree::last_deletion_value(const Triple &triple_patte
         return std::make_pair(value, key);
     }
     delete value;
-    return std::make_pair((DV*) NULL, Triple());
+    return std::make_pair(nullptr, Triple());
 }
 
 std::pair<PatchPosition, Triple> PatchTree::deletion_count(const Triple &triple_pattern, int patch_id) const {
@@ -666,7 +666,7 @@ std::pair<PatchPosition, Triple> PatchTree::deletion_count(const Triple &triple_
         // If we are using the SPO-tree, patch positions are stored in there,
         // so we can immediately retrieve those and return them.
         std::pair<PatchTreeDeletionValue*, Triple> value = last_deletion_value<PatchTreeDeletionValue>(triple_pattern, patch_id);
-        if (value.first == NULL) {
+        if (value.first == nullptr) {
             return std::make_pair((PatchPosition) 0, Triple());
         }
         patch_position = value.first->get(patch_id).get_patch_positions().get_by_pattern(triple_pattern) + 1;
@@ -676,7 +676,7 @@ std::pair<PatchPosition, Triple> PatchTree::deletion_count(const Triple &triple_
         // If we are using a non-SPO-tree, we still know the exact last triple,
         // so we take that triple, and search for it in the SPO-tree, and retrieve the value there, which will be fast.
         std::pair<PatchTreeDeletionValueReduced*, Triple> value = last_deletion_value<PatchTreeDeletionValueReduced>(triple_pattern, patch_id);
-        if (value.first == NULL) {
+        if (value.first == nullptr) {
             return std::make_pair((PatchPosition) 0, Triple());
         }
         delete value.first;

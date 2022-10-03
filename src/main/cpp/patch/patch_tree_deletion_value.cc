@@ -16,8 +16,29 @@ string PatchTreeDeletionValueElement::to_string() const {
     return PatchTreeDeletionValueElementBase::to_string() + ":" + get_patch_positions().to_string();
 }
 
+char *PatchTreeDeletionValueElement::serialize(size_t *size) const {
+    char* base_data = PatchTreeDeletionValueElementBase::serialize(size);
+    char* data = new char[*size + PatchPositions::max_serialization_size()];
+    std::memcpy(data, base_data, *size);
+    delete[] base_data;
+
+    size_t pos_size;
+    char* pos_data = patch_positions.serialize(&pos_size);
+    std::memcpy(data+*size, pos_data, pos_size);
+    *size += pos_size;
+    delete[] pos_data;
+
+    return data;
+}
+
+size_t PatchTreeDeletionValueElement::deserialize(const char *data) {
+    size_t consumed_size = PatchTreeDeletionValueElementBase::deserialize(data);
+    consumed_size += patch_positions.deserialize(data+consumed_size);
+    return consumed_size;
+}
+
 void PatchTreeDeletionValueElementBase::set_local_change() {
-    local_change = true; // TODO: Can we instead just set all patch positions to -1 to save some storage space?
+    local_change = true;  // TODO: Can we instead just set all patch positions to -1 to save some storage space?
 }
 
 bool PatchTreeDeletionValueElementBase::is_local_change() const {
@@ -26,6 +47,34 @@ bool PatchTreeDeletionValueElementBase::is_local_change() const {
 
 string PatchTreeDeletionValueElementBase::to_string() const {
     return std::to_string(get_patch_id());
+}
+
+char* PatchTreeDeletionValueElementBase::serialize(size_t* size) const {
+    char* data = new char[get_SLEB128_size<int>(std::numeric_limits<int>::max()) + sizeof(bool)];
+#ifdef USE_VSI
+    std::vector<uint8_t> buffer;
+    encode_SLEB128<int>(patch_id, buffer);
+    std::memcpy(data, buffer.data(), buffer.size());
+    *size = buffer.size();
+#else
+    std::memcpy(data, &patch_id, sizeof(int));
+    *size = sizeof(int);
+#endif
+    std::memcpy(data+*size, &local_change, sizeof(bool));
+    *size += sizeof(bool);
+    return data;
+}
+
+size_t PatchTreeDeletionValueElementBase::deserialize(const char *data) {
+    size_t consumed_size;
+#ifdef USE_VSI
+    patch_id = decode_SLEB128<int>((const uint8_t*) data, &consumed_size);
+#else
+    std::memcpy(&patch_id, data, sizeof(int));
+    consumed_size = sizeof(int);
+#endif
+    std::memcpy(&local_change, data+consumed_size, sizeof(bool));
+    return consumed_size+sizeof(bool);
 }
 
 #ifndef COMPRESSED_DEL_VALUES
@@ -104,20 +153,34 @@ string PatchTreeDeletionValueBase<T>::to_string() const {
 
 template <class T>
 const char* PatchTreeDeletionValueBase<T>::serialize(size_t* size) const {
-    *size = elements.size() * sizeof(T);
-    char* bytes = new char[*size];
-    for(int i = 0; i < elements.size(); i++) {
-        std::memcpy(&bytes[i * sizeof(T)], &elements[i], sizeof(T));
+    *size = 0;
+    size_t elem_size;
+#ifdef USE_VSI
+    elem_size = get_SLEB128_size<int>(std::numeric_limits<int>::max()) + sizeof(bool);
+    if (T::has_positions()) {
+        elem_size += PatchPositions::max_serialization_size();
+    }
+#else
+    elem_size = sizeof(T);
+#endif
+    char* bytes = new char[elements.size() * elem_size];
+    size_t elem_data_size;
+    for (const auto& e: elements) {
+        char* elem_data = e.serialize(&elem_data_size);
+        std::memcpy(bytes+*size, elem_data, elem_data_size);
+        *size += elem_data_size;
+        delete[] elem_data;
     }
     return bytes;
 }
 
 template <class T>
 void PatchTreeDeletionValueBase<T>::deserialize(const char* data, size_t size) {
-    size_t count = size / sizeof(T);
-    elements.resize(count);
-    for(int i = 0; i < count; i++) {
-        std::memcpy(&elements.data()[i], &data[i * sizeof(T)], sizeof(T));
+    elements.clear();
+    size_t offset = 0;
+    while (offset < size) {
+        elements.emplace_back();
+        offset += elements.back().deserialize(data+offset);
     }
 }
 #else
@@ -293,9 +356,29 @@ bool IntervalPatchPositionsContainer::get_positions(int patch_id, PatchPositions
 }
 
 std::pair<const char *, size_t> IntervalPatchPositionsContainer::serialize() const {
-    size_t size = positions_map.size() * (2*sizeof(int)+sizeof(PatchPositions));
+    size_t size = positions_map.size() * (2*sizeof(int)+PatchPositions::max_serialization_size());
     char* data = new char[size];
     size_t offset = 0;
+#ifdef USE_VSI
+    std::vector<uint8_t> buffer;
+    for (const auto& inter_p: positions_map) {
+        encode_SLEB128<int>(inter_p.first, buffer);
+        std::memcpy(data+offset, buffer.data(), buffer.size());
+        offset += buffer.size();
+
+        buffer.clear();
+        encode_SLEB128<int>(inter_p.second.first, buffer);
+        std::memcpy(data+offset, buffer.data(), buffer.size());
+        offset += buffer.size();
+
+        buffer.clear();
+        size_t pos_size = 0;
+        char* pos_data = inter_p.second.second.serialize(&pos_size);
+        std::memcpy(data+offset, pos_data, pos_size);
+        offset += PatchPositions::max_serialization_size();
+    }
+    return std::make_pair(data, offset);
+#else
     for (const auto& inter_p: positions_map) {
         std::memcpy(data+offset, &inter_p.first, sizeof(int));
         offset += sizeof(int);
@@ -305,11 +388,24 @@ std::pair<const char *, size_t> IntervalPatchPositionsContainer::serialize() con
         offset += sizeof(PatchPositions);
     }
     return std::make_pair(data, size);
+#endif
 }
 
 void IntervalPatchPositionsContainer::deserialize(const char *data, size_t size) {
     positions_map.clear();
     auto it = positions_map.begin();
+#ifdef USE_VSI
+    size_t offset = 0;
+    while (offset < size) {
+        size_t decode_size;
+        int s = decode_SLEB128<int>((const uint8_t*)data+offset, &decode_size);
+        offset += decode_size;
+        int e = decode_SLEB128<int>((const uint8_t*)data+offset, &decode_size);
+        auto new_inter = positions_map.emplace_hint(it, s, std::make_pair(e,PatchPositions()));
+        offset += new_inter->second.second.deserialize(data+offset);
+        it = positions_map.end();
+    }
+#else
     for (size_t offset=0; offset<size; offset+=(2*sizeof(int) + sizeof(PatchPositions))) {
         int s, e;
         std::memcpy(&s, data+offset, sizeof(int));
@@ -319,13 +415,14 @@ void IntervalPatchPositionsContainer::deserialize(const char *data, size_t size)
         positions_map.emplace_hint(it, s, std::make_pair(e,p));
         it = positions_map.end();
     }
+#endif
 }
 
 
 void
 DeltaPatchPositionsContainerBase::delta_serialize_position_vec(const vector<VerPatchPositions<int>> &position_vec, char **data,
                                                                size_t *size) {
-    auto position_diff = [](const VerPatchPositions<int>& first, const VerPatchPositions<int>& second) {
+    auto position_diff = [](char* data, const VerPatchPositions<int>& first, const VerPatchPositions<int>& second) {
         uint8_t head = 0;
         std::vector<PatchPosition> diff_values;
 
@@ -357,41 +454,51 @@ DeltaPatchPositionsContainerBase::delta_serialize_position_vec(const vector<VerP
         head |= (bool)diff << 6;
         if (diff) diff_values.push_back(diff);
 
-        size_t size = sizeof(uint8_t) + sizeof(int) + diff_values.size()*sizeof(PatchPosition);
-        char* data = new char[size];
+
+        size_t size = sizeof(uint8_t);
         std::memcpy(data, &head, sizeof(uint8_t));
+#ifdef USE_VSI
+        std::vector<uint8_t> buffer;
+        buffer.reserve(PatchPositions::max_serialization_size());
+        encode_SLEB128<int>(second.patch_id, buffer);
+        std::memcpy(data+size, buffer.data(), buffer.size());
+        size += buffer.size();
+        buffer.clear();
+        for (PatchPosition d: diff_values) {
+            encode_SLEB128<PatchPosition>(d, buffer);
+            std::memcpy(data+size, buffer.data(), buffer.size());
+            size += buffer.size();
+            buffer.clear();
+        }
+#else
+        size += sizeof(int) + diff_values.size()*sizeof(PatchPosition);
         std::memcpy(data+sizeof(uint8_t), &second.patch_id, sizeof(int));
         std::memcpy(data+sizeof(uint8_t)+sizeof(int), diff_values.data(), diff_values.size()*sizeof(PatchPosition));
-
-        return std::make_pair(size, data);
+#endif
+        return size;
     };
 
     *size = 0;
-    if (position_vec.size() == 1) {
-        *size = sizeof(VerPatchPositions<int>);
-        *data = new char[*size];
+    if (!position_vec.empty()) {
+        size_t alloc_size = position_vec.size()*(PatchPositions::max_serialization_size()+sizeof(int)+sizeof(uint8_t));
+        *data = new char[alloc_size];
+#ifdef USE_VSI
+        std::vector<uint8_t> buffer;
+        encode_SLEB128<int>(position_vec[0].patch_id, buffer);
+        *size += buffer.size();
+        std::memcpy(*data, buffer.data(), buffer.size());
+#else
         std::memcpy(*data, &position_vec[0].patch_id, sizeof(int));
-        std::memcpy(*data+sizeof(int), &position_vec[0].positions, sizeof(PatchPositions));
-    } else if (position_vec.size() > 1) { // if more than 1 PatchPositions, we use delta-encoding
-        // We can't know before encoding the total size. PatchPositions + (>= 1 bytes)
-        size_t total_size = sizeof(VerPatchPositions<int>);
-        std::vector<std::pair<size_t, char*>> data_vec;
-        data_vec.reserve(position_vec.size());
-        for (size_t i=1; i<position_vec.size(); i++) {  // Loop to perform delta encoding (i-1 & ith elements)
-            auto d = position_diff(position_vec[i-1], position_vec[i]);
-            total_size += d.first;
-            data_vec.push_back(d);
-        }
-        // We allocate the correct amount of memory
-        *size = total_size;
-        *data = new char[total_size];
-        std::memcpy(*data, &position_vec[0].patch_id, sizeof(int));
-        std::memcpy(*data+sizeof(int), &position_vec[0].positions, sizeof(PatchPositions)); // plain copy of 1st PatchPositions
-        size_t offset = sizeof(VerPatchPositions<int>);
-        for (auto& p: data_vec) {  // loop to copy the "delta" PatchPositions
-            std::memcpy(*data+offset, p.second, p.first);
-            offset += p.first;
-            delete[] p.second;
+        *size += sizeof(int);
+#endif
+        size_t positions_data_size = 0;
+        char* positions_data = position_vec[0].positions.serialize(&positions_data_size);
+        std::memcpy(*data+*size, positions_data, positions_data_size);
+        *size += positions_data_size;
+        if (position_vec.size() > 1) {
+            for (size_t i=1; i<position_vec.size(); i++) {
+                *size += position_diff(*data+*size, position_vec[i-1], position_vec[i]);
+            }
         }
     }
 }
@@ -404,61 +511,59 @@ DeltaPatchPositionsContainerBase::delta_deserialize_position_vec(vector<VerPatch
         size_t offset = 0;
         std::memcpy(&head, data+offset, sizeof(uint8_t));
         offset += sizeof(uint8_t);
+#ifdef USE_VSI
+        size_t leb128_decode_size = 0;
+        pos.patch_id = decode_SLEB128<int>((const uint8_t*)(data + offset), &leb128_decode_size);
+        offset += leb128_decode_size;
+#else
         std::memcpy(&pos.patch_id, data+offset, sizeof(int));
         offset += sizeof(int);
-
+#endif
         PatchPosition diff = 0;
         if (head & 1) {
-            std::memcpy(&diff, data+offset, sizeof(PatchPosition));
-            offset += sizeof(PatchPosition);
+            offset += decode_diff(data+offset, diff);
         }
         pos.positions.sp_ = prev.sp_ + diff;
 
         diff = 0;
         head >>= 1;
         if (head & 1) {
-            std::memcpy(&diff, data+offset, sizeof(PatchPosition));
-            offset += sizeof(PatchPosition);
+            offset += decode_diff(data+offset, diff);
         }
         pos.positions.s_o = prev.s_o + diff;
 
         diff = 0;
         head >>= 1;
         if (head & 1) {
-            std::memcpy(&diff, data+offset, sizeof(PatchPosition));
-            offset += sizeof(PatchPosition);
+            offset += decode_diff(data+offset, diff);
         }
         pos.positions.s__ = prev.s__ + diff;
 
         diff = 0;
         head >>= 1;
         if (head & 1) {
-            std::memcpy(&diff, data+offset, sizeof(PatchPosition));
-            offset += sizeof(PatchPosition);
+            offset += decode_diff(data+offset, diff);
         }
         pos.positions._po = prev._po + diff;
 
         diff = 0;
         head >>= 1;
         if (head & 1) {
-            std::memcpy(&diff, data+offset, sizeof(PatchPosition));
-            offset += sizeof(PatchPosition);
+            offset += decode_diff(data+offset, diff);
         }
         pos.positions._p_ = prev._p_ + diff;
 
         diff = 0;
         head >>= 1;
         if (head & 1) {
-            std::memcpy(&diff, data+offset, sizeof(PatchPosition));
-            offset += sizeof(PatchPosition);
+            offset += decode_diff(data+offset, diff);
         }
         pos.positions.__o = prev.__o + diff;
 
         diff = 0;
         head >>= 1;
         if (head & 1) {
-            std::memcpy(&diff, data+offset, sizeof(PatchPosition));
-            offset += sizeof(PatchPosition);
+            offset += decode_diff(data+offset, diff);
         }
         pos.positions.___ = prev.___ + diff;
 
@@ -466,15 +571,31 @@ DeltaPatchPositionsContainerBase::delta_deserialize_position_vec(vector<VerPatch
     };
 
     position_vec.resize(1);
+    size_t offset = 0;
+#ifdef USE_VSI
+    position_vec[0].patch_id = decode_SLEB128<int>((const uint8_t*)data, &offset);
+#else
     std::memcpy(&position_vec[0].patch_id, data, sizeof(int));
-    std::memcpy(&position_vec[0].positions, data+sizeof(int), sizeof(PatchPositions));
-    size_t offset = sizeof(VerPatchPositions<int>);
+    offset += sizeof(int);
+#endif
+    offset += position_vec[0].positions.deserialize(data+offset);
     size_t prev_index = 0;
     while(offset < size) {
         position_vec.emplace_back();  // insert default value at the back the vector to be modified
         offset += position_undiff(data+offset, position_vec[prev_index].positions, position_vec.back());
         prev_index += 1;
     }
+}
+
+size_t DeltaPatchPositionsContainerBase::decode_diff(const char *data, PatchPosition &diff) {
+    size_t size = 0;
+#ifdef USE_VSI
+    diff = decode_SLEB128<PatchPosition>((const uint8_t*)(data), &size);
+#else
+    std::memcpy(&diff, data, sizeof(PatchPosition));
+    size += sizeof(PatchPosition);
+#endif
+    return size;
 }
 
 void DeltaPatchPositionsContainerBase::serialize_position_vec(const vector<VerPatchPositions<int>> &position_vec,
@@ -484,10 +605,11 @@ void DeltaPatchPositionsContainerBase::serialize_position_vec(const vector<VerPa
         *data = new char[*size];
         size_t offset = 0;
         for (auto& vp: position_vec) {
-//            std::memcpy(*data+offset, &vp.patch_id, sizeof(VerPatchPositions<int>));
-//            std::memcpy(*data+offset+sizeof(int), &vp.patch_id, sizeof(VerPatchPositions<int>));
-            std::memcpy(*data+offset, &vp, sizeof(VerPatchPositions<int>));
-            offset += sizeof(VerPatchPositions<int>);
+            std::memcpy(*data+offset, &vp.patch_id, sizeof(int));
+            size_t pos_data_size = 0;
+            char* pos_data = vp.positions.serialize(&pos_data_size);
+            std::memcpy(*data+offset+sizeof(int), pos_data, pos_data_size);
+            offset += sizeof(int) + pos_data_size;
         }
     }
 }
@@ -496,9 +618,10 @@ void DeltaPatchPositionsContainerBase::deserialize_position_vec(vector<VerPatchP
                                                                 const char *data, size_t size) {
     size_t n_elements = size/sizeof(VerPatchPositions<int>);
     position_vec.resize(n_elements);
+    size_t offset = 0;
     for (size_t i=0; i<n_elements; i++) {
-        size_t offset = i*sizeof(VerPatchPositions<int>);
-        std::memcpy(&position_vec[i], data+offset, sizeof(VerPatchPositions<int>));
+        std::memcpy(&position_vec[i].patch_id, data+offset, sizeof(int));
+        offset += position_vec[i].positions.deserialize(data+offset+sizeof(int));
     }
 }
 

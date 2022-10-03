@@ -16,7 +16,7 @@ protected:
 public:
     Triple();
 
-    Triple(const TripleID &triple);
+    explicit Triple(const TripleID &triple);
 
     Triple(size_t subject, size_t predicate, size_t object);
 
@@ -25,45 +25,45 @@ public:
     /**
      * @return The subject
      */
-    const size_t get_subject() const;
+    size_t get_subject() const;
 
     /**
      * @return The predicate
      */
-    const size_t get_predicate() const;
+    size_t get_predicate() const;
 
     /**
      * @return The object
      */
-    const size_t get_object() const;
+    size_t get_object() const;
 
     /**
      * @param dict The dictionary to decode from
      * @return The subject
      */
-    const string get_subject(Dictionary &dict) const;
+    string get_subject(Dictionary &dict) const;
 
     /**
      * @param dict The dictionary to decode from
      * @return The predicate
      */
-    const string get_predicate(Dictionary &dict) const;
+    string get_predicate(Dictionary &dict) const;
 
     /**
      * @param dict The dictionary to decode from
      * @return The object
      */
-    const string get_object(Dictionary &dict) const;
+    string get_object(Dictionary &dict) const;
 
     /**
      * @return The string representation of this triple.
      */
-    const string to_string() const;
+    string to_string() const;
 
     /**
      * @return The decoded string representation of this triple.
      */
-    const string to_string(Dictionary &dict) const;
+    string to_string(Dictionary &dict) const;
 
     /**
      * Serialize this value to a byte array
