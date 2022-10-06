@@ -69,20 +69,22 @@ TEST(PatchTreeDeletionValueTest, Serialization) {
     delete[] data;
 }
 
-//TEST(PatchTreeDeletionValueTest, SerializationSize) {
-//    PatchTreeDeletionValue valueIn(20);
-//    valueIn.add(PatchTreeDeletionValueElement(0, PatchPositions(1, 2, 3, 4, 5, 6, 7)));
-//    valueIn.add(PatchTreeDeletionValueElement(1, PatchPositions(82, 83, 84, 85, 86, 87, 88)));
-//    valueIn.add(PatchTreeDeletionValueElement(10, PatchPositions(742, 743, 744, 745, 746, 747, 748)));
-//    valueIn.add(PatchTreeDeletionValueElement(20, PatchPositions(3, 4, 5, 6, 7, 8, 9)));
-//
-//    // Serialize
-//    size_t size;
-//    const char* data = valueIn.serialize(&size);
-//
-//    ASSERT_EQ(sizeof(PatchTreeDeletionValueElement) * 4, size) << "Serialization length is too high";
-//    free((char*) data);
-//}
+TEST(PatchTreeDeletionValueTest, SerializationComplex) {
+    int max = 10;
+    PatchTreeDeletionValue original_value(max);
+    for (int i=0; i<max; i++) {
+        original_value.add(PatchTreeDeletionValueElement(i, PatchPositions(i*100,i*100,i*100,i*100,i*100,i*100,i*100)));
+    }
+    size_t data_size;
+    const char* data = original_value.serialize(&data_size);
+    PatchTreeDeletionValue new_value(max);
+    new_value.deserialize(data, data_size);
+    for (int i=0; i<max; i++) {
+        PatchTreeDeletionValueElement pe = new_value.get_patch_at(i);
+        ASSERT_EQ(i, pe.get_patch_id()) << "The patch ID is incorrect";
+        ASSERT_EQ(PatchPositions(i*100,i*100,i*100,i*100,i*100,i*100,i*100).to_string(), pe.get_patch_positions().to_string()) << "The patch positions are incorrect";
+    }
+}
 
 #else
 

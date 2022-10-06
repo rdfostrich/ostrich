@@ -195,13 +195,13 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, Prog
             should_step_deletions = true;
             should_step_additions = false;
 
-            if (deletion_value.get_patch(0).get_patch_id() <= patch_id) { // Skip this deletion if our current patch id lies before the first patch id for D
+            if (deletion_value.get_patch_at(0).get_patch_id() <= patch_id) { // Skip this deletion if our current patch id lies before the first patch id for D
                 // Add patch id with updated patch positions to current deletion triple
                 PatchPositions patch_positions = deletion_value.is_local_change(patch_id) ?
                                                  PatchPositions() : Patch::positions(deletion_key, sp_, s_o, s__, _po, _p_, __o, ___);
                 long patch_value_index;
                 if ((patch_value_index = deletion_value.get_patchvalue_index(patch_id)) < 0
-                    || deletion_value.get_patch(patch_value_index).get_patch_positions() != patch_positions) { // Don't re-insert when already present for this patch id, except when patch positions have changed
+                    || deletion_value.get_patch_at(patch_value_index).get_patch_positions() != patch_positions) { // Don't re-insert when already present for this patch id, except when patch positions have changed
 #ifdef COMPRESSED_DEL_VALUES
                     bool has_changed = deletion_value.add(PatchTreeDeletionValueElement(patch_id, patch_positions));
                     PatchTreeDeletionValueReduced deletion_value_reduced = deletion_value.to_reduced();
@@ -336,7 +336,7 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, Prog
             // We only update the value with the smallest patch id, because we will never store +/- at the same time for the same patch id
 
             int largest_patch_id_addition = addition_value.get_patch_id_at(addition_value.get_size() - 1);
-            int largest_patch_id_deletion = deletion_value.get_patch(deletion_value.get_size() - 1).get_patch_id();
+            int largest_patch_id_deletion = deletion_value.get_patch_at(deletion_value.get_size() - 1).get_patch_id();
             bool is_local_change = largest_patch_id_addition < largest_patch_id_deletion ? deletion_value.is_local_change(patch_id) : addition_value.is_local_change(patch_id);
             bool add_addition = largest_patch_id_addition > largest_patch_id_deletion;
             bool add_deletion = largest_patch_id_deletion > largest_patch_id_addition;

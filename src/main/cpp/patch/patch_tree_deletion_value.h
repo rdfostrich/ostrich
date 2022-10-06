@@ -75,37 +75,37 @@ typedef struct PatchPositions {
 #ifdef USE_VSI
         std::vector<uint8_t> buffer;
 
-        encode_SLEB128<PatchPosition>(this->sp_, buffer);
+        encode_SLEB128(this->sp_, buffer);
         std::memcpy(data+*size, buffer.data(), buffer.size());
         *size += buffer.size();
         buffer.clear();
 
-        encode_SLEB128<PatchPosition>(this->s_o, buffer);
+        encode_SLEB128(this->s_o, buffer);
         std::memcpy(data+*size, buffer.data(), buffer.size());
         *size += buffer.size();
         buffer.clear();
 
-        encode_SLEB128<PatchPosition>(this->s__, buffer);
+        encode_SLEB128(this->s__, buffer);
         std::memcpy(data+*size, buffer.data(), buffer.size());
         *size += buffer.size();
         buffer.clear();
 
-        encode_SLEB128<PatchPosition>(this->_po, buffer);
+        encode_SLEB128(this->_po, buffer);
         std::memcpy(data+*size, buffer.data(), buffer.size());
         *size += buffer.size();
         buffer.clear();
 
-        encode_SLEB128<PatchPosition>(this->_p_, buffer);
+        encode_SLEB128(this->_p_, buffer);
         std::memcpy(data+*size, buffer.data(), buffer.size());
         *size += buffer.size();
         buffer.clear();
 
-        encode_SLEB128<PatchPosition>(this->__o, buffer);
+        encode_SLEB128(this->__o, buffer);
         std::memcpy(data+*size, buffer.data(), buffer.size());
         *size += buffer.size();
         buffer.clear();
 
-        encode_SLEB128<PatchPosition>(this->___, buffer);
+        encode_SLEB128(this->___, buffer);
         std::memcpy(data+*size, buffer.data(), buffer.size());
         *size += buffer.size();
 #else
@@ -119,25 +119,25 @@ typedef struct PatchPositions {
 #ifdef USE_VSI
         size_t decode_size = 0;
         size_t offset = 0;
-        this->sp_ = decode_SLEB128<PatchPosition>((const uint8_t*)data, &decode_size);
+        this->sp_ = decode_SLEB128((const uint8_t*)data, &decode_size);
         offset += decode_size;
 
-        this->s_o = decode_SLEB128<PatchPosition>((const uint8_t*)data+offset, &decode_size);
+        this->s_o = decode_SLEB128((const uint8_t*)data+offset, &decode_size);
         offset += decode_size;
 
-        this->s__ = decode_SLEB128<PatchPosition>((const uint8_t*)data+offset, &decode_size);
+        this->s__ = decode_SLEB128((const uint8_t*)data+offset, &decode_size);
         offset += decode_size;
 
-        this->_po = decode_SLEB128<PatchPosition>((const uint8_t*)data+offset, &decode_size);
+        this->_po = decode_SLEB128((const uint8_t*)data+offset, &decode_size);
         offset += decode_size;
 
-        this->_p_ = decode_SLEB128<PatchPosition>((const uint8_t*)data+offset, &decode_size);
+        this->_p_ = decode_SLEB128((const uint8_t*)data+offset, &decode_size);
         offset += decode_size;
 
-        this->__o = decode_SLEB128<PatchPosition>((const uint8_t*)data+offset, &decode_size);
+        this->__o = decode_SLEB128((const uint8_t*)data+offset, &decode_size);
         offset += decode_size;
 
-        this->___ = decode_SLEB128<PatchPosition>((const uint8_t*)data+offset);
+        this->___ = decode_SLEB128((const uint8_t*)data+offset, &decode_size);
         offset += decode_size;
         return offset;
 #else
@@ -148,7 +148,7 @@ typedef struct PatchPositions {
 
     static size_t max_serialization_size() {
         PatchPosition max = std::numeric_limits<PatchPosition>::max();
-        size_t bytes = get_SLEB128_size<PatchPosition>(max);
+        size_t bytes = get_SLEB128_size(max);
         return 7 * bytes;
     }
 
@@ -476,11 +476,11 @@ public:
      */
     long get_size() const;
     /**
-     * Get the patch of the given element.
-     * @param element The element index in this value list. This can be the result of get_patchvalue_index().
+     * Get the patch of the given index.
+     * @param index The index index in this value list. This can be the result of get_patchvalue_index().
      * @return The patch.
      */
-    const T& get_patch(long element) const;
+    const T& get_patch_at(long index) const;
     /**
      * @param patch_id The patch id
      * @return The patch.
@@ -512,7 +512,7 @@ public:
     inline PatchTreeDeletionValueBase<PatchTreeDeletionValueElementBase> to_reduced() {
         PatchTreeDeletionValueBase<PatchTreeDeletionValueElementBase> reduced;
         for (long i = 0; i < get_size(); i++) {
-            T patch_element = get_patch(i);
+            T patch_element = get_patch_at(i);
             reduced.add(PatchTreeDeletionValueElementBase(patch_element.get_patch_id(), patch_element.is_local_change()));
         }
         return reduced;
@@ -545,11 +545,11 @@ public:
      */
     long get_size() const;
     /**
-     * Get the patch of the given element.
-     * @param element The element index in this value list. This can be the result of get_patchvalue_index().
+     * Get the patch of the given index.
+     * @param index The index index in this value list. This can be the result of get_patchvalue_index().
      * @return The patch.
      */
-    T get_patch(long element) const;
+    T get_patch_at(long index) const;
     /**
      * @param patch_id The patch id
      * @return The patch.
@@ -581,7 +581,7 @@ public:
     inline PatchTreeDeletionValueBase<PatchTreeDeletionValueElementBase> to_reduced() {
         PatchTreeDeletionValueBase<PatchTreeDeletionValueElementBase> reduced(max_patch_id);
         for (long i = 0; i < get_size(); i++) {
-            T patch_element = get_patch(i);
+            T patch_element = get_patch_at(i);
             reduced.add(PatchTreeDeletionValueElementBase(patch_element.get_patch_id(), patch_element.is_local_change()));
         }
         return reduced;

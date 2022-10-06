@@ -6,8 +6,7 @@
 #include <stdexcept>
 
 
-template <class I>
-inline size_t get_ULEB128_size(I value) {
+inline size_t get_ULEB128_size(uint64_t value) {
     size_t size = 0;
     do {
         value >>= 7;
@@ -16,8 +15,7 @@ inline size_t get_ULEB128_size(I value) {
     return size;
 }
 
-template <class I>
-inline size_t get_SLEB128_size(I value) {
+inline size_t get_SLEB128_size(int64_t value) {
     size_t size = 0;
     bool more;
     do {
@@ -31,12 +29,10 @@ inline size_t get_SLEB128_size(I value) {
 
 /**
  * Encode an unsigned integer into a LEB128 value
- * @tparam I the integer type
  * @param value the value to encode
  * @param p the destination buffer (as a vector)
  */
-template <class I>
-inline void encode_ULEB128(I value, std::vector<uint8_t>& p) {
+inline void encode_ULEB128(uint64_t value, std::vector<uint8_t>& p) {
     do {
         uint8_t byte = value & 0x7f;
         value >>= 7;
@@ -48,12 +44,10 @@ inline void encode_ULEB128(I value, std::vector<uint8_t>& p) {
 
 /**
  * Encode a signed integer into a LEB128 value
- * @tparam I the integer type
  * @param value the value to encode
  * @param p the destination buffer (as a vector)
  */
-template <class I>
-inline void encode_SLEB128(I value, std::vector<uint8_t>& p) {
+inline void encode_SLEB128(int64_t value, std::vector<uint8_t>& p) {
     bool is_more;
     do {
         uint8_t byte = value & 0x7f;
@@ -65,24 +59,24 @@ inline void encode_SLEB128(I value, std::vector<uint8_t>& p) {
     } while (is_more);
 }
 
+
+
 /**
  * Decode an unsigned integer from ULEB128 encoded data
- * @tparam I the integer type
  * @param p the data to decode
  * @param decode_size the amount of bytes decoded
  * @return the decoded value
  */
-template <class I>
-inline I decode_ULEB128(const uint8_t *p, size_t* decode_size = nullptr) {
+inline uint64_t decode_ULEB128(const uint8_t *p, size_t* decode_size = nullptr) {
     const uint8_t *old_p = p;
-    I value = 0;
+    uint64_t value = 0;
     unsigned shift = 0;
     do {
-        I slice = *p & 0x7f;
-        if (shift >= (sizeof(I)*8) || slice << shift >> shift != slice) {
+        uint64_t slice = *p & 0x7f;
+        if (shift >= 64 || slice << shift >> shift != slice) {
             throw std::runtime_error("ULEB128 encoded value is too big");
         }
-        value += I(*p & 0x7f) << shift;
+        value += uint64_t(*p & 0x7f) << shift;
         shift += 7;
     } while (*p++ >= 128);
     if (decode_size) {
@@ -93,31 +87,31 @@ inline I decode_ULEB128(const uint8_t *p, size_t* decode_size = nullptr) {
 
 /**
  * Decode an signed integer from SLEB128 encoded data
- * @tparam I the integer type
  * @param p the data to decode
  * @param decode_size the amount of bytes decoded
  * @return the decoded value
  */
-template <class I>
-inline I decode_SLEB128(const uint8_t *p, size_t* decode_size = nullptr) {
-    const uint8_t *old_p = p;
-    I value = 0;
+inline int64_t decode_SLEB128(const uint8_t *p, size_t* decode_size = nullptr) {
+    int64_t value = 0;
+    unsigned offset = 0;
+    unsigned type_size = sizeof(int64_t) * 8;
     unsigned shift = 0;
     uint8_t byte;
     do {
-        byte = *p;
-        I slice = byte & 0x7f;
-        if ((shift >= (sizeof(I)*8) && slice != (value < 0 ? 0x7f : 0x00)) || (shift == 63 && slice != 0 && slice != 0x7f)) {
+        byte = p[offset];
+        uint64_t slice = byte & 0x7f;
+        if ((shift >= type_size && slice != (value < 0 ? 0x7f : 0x00)) || (shift == type_size-1 && slice != 0 && slice != 0x7f)) {
             throw std::runtime_error("SLEB128 encoded value is too big");
         }
         value |= slice << shift;
         shift += 7;
-        ++p;
-    } while (byte >= 128);
-    if (shift < (sizeof(I)*8) && (byte & 0x40))
-        value |= (-1ULL) << shift;
+        offset++;
+    } while (byte & 0x80);
+    if (shift < type_size && (byte & 0x40)) {
+        value |= (-1ULL) << shift;  // sign
+    }
     if (decode_size) {
-        *decode_size = (size_t)(p - old_p);
+        *decode_size = offset;
     }
     return value;
 }

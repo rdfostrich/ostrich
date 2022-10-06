@@ -50,10 +50,10 @@ string PatchTreeDeletionValueElementBase::to_string() const {
 }
 
 char* PatchTreeDeletionValueElementBase::serialize(size_t* size) const {
-    char* data = new char[get_SLEB128_size<int>(std::numeric_limits<int>::max()) + sizeof(bool)];
+    char* data = new char[get_SLEB128_size(std::numeric_limits<int>::max()) + sizeof(bool)];
 #ifdef USE_VSI
     std::vector<uint8_t> buffer;
-    encode_SLEB128<int>(patch_id, buffer);
+    encode_SLEB128(patch_id, buffer);
     std::memcpy(data, buffer.data(), buffer.size());
     *size = buffer.size();
 #else
@@ -68,7 +68,7 @@ char* PatchTreeDeletionValueElementBase::serialize(size_t* size) const {
 size_t PatchTreeDeletionValueElementBase::deserialize(const char *data) {
     size_t consumed_size;
 #ifdef USE_VSI
-    patch_id = decode_SLEB128<int>((const uint8_t*) data, &consumed_size);
+    patch_id = decode_SLEB128((const uint8_t*) data, &consumed_size);
 #else
     std::memcpy(&patch_id, data, sizeof(int));
     consumed_size = sizeof(int);
@@ -110,19 +110,19 @@ long PatchTreeDeletionValueBase<T>::get_size() const {
 }
 
 template <class T>
-const T& PatchTreeDeletionValueBase<T>::get_patch(long element) const {
-    return elements[element];
+const T& PatchTreeDeletionValueBase<T>::get_patch_at(long index) const {
+    return elements[index];
 }
 
 template <class T>
 const T& PatchTreeDeletionValueBase<T>::get(int patch_id) const {
     long index = get_patchvalue_index(patch_id);
     if(index < 0 || index >= elements.size()) {
-        return get_patch(elements.size() - 1);
+        return get_patch_at(elements.size() - 1);
         //throw std::invalid_argument("Index out of bounds (PatchTreeDeletionValue::get),"
         //                                    "tried to get patch id " + std::to_string(patch_id) + " in " +  this->to_string());
     }
-    return get_patch(index);
+    return get_patch_at(index);
 }
 
 template <class T>
@@ -208,8 +208,8 @@ long PatchTreeDeletionValueBase<T>::get_size() const {
 }
 
 template <class T>
-T PatchTreeDeletionValueBase<T>::get_patch(long element) const {
-    return elements.get_element_at(element, max_patch_id);
+T PatchTreeDeletionValueBase<T>::get_patch_at(long index) const {
+    return elements.get_element_at(index, max_patch_id);
 }
 
 template <class T>
@@ -217,9 +217,9 @@ T PatchTreeDeletionValueBase<T>::get(int patch_id) const {
     long index = get_patchvalue_index(patch_id);
     long size = elements.size(max_patch_id);
     if(index < 0 || index >= size) {
-        return get_patch(size - 1);
+        return get_patch_at(size - 1);
     }
-    return get_patch(index);
+    return get_patch_at(index);
 }
 
 template <class T>
@@ -227,9 +227,9 @@ bool PatchTreeDeletionValueBase<T>::is_local_change(int patch_id) const {
     if (get_size() == 0) return false;
     long index = get_patchvalue_index(patch_id);
     if (index >= 0) {
-        return get_patch(index).is_local_change();
+        return get_patch_at(index).is_local_change();
     }
-    return get_patch(get_size()-1).is_local_change();
+    return get_patch_at(get_size() - 1).is_local_change();
 }
 
 template <class T>
@@ -362,12 +362,12 @@ std::pair<const char *, size_t> IntervalPatchPositionsContainer::serialize() con
 #ifdef USE_VSI
     std::vector<uint8_t> buffer;
     for (const auto& inter_p: positions_map) {
-        encode_SLEB128<int>(inter_p.first, buffer);
+        encode_SLEB128(inter_p.first, buffer);
         std::memcpy(data+offset, buffer.data(), buffer.size());
         offset += buffer.size();
 
         buffer.clear();
-        encode_SLEB128<int>(inter_p.second.first, buffer);
+        encode_SLEB128(inter_p.second.first, buffer);
         std::memcpy(data+offset, buffer.data(), buffer.size());
         offset += buffer.size();
 
@@ -398,9 +398,9 @@ void IntervalPatchPositionsContainer::deserialize(const char *data, size_t size)
     size_t offset = 0;
     while (offset < size) {
         size_t decode_size;
-        int s = decode_SLEB128<int>((const uint8_t*)data+offset, &decode_size);
+        int s = decode_SLEB128((const uint8_t*)data+offset, &decode_size);
         offset += decode_size;
-        int e = decode_SLEB128<int>((const uint8_t*)data+offset, &decode_size);
+        int e = decode_SLEB128((const uint8_t*)data+offset, &decode_size);
         auto new_inter = positions_map.emplace_hint(it, s, std::make_pair(e,PatchPositions()));
         offset += new_inter->second.second.deserialize(data+offset);
         it = positions_map.end();
@@ -459,13 +459,12 @@ DeltaPatchPositionsContainerBase::delta_serialize_position_vec(const vector<VerP
         std::memcpy(data, &head, sizeof(uint8_t));
 #ifdef USE_VSI
         std::vector<uint8_t> buffer;
-        buffer.reserve(PatchPositions::max_serialization_size());
-        encode_SLEB128<int>(second.patch_id, buffer);
+        encode_SLEB128(second.patch_id, buffer);
         std::memcpy(data+size, buffer.data(), buffer.size());
         size += buffer.size();
         buffer.clear();
         for (PatchPosition d: diff_values) {
-            encode_SLEB128<PatchPosition>(d, buffer);
+            encode_SLEB128(d, buffer);
             std::memcpy(data+size, buffer.data(), buffer.size());
             size += buffer.size();
             buffer.clear();
@@ -484,7 +483,7 @@ DeltaPatchPositionsContainerBase::delta_serialize_position_vec(const vector<VerP
         *data = new char[alloc_size];
 #ifdef USE_VSI
         std::vector<uint8_t> buffer;
-        encode_SLEB128<int>(position_vec[0].patch_id, buffer);
+        encode_SLEB128(position_vec[0].patch_id, buffer);
         *size += buffer.size();
         std::memcpy(*data, buffer.data(), buffer.size());
 #else
@@ -509,11 +508,12 @@ DeltaPatchPositionsContainerBase::delta_deserialize_position_vec(vector<VerPatch
     auto position_undiff = [] (const char* data, const PatchPositions& prev, VerPatchPositions<int>& pos) {
         uint8_t head;
         size_t offset = 0;
+
         std::memcpy(&head, data+offset, sizeof(uint8_t));
         offset += sizeof(uint8_t);
 #ifdef USE_VSI
         size_t leb128_decode_size = 0;
-        pos.patch_id = decode_SLEB128<int>((const uint8_t*)(data + offset), &leb128_decode_size);
+        pos.patch_id = decode_SLEB128((const uint8_t*)(data + offset), &leb128_decode_size);
         offset += leb128_decode_size;
 #else
         std::memcpy(&pos.patch_id, data+offset, sizeof(int));
@@ -570,10 +570,15 @@ DeltaPatchPositionsContainerBase::delta_deserialize_position_vec(vector<VerPatch
         return offset;
     };
 
+    std::vector<uint8_t> s_byte;
+    for (int i=0; i<size; i++) {
+        s_byte.push_back(data[i]);
+    }
+
     position_vec.resize(1);
     size_t offset = 0;
 #ifdef USE_VSI
-    position_vec[0].patch_id = decode_SLEB128<int>((const uint8_t*)data, &offset);
+    position_vec[0].patch_id = decode_SLEB128((const uint8_t*)data, &offset);
 #else
     std::memcpy(&position_vec[0].patch_id, data, sizeof(int));
     offset += sizeof(int);
@@ -590,7 +595,7 @@ DeltaPatchPositionsContainerBase::delta_deserialize_position_vec(vector<VerPatch
 size_t DeltaPatchPositionsContainerBase::decode_diff(const char *data, PatchPosition &diff) {
     size_t size = 0;
 #ifdef USE_VSI
-    diff = decode_SLEB128<PatchPosition>((const uint8_t*)(data), &size);
+    diff = decode_SLEB128((const uint8_t*)(data), &size);
 #else
     std::memcpy(&diff, data, sizeof(PatchPosition));
     size += sizeof(PatchPosition);

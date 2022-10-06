@@ -25,7 +25,7 @@ inline void PatchTreeTripleVersionsIterator::eraseDeletedVersions(std::vector<in
         std::iota(versions->begin(), versions->end(), initial_version); // Fill up the vector with all versions from initial_version to max_patch_id
         if (deletion != nullptr) {
             for (int v_del = 0; v_del < deletion->get_size(); v_del++) {
-                PatchTreeDeletionValueElement deletion_element = deletion->get_patch(v_del);
+                PatchTreeDeletionValueElement deletion_element = deletion->get_patch_at(v_del);
                 // Erase-remove idiom on sorted vector, and maintain order
                 auto pr = std::equal_range(versions->begin(), versions->end(), deletion_element.get_patch_id());
                 versions->erase(pr.first, pr.second);

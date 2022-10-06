@@ -120,7 +120,7 @@ bool PatchTreeIteratorBase<DV>::next_deletion(PatchTreeKey* key, DV* value, bool
             } else {
                 filter_valid = false;
                 for(long i = value->get_size() - 1; i >= 0 && !filter_valid; i--) {
-                    PatchTreeDeletionValueElementBase element = value->get_patch(i);
+                    PatchTreeDeletionValueElementBase element = value->get_patch_at(i);
                     if(element.get_patch_id() <= patch_id_filter) {
                         filter_valid = true;
                     }
@@ -253,7 +253,7 @@ bool PatchTreeIteratorBase<DV>::next(PatchTreeKey* key, PatchTreeValueBase<DV>* 
                     deletion_patch_id = value->get_deletion_patch_id(patch_id_filter, is_patch_id_filter_exact);
                     addition_patch_id = value->get_addition_patch_id(patch_id_filter, is_patch_id_filter_exact);
                 } else {
-                    deletion_patch_id = value->get_deletion()->get_patch(
+                    deletion_patch_id = value->get_deletion()->get_patch_at(
                             value->get_deletion()->get_size() - 1).get_patch_id();
                     addition_patch_id = value->get_addition()->get_patch_id_at(value->get_addition()->get_size() - 1);
                 }

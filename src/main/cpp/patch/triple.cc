@@ -49,48 +49,47 @@ string Triple::to_string(Dictionary& dict) const {
 }
 
 const char* Triple::serialize(size_t* size) const {
-#ifdef USE_VSI
-    size_t alloc_size = get_ULEB128_size<size_t>(std::numeric_limits<size_t>::max()) * 3;
+#ifdef USE_VSI_T
+    size_t alloc_size = get_ULEB128_size(std::numeric_limits<size_t>::max()) * 3;
 #else
     size_t alloc_size = sizeof(subject) + sizeof(predicate) + sizeof(object);
 #endif
     char* bytes = new char[alloc_size];
-#ifdef USE_VSI
+#ifdef USE_VSI_T
     size_t offset = 0;
     std::vector<uint8_t> buffer;
 
-    encode_ULEB128<size_t>(subject, buffer);
+    encode_ULEB128(subject, buffer);
     std::memcpy(bytes, buffer.data(), buffer.size());
     offset += buffer.size();
     buffer.clear();
 
-    encode_ULEB128<size_t>(predicate, buffer);
+    encode_ULEB128(predicate, buffer);
     std::memcpy(bytes+offset, buffer.data(), buffer.size());
     offset += buffer.size();
     buffer.clear();
 
-    encode_ULEB128<size_t>(object, buffer);
+    encode_ULEB128(object, buffer);
     std::memcpy(bytes+offset, buffer.data(), buffer.size());
     offset += buffer.size();
-    buffer.clear();
     *size = offset;
 #else
-    std::memcpy(bytes, (char*)&subject, sizeof(subject));
-    std::memcpy(&bytes[sizeof(subject)], (char*)&predicate, sizeof(predicate));
-    std::memcpy(&bytes[sizeof(subject) + sizeof(predicate)], (char*)&object, sizeof(object));
+    std::memcpy(bytes, &subject, sizeof(subject));
+    std::memcpy(&bytes[sizeof(subject)], &predicate, sizeof(predicate));
+    std::memcpy(&bytes[sizeof(subject) + sizeof(predicate)], &object, sizeof(object));
     *size = alloc_size;
 #endif
     return bytes;
 }
 
 void Triple::deserialize(const char* data, size_t size) {
-#ifdef USE_VSI
+#ifdef USE_VSI_T
     size_t read_size, offset;
-    subject = decode_ULEB128<size_t>((const uint8_t*) data, &read_size);
+    subject = decode_ULEB128((const uint8_t*) data, &read_size);
     offset = read_size;
-    predicate = decode_ULEB128<size_t>((const uint8_t*) data+offset, &read_size);
+    predicate = decode_ULEB128((const uint8_t*) data+offset, &read_size);
     offset += read_size;
-    object = decode_ULEB128<size_t>((const uint8_t*) data+offset, &read_size);
+    object = decode_ULEB128((const uint8_t*) data+offset, &read_size);
 #else
     std::memcpy(&subject, data,  sizeof(subject));
     std::memcpy(&predicate, &data[sizeof(subject)],  sizeof(predicate));
