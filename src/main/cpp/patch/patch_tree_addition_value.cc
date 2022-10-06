@@ -66,29 +66,80 @@ std::string PatchTreeAdditionValue::to_string() const {
 const char *PatchTreeAdditionValue::serialize(size_t *size) const {
     size_t patches_size = patches.size();
     size_t local_changes_size = local_changes.size();
-    size_t size_t_size_bits = sizeof(size_t);
-    size_t patches_size_bits = patches_size * sizeof(int);
-    size_t local_changes_size_bits = local_changes_size * sizeof(int);
+#ifdef USE_VSI
+    size_t size_t_size_bytes = get_ULEB128_size(std::numeric_limits<size_t>::max());
+    size_t int_size_bytes = get_SLEB128_size(std::numeric_limits<int>::max());
+    size_t patches_size_bytes = patches_size * int_size_bytes;
+    size_t local_changes_size_bytes = local_changes_size * int_size_bytes;
+#else
+    size_t size_t_size_bytes = sizeof(size_t);
+    size_t patches_size_bytes = patches_size * sizeof(int);
+    size_t local_changes_size_bytes = local_changes_size * sizeof(int);
+#endif
+    size_t alloc_size = size_t_size_bytes + patches_size_bytes + local_changes_size_bytes;
+    char* bytes = new char[alloc_size];
 
-    *size = size_t_size_bits + patches_size_bits + local_changes_size_bits;
-    char* bytes = new char[*size];
+#ifdef USE_VSI
+    // Encode and append patches count
+    std::vector<uint8_t> buffer;
+    encode_ULEB128(patches_size, buffer);
+    std::memcpy(bytes, buffer.data(), buffer.size());
+    *size = buffer.size();
+    buffer.clear();
 
+    // Encode and append patches
+    for (auto p: patches) {
+        encode_SLEB128(p, buffer);
+        std::memcpy(bytes+*size, buffer.data(), buffer.size());
+        *size += buffer.size();
+        buffer.clear();
+    }
+
+    // Encode and append local changes
+    for (auto l: local_changes) {
+        encode_SLEB128(l, buffer);
+        std::memcpy(bytes+*size, buffer.data(), buffer.size());
+        *size += buffer.size();
+        buffer.clear();
+    }
+#else
     // Append patches count
-    std::memcpy(bytes, &patches_size, size_t_size_bits);
+    std::memcpy(bytes, &patches_size, size_t_size_bytes);
 
     // Append patches
     for(int i = 0; i < patches.size(); i++) {
-        std::memcpy(&bytes[size_t_size_bits + i * sizeof(int)], &patches[i], sizeof(int));
+        std::memcpy(&bytes[size_t_size_bytes + i * sizeof(int)], &patches[i], sizeof(int));
     }
 
     // Append local changes
     for(int i = 0; i < local_changes.size(); i++) {
-        std::memcpy(&bytes[size_t_size_bits + patches_size_bits + i * sizeof(int)], &local_changes[i], sizeof(int));
+        std::memcpy(&bytes[size_t_size_bytes + patches_size_bytes + i * sizeof(int)], &local_changes[i], sizeof(int));
     }
+    *size = alloc_size;
+#endif
     return bytes;
 }
 
 void PatchTreeAdditionValue::deserialize(const char *data, size_t size) {
+#ifdef USE_VSI
+    size_t patches_size, decode_size, offset;
+    patches_size = decode_ULEB128((const uint8_t*)data, &decode_size);
+    offset = decode_size;
+
+    // Read patches
+    patches.resize(patches_size);
+    for (int i=0; i<patches_size; i++) {
+        patches[i] = decode_SLEB128((const uint8_t*)(data+offset), &decode_size);
+        offset += decode_size;
+    }
+
+    // Read local changes (the remaining of the data)
+    local_changes.clear();
+    while (offset < size) {
+        local_changes.push_back(decode_SLEB128((const uint8_t*)(data+offset), &decode_size));
+        offset += decode_size;
+    }
+#else
     size_t patches_size, local_changes_size;
     // Read patches count
     std::memcpy(&patches_size, data, sizeof(size_t));
@@ -108,6 +159,7 @@ void PatchTreeAdditionValue::deserialize(const char *data, size_t size) {
     for(int i = 0; i < local_changes_size; i++) {
         std::memcpy(&local_changes[i], &data[size_t_size_bits + patches_size_bits + i * sizeof(int)], sizeof(int));
     }
+#endif
 }
 
 #else
@@ -190,12 +242,27 @@ std::string PatchTreeAdditionValue::to_string() const {
 const char *PatchTreeAdditionValue::serialize(size_t *size) const {
     auto bin_patches = patches.serialize();
     auto bin_local = local_changes.serialize();
-    *size = bin_patches.second + bin_local.second + sizeof(size_t);
-    char* data = new char[*size];
+#ifdef USE_VSI
+    size_t size_t_size_bytes = get_ULEB128_size(std::numeric_limits<size_t>::max());
+#else
+    size_t size_t_size_bytes = sizeof(size_t);
+#endif
+    size_t alloc_size = bin_patches.second + bin_local.second + size_t_size_bytes;
+    char* data = new char[alloc_size];
+#ifdef USE_VSI
+    std::vector<uint8_t> buffer;
+    encode_ULEB128(bin_patches.second, buffer);
+    std::memcpy(data, buffer.data(), buffer.size());
+    *size = buffer.size();
+#else
     std::memcpy(data, &bin_patches.second, sizeof(size_t));
-    std::memcpy(data+sizeof(size_t), bin_patches.first, bin_patches.second);
+    *size = sizeof(size_t);
+#endif
+    std::memcpy(data+*size, bin_patches.first, bin_patches.second);
+    *size += bin_patches.second;
     if (bin_local.second > 0) {
-        std::memcpy(data+sizeof(size_t)+bin_patches.second, bin_local.first, bin_local.second);
+        std::memcpy(data+*size, bin_local.first, bin_local.second);
+        *size += bin_local.second;
     }
     delete[] bin_patches.first;
     delete[] bin_local.first;
@@ -203,12 +270,19 @@ const char *PatchTreeAdditionValue::serialize(size_t *size) const {
 }
 
 void PatchTreeAdditionValue::deserialize(const char *data, size_t size) {
-    size_t patches_size;
+    size_t patches_size, decode_size, offset;
+#ifdef USE_VSI
+    patches_size = decode_ULEB128((const uint8_t*)data, &decode_size);
+    offset = decode_size;
+#else
     std::memcpy(&patches_size, data, sizeof(size_t));
-    size_t local_change_size = size - patches_size - sizeof(size_t);
-    patches.deserialize(data+sizeof(size_t), patches_size);
+    offset = sizeof(size_t);
+#endif
+    size_t local_change_size = size - patches_size - offset;
+    patches.deserialize(data+offset, patches_size);
+    offset += patches_size;
     if (local_change_size > 0) {
-        local_changes.deserialize(data+sizeof(size_t)+patches_size, local_change_size);
+        local_changes.deserialize(data+offset, local_change_size);
     } else {
         local_changes.clear();
     }

@@ -4,6 +4,8 @@
 #include <map>
 #include <cstddef>
 #include <cstring>
+#include <limits>
+#include "variable_size_integer.h"
 
 /*
  * This class represent an ordered list of discrete elements supporting '==', '<', and '+' operators
@@ -197,17 +199,37 @@ public:
      * @return pair (data, size)
      */
     [[nodiscard]] std::pair<const char*, size_t> serialize() const {
-        size_t size = sizeof(T) * 2 * intervals.size();
-        if (size > 0) {
-            char* data = new char[size];
-            char* p = data;
+#ifdef USE_VSI
+        size_t unit_size_bytes = get_SLEB128_size(std::numeric_limits<T>::max());
+#else
+        size_t unit_size_bytes = sizeof(T);
+#endif
+        size_t alloc_size = unit_size_bytes * 2 * intervals.size();
+        if (intervals.size() > 0) {
+            char* data = new char[alloc_size];
+            size_t offset = 0;
+#ifdef USE_VSI
+            std::vector<uint8_t> buffer;
+#endif
             for (auto& t: intervals) {
-                std::memcpy(p, &(t.first), sizeof(T));
-                p += sizeof(T);
-                std::memcpy(p, &(t.second), sizeof(T));
-                p += sizeof(T);
+#ifdef USE_VSI
+                encode_SLEB128(t.first, buffer);
+                std::memcpy(data+offset, buffer.data(), buffer.size());
+                offset += buffer.size();
+                buffer.clear();
+
+                encode_SLEB128(t.second, buffer);
+                std::memcpy(data+offset, buffer.data(), buffer.size());
+                offset += buffer.size();
+                buffer.clear();
+#else
+                std::memcpy(data+offset, &(t.first), sizeof(T));
+                offset += sizeof(T);
+                std::memcpy(data+offset, &(t.second), sizeof(T));
+                offset += sizeof(T);
+#endif
             }
-            return std::make_pair(data, size);
+            return std::make_pair(data, offset);
         }
         return std::make_pair(nullptr, 0);
     }
@@ -220,12 +242,22 @@ public:
     void deserialize(const char *data, size_t size) {
         intervals.clear();
         size_t i = 0;
+#ifdef USE_VSI
+        size_t decode_size;
+#endif
         while (i < size) {
             T s, e;
+#ifdef USE_VSI
+            s = decode_SLEB128((const uint8_t*)(data+i), &decode_size);
+            i += decode_size;
+            e = decode_SLEB128((const uint8_t*)(data+i), &decode_size);
+            i += decode_size;
+#else
             std::memcpy(&s, data+i, sizeof(T));
             i += sizeof(T);
             std::memcpy(&e, data+i, sizeof(T));
             i += sizeof(T);
+#endif
             intervals.insert(std::make_pair(s, e));
         }
     }
