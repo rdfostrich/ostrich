@@ -13,7 +13,7 @@ private:
     Controller* controller;
     std::shared_ptr<DictionaryManager> dict;
     PatchSorted* patch;
-    std::vector<TripleString> triples;
+    std::vector<hdt::TripleString> triples;
     int patch_id;
 public:
     PatchBuilder(Controller* controller);
@@ -28,26 +28,26 @@ public:
      * Insert the accumulated data from this patch into the controller.
      * @param progressListener The progress listener
      */
-    void commit(ProgressListener* progressListener = NULL);
+    void commit(hdt::ProgressListener* progressListener = NULL);
     /**
      * Add a triple.
      * @param triple The triple
      * @param addition If the triple is an addition
      * @return self
      */
-    PatchBuilder* triple(const TripleString& triple, bool addition);
+    PatchBuilder* triple(const hdt::TripleString& triple, bool addition);
     /**
      * Add an addition triple.
      * @param triple The triple
      * @return self
      */
-    PatchBuilder* addition(const TripleString& triple);
+    PatchBuilder* addition(const hdt::TripleString& triple);
     /**
      * Add a deletion triple.
      * @param triple The triple
      * @return self
      */
-    PatchBuilder* deletion(const TripleString& triple);
+    PatchBuilder* deletion(const hdt::TripleString& triple);
 };
 
 

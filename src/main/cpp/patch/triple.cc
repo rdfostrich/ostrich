@@ -5,15 +5,15 @@
 
 Triple::Triple() : subject(0), predicate(0), object(0) {}
 
-Triple::Triple(const TripleID& tripleId) :
+Triple::Triple(const hdt::TripleID& tripleId) :
         subject(tripleId.getSubject()), predicate(tripleId.getPredicate()), object(tripleId.getObject()) {}
 Triple::Triple(size_t subject, size_t predicate, size_t object) :
         subject(subject), predicate(predicate), object(object) {}
 
-Triple::Triple(const string& s, const string& p, const string& o, std::shared_ptr<ModifiableDictionary> dict) {
-  subject = !s.empty() ? dict->insert(const_cast<string&>(s), SUBJECT) : 0;
-  predicate = !p.empty() ? dict->insert(const_cast<string&>(p), PREDICATE) : 0;
-  object = !o.empty() ? dict->insert(const_cast<string&>(o), OBJECT) : 0;
+Triple::Triple(const string& s, const string& p, const string& o, std::shared_ptr<hdt::ModifiableDictionary> dict) {
+  subject = !s.empty() ? dict->insert(const_cast<string&>(s), hdt::SUBJECT) : 0;
+  predicate = !p.empty() ? dict->insert(const_cast<string&>(p), hdt::PREDICATE) : 0;
+  object = !o.empty() ? dict->insert(const_cast<string&>(o), hdt::OBJECT) : 0;
 }
 
 size_t Triple::get_subject() const {
@@ -28,23 +28,23 @@ size_t Triple::get_object() const {
     return object;
 }
 
-string Triple::get_subject(Dictionary& dict) const {
-    return dict.idToString(get_subject(), SUBJECT);
+string Triple::get_subject(hdt::Dictionary& dict) const {
+    return dict.idToString(get_subject(), hdt::SUBJECT);
 }
 
-string Triple::get_predicate(Dictionary& dict) const {
-    return dict.idToString(get_predicate(), PREDICATE);
+string Triple::get_predicate(hdt::Dictionary& dict) const {
+    return dict.idToString(get_predicate(), hdt::PREDICATE);
 }
 
-string Triple::get_object(Dictionary& dict) const {
-    return dict.idToString(get_object(), OBJECT);
+string Triple::get_object(hdt::Dictionary& dict) const {
+    return dict.idToString(get_object(), hdt::OBJECT);
 }
 
 string Triple::to_string() const {
     return std::to_string(get_subject()) + " " + std::to_string(get_predicate()) + " " + std::to_string(get_object()) + ".";
 }
 
-string Triple::to_string(Dictionary& dict) const {
+string Triple::to_string(hdt::Dictionary& dict) const {
     return get_subject(dict) + " " + get_predicate(dict) + " " + get_object(dict) + ".";
 }
 
@@ -148,7 +148,7 @@ StringTriple::StringTriple() = default;
 StringTriple::StringTriple(string s, string p, string o) : subject(std::move(s)), predicate(std::move(p)),
                                                            object(std::move(o)) {}
 
-Triple StringTriple::get_as_triple(std::shared_ptr<ModifiableDictionary> dict) const {
+Triple StringTriple::get_as_triple(std::shared_ptr<hdt::ModifiableDictionary> dict) const {
     return {subject, predicate, object, dict};
 }
 

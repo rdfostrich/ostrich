@@ -34,7 +34,7 @@ public:
      * @param progressListener an optional progress listener.
      * @return If the append succeeded.
      */
-    bool append(PatchElementIterator* patch_it, int patch_id, std::shared_ptr<DictionaryManager> dict, bool check_uniqueness = true, ProgressListener* progressListener = NULL);
+    bool append(PatchElementIterator* patch_it, int patch_id, std::shared_ptr<DictionaryManager> dict, bool check_uniqueness = true, hdt::ProgressListener* progressListener = nullptr);
     /**
      * Add the given patch to a patch tree.
      * @param patch The patch to add.
@@ -44,7 +44,7 @@ public:
      * @param progressListener an optional progress listener.
      * @return If the append succeeded.
      */
-    bool append(const PatchSorted& patch, int patch_id, std::shared_ptr<DictionaryManager> dict, bool check_uniqueness = true, ProgressListener* progressListener = NULL);
+    bool append(const PatchSorted& patch, int patch_id, std::shared_ptr<DictionaryManager> dict, bool check_uniqueness = true, hdt::ProgressListener* progressListener = nullptr);
     /**
      * Find all patch trees in the current directory.
      * @return The found patch trees

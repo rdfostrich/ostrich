@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated -fsanitize=address -fsanitize-recover=address -fno-omit-frame-pointer") # for memory debugging, use with ASAN_OPTIONS=detect_stack_use_after_return=true detect_leaks=true halt_on_error=false
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated -fsanitize=address -fsanitize-recover=address -fno-omit-frame-pointer") # for memory debugging, use with ASAN_OPTIONS=detect_stack_use_after_return=true detect_leaks=true halt_on_error=false
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -78,11 +78,14 @@ set(TEST_FILES
         src/test/cpp/patch/patch_tree.cc
         src/test/cpp/patch/patch_tree_manager.cc
         src/test/cpp/dictionary/dictionary_manager.cc
-        src/test/cpp/snapshot/snapshot_manager.cc src/test/cpp/patch/interval_list.cc src/test/cpp/patch/variable_size_integer.cc)
+        src/test/cpp/snapshot/snapshot_manager.cc
+        src/test/cpp/patch/interval_list.cc
+        src/test/cpp/patch/variable_size_integer.cc)
 
 add_library(ostrich STATIC ${HDT_FILES} ${COMMON_FILES})
 target_compile_definitions(ostrich PUBLIC -DCOMPRESSED_ADD_VALUES -DCOMPRESSED_DEL_VALUES -DUSE_VSI -DUSE_VSI_T)
-#target_compile_definitions(ostrich PUBLIC -DUSE_VSI)
+#target_compile_definitions(ostrich PUBLIC -DCOMPRESSED_ADD_VALUES -DCOMPRESSED_DEL_VALUES)
+#target_compile_definitions(ostrich PUBLIC -DUSE_VSI -DUSE_VSI_T)
 
 
 # Kyoto Cabinet dependencies

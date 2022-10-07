@@ -156,7 +156,7 @@ const char* PatchTreeDeletionValueBase<T>::serialize(size_t* size) const {
     *size = 0;
     size_t elem_size;
 #ifdef USE_VSI
-    elem_size = get_SLEB128_size<int>(std::numeric_limits<int>::max()) + sizeof(bool);
+    elem_size = get_SLEB128_size(std::numeric_limits<int>::max()) + sizeof(bool);
     if (T::has_positions()) {
         elem_size += PatchPositions::max_serialization_size();
     }

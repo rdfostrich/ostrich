@@ -9,8 +9,6 @@
 #include "patch_tree_key_comparator.h"
 #include "patch_tree_addition_value.h"
 
-using namespace std;
-using namespace kyotocabinet;
 
 // The amount of triples after which the store should be flushed to disk, to avoid memory issues
 #ifndef FLUSH_TRIPLES_COUNT
@@ -31,14 +29,14 @@ using namespace kyotocabinet;
 
 class TripleStore {
 private:
-    TreeDB* index_spo_deletions;
-    TreeDB* index_pos_deletions;
-    TreeDB* index_osp_deletions;
-    TreeDB* index_spo_additions;
-    TreeDB* index_pos_additions;
-    TreeDB* index_osp_additions;
-    HashDB* count_additions;
-    HashDB* temp_count_additions;
+    kyotocabinet::TreeDB* index_spo_deletions;
+    kyotocabinet::TreeDB* index_pos_deletions;
+    kyotocabinet::TreeDB* index_osp_deletions;
+    kyotocabinet::TreeDB* index_spo_additions;
+    kyotocabinet::TreeDB* index_pos_additions;
+    kyotocabinet::TreeDB* index_osp_additions;
+    kyotocabinet::HashDB* count_additions;
+    kyotocabinet::HashDB* temp_count_additions;
     //TreeDB index_ops; // We don't need this one if we maintain our s,p,o order priorites
     std::shared_ptr<DictionaryManager> dict;
     PatchTreeKeyComparator* spo_comparator;
@@ -48,23 +46,23 @@ private:
     int flush_counter_additions = 0;
     int flush_counter_deletions = 0;
 protected:
-    void open(TreeDB* db, string name, bool readonly);
-    void close(TreeDB* db, string name);
+    void open(kyotocabinet::TreeDB* db, string name, bool readonly);
+    void close(kyotocabinet::TreeDB* db, string name);
     void increment_addition_count(const TripleVersion& triple_version);
 public:
     TripleStore(string base_file_name, std::shared_ptr<DictionaryManager> dict, int8_t kc_opts = 0, bool readonly = false);
     ~TripleStore();
-    TreeDB* getAdditionsTree(Triple triple_pattern);
-    TreeDB* getDefaultAdditionsTree();
-    TreeDB* getDeletionsTree(Triple triple_pattern);
-    TreeDB* getDefaultDeletionsTree();
-    void insertAdditionSingle(const PatchTreeKey* key, const PatchTreeAdditionValue* value, DB::Cursor* cursor = nullptr);
-    void insertAdditionSingle(const PatchTreeKey* key, int patch_id, bool local_change, bool ignore_existing, DB::Cursor* cursor = nullptr);
+    kyotocabinet::TreeDB* getAdditionsTree(Triple triple_pattern);
+    kyotocabinet::TreeDB* getDefaultAdditionsTree();
+    kyotocabinet::TreeDB* getDeletionsTree(Triple triple_pattern);
+    kyotocabinet::TreeDB* getDefaultDeletionsTree();
+    void insertAdditionSingle(const PatchTreeKey* key, const PatchTreeAdditionValue* value, kyotocabinet::DB::Cursor* cursor = nullptr);
+    void insertAdditionSingle(const PatchTreeKey* key, int patch_id, bool local_change, bool ignore_existing, kyotocabinet::DB::Cursor* cursor = nullptr);
     void increment_addition_counts(int patch_id, const Triple& triple);
     PatchPosition get_addition_count(int patch_id, const Triple& triple);
     long flush_addition_counts();
-    void insertDeletionSingle(const PatchTreeKey* key, const PatchTreeDeletionValue* value, const PatchTreeDeletionValueReduced* value_reduced, DB::Cursor* cursor = nullptr);
-    void insertDeletionSingle(const PatchTreeKey* key, const PatchPositions& patch_positions, int patch_id, bool local_change, bool ignore_existing, DB::Cursor* cursor = nullptr);
+    void insertDeletionSingle(const PatchTreeKey* key, const PatchTreeDeletionValue* value, const PatchTreeDeletionValueReduced* value_reduced, kyotocabinet::DB::Cursor* cursor = nullptr);
+    void insertDeletionSingle(const PatchTreeKey* key, const PatchPositions& patch_positions, int patch_id, bool local_change, bool ignore_existing, kyotocabinet::DB::Cursor* cursor = nullptr);
     /**
      * @return The comparator for this patch tree in SPO order.
      */
@@ -88,22 +86,22 @@ public:
         return (s && p) || (!p && !o);
     }
 
-    static inline TripleComponentOrder get_query_order(const Triple& triple_pattern) {
+    static inline hdt::TripleComponentOrder get_query_order(const Triple& triple_pattern) {
         bool s = triple_pattern.get_subject() > 0;
         bool p = triple_pattern.get_predicate() > 0;
         bool o = triple_pattern.get_object() > 0;
 
-        if( s &  p &  o) return SPO;
-        if( s &  p & !o) return SPO;
-        if( s & !p &  o) return OSP;
-        if( s & !p & !o) return SPO;
-        if(!s &  p &  o) return POS;
-        if(!s &  p & !o) return POS;
-        if(!s & !p &  o) return OSP;
-        return SPO;
+        if( s &  p &  o) return hdt::SPO;
+        if( s &  p & !o) return hdt::SPO;
+        if( s & !p &  o) return hdt::OSP;
+        if( s & !p & !o) return hdt::SPO;
+        if(!s &  p &  o) return hdt::POS;
+        if(!s &  p & !o) return hdt::POS;
+        if(!s & !p &  o) return hdt::OSP;
+        return hdt::SPO;
     }
 
-    static inline TripleComponentOrder get_query_order(const StringTriple& triple_pattern) {
+    static inline hdt::TripleComponentOrder get_query_order(const StringTriple& triple_pattern) {
         size_t s = triple_pattern.get_subject().empty() ? 0 : 1;
         size_t p = triple_pattern.get_predicate().empty() ? 0 : 1;
         size_t o = triple_pattern.get_object().empty() ? 0 : 1;

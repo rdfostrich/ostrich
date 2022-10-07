@@ -35,7 +35,7 @@ bool PatchTreeTripleIterator::next(Triple *triple) {
     return ret;
 }
 
-SnapshotTripleIterator::SnapshotTripleIterator(IteratorTripleID* snapshot_it)
+SnapshotTripleIterator::SnapshotTripleIterator(hdt::IteratorTripleID* snapshot_it)
         : snapshot_it(snapshot_it) {}
 
 SnapshotTripleIterator::~SnapshotTripleIterator() {
@@ -44,7 +44,7 @@ SnapshotTripleIterator::~SnapshotTripleIterator() {
 
 bool SnapshotTripleIterator::next(Triple* triple) {
     if(snapshot_it->hasNext()) {
-        TripleID* triple_id = snapshot_it->next();
+        hdt::TripleID* triple_id = snapshot_it->next();
         *triple = Triple(triple_id->getSubject(), triple_id->getPredicate(), triple_id->getObject());
         return true;
     }

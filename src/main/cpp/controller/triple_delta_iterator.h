@@ -54,10 +54,10 @@ public:
 // This should always be the case with our system
 class SnapshotDiffIterator: public TripleDeltaIterator {
 private:
-    IteratorTripleID* snapshot_it_1;
-    IteratorTripleID* snapshot_it_2;
-    TripleID* t1;
-    TripleID* t2;
+    hdt::IteratorTripleID* snapshot_it_1;
+    hdt::IteratorTripleID* snapshot_it_2;
+    hdt::TripleID* t1;
+    hdt::TripleID* t2;
 
     std::shared_ptr<DictionaryManager> dict1;
     std::shared_ptr<DictionaryManager> dict2;
@@ -102,7 +102,7 @@ private:
     std::vector<TripleDelta*> triples;
 
 public:
-    explicit SortedTripleDeltaIterator(TripleDeltaIterator* iterator, TripleComponentOrder order);
+    explicit SortedTripleDeltaIterator(TripleDeltaIterator* iterator, hdt::TripleComponentOrder order);
     ~SortedTripleDeltaIterator() override;
     bool next(TripleDelta* triple) override;
 };

@@ -3,19 +3,17 @@
 #include "patch_tree_key_comparator.h"
 #include "../simpleprogresslistener.h"
 
-using namespace std;
-using namespace kyotocabinet;
 
 TripleStore::TripleStore(string base_file_name, std::shared_ptr<DictionaryManager> dict, int8_t kc_opts, bool readonly) : dict(dict) {
     // Construct trees
-    index_spo_deletions = new TreeDB();
-    index_pos_deletions = new TreeDB();
-    index_osp_deletions = new TreeDB();
-    index_spo_additions = new TreeDB();
-    index_pos_additions = new TreeDB();
-    index_osp_additions = new TreeDB();
-    count_additions = new HashDB();
-    temp_count_additions = readonly ? nullptr : new HashDB();
+    index_spo_deletions = new kyotocabinet::TreeDB();
+    index_pos_deletions = new kyotocabinet::TreeDB();
+    index_osp_deletions = new kyotocabinet::TreeDB();
+    index_spo_additions = new kyotocabinet::TreeDB();
+    index_pos_additions = new kyotocabinet::TreeDB();
+    index_osp_additions = new kyotocabinet::TreeDB();
+    count_additions = new kyotocabinet::HashDB();
+    temp_count_additions = readonly ? nullptr : new kyotocabinet::HashDB();
 
     // Set the triple comparators
     index_spo_deletions->tune_comparator(spo_comparator = new PatchTreeKeyComparator(comp_s, comp_p, comp_o, dict));
@@ -40,13 +38,13 @@ TripleStore::TripleStore(string base_file_name, std::shared_ptr<DictionaryManage
     open(index_spo_additions, base_file_name + "_spo_additions", readonly);
     open(index_pos_additions, base_file_name + "_pos_additions", readonly);
     open(index_osp_additions, base_file_name + "_osp_additions", readonly);
-    if (!count_additions->open(base_file_name + "_count_additions", (readonly ? HashDB::OREADER : (HashDB::OWRITER | HashDB::OCREATE)) | HashDB::ONOREPAIR)) {
+    if (!count_additions->open(base_file_name + "_count_additions", (readonly ? kyotocabinet::HashDB::OREADER : (kyotocabinet::HashDB::OWRITER | kyotocabinet::HashDB::OCREATE)) | kyotocabinet::HashDB::ONOREPAIR)) {
         cerr << "Open addition count tree error: " << count_additions->error().name() << endl;
     }
     if (temp_count_additions != nullptr) {
         if (!temp_count_additions->open(base_file_name + "_count_additions.tmp",
-                                        (readonly ? HashDB::OREADER : (HashDB::OWRITER | HashDB::OCREATE)) |
-                                        HashDB::ONOREPAIR)) {
+                                        (readonly ? kyotocabinet::HashDB::OREADER : (kyotocabinet::HashDB::OWRITER | kyotocabinet::HashDB::OCREATE)) |
+                                                kyotocabinet::HashDB::ONOREPAIR)) {
             cerr << "Open addition count tree error: " << temp_count_additions->error().name() << endl;
         }
     }
@@ -80,48 +78,48 @@ TripleStore::~TripleStore() {
     delete element_comparator;
 }
 
-void TripleStore::open(TreeDB* db, string name, bool readonly) {
+void TripleStore::open(kyotocabinet::TreeDB* db, string name, bool readonly) {
     db->tune_map(KC_MEMORY_MAP_SIZE);
     //db->tune_buckets(1LL * 1000 * 1000);
     db->tune_page_cache(KC_PAGE_CACHE_SIZE);
     db->tune_defrag(8);
-    if (!db->open(name, (readonly ? TreeDB::OREADER : (TreeDB::OWRITER | TreeDB::OCREATE)) | TreeDB::ONOREPAIR)) {
+    if (!db->open(name, (readonly ? kyotocabinet::TreeDB::OREADER : (kyotocabinet::TreeDB::OWRITER | kyotocabinet::TreeDB::OCREATE)) | kyotocabinet::TreeDB::ONOREPAIR)) {
         cerr << "open " << name << " error: " << db->error().name() << endl;
     }
 }
 
-void TripleStore::close(TreeDB* db, string name) {
+void TripleStore::close(kyotocabinet::TreeDB* db, string name) {
     if (!db->close()) {
         cerr << "close " << name << " error: " << db->error().name() << endl;
     }
     delete db;
 }
 
-TreeDB* TripleStore::getAdditionsTree(Triple triple_pattern) {
-    TripleComponentOrder order = get_query_order(triple_pattern);
+kyotocabinet::TreeDB* TripleStore::getAdditionsTree(Triple triple_pattern) {
+    hdt::TripleComponentOrder order = get_query_order(triple_pattern);
 
-    if(order == OSP) return index_osp_additions;
-    if(order == POS) return index_pos_additions;
+    if(order == hdt::OSP) return index_osp_additions;
+    if(order == hdt::POS) return index_pos_additions;
     return index_spo_additions;
 }
 
-TreeDB* TripleStore::getDefaultAdditionsTree() {
+kyotocabinet::TreeDB* TripleStore::getDefaultAdditionsTree() {
     return index_spo_additions;
 }
 
-TreeDB* TripleStore::getDeletionsTree(Triple triple_pattern) {
-    TripleComponentOrder order = get_query_order(triple_pattern);
+kyotocabinet::TreeDB* TripleStore::getDeletionsTree(Triple triple_pattern) {
+    hdt::TripleComponentOrder order = get_query_order(triple_pattern);
 
-    if(order == OSP) return index_osp_deletions;
-    if(order == POS) return index_pos_deletions;
+    if(order == hdt::OSP) return index_osp_deletions;
+    if(order == hdt::POS) return index_pos_deletions;
     return index_spo_deletions;
 }
 
-TreeDB* TripleStore::getDefaultDeletionsTree() {
+kyotocabinet::TreeDB* TripleStore::getDefaultDeletionsTree() {
     return index_spo_deletions;
 }
 
-void TripleStore::insertAdditionSingle(const PatchTreeKey* key, const PatchTreeAdditionValue* value, DB::Cursor* cursor) {
+void TripleStore::insertAdditionSingle(const PatchTreeKey* key, const PatchTreeAdditionValue* value, kyotocabinet::DB::Cursor* cursor) {
     size_t key_size, value_size;
     const char *raw_key = key->serialize(&key_size);
     const char *raw_value = value->serialize(&value_size);
@@ -146,7 +144,7 @@ void TripleStore::insertAdditionSingle(const PatchTreeKey* key, const PatchTreeA
     }
 }
 
-void TripleStore::insertAdditionSingle(const PatchTreeKey* key, int patch_id, bool local_change, bool ignore_existing, DB::Cursor* cursor) {
+void TripleStore::insertAdditionSingle(const PatchTreeKey* key, int patch_id, bool local_change, bool ignore_existing, kyotocabinet::DB::Cursor* cursor) {
     // Look up the value for the given triple key in the tree.
 #ifdef COMPRESSED_ADD_VALUES
     PatchTreeAdditionValue value(patch_id);
@@ -173,7 +171,7 @@ void TripleStore::insertAdditionSingle(const PatchTreeKey* key, int patch_id, bo
     if (!local_change) increment_addition_counts(patch_id, *key);
 }
 
-void TripleStore::insertDeletionSingle(const PatchTreeKey* key, const PatchTreeDeletionValue* value, const PatchTreeDeletionValueReduced* value_reduced, DB::Cursor* cursor) {
+void TripleStore::insertDeletionSingle(const PatchTreeKey* key, const PatchTreeDeletionValue* value, const PatchTreeDeletionValueReduced* value_reduced, kyotocabinet::DB::Cursor* cursor) {
     size_t key_size, value_size, value_reduced_size;
     const char *raw_key = key->serialize(&key_size);
     const char *raw_value = value->serialize(&value_size);
@@ -200,7 +198,7 @@ void TripleStore::insertDeletionSingle(const PatchTreeKey* key, const PatchTreeD
     }
 }
 
-void TripleStore::insertDeletionSingle(const PatchTreeKey* key, const PatchPositions& patch_positions, int patch_id, bool local_change, bool ignore_existing, DB::Cursor* cursor) {
+void TripleStore::insertDeletionSingle(const PatchTreeKey* key, const PatchPositions& patch_positions, int patch_id, bool local_change, bool ignore_existing, kyotocabinet::DB::Cursor* cursor) {
 #ifdef COMPRESSED_DEL_VALUES
     PatchTreeDeletionValue deletion_value(patch_id);
 #else
@@ -292,7 +290,7 @@ PatchPosition TripleStore::get_addition_count(const int patch_id, const Triple &
 long TripleStore::flush_addition_counts() {
     size_t ksp, vsp;
     PatchPosition count = 0;
-    HashDB::Cursor* cursor = temp_count_additions->cursor();
+    kyotocabinet::HashDB::Cursor* cursor = temp_count_additions->cursor();
     cursor->jump();
     long added = 0;
     while (cursor->step()) {

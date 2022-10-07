@@ -5,7 +5,7 @@
 #include "patch_tree_iterator.h"
 
 template <class DV>
-PatchTreeIteratorBase<DV>::PatchTreeIteratorBase(DB::Cursor* cursor_deletions, DB::Cursor* cursor_additions, PatchTreeKeyComparator* comparator)
+PatchTreeIteratorBase<DV>::PatchTreeIteratorBase(kyotocabinet::DB::Cursor* cursor_deletions, kyotocabinet::DB::Cursor* cursor_additions, PatchTreeKeyComparator* comparator)
         : cursor_deletions(cursor_deletions), cursor_additions(cursor_additions), comparator(comparator),
           is_patch_id_filter(false),
           is_patch_id_filter_exact(false), patch_id_filter(-1),
@@ -61,12 +61,12 @@ int PatchTreeIteratorBase<DV>::get_patch_id_filter() {
 
 template <class DV>
 bool PatchTreeIteratorBase<DV>::is_deletion_tree() const {
-    return cursor_deletions != NULL;
+    return cursor_deletions != nullptr;
 }
 
 template <class DV>
 bool PatchTreeIteratorBase<DV>::is_addition_tree() const {
-    return cursor_additions != NULL;
+    return cursor_additions != nullptr;
 }
 
 template <class DV>
@@ -293,12 +293,12 @@ bool PatchTreeIteratorBase<DV>::next(PatchTreeKey* key, PatchTreeValueBase<DV>* 
 }
 
 template <class DV>
-DB::Cursor *PatchTreeIteratorBase<DV>::getDeletionCursor() {
+kyotocabinet::DB::Cursor *PatchTreeIteratorBase<DV>::getDeletionCursor() {
     return this->cursor_deletions;
 }
 
 template <class DV>
-DB::Cursor *PatchTreeIteratorBase<DV>::getAdditionCursor() {
+kyotocabinet::DB::Cursor *PatchTreeIteratorBase<DV>::getAdditionCursor() {
     return this->cursor_additions;
 }
 

@@ -36,9 +36,9 @@ public:
 
 class SnapshotTripleIterator : public TripleIterator {
 protected:
-    IteratorTripleID* snapshot_it;
+    hdt::IteratorTripleID* snapshot_it;
 public:
-    SnapshotTripleIterator(IteratorTripleID* snapshot_it);
+    SnapshotTripleIterator(hdt::IteratorTripleID* snapshot_it);
     ~SnapshotTripleIterator();
     bool next(Triple* triple);
 };

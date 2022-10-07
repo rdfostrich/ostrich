@@ -6,14 +6,12 @@
 #include "patch.h"
 #include "patch_tree_value.h"
 
-using namespace std;
-using namespace kyotocabinet;
 
 template <class DV>
 class PatchTreeIteratorBase {
 private:
-    DB::Cursor* cursor_deletions;
-    DB::Cursor* cursor_additions;
+    kyotocabinet::DB::Cursor* cursor_deletions;
+    kyotocabinet::DB::Cursor* cursor_additions;
     PatchTreeKeyComparator* comparator;
 
     bool is_patch_id_filter;
@@ -35,7 +33,7 @@ private:
     bool can_early_break = true;
     bool squash_equal_addition_deletion = false;
 public:
-    PatchTreeIteratorBase(DB::Cursor* cursor_deletions, DB::Cursor* cursor_additions, PatchTreeKeyComparator* comparator);
+    PatchTreeIteratorBase(kyotocabinet::DB::Cursor* cursor_deletions, kyotocabinet::DB::Cursor* cursor_additions, PatchTreeKeyComparator* comparator);
     ~PatchTreeIteratorBase();
     /**
      * Set the patch id to filter by
@@ -119,11 +117,11 @@ public:
     /**
      * @return The internal deletion cursor, nullable.
      */
-    DB::Cursor* getDeletionCursor();
+    kyotocabinet::DB::Cursor* getDeletionCursor();
     /**
      * @return The internal addition cursor, nullable.
      */
-    DB::Cursor* getAdditionCursor();
+    kyotocabinet::DB::Cursor* getAdditionCursor();
 };
 
 typedef PatchTreeIteratorBase<PatchTreeDeletionValue> PatchTreeIterator;

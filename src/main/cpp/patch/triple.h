@@ -16,11 +16,11 @@ protected:
 public:
     Triple();
 
-    explicit Triple(const TripleID &triple);
+    explicit Triple(const hdt::TripleID &triple);
 
     Triple(size_t subject, size_t predicate, size_t object);
 
-    Triple(const string &s, const string &p, const string &o, std::shared_ptr<ModifiableDictionary> dict);
+    Triple(const string &s, const string &p, const string &o, std::shared_ptr<hdt::ModifiableDictionary> dict);
 
     /**
      * @return The subject
@@ -41,19 +41,19 @@ public:
      * @param dict The dictionary to decode from
      * @return The subject
      */
-    string get_subject(Dictionary &dict) const;
+    string get_subject(hdt::Dictionary &dict) const;
 
     /**
      * @param dict The dictionary to decode from
      * @return The predicate
      */
-    string get_predicate(Dictionary &dict) const;
+    string get_predicate(hdt::Dictionary &dict) const;
 
     /**
      * @param dict The dictionary to decode from
      * @return The object
      */
-    string get_object(Dictionary &dict) const;
+    string get_object(hdt::Dictionary &dict) const;
 
     /**
      * @return The string representation of this triple.
@@ -63,7 +63,7 @@ public:
     /**
      * @return The decoded string representation of this triple.
      */
-    string to_string(Dictionary &dict) const;
+    string to_string(hdt::Dictionary &dict) const;
 
     /**
      * Serialize this value to a byte array
@@ -139,7 +139,7 @@ public:
     StringTriple();
     StringTriple(std::string s, std::string p, std::string o);
 
-    Triple get_as_triple(std::shared_ptr<ModifiableDictionary> dict) const;
+    Triple get_as_triple(std::shared_ptr<hdt::ModifiableDictionary> dict) const;
 
     std::string get_subject() const;
     std::string get_predicate() const;

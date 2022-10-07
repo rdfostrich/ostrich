@@ -19,11 +19,11 @@ public:
 class PatchElementIteratorTripleStrings : public PatchElementIterator {
 protected:
     std::shared_ptr<DictionaryManager> dict;
-    IteratorTripleString* it;
+    hdt::IteratorTripleString* it;
     bool additions;
     size_t passed;
 public:
-    PatchElementIteratorTripleStrings(std::shared_ptr<DictionaryManager> dict, IteratorTripleString* subIt, bool additions);
+    PatchElementIteratorTripleStrings(std::shared_ptr<DictionaryManager> dict, hdt::IteratorTripleString* subIt, bool additions);
     ~PatchElementIteratorTripleStrings() override;
     bool next(PatchElement* element) override;
     void goToStart() override;
@@ -81,14 +81,14 @@ public:
     size_t getPassed() override;
 };
 
-class IteratorTripleStringVector : public IteratorTripleString {
+class IteratorTripleStringVector : public hdt::IteratorTripleString {
 protected:
-    const std::vector<TripleString>* elements;
-    std::vector<TripleString>::const_iterator it;
+    const std::vector<hdt::TripleString>* elements;
+    std::vector<hdt::TripleString>::const_iterator it;
 public:
-    explicit IteratorTripleStringVector(const std::vector<TripleString>* elements);
+    explicit IteratorTripleStringVector(const std::vector<hdt::TripleString>* elements);
     bool hasNext() override;
-    TripleString *next() override;
+    hdt::TripleString *next() override;
     void goToStart() override;
 };
 

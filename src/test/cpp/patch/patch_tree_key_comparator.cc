@@ -98,15 +98,15 @@ TEST(PatchTreeKeyComparatorTest, CompareComplexSOP) {
 }
 
 TEST(PatchTreeKeyComparatorTest, CompareInterDictTypes) {
-    PlainDictionary* hdtDict = new PlainDictionary();
+    hdt::PlainDictionary* hdtDict = new hdt::PlainDictionary();
     std::shared_ptr<DictionaryManager> dict = std::make_shared<DictionaryManager>(TESTPATH, 0, hdtDict);
     PatchTreeKeyComparator comp(comp_s, comp_o, comp_p, dict);
-    string b("b");
-    hdtDict->insert(b, SUBJECT);
-    string d("d");
-    hdtDict->insert(d, SUBJECT);
-    string f("f");
-    hdtDict->insert(f, SUBJECT);
+    std::string b("b");
+    hdtDict->insert(b, hdt::SUBJECT);
+    std::string d("d");
+    hdtDict->insert(d, hdt::SUBJECT);
+    std::string f("f");
+    hdtDict->insert(f, hdt::SUBJECT);
 
     ASSERT_EQ(false, comp.compare(Triple("a", "a", "a", dict), Triple("a", "a", "a", dict)) > 0);
     ASSERT_EQ(false, comp.compare(Triple("a", "a", "a", dict), Triple("b", "a", "a", dict)) > 0);

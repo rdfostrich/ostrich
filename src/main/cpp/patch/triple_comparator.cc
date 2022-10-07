@@ -12,7 +12,7 @@ triplecomp subject_comparator = [] (const Triple& t1, const Triple& t2, std::sha
     if (dict1 == dict2) {
         // If MSB is not set, id is HDT
         if (!(t1.get_subject() & bitmask) && !(t2.get_subject() & bitmask)) {
-            return dict1->compareComponent(t1.get_subject(), t2.get_subject(), SUBJECT);
+            return dict1->compareComponent(t1.get_subject(), t2.get_subject(), hdt::SUBJECT);
         }
     }
     //Else, translate to string and compare
@@ -27,7 +27,7 @@ triplecomp predicate_comparator = [] (const Triple& t1, const Triple& t2, std::s
     if (dict1 == dict2) {
         // If MSB is not set, id is HDT
         if (!(t1.get_predicate() & bitmask) && !(t2.get_predicate() & bitmask)) {
-            return dict1->compareComponent(t1.get_predicate(), t2.get_predicate(), PREDICATE);
+            return dict1->compareComponent(t1.get_predicate(), t2.get_predicate(), hdt::PREDICATE);
         }
     }
     //Else, translate to string and compare
@@ -42,7 +42,7 @@ triplecomp object_comparator = [] (const Triple& t1, const Triple& t2, std::shar
     if (dict1 == dict2) {
         // If MSB is not set, id is HDT
         if (!(t1.get_object() & bitmask) && !(t2.get_object() & bitmask)) {
-            return dict1->compareComponent(t1.get_object(), t2.get_object(), OBJECT);
+            return dict1->compareComponent(t1.get_object(), t2.get_object(), hdt::OBJECT);
         }
     }
     //Else, translate to string and compare
@@ -75,7 +75,7 @@ int TripleComparator::compare(const Triple &triple1, const Triple &triple2, std:
     return comp;
 }
 
-int TripleComparator::compare(const TripleID &triple1, const TripleID &triple2, std::shared_ptr<DictionaryManager> dict_1,
+int TripleComparator::compare(const hdt::TripleID &triple1, const hdt::TripleID &triple2, std::shared_ptr<DictionaryManager> dict_1,
                           std::shared_ptr<DictionaryManager> dict_2) const {
     Triple t1(triple1.getSubject(), triple1.getPredicate(), triple1.getObject());
     Triple t2(triple2.getSubject(), triple2.getPredicate(), triple2.getObject());
@@ -106,21 +106,21 @@ void TripleComparator::set_dictionary2(std::shared_ptr<DictionaryManager> dict) 
     dict2 = std::move(dict);
 }
 
-TripleComparator* TripleComparator::get_triple_comparator(TripleComponentOrder order, std::shared_ptr<DictionaryManager> dict1, std::shared_ptr<DictionaryManager> dict2) {
+TripleComparator* TripleComparator::get_triple_comparator(hdt::TripleComponentOrder order, std::shared_ptr<DictionaryManager> dict1, std::shared_ptr<DictionaryManager> dict2) {
     switch (order) {
-        case SPO:
+        case hdt::SPO:
             return new TripleComparator(subject_comparator, predicate_comparator, object_comparator, dict1, dict2);
-        case SOP:
+        case hdt::SOP:
             return new TripleComparator(subject_comparator, object_comparator, predicate_comparator, dict1, dict2);
-        case PSO:
+        case hdt::PSO:
             return new TripleComparator(predicate_comparator, subject_comparator, object_comparator, dict1, dict2);
-        case POS:
+        case hdt::POS:
             return new TripleComparator(predicate_comparator, object_comparator, subject_comparator, dict1, dict2);
-        case OSP:
+        case hdt::OSP:
             return new TripleComparator(object_comparator, subject_comparator, predicate_comparator, dict1, dict2);
-        case OPS:
+        case hdt::OPS:
             return new TripleComparator(object_comparator, predicate_comparator, subject_comparator, dict1, dict2);
-        case Unknown:
+        case hdt::Unknown:
             return new TripleComparator(subject_comparator, predicate_comparator, object_comparator, dict1, dict2);
     }
     return new TripleComparator(subject_comparator, predicate_comparator, object_comparator, dict1, dict2);

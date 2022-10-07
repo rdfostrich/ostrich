@@ -5,9 +5,8 @@
 #include "../patch/triple.h"
 #include <Triples.hpp>
 
-using namespace hdt;
 
-class CombinedTripleIterator : public IteratorTripleString {
+class CombinedTripleIterator : public hdt::IteratorTripleString {
 private:
     int pos;
     std::vector<IteratorTripleString*> iterators;
@@ -15,7 +14,7 @@ public:
     CombinedTripleIterator();
     ~CombinedTripleIterator();
     bool hasNext();
-    TripleString *next();
+    hdt::TripleString *next();
     void appendIterator(IteratorTripleString* it);
     void goToStart();
 };

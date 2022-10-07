@@ -1,8 +1,6 @@
 #include <SingleTriple.hpp>
 #include "combined_triple_iterator.h"
 
-using namespace hdt;
-
 CombinedTripleIterator::CombinedTripleIterator() : iterators() {}
 
 bool CombinedTripleIterator::hasNext() {
@@ -18,7 +16,7 @@ bool CombinedTripleIterator::hasNext() {
     return pos < iterators.size();
 }
 
-TripleString* CombinedTripleIterator::next() {
+hdt::TripleString* CombinedTripleIterator::next() {
     return iterators[pos]->next();
 }
 

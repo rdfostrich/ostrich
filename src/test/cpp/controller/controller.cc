@@ -70,10 +70,10 @@ TEST_F(ControllerTest, GetEdge) {
     Triple t;
 
     // Build a snapshot
-    std::vector<TripleString> triples;
-    triples.push_back(TripleString("<a>", "<a>", "<a>"));
-    triples.push_back(TripleString("<a>", "<a>", "<b>"));
-    triples.push_back(TripleString("<a>", "<a>", "<c>"));
+    std::vector<hdt::TripleString> triples;
+    triples.push_back(hdt::TripleString("<a>", "<a>", "<a>"));
+    triples.push_back(hdt::TripleString("<a>", "<a>", "<b>"));
+    triples.push_back(hdt::TripleString("<a>", "<a>", "<c>"));
     VectorTripleIterator* it = new VectorTripleIterator(triples);
     controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     PatchTreeManager* patchTreeManager = controller->get_patch_tree_manager();
@@ -117,15 +117,15 @@ TEST_F(ControllerTest, GetEdge) {
 
 TEST_F(ControllerTest, PatchBuilder) {
     controller->new_patch_bulk()
-            ->addition(TripleString("a", "a", "a"))
-            ->addition(TripleString("b", "b", "b"))
-            ->addition(TripleString("c", "c", "c"))
+            ->addition(hdt::TripleString("a", "a", "a"))
+            ->addition(hdt::TripleString("b", "b", "b"))
+            ->addition(hdt::TripleString("c", "c", "c"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("a", "a", "a"))
-            ->addition(TripleString("d", "d", "d"))
-            ->deletion(TripleString("c", "c", "c"))
+            ->deletion(hdt::TripleString("a", "a", "a"))
+            ->addition(hdt::TripleString("d", "d", "d"))
+            ->deletion(hdt::TripleString("c", "c", "c"))
             ->commit();
 
     std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
@@ -135,15 +135,15 @@ TEST_F(ControllerTest, PatchBuilder) {
 
 TEST_F(ControllerTest, PatchBuilderStreaming) {
     controller->new_patch_stream()
-            ->addition(TripleString("a", "a", "a"))
-            ->addition(TripleString("b", "b", "b"))
-            ->addition(TripleString("c", "c", "c"))
+            ->addition(hdt::TripleString("a", "a", "a"))
+            ->addition(hdt::TripleString("b", "b", "b"))
+            ->addition(hdt::TripleString("c", "c", "c"))
             ->close();
 
     controller->new_patch_stream()
-            ->deletion(TripleString("a", "a", "a"))
-            ->addition(TripleString("d", "d", "d"))
-            ->deletion(TripleString("c", "c", "c"))
+            ->deletion(hdt::TripleString("a", "a", "a"))
+            ->addition(hdt::TripleString("d", "d", "d"))
+            ->deletion(hdt::TripleString("c", "c", "c"))
             ->close();
 
     std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
@@ -153,10 +153,10 @@ TEST_F(ControllerTest, PatchBuilderStreaming) {
 
 TEST_F(ControllerTest, GetVersionMaterializedSimple) {
     // Build a snapshot
-    std::vector<TripleString> triples;
-    triples.push_back(TripleString("<a>", "<a>", "<a>"));
-    triples.push_back(TripleString("<a>", "<a>", "<b>"));
-    triples.push_back(TripleString("<a>", "<a>", "<c>"));
+    std::vector<hdt::TripleString> triples;
+    triples.push_back(hdt::TripleString("<a>", "<a>", "<a>"));
+    triples.push_back(hdt::TripleString("<a>", "<a>", "<b>"));
+    triples.push_back(hdt::TripleString("<a>", "<a>", "<c>"));
     VectorTripleIterator* it = new VectorTripleIterator(triples);
     controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     PatchTreeManager* patchTreeManager = controller->get_patch_tree_manager();
@@ -236,11 +236,11 @@ TEST_F(ControllerTest, GetVersionMaterializedSimple) {
 
 TEST_F(ControllerTest, GetVersionMaterializedComplex1) {
     // Build a snapshot
-    std::vector<TripleString> triples;
-    triples.push_back(TripleString("g", "p", "o"));
-    triples.push_back(TripleString("s", "z", "o"));
-    triples.push_back(TripleString("h", "z", "o"));
-    triples.push_back(TripleString("h", "p", "o"));
+    std::vector<hdt::TripleString> triples;
+    triples.push_back(hdt::TripleString("g", "p", "o"));
+    triples.push_back(hdt::TripleString("s", "z", "o"));
+    triples.push_back(hdt::TripleString("h", "z", "o"));
+    triples.push_back(hdt::TripleString("h", "p", "o"));
     VectorTripleIterator* it = new VectorTripleIterator(triples);
     controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     PatchTreeManager* patchTreeManager = controller->get_patch_tree_manager();
@@ -412,11 +412,11 @@ TEST_F(ControllerTest, GetVersionMaterializedComplex1) {
 
 TEST_F(ControllerMSTest, GetVersionMaterializedComplexMS1) {
     // Build a snapshot
-    std::vector<TripleString> triples;
-    triples.push_back(TripleString("g", "p", "o"));
-    triples.push_back(TripleString("s", "z", "o"));
-    triples.push_back(TripleString("h", "z", "o"));
-    triples.push_back(TripleString("h", "p", "o"));
+    std::vector<hdt::TripleString> triples;
+    triples.push_back(hdt::TripleString("g", "p", "o"));
+    triples.push_back(hdt::TripleString("s", "z", "o"));
+    triples.push_back(hdt::TripleString("h", "z", "o"));
+    triples.push_back(hdt::TripleString("h", "p", "o"));
     VectorTripleIterator* it = new VectorTripleIterator(triples);
     controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     PatchTreeManager* patchTreeManager = controller->get_patch_tree_manager();
@@ -608,11 +608,11 @@ TEST_F(ControllerMSTest, GetVersionMaterializedComplexMS1) {
 
 TEST_F(ControllerTest, GetVersionMaterializedComplex2) {
     // Build a snapshot
-    std::vector<TripleString> triples;
-    triples.push_back(TripleString("g", "p", "o"));
-    triples.push_back(TripleString("s", "z", "o"));
-    triples.push_back(TripleString("h", "z", "o"));
-    triples.push_back(TripleString("h", "p", "o"));
+    std::vector<hdt::TripleString> triples;
+    triples.push_back(hdt::TripleString("g", "p", "o"));
+    triples.push_back(hdt::TripleString("s", "z", "o"));
+    triples.push_back(hdt::TripleString("h", "z", "o"));
+    triples.push_back(hdt::TripleString("h", "p", "o"));
     VectorTripleIterator* it = new VectorTripleIterator(triples);
     controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     PatchTreeManager* patchTreeManager = controller->get_patch_tree_manager();
@@ -784,11 +784,11 @@ TEST_F(ControllerTest, GetVersionMaterializedComplex2) {
 
 TEST_F(ControllerMSTest, GetVersionMaterializedComplexMS2) {
     // Build a snapshot
-    std::vector<TripleString> triples;
-    triples.push_back(TripleString("g", "p", "o"));
-    triples.push_back(TripleString("s", "z", "o"));
-    triples.push_back(TripleString("h", "z", "o"));
-    triples.push_back(TripleString("h", "p", "o"));
+    std::vector<hdt::TripleString> triples;
+    triples.push_back(hdt::TripleString("g", "p", "o"));
+    triples.push_back(hdt::TripleString("s", "z", "o"));
+    triples.push_back(hdt::TripleString("h", "z", "o"));
+    triples.push_back(hdt::TripleString("h", "p", "o"));
     VectorTripleIterator* it = new VectorTripleIterator(triples);
     controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
@@ -967,11 +967,11 @@ TEST_F(ControllerMSTest, GetVersionMaterializedComplexMS2) {
 
 TEST_F(ControllerTest, GetVersionMaterializedComplex3) {
     // Build a snapshot
-    std::vector<TripleString> triples;
-    triples.push_back(TripleString("g", "p", "o"));
-    triples.push_back(TripleString("s", "z", "o"));
-    triples.push_back(TripleString("h", "z", "o"));
-    triples.push_back(TripleString("h", "p", "o"));
+    std::vector<hdt::TripleString> triples;
+    triples.push_back(hdt::TripleString("g", "p", "o"));
+    triples.push_back(hdt::TripleString("s", "z", "o"));
+    triples.push_back(hdt::TripleString("h", "z", "o"));
+    triples.push_back(hdt::TripleString("h", "p", "o"));
     VectorTripleIterator* it = new VectorTripleIterator(triples);
     controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     PatchTreeManager* patchTreeManager = controller->get_patch_tree_manager();
@@ -1073,17 +1073,17 @@ TEST_F(ControllerTest, EdgeCaseVersionMaterialized1) {
      */
 
     // Build a snapshot
-    std::vector<TripleString> triples;
-    triples.push_back(TripleString("0", "0", "0"));
-    triples.push_back(TripleString("1", "1", "1"));
-    triples.push_back(TripleString("2", "2", "2"));
-    triples.push_back(TripleString("3", "3", "3"));
-    triples.push_back(TripleString("4", "4", "4"));
-    triples.push_back(TripleString("5", "5", "5"));
-    triples.push_back(TripleString("6", "6", "6"));
-    triples.push_back(TripleString("7", "7", "7"));
-    triples.push_back(TripleString("8", "8", "8"));
-    triples.push_back(TripleString("9", "9", "9"));
+    std::vector<hdt::TripleString> triples;
+    triples.push_back(hdt::TripleString("0", "0", "0"));
+    triples.push_back(hdt::TripleString("1", "1", "1"));
+    triples.push_back(hdt::TripleString("2", "2", "2"));
+    triples.push_back(hdt::TripleString("3", "3", "3"));
+    triples.push_back(hdt::TripleString("4", "4", "4"));
+    triples.push_back(hdt::TripleString("5", "5", "5"));
+    triples.push_back(hdt::TripleString("6", "6", "6"));
+    triples.push_back(hdt::TripleString("7", "7", "7"));
+    triples.push_back(hdt::TripleString("8", "8", "8"));
+    triples.push_back(hdt::TripleString("9", "9", "9"));
     VectorTripleIterator *it = new VectorTripleIterator(triples);
     controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     PatchTreeManager* patchTreeManager = controller->get_patch_tree_manager();
@@ -1129,11 +1129,11 @@ TEST_F(ControllerTest, EdgeCaseVersionMaterialized2) {
      */
 
     // Build a snapshot
-    std::vector<TripleString> triples;
-    triples.push_back(TripleString("a", "a", "a"));
-    triples.push_back(TripleString("b", "b", "b"));
-    triples.push_back(TripleString("y", "a", "a"));
-    triples.push_back(TripleString("z", "a", "a"));
+    std::vector<hdt::TripleString> triples;
+    triples.push_back(hdt::TripleString("a", "a", "a"));
+    triples.push_back(hdt::TripleString("b", "b", "b"));
+    triples.push_back(hdt::TripleString("y", "a", "a"));
+    triples.push_back(hdt::TripleString("z", "a", "a"));
     VectorTripleIterator* it = new VectorTripleIterator(triples);
     controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     PatchTreeManager* patchTreeManager = controller->get_patch_tree_manager();
@@ -1188,13 +1188,13 @@ TEST_F(ControllerTest, EdgeCaseVersionMaterialized3) {
      */
 
     // Build a snapshot
-    std::vector<TripleString> triples;
-    triples.push_back(TripleString("a", "a", "a"));
-    triples.push_back(TripleString("b", "a", "a"));
-    triples.push_back(TripleString("c", "c", "c"));
-    triples.push_back(TripleString("d", "a", "a"));
-    triples.push_back(TripleString("y", "a", "a"));
-    triples.push_back(TripleString("z", "a", "a"));
+    std::vector<hdt::TripleString> triples;
+    triples.push_back(hdt::TripleString("a", "a", "a"));
+    triples.push_back(hdt::TripleString("b", "a", "a"));
+    triples.push_back(hdt::TripleString("c", "c", "c"));
+    triples.push_back(hdt::TripleString("d", "a", "a"));
+    triples.push_back(hdt::TripleString("y", "a", "a"));
+    triples.push_back(hdt::TripleString("z", "a", "a"));
     VectorTripleIterator* it = new VectorTripleIterator(triples);
     controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     PatchTreeManager* patchTreeManager = controller->get_patch_tree_manager();
@@ -1274,15 +1274,15 @@ TEST_F(ControllerTest, VersionMaterializedOrder) {
      */
 
     // Build a snapshot
-    std::vector<TripleString> triples;
-    triples.push_back(TripleString("w", "a", "d"));
-    triples.push_back(TripleString("z", "a", "c"));
-    triples.push_back(TripleString("y", "a", "b"));
-    triples.push_back(TripleString("x", "a", "a"));
-    triples.push_back(TripleString("w", "b", "a"));
-    triples.push_back(TripleString("x", "b", "b"));
-    triples.push_back(TripleString("y", "b", "c"));
-    triples.push_back(TripleString("z", "b", "d"));
+    std::vector<hdt::TripleString> triples;
+    triples.push_back(hdt::TripleString("w", "a", "d"));
+    triples.push_back(hdt::TripleString("z", "a", "c"));
+    triples.push_back(hdt::TripleString("y", "a", "b"));
+    triples.push_back(hdt::TripleString("x", "a", "a"));
+    triples.push_back(hdt::TripleString("w", "b", "a"));
+    triples.push_back(hdt::TripleString("x", "b", "b"));
+    triples.push_back(hdt::TripleString("y", "b", "c"));
+    triples.push_back(hdt::TripleString("z", "b", "d"));
     VectorTripleIterator* it = new VectorTripleIterator(triples);
     controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     PatchTreeManager* patchTreeManager = controller->get_patch_tree_manager();
@@ -1323,17 +1323,17 @@ TEST_F(ControllerTest, VersionMaterializedOrder) {
 
 TEST_F(ControllerTest, GetDeltaMaterializedSnapshotPatch) {
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<a>"))
-            ->addition(TripleString("<a>", "<a>", "<b>"))
-            ->addition(TripleString("<a>", "<a>", "<c>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<b>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<c>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<a>", "<b>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "<b>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<d>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<d>"))
             ->commit();
 
     std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
@@ -1411,30 +1411,30 @@ TEST_F(ControllerTest, GetDeltaMaterializedSnapshotPatch) {
 
 TEST_F(ControllerMSTest, GetDeltaMaterializedSnapshotMS) {
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<a>"))
-            ->addition(TripleString("<a>", "<a>", "<b>"))
-            ->addition(TripleString("<a>", "<a>", "<c>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<b>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<c>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<a>", "<b>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "<b>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<d>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<d>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<e>"))
-            ->addition(TripleString("<a>", "<a>", "<f>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<e>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<f>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<a>", "<a>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<a>", "<e>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "<e>"))
             ->commit();
 
     // Expected version 0:
@@ -1538,32 +1538,32 @@ TEST_F(ControllerMSTest, GetDeltaMaterializedSnapshotMS) {
 
 TEST_F(ControllerMSTest, GetDeltaMaterializedPatchMS) {
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<a>"))
-            ->addition(TripleString("<a>", "<a>", "<b>"))
-            ->addition(TripleString("<a>", "<a>", "<c>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<b>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<c>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<a>", "<b>"))
-            ->addition(TripleString("<a>", "<b>", "<c>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "<b>"))
+            ->addition(hdt::TripleString("<a>", "<b>", "<c>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<b>", "<c>"))
-            ->addition(TripleString("<a>", "<a>", "<d>"))
+            ->deletion(hdt::TripleString("<a>", "<b>", "<c>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<d>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<e>"))
-            ->addition(TripleString("<a>", "<a>", "<f>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<e>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<f>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<a>", "<a>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<a>", "<e>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "<e>"))
             ->commit();
 
     // Expected version 0:
@@ -1654,33 +1654,33 @@ TEST_F(ControllerMSTest, GetDeltaMaterializedPatchMS) {
 
 TEST_F(ControllerMSTest, GetDeltaMaterializedOrderMS) {
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<b>", "<a>"))
-            ->addition(TripleString("<a>", "<b>", "<b>"))
-            ->addition(TripleString("<a>", "<b>", "<c>"))
+            ->addition(hdt::TripleString("<a>", "<b>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<b>", "<b>"))
+            ->addition(hdt::TripleString("<a>", "<b>", "<c>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<b>", "<b>"))
-            ->addition(TripleString("<a>", "<b>", "<d>"))
+            ->deletion(hdt::TripleString("<a>", "<b>", "<b>"))
+            ->addition(hdt::TripleString("<a>", "<b>", "<d>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<b>", "<c>"))
-            ->addition(TripleString("<a>", "<b>", "<e>"))
+            ->deletion(hdt::TripleString("<a>", "<b>", "<c>"))
+            ->addition(hdt::TripleString("<a>", "<b>", "<e>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<b>", "<g>"))
-            ->addition(TripleString("<a>", "<b>", "<h>"))
+            ->addition(hdt::TripleString("<a>", "<b>", "<g>"))
+            ->addition(hdt::TripleString("<a>", "<b>", "<h>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<n>", "<b>", "<a>"))
+            ->addition(hdt::TripleString("<n>", "<b>", "<a>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<n>", "<b>", "<c>"))
-            ->addition(TripleString("<b>", "<b>", "<b>"))
+            ->addition(hdt::TripleString("<n>", "<b>", "<c>"))
+            ->addition(hdt::TripleString("<b>", "<b>", "<b>"))
             ->commit();
 
 
@@ -1854,22 +1854,22 @@ TEST_F(ControllerMSTest, GetDeltaMaterializedOrderMS) {
 
 TEST_F(ControllerTest, GetDeltaMaterializedPatchPatch) {
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<a>"))
-            ->addition(TripleString("<a>", "<a>", "<b>"))
-            ->addition(TripleString("<a>", "<a>", "<c>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<b>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<c>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<a>", "<b>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "<b>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<d>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<d>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<e>"))
-            ->deletion(TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<e>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
@@ -1982,37 +1982,37 @@ TEST_F(ControllerTest, GetDeltaMaterializedPatchPatch) {
 
 TEST_F(ControllerMSTest, EdgeCaseGetDeltaMaterializedMS) {
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "\"a\"^^<http://example.org/literal>"))
-            ->addition(TripleString("<a>", "<a>", "\"b\"^^<http://example.org/literal>"))
-            ->addition(TripleString("<a>", "<b>", "<a>"))
-            ->addition(TripleString("<a>", "<b>", "<c>"))
-            ->addition(TripleString("<a>", "<b>", "<d>"))
-            ->addition(TripleString("<a>", "<b>", "<f>"))
-            ->addition(TripleString("<a>", "<b>", "<z>"))
-            ->addition(TripleString("<c>", "<c>", "<c>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "\"a\"^^<http://example.org/literal>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "\"b\"^^<http://example.org/literal>"))
+            ->addition(hdt::TripleString("<a>", "<b>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<b>", "<c>"))
+            ->addition(hdt::TripleString("<a>", "<b>", "<d>"))
+            ->addition(hdt::TripleString("<a>", "<b>", "<f>"))
+            ->addition(hdt::TripleString("<a>", "<b>", "<z>"))
+            ->addition(hdt::TripleString("<c>", "<c>", "<c>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<a>", "\"b\"^^<http://example.org/literal>"))
-            ->addition(TripleString("<a>", "<a>", "\"z\"^^<http://example.org/literal>"))
-            ->deletion(TripleString("<a>", "<b>", "<a>"))
-            ->addition(TripleString("<a>", "<b>", "<g>"))
-            ->deletion(TripleString("<a>", "<b>", "<z>"))
-            ->addition(TripleString("<f>", "<f>", "<f>"))
-            ->addition(TripleString("<z>", "<z>", "<z>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "\"b\"^^<http://example.org/literal>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "\"z\"^^<http://example.org/literal>"))
+            ->deletion(hdt::TripleString("<a>", "<b>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<b>", "<g>"))
+            ->deletion(hdt::TripleString("<a>", "<b>", "<z>"))
+            ->addition(hdt::TripleString("<f>", "<f>", "<f>"))
+            ->addition(hdt::TripleString("<z>", "<z>", "<z>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<a>", "\"z\"^^<http://example.org/literal>"))
-            ->deletion(TripleString("<f>", "<f>", "<f>"))
-            ->addition(TripleString("<f>", "<r>", "<s>"))
-            ->addition(TripleString("<q>", "<q>", "<q>"))
-            ->addition(TripleString("<r>", "<r>", "<r>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "\"z\"^^<http://example.org/literal>"))
+            ->deletion(hdt::TripleString("<f>", "<f>", "<f>"))
+            ->addition(hdt::TripleString("<f>", "<r>", "<s>"))
+            ->addition(hdt::TripleString("<q>", "<q>", "<q>"))
+            ->addition(hdt::TripleString("<r>", "<r>", "<r>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<z>", "<z>", "<z>"))
-            ->addition(TripleString("<z>", "<z>", "\"z\"^^<http://example.org/literal>"))
+            ->deletion(hdt::TripleString("<z>", "<z>", "<z>"))
+            ->addition(hdt::TripleString("<z>", "<z>", "\"z\"^^<http://example.org/literal>"))
             ->commit();
 
     TripleDelta t;
@@ -2061,27 +2061,27 @@ TEST_F(ControllerTest, EdgeCaseGetDeltaMaterialized1) {
      * We check if DM 1-2 correctly emits the addition, and if DM 3-4 correctly emits the deletion.
      */
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<z>", "<z>", "<z>"))
+            ->addition(hdt::TripleString("<z>", "<z>", "<z>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<b>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<b>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<a>", "<a>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<a>", "<b>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "<b>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<y>", "<y>", "<y>"))
+            ->addition(hdt::TripleString("<y>", "<y>", "<y>"))
             ->commit();
 
     std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
@@ -2135,23 +2135,23 @@ TEST_F(ControllerTest, EdgeCaseGetDeltaMaterialized2) {
      * Test if DM is correct if we repeatedly add and remove the same triple.
      */
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<a>", "<a>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<a>", "<a>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
@@ -2214,23 +2214,23 @@ TEST_F(ControllerTest, EdgeCaseGetDeltaMaterialized3) {
      * and the triple *is not* present in the snapshot.
      */
     controller->new_patch_bulk()
-            ->addition(TripleString("<dummy>", "<dummy>", "<dummy>"))
+            ->addition(hdt::TripleString("<dummy>", "<dummy>", "<dummy>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<dummy2>", "<dummy2>", "<dummy2>"))
+            ->addition(hdt::TripleString("<dummy2>", "<dummy2>", "<dummy2>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<dummy3>", "<dummy3>", "<dummy3>"))
+            ->addition(hdt::TripleString("<dummy3>", "<dummy3>", "<dummy3>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<a>", "<a>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
@@ -2278,23 +2278,23 @@ TEST_F(ControllerTest, EdgeCaseGetDeltaMaterialized4) {
      * and the triple *is* present in the snapshot.
      */
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<dummy>", "<dummy>", "<dummy>"))
+            ->addition(hdt::TripleString("<dummy>", "<dummy>", "<dummy>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<a>", "<a>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<dummy2>", "<dummy2>", "<dummy2>"))
+            ->addition(hdt::TripleString("<dummy2>", "<dummy2>", "<dummy2>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
@@ -2343,15 +2343,15 @@ TEST_F(ControllerTest, EdgeCaseGetDeltaMaterialized5) {
      * and the triple *is not* present in the snapshot.
      */
     controller->new_patch_bulk()
-            ->addition(TripleString("<dummy>", "<dummy>", "<dummy>"))
+            ->addition(hdt::TripleString("<dummy>", "<dummy>", "<dummy>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<a>", "<a>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
@@ -2394,15 +2394,15 @@ TEST_F(ControllerTest, EdgeCaseGetDeltaMaterialized6) {
      * and the triple *is* present in the snapshot.
      */
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<a>", "<a>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
@@ -2442,9 +2442,9 @@ TEST_F(ControllerTest, EdgeCaseGetDeltaMaterialized6) {
 
 TEST_F(ControllerTest, GetVersionSnapshot) {
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<a>"))
-            ->addition(TripleString("<a>", "<a>", "<b>"))
-            ->addition(TripleString("<a>", "<a>", "<c>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<b>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<c>"))
             ->commit();
 
     std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
@@ -2603,17 +2603,17 @@ TEST_F(ControllerTest, GetVersionSnapshot) {
 
 TEST_F(ControllerTest, GetVersion) {
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<a>"))
-            ->addition(TripleString("<a>", "<a>", "<b>"))
-            ->addition(TripleString("<a>", "<a>", "<c>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<b>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<c>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<a>", "<b>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "<b>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<d>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<d>"))
             ->commit();
 
     std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
@@ -2841,23 +2841,23 @@ TEST_F(ControllerTest, GetVersion) {
 
 TEST_F(ControllerMSTest, GetVersionMS) {
     controller->new_patch_bulk()
-    ->addition(TripleString("<a>", "<a>", "<a>"))
-    ->addition(TripleString("<a>", "<a>", "<b>"))
-    ->addition(TripleString("<a>", "<a>", "<c>"))
+    ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
+    ->addition(hdt::TripleString("<a>", "<a>", "<b>"))
+    ->addition(hdt::TripleString("<a>", "<a>", "<c>"))
     ->commit();
 
     controller->new_patch_bulk()
-    ->deletion(TripleString("<a>", "<a>", "<b>"))
+    ->deletion(hdt::TripleString("<a>", "<a>", "<b>"))
     ->commit();
 
     controller->new_patch_bulk()
-    ->addition(TripleString("<a>", "<a>", "<d>"))
+    ->addition(hdt::TripleString("<a>", "<a>", "<d>"))
     ->commit();
 
     controller->new_patch_bulk()
-    ->addition(TripleString("<a>", "<b>", "<c>"))
-    ->addition(TripleString("<a>", "<b>", "<d>"))
-    ->deletion(TripleString("<a>", "<a>", "<a>"))
+    ->addition(hdt::TripleString("<a>", "<b>", "<c>"))
+    ->addition(hdt::TripleString("<a>", "<b>", "<d>"))
+    ->deletion(hdt::TripleString("<a>", "<a>", "<a>"))
     ->commit();
 
     // Expected version 0:

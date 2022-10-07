@@ -9,22 +9,22 @@
 
 class SnapshotPatchIteratorTripleID : public TripleIterator {
 private:
-    IteratorTripleID* snapshot_it;
+    hdt::IteratorTripleID* snapshot_it;
     PositionedTripleIterator* deletion_it;
     PatchTreeTripleIterator* addition_it;
     PatchTreeKeyComparator* spo_comparator;
 
     bool has_last_deleted_triple;
     PositionedTriple* last_deleted_triple;
-    std::shared_ptr<HDT> snapshot;
+    std::shared_ptr<hdt::HDT> snapshot;
     const Triple triple_pattern;
     std::shared_ptr<PatchTree> patchTree;
     int patch_id;
     int offset;
     PatchPosition deletion_count;
 public:
-    SnapshotPatchIteratorTripleID(IteratorTripleID* snapshot_it, PositionedTripleIterator* deletion_it,
-                                  PatchTreeKeyComparator* spo_comparator, std::shared_ptr<HDT> snapshot, const Triple& triple_pattern,
+    SnapshotPatchIteratorTripleID(hdt::IteratorTripleID* snapshot_it, PositionedTripleIterator* deletion_it,
+                                  PatchTreeKeyComparator* spo_comparator, std::shared_ptr<hdt::HDT> snapshot, const Triple& triple_pattern,
                                   std::shared_ptr<PatchTree> patchTree, int patch_id, int offset, PatchPosition deletion_count);
     ~SnapshotPatchIteratorTripleID();
     bool next(Triple* triple);

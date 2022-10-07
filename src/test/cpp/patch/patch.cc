@@ -249,18 +249,18 @@ TEST_F(PatchElementsTest, Positions) {
     // s z o -
 
     // Calculate positions
-    HashDB sp_;
-    HashDB s_o;
-    HashDB s__;
-    HashDB _po;
-    HashDB _p_;
-    HashDB __o;
-    sp_.open(".additions.sp_.tmp", HashDB::OWRITER | HashDB::OCREATE);
-    s_o.open(".additions.s_o.tmp", HashDB::OWRITER | HashDB::OCREATE);
-    s__.open(".additions.s__.tmp", HashDB::OWRITER | HashDB::OCREATE);
-    _po.open(".additions._po.tmp", HashDB::OWRITER | HashDB::OCREATE);
-    _p_.open(".additions._p_.tmp", HashDB::OWRITER | HashDB::OCREATE);
-    __o.open(".additions.__o.tmp", HashDB::OWRITER | HashDB::OCREATE);
+    kyotocabinet::HashDB sp_;
+    kyotocabinet::HashDB s_o;
+    kyotocabinet::HashDB s__;
+    kyotocabinet::HashDB _po;
+    kyotocabinet::HashDB _p_;
+    kyotocabinet::HashDB __o;
+    sp_.open(".additions.sp_.tmp", kyotocabinet::HashDB::OWRITER | kyotocabinet::HashDB::OCREATE);
+    s_o.open(".additions.s_o.tmp", kyotocabinet::HashDB::OWRITER | kyotocabinet::HashDB::OCREATE);
+    s__.open(".additions.s__.tmp", kyotocabinet::HashDB::OWRITER | kyotocabinet::HashDB::OCREATE);
+    _po.open(".additions._po.tmp", kyotocabinet::HashDB::OWRITER | kyotocabinet::HashDB::OCREATE);
+    _p_.open(".additions._p_.tmp", kyotocabinet::HashDB::OWRITER | kyotocabinet::HashDB::OCREATE);
+    __o.open(".additions.__o.tmp", kyotocabinet::HashDB::OWRITER | kyotocabinet::HashDB::OCREATE);
     PatchPosition ___ = 0;
 
     // Simulate patch-position calculation

@@ -5,7 +5,7 @@
 
 
 
-PatchTreeTripleVersionsIterator::PatchTreeTripleVersionsIterator(Triple triple_pattern, IteratorTripleID* snapshot_it, std::shared_ptr<PatchTree> patchTree, int first_version, std::shared_ptr<DictionaryManager> dictionary)
+PatchTreeTripleVersionsIterator::PatchTreeTripleVersionsIterator(Triple triple_pattern, hdt::IteratorTripleID* snapshot_it, std::shared_ptr<PatchTree> patchTree, int first_version, std::shared_ptr<DictionaryManager> dictionary)
         : triple_pattern(triple_pattern), snapshot_it(snapshot_it), patchTree(patchTree), addition_it(nullptr), first_version(first_version), dict(dictionary) {}
 
 PatchTreeTripleVersionsIterator::~PatchTreeTripleVersionsIterator() {
@@ -41,7 +41,7 @@ bool PatchTreeTripleVersionsIterator::next(TripleVersions* triple_versions) {
     triple_versions->set_dictionary(dict);
 
     if (snapshot_it != nullptr && snapshot_it->hasNext()) {
-        TripleID *tripleId = snapshot_it->next();
+        hdt::TripleID *tripleId = snapshot_it->next();
         Triple* currentTriple = triple_versions->get_triple();
         currentTriple->set_subject(tripleId->getSubject());
         currentTriple->set_predicate(tripleId->getPredicate());
@@ -92,7 +92,7 @@ PatchTreeTripleVersionsIterator* PatchTreeTripleVersionsIterator::offset(int off
 }
 
 
-TripleVersionsIteratorCombined::TripleVersionsIteratorCombined(TripleComponentOrder order) : comparator(TripleComparator::get_triple_comparator(order)), triples(*comparator) {}
+TripleVersionsIteratorCombined::TripleVersionsIteratorCombined(hdt::TripleComponentOrder order) : comparator(TripleComparator::get_triple_comparator(order)), triples(*comparator) {}
 
 bool TripleVersionsIteratorCombined::next(TripleVersions *triple_versions) {
     if (triples_it == triples.end())
@@ -155,7 +155,7 @@ void TripleVersionsIteratorCombined::add_iterator(TripleVersionsIterator *it) {
 
 TripleVersionsIteratorMerged::TripleVersionsIteratorMerged(TripleVersionsIterator *iterator1,
                                                            TripleVersionsIterator *iterator2,
-                                                           TripleComponentOrder triple_order): it1(iterator1), it2(iterator2), t1(new TripleVersions), t2(new TripleVersions) {
+                                                           hdt::TripleComponentOrder triple_order): it1(iterator1), it2(iterator2), t1(new TripleVersions), t2(new TripleVersions) {
     status1 = it1->next(t1);
     status2 = it2->next(t2);
     comparator = TripleComparator::get_triple_comparator(triple_order, t1->get_dictionary(), t2->get_dictionary());
@@ -246,7 +246,7 @@ TripleVersionsIteratorMerged *TripleVersionsIteratorMerged::offset(int offset) {
 
 
 SortedTripleVersionsIterator::SortedTripleVersionsIterator(TripleVersionsIterator *iterator,
-                                                           TripleComponentOrder order): comparator(TripleComparator::get_triple_comparator(order)), pos(0) {
+                                                           hdt::TripleComponentOrder order): comparator(TripleComparator::get_triple_comparator(order)), pos(0) {
     TripleVersions tv;
     while(iterator->next(&tv)) {
         auto t = new Triple(tv.get_triple()->get_subject(), tv.get_triple()->get_predicate(), tv.get_triple()->get_object());

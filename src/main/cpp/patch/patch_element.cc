@@ -32,6 +32,6 @@ const string PatchElement::to_string() const {
     return get_triple().to_string() + " (" + (is_addition() ? "+" : "-") + ")";
 }
 
-const string PatchElement::to_string(Dictionary& dict) const {
+const string PatchElement::to_string(hdt::Dictionary& dict) const {
     return get_triple().to_string(dict) + " (" + (is_addition() ? "+" : "-") + ")";
 }

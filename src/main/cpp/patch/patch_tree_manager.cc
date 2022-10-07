@@ -9,7 +9,7 @@ PatchTreeManager::PatchTreeManager(string basePath, int8_t kc_opts, bool readonl
 
 PatchTreeManager::~PatchTreeManager() = default;
 
-bool PatchTreeManager::append(PatchElementIterator* patch_it, int patch_id, std::shared_ptr<DictionaryManager> dict, bool check_uniqueness, ProgressListener* progressListener) {
+bool PatchTreeManager::append(PatchElementIterator* patch_it, int patch_id, std::shared_ptr<DictionaryManager> dict, bool check_uniqueness, hdt::ProgressListener* progressListener) {
     int patchtree_id = get_patch_tree_id(patch_id);
     std::shared_ptr<PatchTree> patchtree;
     if(patchtree_id < 0) {
@@ -26,7 +26,7 @@ bool PatchTreeManager::append(PatchElementIterator* patch_it, int patch_id, std:
 }
 
 bool PatchTreeManager::append(const PatchSorted &patch, int patch_id, std::shared_ptr<DictionaryManager> dict, bool check_uniqueness,
-                              ProgressListener *progressListener) {
+                              hdt::ProgressListener *progressListener) {
     PatchElementIteratorVector* it = new PatchElementIteratorVector(&patch.get_vector());
     bool ret = append(it, patch_id, dict, check_uniqueness, progressListener);
     delete it;

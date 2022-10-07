@@ -5,18 +5,16 @@
 #include "../patch/triple.h"
 #include <Triples.hpp>
 
-using namespace hdt;
-
-class VectorTripleIterator : public IteratorTripleString {
+class VectorTripleIterator : public hdt::IteratorTripleString {
 private:
     int pos;
-    std::vector<TripleString> triples;
+    std::vector<hdt::TripleString> triples;
 public:
-    VectorTripleIterator(std::vector<TripleString> triples);
+    VectorTripleIterator(std::vector<hdt::TripleString> triples);
     bool hasNext();
-    TripleString *next();
+    hdt::TripleString *next();
     bool hasPrevious();
-    TripleString *previous();
+    hdt::TripleString *previous();
     void goToStart();
 
 };

@@ -20,14 +20,14 @@ public:
 class PatchTreeTripleVersionsIterator: public TripleVersionsIterator {
 protected:
     Triple triple_pattern;
-    IteratorTripleID* snapshot_it;
+    hdt::IteratorTripleID* snapshot_it;
     std::shared_ptr<PatchTree> patchTree;
     PatchTreeIterator* addition_it;
     int first_version;
     inline void eraseDeletedVersions(std::vector<int>* versions, Triple* currentTriple, int initial_version);
     std::shared_ptr<DictionaryManager> dict;
 public:
-    PatchTreeTripleVersionsIterator(Triple triple_pattern, IteratorTripleID* snapshot_it, std::shared_ptr<PatchTree> patchTree, int first_version = 0, std::shared_ptr<DictionaryManager> dictionary = nullptr);
+    PatchTreeTripleVersionsIterator(Triple triple_pattern, hdt::IteratorTripleID* snapshot_it, std::shared_ptr<PatchTree> patchTree, int first_version = 0, std::shared_ptr<DictionaryManager> dictionary = nullptr);
     ~PatchTreeTripleVersionsIterator() override;
     bool next(TripleVersions* triple_versions) override;
     size_t get_count() override;
@@ -42,7 +42,7 @@ private:
     std::set<TripleVersions*, TripleComparator>::iterator triples_it;
 
 public:
-    explicit TripleVersionsIteratorCombined(TripleComponentOrder order);
+    explicit TripleVersionsIteratorCombined(hdt::TripleComponentOrder order);
     ~TripleVersionsIteratorCombined() override;
     /**
      * Add an iterator
@@ -68,7 +68,7 @@ private:
     TripleComparator* comparator;
 
 public:
-    TripleVersionsIteratorMerged(TripleVersionsIterator* iterator1, TripleVersionsIterator* iterator2, TripleComponentOrder triple_order);
+    TripleVersionsIteratorMerged(TripleVersionsIterator* iterator1, TripleVersionsIterator* iterator2, hdt::TripleComponentOrder triple_order);
     ~TripleVersionsIteratorMerged() override;
     bool next(TripleVersions* triple_versions) override;
     size_t get_count() override;
@@ -82,7 +82,7 @@ private:
     std::vector<TripleVersions*> triples;
     size_t pos;
 public:
-    SortedTripleVersionsIterator(TripleVersionsIterator* iterator, TripleComponentOrder order);
+    SortedTripleVersionsIterator(TripleVersionsIterator* iterator, hdt::TripleComponentOrder order);
     ~SortedTripleVersionsIterator() override;
     bool next(TripleVersions* triple_versions) override;
     size_t get_count() override;

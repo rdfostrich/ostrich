@@ -29,7 +29,7 @@ private:
 public:
     int compare(const Triple& triple1, const Triple& triple2) const;
     int compare(const Triple& triple1, const Triple& triple2, std::shared_ptr<DictionaryManager> dict_1, std::shared_ptr<DictionaryManager> dict_2) const;
-    int compare(const TripleID& triple1, const TripleID& triple2, std::shared_ptr<DictionaryManager> dict_1, std::shared_ptr<DictionaryManager> dict_2) const;
+    int compare(const hdt::TripleID& triple1, const hdt::TripleID& triple2, std::shared_ptr<DictionaryManager> dict_1, std::shared_ptr<DictionaryManager> dict_2) const;
     int compare(const TripleDelta* triple1, const TripleDelta* triple2) const;
 
     bool operator()(const Triple& triple1, const Triple& triple2) const;
@@ -39,7 +39,7 @@ public:
     void set_dictionary1(std::shared_ptr<DictionaryManager> dict);
     void set_dictionary2(std::shared_ptr<DictionaryManager> dict);
 
-    static TripleComparator* get_triple_comparator(TripleComponentOrder order, std::shared_ptr<DictionaryManager> dict1 = nullptr, std::shared_ptr<DictionaryManager> dict2 = nullptr);
+    static TripleComparator* get_triple_comparator(hdt::TripleComponentOrder order, std::shared_ptr<DictionaryManager> dict1 = nullptr, std::shared_ptr<DictionaryManager> dict2 = nullptr);
 };
 
 

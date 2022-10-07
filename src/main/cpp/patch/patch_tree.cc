@@ -5,8 +5,6 @@
 #include "patch_tree.h"
 #include "../simpleprogresslistener.h"
 
-using namespace std;
-using namespace kyotocabinet;
 
 PatchTree::PatchTree(string basePath, int min_patch_id, std::shared_ptr<DictionaryManager> dict, int8_t kc_opts, bool readonly)
         : metadata_filename(basePath + METADATA_FILENAME_BASE(min_patch_id)), min_patch_id(min_patch_id), max_patch_id(min_patch_id), readonly(readonly) {
@@ -21,12 +19,12 @@ PatchTree::PatchTree(string basePath, int min_patch_id, std::shared_ptr<Dictiona
         std::remove(".additions._p_.tmp");
         std::remove(".additions.__o.tmp");
 
-        sp_.open(".additions.sp_.tmp", HashDB::OWRITER | HashDB::OCREATE);
-        s_o.open(".additions.s_o.tmp", HashDB::OWRITER | HashDB::OCREATE);
-        s__.open(".additions.s__.tmp", HashDB::OWRITER | HashDB::OCREATE);
-        _po.open(".additions._po.tmp", HashDB::OWRITER | HashDB::OCREATE);
-        _p_.open(".additions._p_.tmp", HashDB::OWRITER | HashDB::OCREATE);
-        __o.open(".additions.__o.tmp", HashDB::OWRITER | HashDB::OCREATE);
+        sp_.open(".additions.sp_.tmp", kyotocabinet::HashDB::OWRITER | kyotocabinet::HashDB::OCREATE);
+        s_o.open(".additions.s_o.tmp", kyotocabinet::HashDB::OWRITER | kyotocabinet::HashDB::OCREATE);
+        s__.open(".additions.s__.tmp", kyotocabinet::HashDB::OWRITER | kyotocabinet::HashDB::OCREATE);
+        _po.open(".additions._po.tmp", kyotocabinet::HashDB::OWRITER | kyotocabinet::HashDB::OCREATE);
+        _p_.open(".additions._p_.tmp", kyotocabinet::HashDB::OWRITER | kyotocabinet::HashDB::OCREATE);
+        __o.open(".additions.__o.tmp", kyotocabinet::HashDB::OWRITER | kyotocabinet::HashDB::OCREATE);
     }
 };
 
@@ -102,7 +100,7 @@ inline bool a_lt_d(PINS_COMP_PARAMS_DEF) { return !have_additions_ended && (have
  * --- END OF COMPARISON MACROS  ---
  */
 
-void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, ProgressListener *progressListener) {
+void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, hdt::ProgressListener *progressListener) {
     if (readonly) {
         throw std::invalid_argument("Can not append in read-only mode");
     }
@@ -129,8 +127,8 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, Prog
     // Loop over SPO deletion and addition trees
     // We do this together to be able to efficiently determine the local change flags
     NOTIFYMSG(progressListener, "Inserting into deletion and addition trees...\n");
-    DB::Cursor* cursor_deletions = tripleStore->getDefaultDeletionsTree()->cursor();
-    DB::Cursor* cursor_additions = tripleStore->getDefaultAdditionsTree()->cursor();
+    kyotocabinet::DB::Cursor* cursor_deletions = tripleStore->getDefaultDeletionsTree()->cursor();
+    kyotocabinet::DB::Cursor* cursor_additions = tripleStore->getDefaultAdditionsTree()->cursor();
 
     cursor_deletions->jump();
     cursor_additions->jump();
@@ -461,7 +459,7 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, Prog
     //delete patch_it;
 }
 
-bool PatchTree::append(PatchElementIterator* patch_it, int patch_id, ProgressListener* progressListener) {
+bool PatchTree::append(PatchElementIterator* patch_it, int patch_id, hdt::ProgressListener* progressListener) {
     PatchElement element(Triple(0, 0, 0), true);
     // TODO: we can probably remove this, this shouldn't be a real problem. We should just crash when this occurs
     while (patch_it->next(&element)) {
@@ -475,7 +473,7 @@ bool PatchTree::append(PatchElementIterator* patch_it, int patch_id, ProgressLis
     return true;
 }
 
-bool PatchTree::append(const PatchSorted& patch, int patch_id, ProgressListener* progressListener) {
+bool PatchTree::append(const PatchSorted& patch, int patch_id, hdt::ProgressListener* progressListener) {
     PatchElementIteratorVector* it = new PatchElementIteratorVector(&patch.get_vector());
     bool ret = append(it, patch_id, progressListener);
     delete it;
@@ -570,8 +568,8 @@ PatchSorted* PatchTree::reconstruct_patch(int patch_id, bool ignore_local_change
 }
 
 PatchTreeIterator PatchTree::iterator(PatchTreeKey* key) const {
-    DB::Cursor* cursor_deletions = tripleStore->getDefaultDeletionsTree()->cursor();
-    DB::Cursor* cursor_additions = tripleStore->getDefaultAdditionsTree()->cursor();
+    kyotocabinet::DB::Cursor* cursor_deletions = tripleStore->getDefaultDeletionsTree()->cursor();
+    kyotocabinet::DB::Cursor* cursor_additions = tripleStore->getDefaultAdditionsTree()->cursor();
     size_t size;
     const char* data = key->serialize(&size);
     cursor_deletions->jump(data, size);
@@ -582,8 +580,8 @@ PatchTreeIterator PatchTree::iterator(PatchTreeKey* key) const {
 }
 
 PatchTreeIterator PatchTree::iterator(int patch_id, bool exact) const {
-    DB::Cursor* cursor_deletions = tripleStore->getDefaultDeletionsTree()->cursor();
-    DB::Cursor* cursor_additions = tripleStore->getDefaultAdditionsTree()->cursor();
+    kyotocabinet::DB::Cursor* cursor_deletions = tripleStore->getDefaultDeletionsTree()->cursor();
+    kyotocabinet::DB::Cursor* cursor_additions = tripleStore->getDefaultAdditionsTree()->cursor();
     cursor_deletions->jump();
     cursor_additions->jump();
     PatchTreeIterator patchTreeIterator(cursor_deletions, cursor_additions, get_spo_comparator());
@@ -592,8 +590,8 @@ PatchTreeIterator PatchTree::iterator(int patch_id, bool exact) const {
 }
 
 PatchTreeIterator PatchTree::iterator(PatchTreeKey *key, int patch_id, bool exact) const {
-    DB::Cursor* cursor_deletions = tripleStore->getDefaultDeletionsTree()->cursor();
-    DB::Cursor* cursor_additions = tripleStore->getDefaultAdditionsTree()->cursor();
+    kyotocabinet::DB::Cursor* cursor_deletions = tripleStore->getDefaultDeletionsTree()->cursor();
+    kyotocabinet::DB::Cursor* cursor_additions = tripleStore->getDefaultAdditionsTree()->cursor();
     size_t size;
     const char* data = key->serialize(&size);
     cursor_deletions->jump(data, size);
@@ -606,8 +604,8 @@ PatchTreeIterator PatchTree::iterator(PatchTreeKey *key, int patch_id, bool exac
 
 template <class DV>
 PatchTreeIteratorBase<DV>* PatchTree::iterator(const Triple *triple_pattern) const {
-    DB::Cursor* cursor_deletions = tripleStore->getDeletionsTree(*triple_pattern)->cursor();
-    DB::Cursor* cursor_additions = tripleStore->getAdditionsTree(*triple_pattern)->cursor();
+    kyotocabinet::DB::Cursor* cursor_deletions = tripleStore->getDeletionsTree(*triple_pattern)->cursor();
+    kyotocabinet::DB::Cursor* cursor_additions = tripleStore->getAdditionsTree(*triple_pattern)->cursor();
     size_t size;
     const char* data = triple_pattern->serialize(&size);
     cursor_deletions->jump(data, size);
@@ -626,7 +624,7 @@ std::pair<DV*, Triple> PatchTree::last_deletion_value(const Triple &triple_patte
             triple_pattern.get_predicate() == 0 ? max_id : triple_pattern.get_predicate(),
             triple_pattern.get_object() == 0 ? max_id : triple_pattern.get_object()
     );
-    DB::Cursor* cursor_deletions = tripleStore->getDeletionsTree(triple_pattern)->cursor();
+    kyotocabinet::DB::Cursor* cursor_deletions = tripleStore->getDeletionsTree(triple_pattern)->cursor();
 
     // Try jumping backwards to the position where the triple_pattern matches
     size_t size;
@@ -689,7 +687,7 @@ std::pair<PatchPosition, Triple> PatchTree::deletion_count(const Triple &triple_
 }
 
 PositionedTripleIterator* PatchTree::deletion_iterator_from(const Triple& offset, int patch_id, const Triple& triple_pattern) const {
-    DB::Cursor* cursor_deletions = tripleStore->getDefaultDeletionsTree()->cursor();
+    kyotocabinet::DB::Cursor* cursor_deletions = tripleStore->getDefaultDeletionsTree()->cursor();
     size_t size;
     const char* data = offset.serialize(&size);
     cursor_deletions->jump(data, size);
@@ -724,7 +722,7 @@ template <class DV>
 PatchTreeDeletionValueBase<DV>* PatchTree::get_deletion_value_after(const Triple& triple_pattern) const {
     size_t ksp, vsp;
     const char *kbp = triple_pattern.serialize(&ksp);
-    DB::Cursor* cursor = tripleStore->getDeletionsTree(triple_pattern)->cursor();
+    kyotocabinet::DB::Cursor* cursor = tripleStore->getDeletionsTree(triple_pattern)->cursor();
     if (!cursor->jump(kbp, ksp)) {
         free((char*) kbp);
         return nullptr;
@@ -776,7 +774,7 @@ PatchPositions PatchTree::get_deletion_patch_positions(const Triple& triple, int
 }
 
 PatchTreeTripleIterator* PatchTree::addition_iterator_from(long offset, int patch_id, const Triple& triple_pattern) const {
-    DB::Cursor* cursor = tripleStore->getAdditionsTree(triple_pattern)->cursor();
+    kyotocabinet::DB::Cursor* cursor = tripleStore->getAdditionsTree(triple_pattern)->cursor();
     size_t size;
     const char* data = triple_pattern.serialize(&size);
     cursor->jump(data, size);
@@ -806,7 +804,7 @@ PatchTreeTripleIterator* PatchTree::addition_iterator_from(long offset, int patc
 }
 
 PatchTreeIterator* PatchTree::addition_iterator(const Triple &triple_pattern) const {
-    DB::Cursor* cursor = tripleStore->getAdditionsTree(triple_pattern)->cursor();
+    kyotocabinet::DB::Cursor* cursor = tripleStore->getAdditionsTree(triple_pattern)->cursor();
     size_t size;
     const char* data = triple_pattern.serialize(&size);
     cursor->jump(data, size);

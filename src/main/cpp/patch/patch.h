@@ -69,7 +69,7 @@ public:
      * @param dict The dictionary to decode from
      * @return The string representation of this patch.
      */
-    string to_string(Dictionary& dict) const;
+    string to_string(hdt::Dictionary& dict) const;
     virtual PatchIterator* iterator() const = 0;
     /**
      * Find the DELETION positions of the given element in this patch based on the pattern-based caches.
@@ -78,12 +78,12 @@ public:
      * @return The relative positions for all derived triple patterns.
      */
     static PatchPositions positions(const Triple& element,
-                                    HashDB& sp_,
-                                    HashDB& s_o,
-                                    HashDB& s__,
-                                    HashDB& _po,
-                                    HashDB& _p_,
-                                    HashDB& __o,
+                                    kyotocabinet::HashDB& sp_,
+                                    kyotocabinet::HashDB& s_o,
+                                    kyotocabinet::HashDB& s__,
+                                    kyotocabinet::HashDB& _po,
+                                    kyotocabinet::HashDB& _p_,
+                                    kyotocabinet::HashDB& __o,
                                     PatchPosition& ___);
 };
 

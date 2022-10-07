@@ -25,7 +25,7 @@ string Patch::to_string() const {
     return ret;
 }
 
-string Patch::to_string(Dictionary& dict) const {
+string Patch::to_string(hdt::Dictionary& dict) const {
     string ret;
     PatchIterator* it = iterator();
     while (it->has_next()) {
@@ -93,7 +93,7 @@ PatchIterator* PatchSorted::iterator() const {
     return new PatchIteratorVector(elements.cbegin(), elements.cend());
 }
 
-inline PatchPosition contains_and_increment_position(HashDB& m, size_t hash) {
+inline PatchPosition contains_and_increment_position(kyotocabinet::HashDB& m, size_t hash) {
     size_t _;
     char raw_key[sizeof(long)];
     char* raw_value;
@@ -121,12 +121,12 @@ inline PatchPosition contains_and_increment_position(HashDB& m, size_t hash) {
 }
 
 PatchPositions Patch::positions(const Triple& triple,
-                                HashDB& sp_,
-                                HashDB& s_o,
-                                HashDB& s__,
-                                HashDB& _po,
-                                HashDB& _p_,
-                                HashDB& __o,
+                                kyotocabinet::HashDB& sp_,
+                                kyotocabinet::HashDB& s_o,
+                                kyotocabinet::HashDB& s__,
+                                kyotocabinet::HashDB& _po,
+                                kyotocabinet::HashDB& _p_,
+                                kyotocabinet::HashDB& __o,
                                 PatchPosition& ___) {
     PatchPositions positions = PatchPositions();
     size_t hsp_ = triple.get_subject() | (triple.get_predicate() << 16);

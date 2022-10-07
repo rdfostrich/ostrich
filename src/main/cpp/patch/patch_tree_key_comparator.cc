@@ -42,7 +42,7 @@ comp comp_s = [] (const PatchTreeKey& e1, const PatchTreeKey& e2, DictionaryMana
     if (e2.get_subject() == max_id || e1.get_subject() == 0) return -1;
     // If MSB is not set, id is HDT
     if (!(e1.get_subject() & bitmask) && !(e2.get_subject() & bitmask)) {
-        return dict.compareComponent(e1.get_subject(), e2.get_subject(), SUBJECT);
+        return dict.compareComponent(e1.get_subject(), e2.get_subject(), hdt::SUBJECT);
     }
     //Else, translate to string and compare
     return e1.get_subject(dict).compare(e2.get_subject(dict));
@@ -55,7 +55,7 @@ comp comp_p = [] (const PatchTreeKey& e1, const PatchTreeKey& e2, DictionaryMana
     if (e2.get_predicate() == max_id || e1.get_predicate() == 0) return -1;
     // If MSB is not set, id is HDT
     if (!(e1.get_predicate() & bitmask) && !(e2.get_predicate() & bitmask)) {
-        return dict.compareComponent(e1.get_predicate(), e2.get_predicate(), PREDICATE);
+        return dict.compareComponent(e1.get_predicate(), e2.get_predicate(), hdt::PREDICATE);
     }
     //Else, translate to string and compare
     return e1.get_predicate(dict).compare(e2.get_predicate(dict));
@@ -68,7 +68,7 @@ comp comp_o = [] (const PatchTreeKey& e1, const PatchTreeKey& e2, DictionaryMana
     if (e2.get_object() == max_id || e1.get_object() == 0) return -1;
     // If MSB is not set, id is HDT
     if (!(e1.get_object() & bitmask) && !(e2.get_object() & bitmask)) {
-        return dict.compareComponent(e1.get_object(), e2.get_object(), OBJECT);
+        return dict.compareComponent(e1.get_object(), e2.get_object(), hdt::OBJECT);
     }
     //Else, translate to string and compare
     return e1.get_object(dict).compare(e2.get_object(dict));
