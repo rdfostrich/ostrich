@@ -245,13 +245,14 @@ hdt::IteratorUInt* DictionaryManager::getIDSuggestions(const char *prefix, hdt::
     return nullptr;
 }
 
-int DictionaryManager::compareComponent(size_t componentId1, size_t componentId2,
-                                        hdt::TripleComponentRole role) {
-    size_t sharedCount = hdtDict->getNshared();
-    bool shared1 = componentId1 > sharedCount;
-    bool shared2 = componentId2 > sharedCount;
-    if (shared1 == shared2) {
-        return static_cast<int>(componentId1 - componentId2);
+int DictionaryManager::compareComponent(size_t componentId1, size_t componentId2, hdt::TripleComponentRole role) {
+    if (!(componentId1 & bitmask) && !(componentId2 & bitmask)) {
+        size_t sharedCount = hdtDict->getNshared();
+        bool shared1 = componentId1 > sharedCount;
+        bool shared2 = componentId2 > sharedCount;
+        if (shared1 == shared2) {
+            return static_cast<int>(componentId1 - componentId2);
+        }
     }
     return idToString(componentId1, role).compare(idToString(componentId2, role));
 }

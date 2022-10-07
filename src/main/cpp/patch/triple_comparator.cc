@@ -1,7 +1,5 @@
 #include "triple_comparator.h"
 
-constexpr size_t bitmask = 1ULL << (8 * sizeof(size_t) - 1);
-
 
 triplecomp subject_comparator = [] (const Triple& t1, const Triple& t2, std::shared_ptr<DictionaryManager> dict1, std::shared_ptr<DictionaryManager> dict2) {
     size_t max_id = (size_t) -1;
@@ -10,10 +8,7 @@ triplecomp subject_comparator = [] (const Triple& t1, const Triple& t2, std::sha
     if (t2.get_subject() == max_id || t1.get_subject() == 0) return -1;
     // the triples are using the same dictionary
     if (dict1 == dict2) {
-        // If MSB is not set, id is HDT
-        if (!(t1.get_subject() & bitmask) && !(t2.get_subject() & bitmask)) {
-            return dict1->compareComponent(t1.get_subject(), t2.get_subject(), hdt::SUBJECT);
-        }
+        return dict1->compareComponent(t1.get_subject(), t2.get_subject(), hdt::SUBJECT);
     }
     //Else, translate to string and compare
     return t1.get_subject(*dict1).compare(t2.get_subject(*dict2));
@@ -25,10 +20,7 @@ triplecomp predicate_comparator = [] (const Triple& t1, const Triple& t2, std::s
     if (t1.get_predicate() == max_id || t2.get_predicate() == 0) return 1;
     if (t2.get_predicate() == max_id || t1.get_predicate() == 0) return -1;
     if (dict1 == dict2) {
-        // If MSB is not set, id is HDT
-        if (!(t1.get_predicate() & bitmask) && !(t2.get_predicate() & bitmask)) {
-            return dict1->compareComponent(t1.get_predicate(), t2.get_predicate(), hdt::PREDICATE);
-        }
+        return dict1->compareComponent(t1.get_predicate(), t2.get_predicate(), hdt::PREDICATE);
     }
     //Else, translate to string and compare
     return t1.get_predicate(*dict1).compare(t2.get_predicate(*dict2));
@@ -40,10 +32,7 @@ triplecomp object_comparator = [] (const Triple& t1, const Triple& t2, std::shar
     if (t1.get_object() == max_id || t2.get_object() == 0) return 1;
     if (t2.get_object() == max_id || t1.get_object() == 0) return -1;
     if (dict1 == dict2) {
-        // If MSB is not set, id is HDT
-        if (!(t1.get_object() & bitmask) && !(t2.get_object() & bitmask)) {
-            return dict1->compareComponent(t1.get_object(), t2.get_object(), hdt::OBJECT);
-        }
+        return dict1->compareComponent(t1.get_object(), t2.get_object(), hdt::OBJECT);
     }
     //Else, translate to string and compare
     return t1.get_object(*dict1).compare(t2.get_object(*dict2));
