@@ -2,11 +2,11 @@
 
 
 triplecomp subject_comparator = [] (const Triple& t1, const Triple& t2, std::shared_ptr<DictionaryManager> dict1, std::shared_ptr<DictionaryManager> dict2) {
-    size_t max_id = (size_t) -1;
+    size_t max_id = std::numeric_limits<size_t>::max();
     if (dict1 == nullptr || dict2 == nullptr) return (int32_t)(t1.get_subject() - t2.get_subject());
     if (t1.get_subject() == max_id || t2.get_subject() == 0) return 1;
     if (t2.get_subject() == max_id || t1.get_subject() == 0) return -1;
-    // the triples are using the same dictionary
+    // The triples are using the same dictionary
     if (dict1 == dict2) {
         return dict1->compareComponent(t1.get_subject(), t2.get_subject(), hdt::SUBJECT);
     }
@@ -15,10 +15,11 @@ triplecomp subject_comparator = [] (const Triple& t1, const Triple& t2, std::sha
 };
 
 triplecomp predicate_comparator = [] (const Triple& t1, const Triple& t2, std::shared_ptr<DictionaryManager> dict1, std::shared_ptr<DictionaryManager> dict2) {
-    size_t max_id = (size_t) -1;
+    size_t max_id = std::numeric_limits<size_t>::max();
     if (dict1 == nullptr || dict2 == nullptr) return (int32_t)(t1.get_predicate() - t2.get_predicate());
     if (t1.get_predicate() == max_id || t2.get_predicate() == 0) return 1;
     if (t2.get_predicate() == max_id || t1.get_predicate() == 0) return -1;
+    // The triples are using the same dictionary
     if (dict1 == dict2) {
         return dict1->compareComponent(t1.get_predicate(), t2.get_predicate(), hdt::PREDICATE);
     }
@@ -27,10 +28,11 @@ triplecomp predicate_comparator = [] (const Triple& t1, const Triple& t2, std::s
 };
 
 triplecomp object_comparator = [] (const Triple& t1, const Triple& t2, std::shared_ptr<DictionaryManager> dict1, std::shared_ptr<DictionaryManager> dict2) {
-    size_t max_id = (size_t) -1;
+    size_t max_id = std::numeric_limits<size_t>::max();
     if (dict1 == nullptr || dict2 == nullptr) return (int32_t)(t1.get_object() - t2.get_object());
     if (t1.get_object() == max_id || t2.get_object() == 0) return 1;
     if (t2.get_object() == max_id || t1.get_object() == 0) return -1;
+    // The triples are using the same dictionary
     if (dict1 == dict2) {
         return dict1->compareComponent(t1.get_object(), t2.get_object(), hdt::OBJECT);
     }
