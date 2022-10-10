@@ -81,9 +81,10 @@ public:
      * @param hdt A hdt file
      * @param triple_pattern A triple pattern
      * @param offset The offset the iterator should start from.
+     * @param dict optional dict to help translating triple_pattern to HDT with correct ID (i.e. use max ID when unknown by HDT)
      * @return the iterator.
      */
-    static hdt::IteratorTripleID* search_with_offset(std::shared_ptr<hdt::HDT> hdt, const Triple& triple_pattern, long offset);
+    static hdt::IteratorTripleID* search_with_offset(std::shared_ptr<hdt::HDT> hdt, const Triple& triple_pattern, long offset, std::shared_ptr<DictionaryManager> dict = nullptr);
 
     /**
      * @return The DictionaryManager file for the given snapshot id.

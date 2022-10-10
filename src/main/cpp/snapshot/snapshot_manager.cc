@@ -118,8 +118,14 @@ std::vector<int> SnapshotManager::get_snapshots_ids() const {
     return ids;
 }
 
-hdt::IteratorTripleID* SnapshotManager::search_with_offset(std::shared_ptr<hdt::HDT> hdt, const Triple& triple_pattern, long offset) {
-    hdt::TripleID tripleId(triple_pattern.get_subject(), triple_pattern.get_predicate(), triple_pattern.get_object());
+hdt::IteratorTripleID* SnapshotManager::search_with_offset(std::shared_ptr<hdt::HDT> hdt, const Triple& triple_pattern, long offset, std::shared_ptr<DictionaryManager> dict) {
+    size_t subject = triple_pattern.get_subject();
+    size_t predicate = triple_pattern.get_predicate();
+    size_t object = triple_pattern.get_object();
+    if (dict != nullptr) {
+        // TODO: check HDT IDs bound and fix pattern accordingly
+    }
+    hdt::TripleID tripleId(subject, predicate, object);
 
     try {
         hdt::IteratorTripleID* it = hdt->getTriples()->search(tripleId);
