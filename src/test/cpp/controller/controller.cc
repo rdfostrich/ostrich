@@ -66,6 +66,28 @@ protected:
     }
 };
 
+class ControllerMSTest2 : public ::testing::Test {
+protected:
+    Controller* controller;
+    SnapshotCreationStrategy* strategy;
+
+    ControllerMSTest2() {
+        // Patch every 2 versions
+        // 0 (snapshot), 1 (patch), 2 (patch), 3 (snapshot), 4 (patch), ...
+        strategy = new CreateSnapshotEveryN(3);
+        controller = new Controller(TESTPATH, strategy);
+    }
+
+    virtual void SetUp() {
+
+    }
+
+    virtual void TearDown() {
+        Controller::cleanup(TESTPATH, controller);
+        clean_meta_files();
+    }
+};
+
 TEST_F(ControllerTest, GetEdge) {
     Triple t;
 
@@ -2053,6 +2075,114 @@ TEST_F(ControllerMSTest, EdgeCaseGetDeltaMaterializedMS) {
     // TODO: test between 0 and 3
     // TODO: test between 0 and 2
 }
+
+
+TEST_F(ControllerMSTest2, EdgeCaseGetDeltaMaterializedMS2) {
+    // Snapshot 0
+    // <a> <a> <a>
+    // <a> <a> <b>
+    controller->new_patch_bulk()
+            ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<b>"))
+            ->commit();
+
+    // Patch 1
+    // <a> <a> <a>
+    // <a> <a> <b>
+    // <a> <a> <c>
+    controller->new_patch_bulk()
+            ->addition(hdt::TripleString("<a>", "<a>", "<c>"))
+            ->commit();
+
+    // Patch 2
+    // <a> <a> <a>
+    // <a> <a> <b>
+    // <a> <a> <c>
+    // <a> <a> <d>
+    controller->new_patch_bulk()
+            ->addition(hdt::TripleString("<a>", "<a>", "<d>"))
+            ->commit();
+
+    // Snapshot 3
+    // <a> <a> <a>
+    // <a> <a> <c>
+    // <a> <a> <d>
+    // <a> <a> <e>
+    controller->new_patch_bulk()
+            ->deletion(hdt::TripleString("<a>", "<a>", "<b>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<e>"))
+            ->commit();
+
+    // Patch 4
+    // <a> <a> <a>
+    // <a> <a> <b>
+    // <a> <a> <c>
+    // <a> <a> <d>
+    controller->new_patch_bulk()
+            ->addition(hdt::TripleString("<a>", "<a>", "<b>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "<e>"))
+            ->commit();
+
+    // Patch 5
+    // <a> <a> <a>
+    // <a> <a> <c>
+    // <a> <a> <d>
+    // <a> <a> <e>
+    controller->new_patch_bulk()
+            ->deletion(hdt::TripleString("<a>", "<a>", "<b>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<e>"))
+            ->commit();
+
+    TripleDelta t;
+
+    // Expected delta 0 -> 5
+    // - <a> <a> <b>
+    // + <a> <a> <c>
+    // + <a> <a> <d>
+    // + <a> <a> <e>
+    ASSERT_EQ(4, controller->get_delta_materialized_count(StringTriple("", "", ""), 0, 5, false).first) << "Count is incorrect";
+    TripleDeltaIterator* it0 = controller->get_delta_materialized(StringTriple("", "", ""), 0, 0, 5);
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <b>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(false, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <c>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <d>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <e>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(false, it0->next(&t)) << "Iterator should be finished";
+
+    // Expected delta 1 -> 5
+    // - <a> <a> <b>
+    // + <a> <a> <d>
+    // + <a> <a> <e>
+    ASSERT_EQ(3, controller->get_delta_materialized_count(StringTriple("", "", ""), 1, 5, false).first) << "Count is incorrect";
+    TripleDeltaIterator* it1 = controller->get_delta_materialized(StringTriple("", "", ""), 0, 1, 5);
+
+    ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <b>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(false, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <d>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <e>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(false, it1->next(&t)) << "Iterator should be finished";
+}
+
 
 TEST_F(ControllerTest, EdgeCaseGetDeltaMaterialized1) {
     /*
