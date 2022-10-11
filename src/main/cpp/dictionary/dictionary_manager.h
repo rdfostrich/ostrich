@@ -18,7 +18,6 @@ class DictionaryManager : public hdt::ModifiableDictionary {
     Dictionary *hdtDict;             // Dictionary from HDT file
     hdt::PlainDictionary *patchDict; // Additional dictionary
 
-//    const size_t bitmask;
     const size_t maxHdtId;
     int snapshotId;
     bool readonly;
