@@ -25,9 +25,9 @@ class DictionaryManager : public hdt::ModifiableDictionary {
 
     std::mutex action_mutex;
 public:
-    DictionaryManager(string basePath, int snapshotId, Dictionary *hdtDict, hdt::PlainDictionary *patchDict, bool readonly = false);
-    DictionaryManager(string basePath, int snapshotId, Dictionary *hdtDict, bool readonly = false);
-    DictionaryManager(string basePath, int snapshotId, bool readonly = false);
+    DictionaryManager(std::string basePath, int snapshotId, Dictionary *hdtDict, hdt::PlainDictionary *patchDict, bool readonly = false);
+    DictionaryManager(std::string basePath, int snapshotId, Dictionary *hdtDict, bool readonly = false);
+    DictionaryManager(std::string basePath, int snapshotId, bool readonly = false);
     ~DictionaryManager() override;
 
     /**
@@ -60,7 +60,7 @@ public:
     /**
      * Removes all the files that were created by the dictionary manager of the given id.
      */
-    static void cleanup(string basePath, int snapshotId);
+    static void cleanup(std::string basePath, int snapshotId);
 
     /**
      * @param componentId1 The first id
