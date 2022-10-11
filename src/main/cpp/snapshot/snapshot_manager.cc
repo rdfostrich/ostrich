@@ -123,7 +123,14 @@ hdt::IteratorTripleID* SnapshotManager::search_with_offset(std::shared_ptr<hdt::
     size_t predicate = triple_pattern.get_predicate();
     size_t object = triple_pattern.get_object();
     if (dict != nullptr) {
-        // TODO: check HDT IDs bound and fix pattern accordingly
+        // Searching with IDs close to the max ID stored in HDT (i.e. ID + 1) can confuse some HDT iterators
+        // Those iterators will then return 'true' to has_next() and then crash on next() because they reach their limits
+        // So we work around by setting the max for ID not in HDT, which makes the iterators properly reply to has_next()
+        // That way we shouldn't have to catch exceptions everywhere because HDT is crashing
+        size_t max = std::numeric_limits<size_t>::max();
+        subject = subject > dict->getMaxHdtId() ? max : subject;
+        predicate = predicate > dict->getMaxHdtId() ? max : predicate;
+        object = object > dict->getMaxHdtId() ? max : object;
     }
     hdt::TripleID tripleId(subject, predicate, object);
 

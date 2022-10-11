@@ -18,7 +18,8 @@ class DictionaryManager : public hdt::ModifiableDictionary {
     Dictionary *hdtDict;             // Dictionary from HDT file
     hdt::PlainDictionary *patchDict; // Additional dictionary
 
-    const size_t bitmask;
+//    const size_t bitmask;
+    const size_t maxHdtId;
     int snapshotId;
     bool readonly;
 
@@ -68,6 +69,8 @@ public:
      * @return The comparisson
      */
     int compareComponent(size_t componentId1, size_t componentId2, hdt::TripleComponentRole role);
+
+    size_t getMaxHdtId() const;
 
     /**
     * Proxied methods

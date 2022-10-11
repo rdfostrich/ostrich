@@ -12,22 +12,22 @@
 #include "dictionary_manager.h"
 
 
-constexpr size_t bitmask_value = 1ULL << (8 * sizeof(size_t) - 1);
+//constexpr size_t bitmask_value = 1ULL << (8 * sizeof(size_t) - 1);
 
 DictionaryManager::DictionaryManager(string basePath, int snapshotId, Dictionary *hdtDict, hdt::PlainDictionary *patchDict, bool readonly)
-        : basePath(std::move(basePath)), snapshotId(snapshotId), hdtDict(hdtDict), patchDict(patchDict), bitmask(bitmask_value), readonly(readonly) {
+        : basePath(std::move(basePath)), snapshotId(snapshotId), hdtDict(hdtDict), patchDict(patchDict), maxHdtId(hdtDict->getMaxID()), readonly(readonly) {
     load();
 };
 
 DictionaryManager::DictionaryManager(string basePath, int snapshotId, Dictionary *hdtDict, bool readonly)
-        : basePath(std::move(basePath)), snapshotId(snapshotId), hdtDict(hdtDict), bitmask(bitmask_value), readonly(readonly) {
+        : basePath(std::move(basePath)), snapshotId(snapshotId), hdtDict(hdtDict), maxHdtId(hdtDict->getMaxID()), readonly(readonly) {
     // Create additional dictionary
     patchDict = new hdt::PlainDictionary();
     load();
 };
 
 DictionaryManager::DictionaryManager(string basePath, int snapshotId, bool readonly)
-        : basePath(std::move(basePath)), snapshotId(snapshotId), bitmask(bitmask_value), readonly(readonly) {
+        : basePath(std::move(basePath)), snapshotId(snapshotId), maxHdtId(0), readonly(readonly) {
     // Create two empty default dictionaries dictionary,
     hdtDict = new hdt::PlainDictionary();
     patchDict = new hdt::PlainDictionary();
@@ -78,11 +78,13 @@ std::string DictionaryManager::idToString(size_t id,
     if (id == 0) return "";
 
     // Check whether id is from HDT or not (MSB is not set)
-    if (!(id & bitmask)) {
+//    if (!(id & bitmask)) {
+    if (id <= maxHdtId) {
         return hdtDict->idToString(id, position);
     }
 
-    return patchDict->idToString(id - bitmask, position);
+//    return patchDict->idToString(id - bitmask, position);
+    return patchDict->idToString(id - maxHdtId, position);
 }
 
 size_t DictionaryManager::stringToId(const std::string &str,
@@ -102,7 +104,8 @@ size_t DictionaryManager::stringToId(const std::string &str,
 
     // Set MSB to 1
     id = patchDict->stringToId(str, position);
-    return bitmask | id;
+//    return bitmask | id;
+    return id + maxHdtId;
 }
 
 size_t DictionaryManager::insert(const std::string &str,
@@ -127,7 +130,8 @@ size_t DictionaryManager::insert(const std::string &str,
 //        patchDict->insert(str, position);
         originalId = patchDict->stringToId(str, position);
     }
-    id = bitmask | originalId;
+//    id = bitmask | originalId;
+    id  = originalId + maxHdtId;
 
     return id;
 }
@@ -246,7 +250,8 @@ hdt::IteratorUInt* DictionaryManager::getIDSuggestions(const char *prefix, hdt::
 }
 
 int DictionaryManager::compareComponent(size_t componentId1, size_t componentId2, hdt::TripleComponentRole role) {
-    if (!(componentId1 & bitmask) && !(componentId2 & bitmask)) {
+//    if (!(componentId1 & bitmask) && !(componentId2 & bitmask)) {
+    if (componentId1 <= maxHdtId && componentId2 <= maxHdtId) {
         size_t sharedCount = hdtDict->getNshared();
         bool shared1 = componentId1 > sharedCount;
         bool shared2 = componentId2 > sharedCount;
@@ -255,4 +260,8 @@ int DictionaryManager::compareComponent(size_t componentId1, size_t componentId2
         }
     }
     return idToString(componentId1, role).compare(idToString(componentId2, role));
+}
+
+size_t DictionaryManager::getMaxHdtId() const {
+    return maxHdtId;
 }

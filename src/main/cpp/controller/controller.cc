@@ -53,7 +53,7 @@ std::pair<size_t, hdt::ResultEstimationType> Controller::get_version_materialize
     std::shared_ptr<DictionaryManager> dict = get_snapshot_manager()->get_dictionary_manager(snapshot_id);
     Triple pattern = triple_pattern.get_as_triple(dict);
 
-    hdt::IteratorTripleID* snapshot_it = SnapshotManager::search_with_offset(snapshot, pattern, 0);
+    hdt::IteratorTripleID* snapshot_it = SnapshotManager::search_with_offset(snapshot, pattern, 0, dict);
     size_t snapshot_count = snapshot_it->estimatedNumResults();
     hdt::ResultEstimationType res_type = snapshot_it->numResultEstimation();
 
@@ -98,7 +98,7 @@ TripleIterator* Controller::get_version_materialized(const StringTriple &triple_
     Triple pattern = triple_pattern.get_as_triple(dict);
 
     // Simple case: We are requesting a snapshot, delegate lookup to that snapshot.
-    hdt::IteratorTripleID* snapshot_it = SnapshotManager::search_with_offset(snapshot, pattern, offset);
+    hdt::IteratorTripleID* snapshot_it = SnapshotManager::search_with_offset(snapshot, pattern, offset, dict);
     if(snapshot_id == patch_id) {
         return new SnapshotTripleIterator(snapshot_it);
     }
@@ -162,7 +162,7 @@ TripleIterator* Controller::get_version_materialized(const StringTriple &triple_
             // Make a new snapshot iterator for the new offset
             // TODO: look into reusing the snapshot iterator and applying a relative offset (NOTE: I tried it before, it's trickier than it seems...)
             delete snapshot_it;
-            snapshot_it = SnapshotManager::search_with_offset(snapshot, pattern, offset + added_offset);
+            snapshot_it = SnapshotManager::search_with_offset(snapshot, pattern, offset + added_offset, dict);
 
             // Check if we need to loop again
             check_offseted_deletions = previous_added_offset < added_offset;
@@ -200,14 +200,15 @@ std::pair<size_t, hdt::ResultEstimationType> Controller::get_delta_materialized_
         }
         // We count for intermediary delta chains
         if (snapshot_id_start != snapshot_id_end) {
-            hdt::Dictionary* d1 = snapshotManager->get_dictionary_manager(snapshot_id_start)->getHdtDict();
-            Triple t1 = triple_pattern.get_as_triple(snapshotManager->get_dictionary_manager(snapshot_id_start));
-            Triple t2 = triple_pattern.get_as_triple(snapshotManager->get_dictionary_manager(snapshot_id_end));
+            std::shared_ptr<DictionaryManager> dict_start = snapshotManager->get_dictionary_manager(snapshot_id_start);
+            std::shared_ptr<DictionaryManager> dict_end = snapshotManager->get_dictionary_manager(snapshot_id_end);
+            Triple t1 = triple_pattern.get_as_triple(dict_start);
+            Triple t2 = triple_pattern.get_as_triple(dict_end);
             std::shared_ptr<hdt::HDT> snapshot_start = snapshotManager->get_snapshot(snapshot_id_start);
             std::shared_ptr<hdt::HDT> snapshot_end = snapshotManager->get_snapshot(snapshot_id_end);
-            hdt::IteratorTripleID* it1 = SnapshotManager::search_with_offset(snapshot_start, t1, 0);
+            hdt::IteratorTripleID* it1 = SnapshotManager::search_with_offset(snapshot_start, t1, 0, dict_start);
             count += it1->estimatedNumResults();
-            hdt::IteratorTripleID* it2 = SnapshotManager::search_with_offset(snapshot_end, t2, 0);
+            hdt::IteratorTripleID* it2 = SnapshotManager::search_with_offset(snapshot_end, t2, 0, dict_end);
             count += it2->estimatedNumResults();
             delete it1;
             delete it2;
@@ -362,7 +363,7 @@ std::pair<size_t, hdt::ResultEstimationType> Controller::get_version_count(const
             std::shared_ptr<DictionaryManager> dict = snapshotManager->get_dictionary_manager(snapshot);
             Triple pattern = triple_pattern.get_as_triple(dict);
             std::shared_ptr<hdt::HDT> hdt = snapshotManager->get_snapshot(snapshot);  // by using get_snapshot, we make sure it's loaded before use
-            hdt::IteratorTripleID *snapshot_it = SnapshotManager::search_with_offset(hdt, pattern, 0);
+            hdt::IteratorTripleID *snapshot_it = SnapshotManager::search_with_offset(hdt, pattern, 0, dict);
             size_t c = snapshot_it->estimatedNumResults();
             hdt::ResultEstimationType tmp_est_type = snapshot_it->numResultEstimation();
             if (!allowEstimates) {
@@ -422,7 +423,7 @@ TripleVersionsIterator *Controller::get_version(const StringTriple &triple_patte
         std::shared_ptr<DictionaryManager> dict = snapshotManager->get_dictionary_manager(id);
         Triple pattern = triple_pattern.get_as_triple(dict);
         std::shared_ptr<hdt::HDT> snapshot = snapshotManager->get_snapshot(id);
-        hdt::IteratorTripleID* snapshot_it = SnapshotManager::search_with_offset(snapshot, pattern, 0);
+        hdt::IteratorTripleID* snapshot_it = SnapshotManager::search_with_offset(snapshot, pattern, 0, dict);
         int patch_tree_id = patchTreeManager->get_patch_tree_id(id+1);
         std::shared_ptr<PatchTree> patchTree = patchTreeManager->get_patch_tree(patch_tree_id, dict);
         auto it = new PatchTreeTripleVersionsIterator(pattern, snapshot_it, patchTree, id, dict);

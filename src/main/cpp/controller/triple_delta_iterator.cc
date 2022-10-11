@@ -89,8 +89,8 @@ SnapshotDiffIterator::SnapshotDiffIterator(const StringTriple &triple_pattern, S
     if (snap_1 && snap_2) {
         Triple tp1 = triple_pattern.get_as_triple(dict1);
         Triple tp2 = triple_pattern.get_as_triple(dict2);
-        snapshot_it_1 = SnapshotManager::search_with_offset(snap_1, tp1, 0);
-        snapshot_it_2 = SnapshotManager::search_with_offset(snap_2, tp2, 0);
+        snapshot_it_1 = SnapshotManager::search_with_offset(snap_1, tp1, 0, dict1);
+        snapshot_it_2 = SnapshotManager::search_with_offset(snap_2, tp2, 0, dict2);
         if (snapshot_it_1->hasNext()) t1 = snapshot_it_1->next();
         if (snapshot_it_2->hasNext()) t2 = snapshot_it_2->next();
     }

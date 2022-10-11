@@ -79,7 +79,7 @@ bool SnapshotPatchIteratorTripleID::next(Triple* triple) {
                 long snapshot_count = snapshot_it->numResultEstimation() == hdt::EXACT ? snapshot_it->estimatedNumResults() : -1;
                 if (snapshot_count == -1) {
                     snapshot_count = 0;
-                    hdt::IteratorTripleID *tmp_it = SnapshotManager::search_with_offset(snapshot, triple_pattern, 0);
+                    hdt::IteratorTripleID *tmp_it = SnapshotManager::search_with_offset(snapshot, triple_pattern, 0);  // TODO: add dictionary parameter if needed
                     while (tmp_it->hasNext()) {
                         tmp_it->next();
                         snapshot_count++;
