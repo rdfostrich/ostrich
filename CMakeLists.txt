@@ -111,7 +111,7 @@ hunter_add_package(Boost COMPONENTS iostreams regex)
 find_package(Boost CONFIG REQUIRED COMPONENTS iostreams regex)
 
 target_link_libraries(ostrich ${KYOTO_CABINET} ${LZMA} ${LZO})
-target_link_libraries(ostrich ${ZLIB_LIBRARIES})
+target_link_libraries(ostrich ZLIB::ZLIB)
 target_link_libraries(ostrich Threads::Threads)
 target_link_libraries(ostrich Boost::iostreams Boost::regex)
 
