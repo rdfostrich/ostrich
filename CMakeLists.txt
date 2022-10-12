@@ -107,13 +107,13 @@ find_package(ZLIB CONFIG REQUIRED)
 include_directories(${ZLIB_INCLUDE_DIRS})
 
 # Add Boost
-hunter_add_package(Boost COMPONENTS iostreams regex)
-find_package(Boost CONFIG REQUIRED COMPONENTS iostreams regex)
+hunter_add_package(Boost COMPONENTS iostreams)
+find_package(Boost CONFIG REQUIRED COMPONENTS iostreams)
 
 target_link_libraries(ostrich ${KYOTO_CABINET} ${LZMA} ${LZO})
 target_link_libraries(ostrich ZLIB::ZLIB)
 target_link_libraries(ostrich Threads::Threads)
-target_link_libraries(ostrich Boost::iostreams Boost::regex)
+target_link_libraries(ostrich Boost::iostreams)
 
 # Evaluation executable
 add_executable(${PROJECT_NAME_STR}-evaluate ${SOURCE_FILE_EVALUATE})
