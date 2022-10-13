@@ -172,6 +172,10 @@ bool StringTriple::operator==(const StringTriple &other) const {
     return subject == other.subject && predicate == other.predicate && object == other.object;
 }
 
+bool StringTriple::operator!=(const StringTriple &other) const {
+    return !(*this == other);
+}
+
 bool StringTriple::operator<(const StringTriple &other) const {
     return to_string() < other.to_string();
 }

@@ -272,6 +272,8 @@ struct VerPatchPositions {
 
 class PatchPositionsContainer {
 public:
+    virtual ~PatchPositionsContainer() = default;
+
     virtual bool insert_positions(int patch_id, const PatchPositions& positions) = 0;
     virtual bool delete_positions(int patch_id) = 0;
     virtual bool get_positions(int patch_id, PatchPositions& positions, int outer_patch_limit) const = 0;

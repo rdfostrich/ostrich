@@ -368,7 +368,7 @@ std::pair<size_t, hdt::ResultEstimationType> Controller::get_version_count(const
             hdt::ResultEstimationType tmp_est_type = snapshot_it->numResultEstimation();
             if (!allowEstimates) {
                 while (snapshot_it->hasNext()) {
-                    hdt::TripleID* t = snapshot_it->next();
+                    snapshot_it->next();
                     count++;
                 }
             } else {
@@ -466,7 +466,7 @@ bool Controller::append(PatchElementIterator* patch_it, int patch_id, std::share
     double change_ratio = ag/su;
     metadata->change_ratios = metadata_manager->store_double("change-ratio", snapshot_id, change_ratio);
     if (metadata->agg_delta_sizes.size() > 1) {
-        uint64_t prev_agg_delta = metadata->agg_delta_sizes[metadata->agg_delta_sizes.size()-2];
+//        uint64_t prev_agg_delta = metadata->agg_delta_sizes[metadata->agg_delta_sizes.size()-2];
         uint64_t prev_ver_size = metadata->version_sizes[metadata->version_sizes.size()-2];
         double loc_cr = (double) patch_it->getPassed() / (prev_ver_size + patch_it->getPassed());
         metadata->loc_change_ratios = metadata_manager->store_double("local-change-ratio", snapshot_id, loc_cr);

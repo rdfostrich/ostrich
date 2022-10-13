@@ -151,6 +151,7 @@ public:
     std::string to_string() const;
 
     bool operator==(const StringTriple& other) const;
+    bool operator!=(const StringTriple& other) const;
     bool operator<(const StringTriple& other) const;
 };
 
