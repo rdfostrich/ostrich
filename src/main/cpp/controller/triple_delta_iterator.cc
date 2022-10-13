@@ -181,30 +181,26 @@ bool MergeDiffIterator::next(TripleDelta *triple) {
         target->set_dictionary(source->get_dictionary());
     };
 
+    // If both iterators are valid
+    if (status1 && status2) {
+        int comp = comparator->compare(triple1, triple2);
+        // we need to skip identical triples if they have different addition flags
+        // before handing out to the rest of the function
+        while (comp == 0 && status1 && status2 && (triple1->is_addition() != triple2->is_addition())) {
+            status1 = it1->next(triple1);
+            status2 = it2->next(triple2);
+            if (status1 && status2) {
+                comp = comparator->compare(triple1, triple2);
+            }
+        }
+    }
+
     if (status1 && status2) {
         int comp = comparator->compare(triple1, triple2);
         if (comp == 0) {
-            while (comp == 0 && status1 && status2 && (triple1->is_addition() != triple2->is_addition())) {
-                status1 = it1->next(triple1);
-                status2 = it2->next(triple2);
-                if (status1 && status2) {
-                    comp = comparator->compare(triple1, triple2);
-                }
-            }
-            if (comp == 0 && (triple1->is_addition() == triple2->is_addition())) {
-                emit_triple(triple2, triple, triple2->is_addition());
-                status1 = it1->next(triple1);
-                status2 = it2->next(triple2);
-            }
-            if (comp < 0 || (status1 && !triple2)) {
-                emit_triple(triple1, triple, triple1->is_addition());
-                status1 = it1->next(triple1);
-            } else if (comp > 0 || (!status1 && status2)) {
-                emit_triple(triple2, triple, triple2->is_addition());
-                status2 = it2->next(triple2);
-            } else if (!status1 && !status2) {
-                return false;
-            }
+            emit_triple(triple2, triple, triple2->is_addition());
+            status1 = it1->next(triple1);
+            status2 = it2->next(triple2);
             return true;
         } else if (comp < 0) {
             emit_triple(triple1, triple, triple1->is_addition());
@@ -294,34 +290,24 @@ bool MergeDiffIteratorCase2::next(TripleDelta *triple) {
         target->set_dictionary(source->get_dictionary());
     };
 
+    // If both iterators are valid
     if (status1 && status2) {
         int comp = comparator->compare(triple1, triple2);
-        if (comp == 0) {  // It's the same triple (SPO)
-            if (triple1->is_addition() != triple2->is_addition()) {
-                emit_triple(triple2, triple, triple2->is_addition());
-                status1 = it1->next(triple1);
-                status2 = it2->next(triple2);
-                return true;
-            } else {
-                while (comp == 0 && status1 && status2) {
-                    status1 = it1->next(triple1);
-                    status2 = it2->next(triple2);
-                    if (status1 && status2) {
-                        comp = comparator->compare(triple1, triple2);
-                    }
-                }
-                if (comp < 0 || (status1 && !status2)) {
-                    emit_triple(triple1, triple, !triple1->is_addition());
-                    status1 = it1->next(triple1);
-                } else if (comp > 0 || (!status1 && status2)) {
-                    emit_triple(triple2, triple, triple2->is_addition());
-                    status2 = it2->next(triple2);
-                } else {
-                    return false;
-                }
-                return true;
+        // we need to skip identical triples if they have identical addition flags
+        // before handing out to the rest of the function
+        // in practice we skip all identical triples regardless of flag since different flags should never happen
+        while (comp == 0 && status1 && status2) { //&& (triple1->is_addition() == triple2->is_addition())) {
+            status1 = it1->next(triple1);
+            status2 = it2->next(triple2);
+            if (status1 && status2) {
+                comp = comparator->compare(triple1, triple2);
             }
-        } else if (comp < 0) {
+        }
+    }
+
+    if (status1 && status2) {
+        int comp = comparator->compare(triple1, triple2);
+        if (comp < 0) {
             // The triple from set 1 does not exist in set 2
             // It means that it must have been reverted somewhere in between
             // So if triple1 is addition, then it's a deletion
