@@ -2,14 +2,10 @@ cmake_minimum_required(VERSION 3.16)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated -fsanitize=address -fsanitize-recover=address -fno-omit-frame-pointer") # for memory debugging, use with ASAN_OPTIONS=detect_stack_use_after_return=true detect_leaks=true halt_on_error=false
 
+include(FetchContent)
+
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-include("ext/hunter/HunterGate.cmake")
-
-HunterGate(
-    URL "https://github.com/cpp-pm/hunter/archive/v0.23.304.tar.gz"
-    SHA1 "cae9026e69d7d8333897663688a11f4232fb8826"
-)
 
 # Add HDT
 # We may want to declare hdt as a library
@@ -102,13 +98,10 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
 # Add zlib
-hunter_add_package(ZLIB)
-find_package(ZLIB CONFIG REQUIRED)
-include_directories(${ZLIB_INCLUDE_DIRS})
+find_package(ZLIB REQUIRED)
 
 # Add Boost
-hunter_add_package(Boost COMPONENTS iostreams)
-find_package(Boost CONFIG REQUIRED COMPONENTS iostreams)
+find_package(Boost REQUIRED COMPONENTS iostreams)
 
 target_link_libraries(ostrich ${KYOTO_CABINET} ${LZMA} ${LZO})
 target_link_libraries(ostrich ZLIB::ZLIB)
@@ -139,34 +132,20 @@ add_executable(${PROJECT_NAME_STR}-insert ${SOURCE_FILE_INSERT})
 target_link_libraries(${PROJECT_NAME_STR}-insert ostrich)
 
 # Add gtest
-add_subdirectory(${EXT_PROJECTS_DIR}/gtest)
-enable_testing()
+FetchContent_Declare(
+        googletest
+        URL https://github.com/google/googletest/archive/67174c7675fe500644490c49e8c822173f7e1f9a.zip
+)
+FetchContent_MakeAvailable(googletest)
+
 set(PROJECT_TEST_NAME ${PROJECT_NAME_STR}_test)
-include_directories(${GTEST_INCLUDE_DIRS})
 
 file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/src/test/cpp/*.cc)
 add_executable(${PROJECT_TEST_NAME} ${TEST_FILES})
-add_dependencies(${PROJECT_TEST_NAME} googletest)
+target_link_libraries(${PROJECT_TEST_NAME} gtest_main)
 
 if(NOT MSVC)
     set(PThreadLib -pthread)
-endif()
-
-if(NOT WIN32)
-    target_link_libraries(${PROJECT_TEST_NAME}
-            ${PThreadLib}
-            ${GTEST_LIBS_DIR}/libgtest.a
-            ${GTEST_LIBS_DIR}/libgtest_main.a
-            )
-else()
-    target_link_libraries(${PROJECT_TEST_NAME}
-            debug ${GTEST_LIBS_DIR}/DebugLibs/${CMAKE_FIND_LIBRARY_PREFIXES}gtest${CMAKE_FIND_LIBRARY_SUFFIXES}
-            optimized ${GTEST_LIBS_DIR}/ReleaseLibs/${CMAKE_FIND_LIBRARY_PREFIXES}gtest${CMAKE_FIND_LIBRARY_SUFFIXES}
-            )
-    target_link_libraries(${PROJECT_TEST_NAME}
-            debug ${GTEST_LIBS_DIR}/DebugLibs/${CMAKE_FIND_LIBRARY_PREFIXES}gtest_main${CMAKE_FIND_LIBRARY_SUFFIXES}
-            optimized ${GTEST_LIBS_DIR}/ReleaseLibs/${CMAKE_FIND_LIBRARY_PREFIXES}gtest_main${CMAKE_FIND_LIBRARY_SUFFIXES}
-            )
 endif()
 
 target_link_libraries(${PROJECT_TEST_NAME} ostrich)
