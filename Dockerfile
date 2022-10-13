@@ -10,6 +10,11 @@ RUN apt-get install -y clang
 ENV C clang
 ENV CXX clang++
 
+# Download and install boost
+RUN cd /opt && curl -LO https://boostorg.jfrog.io/artifactory/main/release/1.80.0/source/boost_1_80_0.tar.gz
+RUN cd /opt && tar -xvzf boost_1_80_0.tar.gz && mv boost_1_80_0 boost && rm boost_1_80_0.tar.gz
+RUN cd /opt/boost && ./bootstrap.sh --with-libraries=iostreams
+
 # Install kyoto cabinet
 RUN apt-get -y install liblzo2-dev liblzma-dev zlib1g-dev build-essential
 RUN cd /opt/kyotocabinet && ./configure --enable-lzo --enable-lzma && make && make install
