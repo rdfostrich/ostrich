@@ -202,7 +202,7 @@ bool MergeDiffIterator::next(TripleDelta *triple) {
             } else if (comp > 0 || (!status1 && status2)) {
                 emit_triple(triple2, triple, triple2->is_addition());
                 status2 = it2->next(triple2);
-            } else {
+            } else if (!status1 && !status2) {
                 return false;
             }
             return true;
