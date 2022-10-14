@@ -115,8 +115,9 @@ size_t TripleVersionsIteratorCombined::get_count() {
 }
 
 TripleVersionsIteratorCombined *TripleVersionsIteratorCombined::offset(int offset) {
-    while (offset-- > 0)
+    while (offset-- > 0 && triples_it != triples.end()) {
         triples_it++;
+    }
     return this;
 }
 
