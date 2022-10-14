@@ -1629,7 +1629,7 @@ TEST_F(ControllerMSTest, GetDeltaMaterializedPatchMS) {
     // + <a> <a> <e>
     // + <a> <a> <f>
     // - <a> <b> <c>
-//    ASSERT_EQ(4, controller->get_delta_materialized_count(StringTriple("", "", ""), 1, 3).first) << "Count is incorrect";
+    ASSERT_EQ(4, controller->get_delta_materialized_count(StringTriple("", "", ""), 1, 3).first) << "Count is incorrect";
     TripleDeltaIterator* it0 = controller->get_delta_materialized(StringTriple("", "", ""), 0, 1, 3);
 
     ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
@@ -2970,6 +2970,11 @@ TEST_F(ControllerTest, GetVersion) {
     TripleVersionsIterator* it17 = controller->get_version(Triple("", "", "<d>", dict), 1);
 
     ASSERT_EQ(false, it17->next(&t)) << "Iterator should be finished";
+
+    // Request with offset > number of results
+    TripleVersionsIterator* it18 = controller->get_version(Triple("", "", "", dict), 20);
+
+    ASSERT_EQ(false, it18->next(&t)) << "Iterator should be finished";
 }
 
 
