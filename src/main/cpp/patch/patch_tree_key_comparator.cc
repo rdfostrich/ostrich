@@ -1,5 +1,5 @@
 #include <iostream>
-
+#include <limits>
 #include "patch_tree_key_comparator.h"
 
 
@@ -35,21 +35,21 @@ int32_t PatchTreeKeyComparator::compare(const PatchTreeKey& element1, const Patc
 }
 
 comp comp_s = [] (const PatchTreeKey& e1, const PatchTreeKey& e2, DictionaryManager& dict) {
-    size_t max_id = (size_t) -1;
+    size_t max_id = std::numeric_limits<size_t>::max();
     if (e1.get_subject() == max_id || e2.get_subject() == 0) return 1;
     if (e2.get_subject() == max_id || e1.get_subject() == 0) return -1;
     return dict.compareComponent(e1.get_subject(), e2.get_subject(), hdt::SUBJECT);
 };
 
 comp comp_p = [] (const PatchTreeKey& e1, const PatchTreeKey& e2, DictionaryManager& dict) {
-    size_t max_id = (size_t) -1;
+    size_t max_id = std::numeric_limits<size_t>::max();
     if (e1.get_predicate() == max_id || e2.get_predicate() == 0) return 1;
     if (e2.get_predicate() == max_id || e1.get_predicate() == 0) return -1;
     return dict.compareComponent(e1.get_predicate(), e2.get_predicate(), hdt::PREDICATE);
 };
 
 comp comp_o = [] (const PatchTreeKey& e1, const PatchTreeKey& e2, DictionaryManager& dict) {
-    size_t max_id = (size_t) -1;
+    size_t max_id = std::numeric_limits<size_t>::max();
     if (e1.get_object() == max_id || e2.get_object() == 0) return 1;
     if (e2.get_object() == max_id || e1.get_object() == 0) return -1;
     return dict.compareComponent(e1.get_object(), e2.get_object(), hdt::OBJECT);
