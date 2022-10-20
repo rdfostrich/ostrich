@@ -13,12 +13,14 @@
 
 
 DictionaryManager::DictionaryManager(string basePath, int snapshotId, Dictionary *hdtDict, hdt::PlainDictionary *patchDict, bool readonly)
-        : basePath(std::move(basePath)), snapshotId(snapshotId), hdtDict(hdtDict), patchDict(patchDict), maxHdtId(hdtDict->getMaxID()), readonly(readonly) {
+        : basePath(std::move(basePath)), snapshotId(snapshotId), hdtDict(hdtDict), patchDict(patchDict), maxHdtId(0), readonly(readonly) {
+    updateMaxHdtId();
     load();
 };
 
 DictionaryManager::DictionaryManager(string basePath, int snapshotId, Dictionary *hdtDict, bool readonly)
-        : basePath(std::move(basePath)), snapshotId(snapshotId), hdtDict(hdtDict), maxHdtId(hdtDict->getMaxID()), readonly(readonly) {
+        : basePath(std::move(basePath)), snapshotId(snapshotId), hdtDict(hdtDict), maxHdtId(0), readonly(readonly) {
+    updateMaxHdtId();
     // Create additional dictionary
     patchDict = new hdt::PlainDictionary();
     load();
@@ -256,4 +258,11 @@ int DictionaryManager::compareComponent(size_t componentId1, size_t componentId2
 
 size_t DictionaryManager::getMaxHdtId() const {
     return maxHdtId;
+}
+
+void DictionaryManager::updateMaxHdtId() {
+    size_t max_s = hdtDict->getMaxSubjectID();
+    size_t max_p = hdtDict->getMaxPredicateID();
+    size_t max_o = hdtDict->getMaxObjectID();
+    maxHdtId = std::max({max_s, max_p, max_o});
 }

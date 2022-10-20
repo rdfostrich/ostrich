@@ -18,11 +18,13 @@ class DictionaryManager : public hdt::ModifiableDictionary {
     Dictionary *hdtDict;             // Dictionary from HDT file
     hdt::PlainDictionary *patchDict; // Additional dictionary
 
-    const size_t maxHdtId;
+    size_t maxHdtId;
     int snapshotId;
     bool readonly;
 
     std::mutex action_mutex;
+
+    void updateMaxHdtId();
 public:
     DictionaryManager(std::string basePath, int snapshotId, Dictionary *hdtDict, hdt::PlainDictionary *patchDict, bool readonly = false);
     DictionaryManager(std::string basePath, int snapshotId, Dictionary *hdtDict, bool readonly = false);
