@@ -5,6 +5,7 @@
 #include <kchashdb.h>
 #include "patch.h"
 #include "patch_tree_value.h"
+#include "triple_comparator.h"
 
 
 template <class DV>

@@ -56,13 +56,13 @@ bool ForwardPatchTripleDeltaIterator<DV>::next(TripleDelta* triple) {
 }
 
 template <class DV>
-FowardDiffPatchTripleDeltaIterator<DV>::FowardDiffPatchTripleDeltaIterator(std::shared_ptr<PatchTree> patchTree, const Triple &triple_pattern, int patch_id_start, int patch_id_end, std::shared_ptr<DictionaryManager> dict)
+ForwardDiffPatchTripleDeltaIterator<DV>::ForwardDiffPatchTripleDeltaIterator(std::shared_ptr<PatchTree> patchTree, const Triple &triple_pattern, int patch_id_start, int patch_id_end, std::shared_ptr<DictionaryManager> dict)
         : ForwardPatchTripleDeltaIterator<DV>(patchTree, triple_pattern, patch_id_end, dict), patch_id_start(patch_id_start), patch_id_end(patch_id_end) {
     this->it->set_filter_local_changes(false);
 }
 
 template <class DV>
-bool FowardDiffPatchTripleDeltaIterator<DV>::next(TripleDelta *triple) {
+bool ForwardDiffPatchTripleDeltaIterator<DV>::next(TripleDelta *triple) {
     bool valid;
     while ((valid = this->it->next(triple->get_triple(), this->value))
                     && this->value->is_delta_type_equal(patch_id_start, patch_id_end)) {}
@@ -76,12 +76,12 @@ bool FowardDiffPatchTripleDeltaIterator<DV>::next(TripleDelta *triple) {
 
 template class ForwardPatchTripleDeltaIterator<PatchTreeDeletionValue>;
 template class ForwardPatchTripleDeltaIterator<PatchTreeDeletionValueReduced>;
-template class FowardDiffPatchTripleDeltaIterator<PatchTreeDeletionValue>;
-template class FowardDiffPatchTripleDeltaIterator<PatchTreeDeletionValueReduced>;
+template class ForwardDiffPatchTripleDeltaIterator<PatchTreeDeletionValue>;
+template class ForwardDiffPatchTripleDeltaIterator<PatchTreeDeletionValueReduced>;
 
 
 SnapshotDiffIterator::SnapshotDiffIterator(const StringTriple &triple_pattern, SnapshotManager *manager, int snapshot_1,
-                                           int snapshot_2): t1(nullptr), t2(nullptr), comparator(TripleComparator::get_triple_comparator(hdt::SPO)) {
+                                           int snapshot_2, hdt::TripleComponentOrder qr_order): t1(nullptr), t2(nullptr), comparator(TripleComparator::get_triple_comparator(qr_order)) {
     std::shared_ptr<hdt::HDT> snap_1 = manager->get_snapshot(snapshot_1);
     dict1 = manager->get_dictionary_manager(snapshot_1);
     std::shared_ptr<hdt::HDT> snap_2 = manager->get_snapshot(snapshot_2);
@@ -89,8 +89,8 @@ SnapshotDiffIterator::SnapshotDiffIterator(const StringTriple &triple_pattern, S
     if (snap_1 && snap_2) {
         Triple tp1 = triple_pattern.get_as_triple(dict1);
         Triple tp2 = triple_pattern.get_as_triple(dict2);
-        snapshot_it_1 = SnapshotManager::search_with_offset(snap_1, tp1, 0, dict1);
-        snapshot_it_2 = SnapshotManager::search_with_offset(snap_2, tp2, 0, dict2);
+        snapshot_it_1 = SnapshotManager::search_with_offset(snap_1, tp1, 0, dict1, true);
+        snapshot_it_2 = SnapshotManager::search_with_offset(snap_2, tp2, 0, dict2, true);
         if (snapshot_it_1->hasNext()) t1 = snapshot_it_1->next();
         if (snapshot_it_2->hasNext()) t2 = snapshot_it_2->next();
     }
@@ -166,8 +166,8 @@ SnapshotDiffIterator::~SnapshotDiffIterator() {
 }
 
 
-MergeDiffIterator::MergeDiffIterator(TripleDeltaIterator *iterator_1, TripleDeltaIterator *iterator_2) : it1(iterator_1),
-        it2(iterator_2), triple1(new TripleDelta), triple2(new TripleDelta), comparator(TripleComparator::get_triple_comparator(hdt::SPO)) {
+MergeDiffIterator::MergeDiffIterator(TripleDeltaIterator *iterator_1, TripleDeltaIterator *iterator_2, hdt::TripleComponentOrder qr_order) : it1(iterator_1),
+        it2(iterator_2), triple1(new TripleDelta), triple2(new TripleDelta), comparator(TripleComparator::get_triple_comparator(qr_order)) {
     status1 = it1->next(triple1);
     status2 = it2->next(triple2);
 }
@@ -266,8 +266,8 @@ SortedTripleDeltaIterator::~SortedTripleDeltaIterator() {
 }
 
 
-MergeDiffIteratorCase2::MergeDiffIteratorCase2(TripleDeltaIterator *iterator_1, TripleDeltaIterator *iterator_2):
-    it1(iterator_1), it2(iterator_2), triple1(new TripleDelta), triple2(new TripleDelta), comparator(TripleComparator::get_triple_comparator(hdt::SPO))
+MergeDiffIteratorCase2::MergeDiffIteratorCase2(TripleDeltaIterator *iterator_1, TripleDeltaIterator *iterator_2, hdt::TripleComponentOrder qr_order):
+    it1(iterator_1), it2(iterator_2), triple1(new TripleDelta), triple2(new TripleDelta), comparator(TripleComparator::get_triple_comparator(qr_order))
 {
     status1 = it1->next(triple1);
     status2 = it2->next(triple2);
@@ -416,7 +416,7 @@ AutoSnapshotDiffIterator::AutoSnapshotDiffIterator(const StringTriple &triple_pa
             internal_it = new ForwardPatchTripleDeltaIterator<PatchTreeDeletionValueReduced>(patch_tree, ttp, max_id, dict);
         }
     } else {
-        internal_it = new SnapshotDiffIterator(triple_pattern, snapshot_manager, snapshot_id_1, snapshot_id_2);
+        internal_it = new SnapshotDiffIterator(triple_pattern, snapshot_manager, snapshot_id_1, snapshot_id_2, TripleStore::get_query_order(triple_pattern));
     }
 }
 

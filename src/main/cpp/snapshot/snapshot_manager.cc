@@ -3,8 +3,8 @@
 #include <dirent.h>
 #include <hdt/BasicHDT.hpp>
 #include "snapshot_manager.h"
-#include "hdt/BasicModifiableHDT.hpp"
-#include "../dictionary/dictionary_manager.h"
+#include "../patch/triple_store.h"
+#include "sorted_triple_iterator.h"
 
 
 SnapshotManager::SnapshotManager(std::string basePath, bool readonly, size_t cache_size) : basePath(basePath), max_loaded_snapshots(std::max((size_t)2,cache_size)), readonly(readonly) {
@@ -87,7 +87,6 @@ std::shared_ptr<hdt::HDT> SnapshotManager::create_snapshot(int snapshot_id, stri
 const std::map<int, std::shared_ptr<hdt::HDT>>& SnapshotManager::detect_snapshots() {
     std::regex r("snapshot_([0-9]*).hdt");
     std::smatch base_match;
-    //std::map<int, HDT*> snapshots = std::map<int, HDT*>();
     DIR *dir;
     struct dirent *ent;
     if ((dir = opendir(basePath.c_str())) != nullptr) {
@@ -118,7 +117,7 @@ std::vector<int> SnapshotManager::get_snapshots_ids() const {
     return ids;
 }
 
-hdt::IteratorTripleID* SnapshotManager::search_with_offset(std::shared_ptr<hdt::HDT> hdt, const Triple& triple_pattern, long offset, std::shared_ptr<DictionaryManager> dict) {
+hdt::IteratorTripleID* SnapshotManager::search_with_offset(std::shared_ptr<hdt::HDT> hdt, const Triple& triple_pattern, long offset, std::shared_ptr<DictionaryManager> dict, bool sort) {
     size_t subject = triple_pattern.get_subject();
     size_t predicate = triple_pattern.get_predicate();
     size_t object = triple_pattern.get_object();
@@ -135,7 +134,11 @@ hdt::IteratorTripleID* SnapshotManager::search_with_offset(std::shared_ptr<hdt::
     hdt::TripleID tripleId(subject, predicate, object);
 
     try {
+        hdt::TripleComponentOrder qr_order = TripleStore::get_query_order(triple_pattern);
         hdt::IteratorTripleID* it = hdt->getTriples()->search(tripleId);
+        if (sort && qr_order != hdt::SPO) {
+            it = new SortedTripleIterator(it, qr_order, dict);
+        }
         if(it->canGoTo()) {
             try {
                 // If we goTo() with offset == 0, and HDT internal iterator is a MiddleWaveletIterator

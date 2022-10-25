@@ -6,10 +6,10 @@ SnapshotPatchIteratorTripleID::SnapshotPatchIteratorTripleID(hdt::IteratorTriple
                                                              PositionedTripleIterator* deletion_it,
                                                              PatchTreeKeyComparator* spo_comparator, std::shared_ptr<hdt::HDT> snapshot,
                                                              const Triple& triple_pattern, std::shared_ptr<PatchTree> patchTree,
-                                                             int patch_id, int offset, PatchPosition deletion_count)
+                                                             int patch_id, int offset, PatchPosition deletion_count, std::shared_ptr<DictionaryManager> dict)
         : snapshot_it(snapshot_it), deletion_it(deletion_it), addition_it(nullptr), spo_comparator(spo_comparator),
           snapshot(snapshot), triple_pattern(triple_pattern), patchTree(patchTree), patch_id(patch_id), offset(offset),
-          deletion_count(deletion_count) {
+          deletion_count(deletion_count), dict(dict) {
     if (deletion_it != nullptr) {
         // Reset the filter, because from here on we only need to know if a triple is in the tree or not.
         // So we don't need the filter, because this will introduce unnecessary (possibly huge for specific triple patterns) overhead.
@@ -79,7 +79,7 @@ bool SnapshotPatchIteratorTripleID::next(Triple* triple) {
                 long snapshot_count = snapshot_it->numResultEstimation() == hdt::EXACT ? snapshot_it->estimatedNumResults() : -1;
                 if (snapshot_count == -1) {
                     snapshot_count = 0;
-                    hdt::IteratorTripleID *tmp_it = SnapshotManager::search_with_offset(snapshot, triple_pattern, 0);  // TODO: add dictionary parameter if needed
+                    hdt::IteratorTripleID *tmp_it = SnapshotManager::search_with_offset(snapshot, triple_pattern, 0, dict);
                     while (tmp_it->hasNext()) {
                         tmp_it->next();
                         snapshot_count++;

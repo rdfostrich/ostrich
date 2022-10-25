@@ -77,6 +77,10 @@ int TripleComparator::compare(const TripleDelta *triple1, const TripleDelta *tri
     return compare(*(triple1->get_triple_const()), *(triple2->get_triple_const()), triple1->get_dictionary(), triple2->get_dictionary());
 }
 
+int TripleComparator::compare(const TripleVersions *triple1, const TripleVersions *triple2) const {
+    return compare(*(triple1->get_triple_const()), *(triple2->get_triple_const()), triple1->get_dictionary(), triple2->get_dictionary());
+}
+
 bool TripleComparator::operator()(const Triple &triple1, const Triple &triple2) const {
     return compare(triple1, triple2) < 0;
 }
@@ -87,6 +91,10 @@ bool TripleComparator::operator()(const TripleVersions *triple1, const TripleVer
 
 bool TripleComparator::operator()(const TripleDelta *triple1, const TripleDelta *triple2) const {
     return compare(*(triple1->get_triple_const()), *(triple2->get_triple_const()), triple1->get_dictionary(), triple2->get_dictionary()) < 0;
+}
+
+bool TripleComparator::operator()(const hdt::TripleID &triple1, const hdt::TripleID &triple2) const {
+    return compare(triple1, triple2, dict1, dict2) < 0;
 }
 
 void TripleComparator::set_dictionary1(std::shared_ptr<DictionaryManager> dict) {
@@ -116,4 +124,3 @@ TripleComparator* TripleComparator::get_triple_comparator(hdt::TripleComponentOr
     }
     return new TripleComparator(subject_comparator, predicate_comparator, object_comparator, dict1, dict2);
 }
-

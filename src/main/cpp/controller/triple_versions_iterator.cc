@@ -1,4 +1,5 @@
 #include "triple_versions_iterator.h"
+#include "../snapshot/sorted_triple_iterator.h"
 #include <algorithm>
 #include <numeric>
 #include <utility>
@@ -115,8 +116,10 @@ size_t TripleVersionsIteratorCombined::get_count() {
 }
 
 TripleVersionsIteratorCombined *TripleVersionsIteratorCombined::offset(int offset) {
-    while (offset-- > 0 && triples_it != triples.end()) {
-        triples_it++;
+    if (offset > triples.size()) {
+        triples_it = triples.end();
+    } else {
+        std::advance(triples_it, offset);
     }
     return this;
 }
@@ -288,4 +291,263 @@ size_t SortedTripleVersionsIterator::get_count() {
 SortedTripleVersionsIterator *SortedTripleVersionsIterator::offset(int offset) {
     pos += offset;
     return this;
+}
+
+
+
+void PatchTreeTripleVersionsIteratorV2::eraseDeletedVersions(std::vector<int> *versions, Triple *currentTriple,
+                                                             int initial_version) {
+    if (patchTree == nullptr) {
+        // If we only have a snapshot, return a single version annotation.
+        versions->clear();
+        versions->push_back(initial_version);
+    } else {
+        PatchTreeDeletionValue* deletion = patchTree->get_deletion_value(*currentTriple);
+        versions->clear();
+        versions->resize(patchTree->get_max_patch_id() + 1 - initial_version);
+        std::iota(versions->begin(), versions->end(), initial_version); // Fill up the vector with all versions from initial_version to max_patch_id
+        if (deletion != nullptr) {
+            for (int v_del = 0; v_del < deletion->get_size(); v_del++) {
+                PatchTreeDeletionValueElement deletion_element = deletion->get_patch_at(v_del);
+                // Erase-remove idiom on sorted vector, and maintain order
+                auto pr = std::equal_range(versions->begin(), versions->end(), deletion_element.get_patch_id());
+                versions->erase(pr.first, pr.second);
+            }
+        }
+        delete deletion;
+    }
+}
+
+PatchTreeTripleVersionsIteratorV2::PatchTreeTripleVersionsIteratorV2(Triple triple_pattern, hdt::IteratorTripleID *snapshot_it, std::shared_ptr<PatchTree> patchTree, int first_version, std::shared_ptr<DictionaryManager> dictionary) :
+                                                                         triple_pattern(triple_pattern),
+                                                                         snapshot_it(nullptr),
+                                                                         patchTree(patchTree),
+                                                                         addition_it(nullptr),
+                                                                         first_version(first_version),
+                                                                         dict(dictionary) {
+
+    hdt::TripleComponentOrder qr_order = TripleStore::get_query_order(triple_pattern);
+    comparator = std::unique_ptr<TripleComparator>(TripleComparator::get_triple_comparator(qr_order, dict, dict));
+    this->snapshot_it = std::unique_ptr<hdt::IteratorTripleID>(snapshot_it);
+    if (this->snapshot_it->hasNext()) {
+        hdt::TripleID *tripleId = this->snapshot_it->next();
+        t1.set_subject(tripleId->getSubject());
+        t1.set_predicate(tripleId->getPredicate());
+        t1.set_object(tripleId->getObject());
+        status1 = true;
+    } else {
+        status1 = false;
+    }
+
+    if (patchTree != nullptr) {
+        addition_it = std::unique_ptr<PatchTreeIterator>(patchTree->addition_iterator(triple_pattern));
+#ifdef COMPRESSED_ADD_VALUES
+        value = std::unique_ptr<PatchTreeAdditionValue>(new PatchTreeAdditionValue(patchTree->get_max_patch_id()));
+#else
+        value = std::unique_ptr<PatchTreeAdditionValue>(new PatchTreeAdditionValue);
+#endif
+        status2 = addition_it->next_addition(&t2, value.get());
+    } else {
+        status2 = false;
+    }
+}
+
+bool PatchTreeTripleVersionsIteratorV2::next(TripleVersions *triple_versions) {
+    auto emit_triple = [] (const Triple& source, Triple& target) {
+        target.set_subject(source.get_subject());
+        target.set_predicate(source.get_predicate());
+        target.set_object(source.get_object());
+    };
+    auto step_snapshot_it = [=] () {
+        if (snapshot_it->hasNext()) {
+            hdt::TripleID *tripleId = snapshot_it->next();
+            t1.set_subject(tripleId->getSubject());
+            t1.set_predicate(tripleId->getPredicate());
+            t1.set_object(tripleId->getObject());
+            status1 = true;
+        } else {
+            status1 = false;
+        }
+    };
+
+    triple_versions->set_dictionary(dict);
+
+    if (status1 && status2) {
+        int comp = comparator->compare(t1, t2);
+        if (comp == 0) {
+            emit_triple(t1, *triple_versions->get_triple());
+            eraseDeletedVersions(triple_versions->get_versions(), triple_versions->get_triple(), first_version);
+            step_snapshot_it();
+            status2 = addition_it->next_addition(&t2, value.get());
+        } else if (comp < 0) {
+            emit_triple(t1, *triple_versions->get_triple());
+            eraseDeletedVersions(triple_versions->get_versions(), triple_versions->get_triple(), first_version);
+            step_snapshot_it();
+        } else {
+            emit_triple(t2, *triple_versions->get_triple());
+            eraseDeletedVersions(triple_versions->get_versions(), triple_versions->get_triple(), value->get_patch_id_at(0));
+            status2 = addition_it->next_addition(&t2, value.get());
+        }
+        return true;
+    }
+    if (status1 && !status2) {
+        std::string s1 = t1.to_string(*dict);
+        emit_triple(t1, *triple_versions->get_triple());
+        eraseDeletedVersions(triple_versions->get_versions(), triple_versions->get_triple(), first_version);
+        step_snapshot_it();
+        return true;
+    }
+    if (!status1 && status2) {
+        std::string s2 = t2.to_string(*dict);
+        emit_triple(t2, *triple_versions->get_triple());
+        eraseDeletedVersions(triple_versions->get_versions(), triple_versions->get_triple(), value->get_patch_id_at(0));
+        status2 = addition_it->next_addition(&t2, value.get());
+        return true;
+    }
+    return false;
+}
+
+size_t PatchTreeTripleVersionsIteratorV2::get_count() {
+    size_t count = 0;
+    TripleVersions tv;
+    while (next(&tv)) {
+        count++;
+    }
+    return count;
+}
+
+PatchTreeTripleVersionsIteratorV2 *PatchTreeTripleVersionsIteratorV2::offset(int offset) {
+    TripleVersions tv;
+    while(offset-- > 0 && next(&tv));
+    return this;
+}
+
+hdt::TripleComponentOrder PatchTreeTripleVersionsIteratorV2::get_order() {
+    return snapshot_it->getOrder();
+}
+
+
+TripleVersionsIteratorCombinedV2::TripleVersionsIteratorCombinedV2(hdt::TripleComponentOrder order) : comparator(TripleComparator::get_triple_comparator(order)) {}
+
+void TripleVersionsIteratorCombinedV2::add_iterator(TripleVersionsIterator *it) {
+    auto merge_versions = [] (const std::vector<int>& v1, const std::vector<int>& v2, std::vector<int>& dest) {
+        dest.reserve(std::max(v1.size(), v2.size()));
+        std::merge(v1.begin(), v1.end(), v2.begin(), v2.end(), std::back_inserter(dest));
+        auto erase_it = std::unique(dest.begin(), dest.end());
+        dest.erase(erase_it, dest.end());
+    };
+
+    auto* t = new TripleVersions;
+    bool status = it->next(t);
+    auto pos = std::lower_bound(triples.begin(), triples.end(), t, *comparator);
+    while (status) {
+        if (pos != triples.end()) {
+            int comp = comparator->compare(t, (*pos));
+            if (comp == 0) {
+                std::vector<int> nv;
+                merge_versions(*(*pos)->get_versions(), *t->get_versions(), nv);
+                (*pos)->get_versions()->clear();
+                (*pos)->get_versions()->insert((*pos)->get_versions()->begin(), nv.begin(), nv.end());
+                status = it->next(t);
+                pos++;
+            } else if (comp < 0) {
+                pos = triples.insert(pos, t);
+                t = new TripleVersions;
+                status = it->next(t);
+                pos++;
+            } else {
+                pos = std::lower_bound(pos, triples.end(), t, *comparator);
+            }
+        } else {
+            triples.push_back(t);
+            t = new TripleVersions;
+            status = it->next(t);
+            pos = triples.end();
+        }
+    }
+    triples_it = triples.begin();
+}
+
+bool TripleVersionsIteratorCombinedV2::next(TripleVersions *triple_versions) {
+    if (triples_it != triples.end()) {
+        triple_versions->get_triple()->set_subject((*triples_it)->get_triple()->get_subject());
+        triple_versions->get_triple()->set_predicate((*triples_it)->get_triple()->get_predicate());
+        triple_versions->get_triple()->set_object((*triples_it)->get_triple()->get_object());
+        triple_versions->get_versions()->clear();
+        triple_versions->get_versions()->insert(triple_versions->get_versions()->begin(), (*triples_it)->get_versions()->begin(), (*triples_it)->get_versions()->end());
+        triple_versions->set_dictionary((*triples_it)->get_dictionary());
+        triples_it++;
+        return true;
+    }
+    return false;
+}
+
+size_t TripleVersionsIteratorCombinedV2::get_count() {
+    return triples.size();
+}
+
+TripleVersionsIteratorCombinedV2 *TripleVersionsIteratorCombinedV2::offset(int offset) {
+    if (offset > triples.size()) {
+        triples_it = triples.end();
+    } else {
+        std::advance(triples_it, offset);
+    }
+    return this;
+}
+
+TripleVersionsIteratorCombinedV2::~TripleVersionsIteratorCombinedV2() {
+    for (auto t: triples) {
+        delete t;
+    }
+}
+
+
+StandardPatchTreeIteratorAdditionProxy::StandardPatchTreeIteratorAdditionProxy(std::shared_ptr<PatchTree> patch_tree, Triple triple_pattern) {
+    addition_it = std::unique_ptr<PatchTreeIterator>(patch_tree->addition_iterator(triple_pattern));
+#ifdef COMPRESSED_ADD_VALUES
+    value = std::unique_ptr<PatchTreeAdditionValue>(new PatchTreeAdditionValue(patch_tree->get_max_patch_id()));
+#else
+    value = std::unique_ptr<PatchTreeAdditionValue>(new PatchTreeAdditionValue);
+#endif
+}
+
+bool StandardPatchTreeIteratorAdditionProxy::next(Triple *triple, int *first_version) {
+    bool status = addition_it->next_addition(triple, value.get());
+    *first_version = value->get_patch_id_at(0);
+    return status;
+}
+
+
+SortedPatchTreeIteratorAdditionProxy::SortedPatchTreeIteratorAdditionProxy(std::shared_ptr<PatchTree> patch_tree,
+                                                                           Triple triple_pattern,
+                                                                           TripleComparator *comparator) {
+    std::unique_ptr<PatchTreeIterator> tmp_it = std::unique_ptr<PatchTreeIterator>(patch_tree->addition_iterator(triple_pattern));
+#ifdef COMPRESSED_ADD_VALUES
+    std::unique_ptr<PatchTreeAdditionValue> value = std::unique_ptr<PatchTreeAdditionValue>(new PatchTreeAdditionValue(patch_tree->get_max_patch_id()));
+#else
+    std::unique_ptr<PatchTreeAdditionValue> value = std::unique_ptr<PatchTreeAdditionValue>(new PatchTreeAdditionValue);
+#endif
+
+    // Comparison function for sorting the vector
+    auto comp = [comparator] (const std::pair<Triple, int>& rhs, const std::pair<Triple, int>& lhs) {
+        return comparator->compare(rhs.first, lhs.first) < 0;
+    };
+    Triple t;
+    while (tmp_it->next_addition(&t, value.get())) {
+        triples.emplace_back(t, value->get_patch_id_at(0));
+    }
+    std::sort(triples.begin(), triples.end(), comp);
+    triples_it = triples.begin();
+}
+
+bool SortedPatchTreeIteratorAdditionProxy::next(Triple *triple, int *first_version) {
+    if (triples_it != triples.end()) {
+        triple->set_subject((*triples_it).first.get_subject());
+        triple->set_predicate((*triples_it).first.get_predicate());
+        triple->set_object((*triples_it).first.get_object());
+        *first_version = (*triples_it).second;
+        triples_it++;
+        return true;
+    }
+    return false;
 }

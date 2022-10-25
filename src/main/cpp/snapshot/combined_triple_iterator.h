@@ -9,14 +9,14 @@
 class CombinedTripleIterator : public hdt::IteratorTripleString {
 private:
     int pos;
-    std::vector<IteratorTripleString*> iterators;
+    std::vector<hdt::IteratorTripleString*> iterators;
 public:
     CombinedTripleIterator();
-    ~CombinedTripleIterator();
-    bool hasNext();
-    hdt::TripleString *next();
-    void appendIterator(IteratorTripleString* it);
-    void goToStart();
+    ~CombinedTripleIterator() override;
+    bool hasNext() override;
+    hdt::TripleString *next() override;
+    void appendIterator(hdt::IteratorTripleString* it);
+    void goToStart() override;
 };
 
 

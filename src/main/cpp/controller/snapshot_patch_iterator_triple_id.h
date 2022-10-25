@@ -22,10 +22,11 @@ private:
     int patch_id;
     int offset;
     PatchPosition deletion_count;
+    std::shared_ptr<DictionaryManager> dict;
 public:
     SnapshotPatchIteratorTripleID(hdt::IteratorTripleID* snapshot_it, PositionedTripleIterator* deletion_it,
                                   PatchTreeKeyComparator* spo_comparator, std::shared_ptr<hdt::HDT> snapshot, const Triple& triple_pattern,
-                                  std::shared_ptr<PatchTree> patchTree, int patch_id, int offset, PatchPosition deletion_count);
+                                  std::shared_ptr<PatchTree> patchTree, int patch_id, int offset, PatchPosition deletion_count, std::shared_ptr<DictionaryManager> dict);
     ~SnapshotPatchIteratorTripleID();
     bool next(Triple* triple);
 };

@@ -28,9 +28,9 @@ protected:
     std::vector<PatchElement>::const_iterator it_end;
 public:
     PatchIteratorVector(std::vector<PatchElement>::const_iterator it, std::vector<PatchElement>::const_iterator it_end);
-    ~PatchIteratorVector();
-    bool has_next();
-    const PatchElement next();
+    ~PatchIteratorVector() override;
+    bool has_next() override;
+    const PatchElement next() override;
 };
 
 class PatchIteratorHashed : public PatchIterator {
@@ -39,9 +39,9 @@ protected:
     std::unordered_map<Triple, std::pair<bool, bool>>::const_iterator it_end;
 public:
     PatchIteratorHashed(std::unordered_map<Triple, std::pair<bool, bool>>::const_iterator it, std::unordered_map<Triple, std::pair<bool, bool>>::const_iterator it_end);
-    ~PatchIteratorHashed();
-    bool has_next();
-    const PatchElement next();
+    ~PatchIteratorHashed() override;
+    bool has_next() override;
+    const PatchElement next() override;
 };
 
 class Patch {
@@ -104,10 +104,10 @@ protected:
     std::vector<PatchElement> elements;
     PatchElementComparator* element_comparator;
 public:
-    PatchSorted(PatchElementComparator* element_comparator);
-    PatchSorted(std::shared_ptr<DictionaryManager> dict);
+    explicit PatchSorted(PatchElementComparator* element_comparator);
+    explicit PatchSorted(std::shared_ptr<DictionaryManager> dict);
     PatchSorted(PatchElementComparator* element_comparator, std::vector<PatchElement> elements);
-    void add(const PatchElement& element);
+    void add(const PatchElement& element) override;
     /**
      * Add the given patch element in an unsorted manner.
      * @param element The patch element
@@ -120,10 +120,10 @@ public:
      * @param element The element to set.
      */
     void overwrite(long i, const PatchElement& element);
-    unsigned long get_size() const;
-    const PatchElement& get(long index) const;
-    PatchIterator* iterator() const;
-    const std::vector<PatchElement>& get_vector() const;
+    unsigned long get_size() const override;
+    const PatchElement& get(long index) const override;
+    PatchIterator* iterator() const override;
+    const std::vector<PatchElement>& get_vector() const override;
     /**
      * Find the position of the given element in this patch.
      * The boolean parameters are used to virtually include or exclude certain elements.
@@ -165,11 +165,11 @@ class PatchUnsorted : public PatchIndexed {
 protected:
     std::vector<PatchElement> elements;
 public:
-    void add(const PatchElement& element);
-    unsigned long get_size() const;
-    const PatchElement& get(long index) const;
-    PatchIterator* iterator() const;
-    const std::vector<PatchElement>& get_vector() const;
+    void add(const PatchElement& element) override;
+    unsigned long get_size() const override;
+    const PatchElement& get(long index) const override;
+    PatchIterator* iterator() const override;
+    const std::vector<PatchElement>& get_vector() const override;
 };
 
 // A PatchHashed contains an unordered set of PatchElements
@@ -177,9 +177,9 @@ class PatchHashed : public Patch {
 protected:
     std::unordered_map<Triple, std::pair<bool, bool>> elements;
 public:
-    void add(const PatchElement& element);
-    unsigned long get_size() const;
-    PatchIterator* iterator() const;
+    void add(const PatchElement& element) override;
+    unsigned long get_size() const override;
+    PatchIterator* iterator() const override;
     /**
      * Copy all patch elements from this and the given patch into a new patch patch.
      * This is optimized for merging large patches.

@@ -174,7 +174,7 @@ TripleIterator* Controller::get_version_materialized(const StringTriple &triple_
             check_offseted_deletions = false;
         }
     }
-    return new SnapshotPatchIteratorTripleID(snapshot_it, deletion_it, patchTree->get_spo_comparator(), snapshot, pattern, patchTree, patch_id, offset, deletion_count_data.first);
+    return new SnapshotPatchIteratorTripleID(snapshot_it, deletion_it, patchTree->get_spo_comparator(), snapshot, pattern, patchTree, patch_id, offset, deletion_count_data.first, dict);
 }
 
 std::pair<size_t, hdt::ResultEstimationType> Controller::get_delta_materialized_count(const Triple &triple_pattern, int patch_id_start, int patch_id_end, bool allowEstimates) const {
@@ -252,9 +252,9 @@ TripleDeltaIterator* Controller::get_delta_materialized(const StringTriple &trip
             // start_id = patch
             if (start_id != snapshot_id) {
                 if (TripleStore::is_default_tree(tp)) {
-                    return_it = new FowardDiffPatchTripleDeltaIterator<PatchTreeDeletionValue>(patch_tree, tp, start_id, end_id, dict);
+                    return_it = new ForwardDiffPatchTripleDeltaIterator<PatchTreeDeletionValue>(patch_tree, tp, start_id, end_id, dict);
                 } else {
-                    TripleDeltaIterator* tmp_it = new FowardDiffPatchTripleDeltaIterator<PatchTreeDeletionValueReduced>(patch_tree, tp, start_id, end_id, dict);
+                    TripleDeltaIterator* tmp_it = new ForwardDiffPatchTripleDeltaIterator<PatchTreeDeletionValueReduced>(patch_tree, tp, start_id, end_id, dict);
                     if (sort) {
                         return_it = new SortedTripleDeltaIterator(tmp_it, hdt::SPO);
                     } else {
@@ -295,8 +295,10 @@ TripleDeltaIterator* Controller::get_delta_materialized(const StringTriple &trip
 
     // Both patches are in the same delta chain
     if (snapshot_id_start == snapshot_id_end) {
-        return (single_delta_query(patch_id_start, patch_id_end, dict_end))->offset(offset);
+        return (single_delta_query(patch_id_start, patch_id_end, dict_end, false))->offset(offset);
     }
+
+    hdt::TripleComponentOrder qr_order = TripleStore::get_query_order(triple_pattern);
 
     if (use_plain_diff) {
         TripleIterator* it1 = get_version_materialized(triple_pattern, 0, patch_id_start);
@@ -316,7 +318,7 @@ TripleDeltaIterator* Controller::get_delta_materialized(const StringTriple &trip
     // start = patch
     if (patch_id_start != snapshot_id_start) {
         TripleDeltaIterator* delta_it_start = single_delta_query(snapshot_id_start, patch_id_start, dict_start, false);
-        intermediate_it = new MergeDiffIteratorCase2(delta_it_start, snapshot_diff_it);
+        intermediate_it = new MergeDiffIteratorCase2(delta_it_start, snapshot_diff_it, qr_order);
     }
     // end = patch
     if (patch_id_end != snapshot_id_end) {
@@ -325,20 +327,12 @@ TripleDeltaIterator* Controller::get_delta_materialized(const StringTriple &trip
 
     if (intermediate_it) {
         if (patch_id_end != snapshot_id_end) {
-            return (new MergeDiffIterator(intermediate_it, delta_it_end))->offset(offset);
+            return (new MergeDiffIterator(intermediate_it, delta_it_end, qr_order))->offset(offset);
         }
         return intermediate_it->offset(offset);
     }
 
-    // Test if HDT is going to emit in SPO order
-    // HDT seems to always emit in SPO order, unless dealing with ??O or ?PO patterns
-    Triple t = triple_pattern.get_as_triple(dict_start);
-    hdt::TripleID tid(t.get_subject(), t.get_predicate(), t.get_object());
-    if (tid.getPatternString() =="??O" || tid.getPatternString() =="?PO") {
-        snapshot_diff_it = new SortedTripleDeltaIterator(snapshot_diff_it, hdt::SPO);
-    }
-
-    return (new MergeDiffIterator(snapshot_diff_it, delta_it_end))->offset(offset);
+    return (new MergeDiffIterator(snapshot_diff_it, delta_it_end, qr_order))->offset(offset);
 }
 
 std::pair<size_t, hdt::ResultEstimationType> Controller::get_version_count(const Triple &triple_pattern, bool allowEstimates) const {
@@ -417,16 +411,20 @@ TripleVersionsIterator* Controller::get_version(const Triple &triple_pattern, in
 }
 
 TripleVersionsIterator *Controller::get_version(const StringTriple &triple_pattern, int offset) const {
+    hdt::TripleComponentOrder qr_order = TripleStore::get_query_order(triple_pattern);
     std::vector<int> snapshots_id = snapshotManager->get_snapshots_ids();
-    auto it_version = new TripleVersionsIteratorCombined(hdt::SPO);
+
+//    auto it_version = new TripleVersionsIteratorCombined(qr_order);
+    auto it_version = new TripleVersionsIteratorCombinedV2(qr_order);
     for (int id: snapshots_id) {
         std::shared_ptr<DictionaryManager> dict = snapshotManager->get_dictionary_manager(id);
         Triple pattern = triple_pattern.get_as_triple(dict);
         std::shared_ptr<hdt::HDT> snapshot = snapshotManager->get_snapshot(id);
-        hdt::IteratorTripleID* snapshot_it = SnapshotManager::search_with_offset(snapshot, pattern, 0, dict);
+        hdt::IteratorTripleID* snapshot_it = SnapshotManager::search_with_offset(snapshot, pattern, 0, dict, true);
         int patch_tree_id = patchTreeManager->get_patch_tree_id(id+1);
         std::shared_ptr<PatchTree> patchTree = patchTreeManager->get_patch_tree(patch_tree_id, dict);
-        auto it = new PatchTreeTripleVersionsIterator(pattern, snapshot_it, patchTree, id, dict);
+//        auto it = new PatchTreeTripleVersionsIterator(pattern, snapshot_it, patchTree, id, dict);
+        auto it = new PatchTreeTripleVersionsIteratorV2(pattern, snapshot_it, patchTree, id, dict);
         it_version->add_iterator(it);
         delete it;
     }
@@ -472,6 +470,16 @@ bool Controller::append(PatchElementIterator* patch_it, int patch_id, std::share
         metadata->loc_change_ratios = metadata_manager->store_double("local-change-ratio", snapshot_id, loc_cr);
     } else {
         metadata->loc_change_ratios = metadata_manager->store_double("local-change-ratio", snapshot_id, 0.0);
+    }
+
+    { //debug remove later
+        TripleIterator* triples_vm = get_version_materialized(Triple("", "", "", dict), 0, patch_id);
+        std::vector<hdt::TripleString> triples;
+        Triple t;
+        while (triples_vm->next(&t)) {
+            triples.emplace_back(t.get_subject(*dict), t.get_predicate(*dict), t.get_object(*dict));
+        }
+        delete triples_vm;
     }
 
     // If we need to create a new snapshot:
@@ -598,6 +606,8 @@ PatchBuilderStreaming *Controller::new_patch_stream() {
 bool Controller::ingest(const std::vector<std::pair<hdt::IteratorTripleString *, bool>> &files, int patch_id,
                         hdt::ProgressListener *progressListener) {
 
+
+    bool sort = true;
     std::shared_ptr<DictionaryManager> dict;
 
     bool first = patch_id == 0;
@@ -639,15 +649,28 @@ bool Controller::ingest(const std::vector<std::pair<hdt::IteratorTripleString *,
         added = hdt->getTriples()->getNumberOfElements();
         delete it_snapshot;
     } else {
-        NOTIFYMSG(progressListener, "\nAppending patch...\n");
-        append(it_patch, patch_id, dict, false, progressListener);
-        added = it_patch->getPassed();
-
+        if (sort) {
+            NOTIFYMSG(progressListener, "\nSorting patch...\n");
+            auto* comparator = new PatchElementComparator(new PatchTreeKeyComparator(comp_s, comp_p, comp_o, dict));
+            PatchSorted patch_sorted(comparator);
+            PatchElement patch_element;
+            while (it_patch->next(&patch_element)) {
+                patch_sorted.add_unsorted(patch_element);
+            }
+            patch_sorted.sort();
+            NOTIFYMSG(progressListener, "\nAppending patch...\n");
+            append(patch_sorted, patch_id, dict, false, progressListener);
+            added = patch_sorted.get_size();
+            delete comparator;
+        } else {
+            NOTIFYMSG(progressListener, "\nAppending patch...\n");
+            append(it_patch, patch_id, dict, false, progressListener);
+            added = it_patch->getPassed();
+        }
         delete it_patch;
     }
 
-    NOTIFYMSG(progressListener,
-              ("\nInserted " + to_string(added) + " for version " + to_string(patch_id) + ".\n").c_str());
+    NOTIFYMSG(progressListener, ("\nInserted " + to_string(added) + " for version " + to_string(patch_id) + ".\n").c_str());
 
     return true;
 }

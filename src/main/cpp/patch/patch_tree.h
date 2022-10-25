@@ -25,7 +25,7 @@
 class PatchTree {
 private:
     TripleStore* tripleStore;
-    string metadata_filename;
+    std::string metadata_filename;
     int min_patch_id;
     int max_patch_id;
     bool readonly;
@@ -59,7 +59,7 @@ public:
      * @note If an error occurs, some elements might have already been added.
      * If you want to change this behaviour, you'll have to first check if the patch elements are really new.
      */
-    void append_unsafe(PatchElementIterator *patch_it, int patch_id, hdt::ProgressListener *progressListener = NULL);
+    void append_unsafe(PatchElementIterator *patch_it, int patch_id, hdt::ProgressListener *progressListener = nullptr);
     /**
      * Append the given patch elements to the tree with given patch id.
      * This safe append will first check if the patch is completely new, only then it will add the data
@@ -68,7 +68,7 @@ public:
      * @param progressListener an optional progress listener.
      * @return If the patch was added, otherwise the patch was not completely new.
      */
-    bool append(PatchElementIterator* patch_it, int patch_id, hdt::ProgressListener* progressListener = NULL);
+    bool append(PatchElementIterator* patch_it, int patch_id, hdt::ProgressListener* progressListener = nullptr);
     /**
      * Append the given patch elements to the tree with given patch id.
      * This safe append will first check if the patch is completely new, only then it will add the data
@@ -77,7 +77,7 @@ public:
      * @param progressListener an optional progress listener.
      * @return If the patch was added, otherwise the patch was not completely new.
      */
-    bool append(const PatchSorted& patch, int patch_id, hdt::ProgressListener* progressListener = NULL);
+    bool append(const PatchSorted& patch, int patch_id, hdt::ProgressListener* progressListener = nullptr);
     /**
      * Check if the given patch element is present in the tree.
      * @param patch_element The patch element to look for

@@ -1825,12 +1825,24 @@ TEST_F(ControllerMSTest, GetDeltaMaterializedOrderMS) {
     TripleDeltaIterator* it3 = controller->get_delta_materialized(StringTriple("", "<b>", ""), 0, 0, 5);
 
     ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<n> <b> <a>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
     ASSERT_EQ("<a> <b> <b>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
     ASSERT_EQ(false, t.is_addition()) << "Element is incorrect";
 
     ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<b> <b> <b>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
     ASSERT_EQ("<a> <b> <c>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
     ASSERT_EQ(false, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<n> <b> <c>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
 
     ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
     ASSERT_EQ("<a> <b> <d>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
@@ -1846,18 +1858,6 @@ TEST_F(ControllerMSTest, GetDeltaMaterializedOrderMS) {
 
     ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
     ASSERT_EQ("<a> <b> <h>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
-    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
-
-    ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("<b> <b> <b>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
-    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
-
-    ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("<n> <b> <a>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
-    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
-
-    ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("<n> <b> <c>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
     ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
 
     ASSERT_EQ(false, it3->next(&t)) << "Iterator should be finished";
@@ -3311,4 +3311,194 @@ TEST_F(ControllerMSTest, GetVersionMS) {
 
     ASSERT_EQ(false, it19->next(&t)) << "Iterator should be finished";
 
+}
+
+
+TEST_F(ControllerMSTest2, GetVersionMS2) {
+    // 0
+    // <a> <a> <a>
+    // <a> <b> <a>
+    controller->new_patch_bulk()
+            ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<b>", "<a>"))
+            ->commit();
+
+    // 1
+    // <a> <a> <a>
+    controller->new_patch_bulk()
+            ->deletion(hdt::TripleString("<a>", "<b>", "<a>"))
+            ->commit();
+
+    // 2
+    // <a> <a> <a>
+    // <a> <c> <a>
+    controller->new_patch_bulk()
+            ->addition(hdt::TripleString("<a>", "<c>", "<a>"))
+            ->commit();
+
+    // 3
+    // <a> <c> <a>
+    // <a> <d> <a>
+    // <a> <e> <a>
+    controller->new_patch_bulk()
+            ->deletion(hdt::TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<d>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<e>", "<a>"))
+            ->commit();
+
+    // 4
+    // <a> <d> <a>
+    // <a> <e> <a>
+    controller->new_patch_bulk()
+            ->deletion(hdt::TripleString("<a>", "<c>", "<a>"))
+            ->commit();
+
+    // 5
+    // <a> <e> <a>
+    controller->new_patch_bulk()
+            ->deletion(hdt::TripleString("<a>", "<d>", "<a>"))
+            ->commit();
+
+    // 6
+    // <a> <b> <a>
+    // <a> <e> <a>
+    controller->new_patch_bulk()
+            ->addition(hdt::TripleString("<a>", "<b>", "<a>"))
+            ->commit();
+
+    // 7
+    // <a> <b> <a>
+    // <a> <c> <a>
+    // <a> <e> <a>
+    controller->new_patch_bulk()
+            ->addition(hdt::TripleString("<a>", "<c>", "<a>"))
+            ->commit();
+
+    std::vector<int> v_aaa = {0,1,2};
+    std::vector<int> v_aba = {0,6,7};
+    std::vector<int> v_aca = {2,3,7};
+    std::vector<int> v_ada = {3,4};
+    std::vector<int> v_aea = {3,4,5,6,7};
+
+    TripleVersions t;
+
+    ASSERT_EQ(5, controller->get_version_count(StringTriple("", "", "")).first) << "Count is incorrect";
+    TripleVersionsIterator* it0 = controller->get_version(StringTriple("", "", ""), 0);
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <a>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(v_aaa, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <b> <a>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(v_aba, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <c> <a>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(v_aca, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <d> <a>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(v_ada, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <e> <a>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(v_aea, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(false, it0->next(&t)) << "Iterator should be finished";
+}
+
+
+TEST_F(ControllerMSTest2, GetVersionMS3) {
+    // 0
+    // <a> <a> <a>
+    // <b> <a> <b>
+    controller->new_patch_bulk()
+            ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<b>", "<a>", "<b>"))
+            ->commit();
+
+    // 1
+    // <a> <a> <a>
+    controller->new_patch_bulk()
+            ->deletion(hdt::TripleString("<b>", "<a>", "<b>"))
+            ->commit();
+
+    // 2
+    // <a> <a> <a>
+    // <c> <a> <c>
+    controller->new_patch_bulk()
+            ->addition(hdt::TripleString("<c>", "<a>", "<c>"))
+            ->commit();
+
+    // 3
+    // <c> <a> <c>
+    // <d> <a> <d>
+    // <e> <a> <e>
+    controller->new_patch_bulk()
+            ->deletion(hdt::TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<d>", "<a>", "<d>"))
+            ->addition(hdt::TripleString("<e>", "<a>", "<e>"))
+            ->commit();
+
+    // 4
+    // <d> <a> <d>
+    // <e> <a> <e>
+    controller->new_patch_bulk()
+            ->deletion(hdt::TripleString("<c>", "<a>", "<c>"))
+            ->commit();
+
+    // 5
+    // <e> <a> <e>
+    controller->new_patch_bulk()
+            ->deletion(hdt::TripleString("<d>", "<a>", "<d>"))
+            ->commit();
+
+    // 6
+    // <b> <a> <b>
+    // <e> <a> <e>
+    controller->new_patch_bulk()
+            ->addition(hdt::TripleString("<b>", "<a>", "<b>"))
+            ->commit();
+
+    // 7
+    // <b> <a> <b>
+    // <c> <a> <c>
+    // <e> <a> <e>
+    controller->new_patch_bulk()
+            ->addition(hdt::TripleString("<c>", "<a>", "<c>"))
+            ->commit();
+
+    std::vector<int> v_aaa = {0,1,2};
+    std::vector<int> v_bab = {0,6,7};
+    std::vector<int> v_cac = {2,3,7};
+    std::vector<int> v_dad = {3,4};
+    std::vector<int> v_eae = {3,4,5,6,7};
+
+    TripleVersions t;
+
+    ASSERT_EQ(5, controller->get_version_count(StringTriple("", "<a>", "")).first) << "Count is incorrect";
+    TripleVersionsIterator* it0 = controller->get_version(StringTriple("", "<a>", ""), 0);
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <a>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(v_aaa, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<b> <a> <b>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(v_bab, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<c> <a> <c>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(v_cac, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<d> <a> <d>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(v_dad, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<e> <a> <e>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(v_eae, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(false, it0->next(&t)) << "Iterator should be finished";
 }

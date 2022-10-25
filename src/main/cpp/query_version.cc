@@ -1,6 +1,5 @@
 #include <iostream>
 #include <kchashdb.h>
-#include <unistd.h>
 #include <cstring>
 
 #include "../../main/cpp/patch/patch_tree.h"
@@ -10,8 +9,6 @@
 
 #define BASEURI "<http://example.org>"
 
-using namespace std;
-using namespace kyotocabinet;
 
 int main(int argc, char** argv) {
     if (argc < 4 || argc > 5) {
@@ -43,7 +40,7 @@ int main(int argc, char** argv) {
     while (it->next(&triple_versions)) {
         std::stringstream vect;
         std::copy(triple_versions.get_versions()->begin(), triple_versions.get_versions()->end(), std::ostream_iterator<int>(vect, " "));
-        cout << triple_versions.get_triple()->to_string(*(triple_versions.get_dictionary())) << " :: [ " << vect.str() << "]" << endl;
+        std::cout << triple_versions.get_triple()->to_string(*(triple_versions.get_dictionary())) << " :: [ " << vect.str() << "]" << std::endl;
     }
     delete it;
 
