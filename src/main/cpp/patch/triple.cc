@@ -133,15 +133,49 @@ std::size_t std::hash<Triple>::operator()(const Triple& triple) const {
           ^ (triple.get_object() << 1);
 }
 
+
+TripleVersion::TripleVersion(): patch_id(0), triple(Triple()) {}
+
 TripleVersion::TripleVersion(int patch_id, const Triple& triple) : patch_id(patch_id), triple(triple) {}
 
 const char *TripleVersion::serialize(size_t *size) const {
-    *size = sizeof(TripleVersion);
-    char* bytes = (char *) malloc(*size);
-    memcpy(bytes, (char*)&patch_id, sizeof(patch_id));
-    memcpy(&bytes[sizeof(patch_id)], (char*)&triple, sizeof(triple));
+    *size = 0;
+#ifdef USE_VSI
+    size_t alloc_size = get_SLEB128_size(std::numeric_limits<int>::max()) + get_ULEB128_size(std::numeric_limits<size_t>::max()) * 3;
+#else
+    size_t alloc_size = sizeof(patch_id) + sizeof(size_t) * 3;
+#endif
+    char* bytes = new char[alloc_size];
+#ifdef USE_VSI
+    std::vector<uint8_t> buffer;
+    encode_SLEB128(patch_id, buffer);
+    *size += buffer.size();
+    std::memcpy(bytes, buffer.data(), buffer.size());
+#else
+    std::memcpy(bytes, &patch_id, sizeof(patch_id));
+    *size += sizeof(patch_id);
+#endif
+    size_t ts;
+    const char* triple_data = triple.serialize(&ts);
+
+    std::memcpy(bytes+*size, triple_data, ts);
+    *size += ts;
+    delete[] triple_data;
+
     return bytes;
 }
+
+void TripleVersion::deserialize(const char *data, size_t size) {
+    size_t offset = 0;
+#ifdef USE_VSI
+    patch_id = decode_SLEB128((const uint8_t*)(data), &offset);
+#else
+    std::memcpy(&patch_id, data, sizeof(patch_id));
+    offset += sizeof(patch_id);
+#endif
+    triple.deserialize(data+offset, size-offset);
+}
+
 
 StringTriple::StringTriple() = default;
 

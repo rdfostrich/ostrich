@@ -77,7 +77,6 @@ protected:
     IntervalList<int> local_changes;
     int max_patch_id;
 public:
-//    PatchTreeAdditionValue();
     /**
      * Construct a new AdditionValue with a specified max id.
      * This is needed in order to conduct correct get_size and get_patch_id_at operations
@@ -85,6 +84,11 @@ public:
      * @param max_patch_id the outer bound of the values stored
      */
     explicit PatchTreeAdditionValue(int max_patch_id);
+    /**
+     * Set the maximum patch_id handled by this PatchTreeAdditionValue.
+     * @param id
+     */
+    void set_max_patch_id(int id);
     /**
      * Add the given patch id.
      * @param patch_id The patch id to add

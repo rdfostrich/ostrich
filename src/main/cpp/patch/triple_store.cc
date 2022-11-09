@@ -248,29 +248,21 @@ void TripleStore::increment_addition_counts(const int patch_id, const Triple &tr
 }
 
 void TripleStore::increment_addition_count(const TripleVersion& triple_version) {
-    size_t _;
-    char raw_key[sizeof(TripleVersion)];
+    size_t _, tv_size;
     char* raw_value;
-    bool was_present = false;
-    memcpy(raw_key, &triple_version, sizeof(TripleVersion));
-
-    raw_value = temp_count_additions->get(raw_key, sizeof(TripleVersion), &_);
+    const char* raw_key = triple_version.serialize(&tv_size);
+    raw_value = temp_count_additions->get(raw_key, tv_size, &_);
     PatchPosition pos = 0;
     if (raw_value != nullptr) {
-        was_present = true;
-        memcpy(&pos, raw_value, sizeof(PatchPosition));
+        std::memcpy(&pos, raw_value, sizeof(PatchPosition));
     } else {
-        raw_value = (char*) malloc(sizeof(TripleVersion));
+        raw_value = new char[sizeof(PatchPosition)];
     }
     pos++;
-    memcpy(raw_value, &pos, sizeof(PatchPosition));
-    temp_count_additions->set(raw_key, sizeof(TripleVersion), raw_value, sizeof(PatchPosition));
+    std::memcpy(raw_value, &pos, sizeof(PatchPosition));
+    temp_count_additions->set(raw_key, tv_size, raw_value, sizeof(PatchPosition));
 
-    if (was_present) {
-        delete[] raw_value;
-    } else {
-        free(raw_value);
-    }
+    delete[] raw_value;
 }
 
 PatchPosition TripleStore::get_addition_count(const int patch_id, const Triple &triple) {
@@ -280,9 +272,9 @@ PatchPosition TripleStore::get_addition_count(const int patch_id, const Triple &
     const char* vbp = count_additions->get(kbp, ksp, &vsp);
     PatchPosition count = 0;
     if (vbp != nullptr) {
-        memcpy(&count, vbp, sizeof(PatchPosition));
+        std::memcpy(&count, vbp, sizeof(PatchPosition));
     }
-    free((char*) kbp);
+    delete[] kbp;
     delete[] vbp;
     return count;
 }
@@ -296,7 +288,7 @@ long TripleStore::flush_addition_counts() {
     while (cursor->step()) {
         const char* vbp;
         const char* kbp = cursor->get(&ksp, &vbp, &vsp, false);
-        memcpy(&count, vbp, sizeof(PatchPosition));
+        std::memcpy(&count, vbp, sizeof(PatchPosition));
         if (count >= MIN_ADDITION_COUNT) {
             count_additions->set(kbp, ksp, vbp, vsp);
             added++;

@@ -464,22 +464,11 @@ bool Controller::append(PatchElementIterator* patch_it, int patch_id, std::share
     double change_ratio = ag/su;
     metadata->change_ratios = metadata_manager->store_double("change-ratio", snapshot_id, change_ratio);
     if (metadata->agg_delta_sizes.size() > 1) {
-//        uint64_t prev_agg_delta = metadata->agg_delta_sizes[metadata->agg_delta_sizes.size()-2];
         uint64_t prev_ver_size = metadata->version_sizes[metadata->version_sizes.size()-2];
         double loc_cr = (double) patch_it->getPassed() / (prev_ver_size + patch_it->getPassed());
         metadata->loc_change_ratios = metadata_manager->store_double("local-change-ratio", snapshot_id, loc_cr);
     } else {
         metadata->loc_change_ratios = metadata_manager->store_double("local-change-ratio", snapshot_id, 0.0);
-    }
-
-    { //debug remove later
-        TripleIterator* triples_vm = get_version_materialized(Triple("", "", "", dict), 0, patch_id);
-        std::vector<hdt::TripleString> triples;
-        Triple t;
-        while (triples_vm->next(&t)) {
-            triples.emplace_back(t.get_subject(*dict), t.get_predicate(*dict), t.get_object(*dict));
-        }
-        delete triples_vm;
     }
 
     // If we need to create a new snapshot:
@@ -491,6 +480,7 @@ bool Controller::append(PatchElementIterator* patch_it, int patch_id, std::share
         NOTIFYMSG(progressListener, "\nCreating snapshot from patch...\n");
         NOTIFYMSG(progressListener, "\nMaterializing version ...\n");
         TripleIterator* triples_vm = get_version_materialized(Triple("", "", "", dict), 0, patch_id);
+        //TODO: custom IteratorTripleString to not have to buffer triples
         std::vector<hdt::TripleString> triples;
         Triple t;
         while (triples_vm->next(&t)) {

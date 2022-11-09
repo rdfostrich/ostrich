@@ -108,6 +108,7 @@ protected:
     int patch_id;
     Triple triple;
 public:
+    TripleVersion();
     TripleVersion(int patch_id, const Triple &triple);
 
     /**
@@ -116,6 +117,12 @@ public:
      * @return The byte array
      */
     const char *serialize(size_t *size) const;
+    /**
+     * Deserialize the given byte array to this object.
+     * @param data The data to deserialize from.
+     * @param size The size of the byte array
+     */
+    void deserialize(const char *data, size_t size);
 };
 
 namespace std {

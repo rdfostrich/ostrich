@@ -8,8 +8,7 @@
 PatchTreeAdditionValue::PatchTreeAdditionValue() : patches(), local_changes() {}
 
 void PatchTreeAdditionValue::add(int patch_id) {
-    std::vector<int>::iterator itToInsert = std::lower_bound(
-            patches.begin(), patches.end(), patch_id);
+    auto itToInsert = std::lower_bound(patches.begin(), patches.end(), patch_id);
     if(itToInsert == patches.end() || *itToInsert != patch_id) {
         patches.insert(itToInsert, patch_id);
     }
@@ -20,7 +19,7 @@ bool PatchTreeAdditionValue::is_patch_id(int patch_id) const {
 }
 
 long PatchTreeAdditionValue::get_patchvalue_index(int patch_id) const {
-    std::vector<int>::const_iterator findIt = std::lower_bound(patches.begin(), patches.end(), patch_id);
+    auto findIt = std::lower_bound(patches.begin(), patches.end(), patch_id);
     if (findIt != patches.end() && *findIt == patch_id) {
         return std::distance(patches.begin(), findIt);
     } else {
@@ -37,16 +36,15 @@ long PatchTreeAdditionValue::get_size() const {
 }
 
 void PatchTreeAdditionValue::set_local_change(int patch_id) {
-    std::vector<int>::iterator itToInsert = std::lower_bound(
-            local_changes.begin(), local_changes.end(), patch_id);
+    auto itToInsert = std::lower_bound(local_changes.begin(), local_changes.end(), patch_id);
     if(itToInsert == local_changes.end() || *itToInsert != patch_id) {
         local_changes.insert(itToInsert, patch_id);
     }
 }
 
 bool PatchTreeAdditionValue::is_local_change(int patch_id) const {
-    if (local_changes.size() == 0) return false;
-    std::vector<int>::const_iterator findIt = std::lower_bound(local_changes.begin(), local_changes.end(), patch_id);
+    if (local_changes.empty()) return false;
+    auto findIt = std::lower_bound(local_changes.begin(), local_changes.end(), patch_id);
     if(findIt == local_changes.end()) findIt--;
     return *findIt <= patch_id;
 }
@@ -54,10 +52,10 @@ bool PatchTreeAdditionValue::is_local_change(int patch_id) const {
 std::string PatchTreeAdditionValue::to_string() const {
     std::string ret = "{";
     bool separator = false;
-    for(int i = 0; i < patches.size(); i++) {
+    for (int patch : patches) {
         if(separator) ret += ",";
         separator = true;
-        ret += std::to_string(patches[i]) + (is_local_change(patches[i]) ? "L" : "");
+        ret += std::to_string(patch) + (is_local_change(patch) ? "L" : "");
     }
     ret += "}";
     return ret;
@@ -286,6 +284,10 @@ void PatchTreeAdditionValue::deserialize(const char *data, size_t size) {
     } else {
         local_changes.clear();
     }
+}
+
+void PatchTreeAdditionValue::set_max_patch_id(int id) {
+    max_patch_id = id;
 }
 
 #endif

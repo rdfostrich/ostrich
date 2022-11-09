@@ -1,6 +1,4 @@
-#include <iostream>
 #include <kchashdb.h>
-#include <fstream>
 
 #include "patch_tree.h"
 #include "../simpleprogresslistener.h"
@@ -232,9 +230,12 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, hdt:
                 tripleStore->insertAdditionSingle(&addition_key, &addition_value, cursor_additions);
 #endif
             }
-            if (!addition_value.is_local_change(patch_id)) tripleStore->increment_addition_counts(patch_id, addition_key);
-            // TODO: double check what this line does, especially that i and patch_id are correct
-            if (!addition_value.is_local_change(addition_value.get_patch_id_at(0))) tripleStore->increment_addition_counts(0, addition_key);
+            if (!addition_value.is_local_change(patch_id)) {
+                tripleStore->increment_addition_counts(patch_id, addition_key);
+            }
+            if (!addition_value.is_local_change(addition_value.get_patch_id_at(0))) {
+                tripleStore->increment_addition_counts(0, addition_key);
+            }
         } else if (P_LT_A && P_LT_D) { // P < A && P < D
             // P++
             should_step_patch = true;
@@ -312,17 +313,21 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, hdt:
                 addition_value.add(patch_id);
                 if (was_local_change) addition_value.set_local_change(patch_id);
                 tripleStore->insertAdditionSingle(&addition_key, &addition_value);
-                if (!was_local_change) tripleStore->increment_addition_counts(patch_id, addition_key);
+                if (!was_local_change) {
+                    tripleStore->increment_addition_counts(patch_id, addition_key);
+                }
 #else
                 bool has_changed = addition_value.add(patch_id);
                 if (has_changed)
                     tripleStore->insertAdditionSingle(&addition_key, &addition_value, cursor_additions);
-                if (!addition_value.is_local_change(patch_id))
+                if (!addition_value.is_local_change(patch_id)) {
                     tripleStore->increment_addition_counts(patch_id, addition_key);
+                }
 #endif
             }
-            // TODO: double check what this line does, especially that i and patch_id are correct
-            if (!addition_value.is_local_change(addition_value.get_patch_id_at(0))) tripleStore->increment_addition_counts(0, addition_key);
+            if (!addition_value.is_local_change(addition_value.get_patch_id_at(0))) {
+                tripleStore->increment_addition_counts(0, addition_key);
+            }
         } else { // (D = A) < P   or   P = A = D
             // carry over local change if < P, or invert existing local change if = P
             should_step_patch = !P_GT_D;
@@ -333,6 +338,9 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, hdt:
             // That means that the local change must be inverted.
             // We only update the value with the smallest patch id, because we will never store +/- at the same time for the same patch id
 
+#ifdef COMPRESSED_ADD_VALUES
+            addition_value.set_max_patch_id(patch_id);
+#endif
             int largest_patch_id_addition = addition_value.get_patch_id_at(addition_value.get_size() - 1);
             int largest_patch_id_deletion = deletion_value.get_patch_at(deletion_value.get_size() - 1).get_patch_id();
             bool is_local_change = largest_patch_id_addition < largest_patch_id_deletion ? deletion_value.is_local_change(patch_id) : addition_value.is_local_change(patch_id);
@@ -343,6 +351,9 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, hdt:
                 add_addition = !add_addition;
                 add_deletion = !add_deletion;
             }
+#ifdef COMPRESSED_ADD_VALUES
+            addition_value.set_max_patch_id(patch_id+1);
+#endif
 
             // Sanity check, disabled for efficiency
             /*
@@ -361,7 +372,9 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, hdt:
                 throw std::invalid_argument("D is not equal to A.");
             }*/
 
-            if (!addition_value.is_local_change(addition_value.get_patch_id_at(0))) tripleStore->increment_addition_counts(0, addition_key);
+            if (!addition_value.is_local_change(addition_value.get_patch_id_at(0))) {
+                tripleStore->increment_addition_counts(0, addition_key);
+            }
             if (add_addition) {
 #ifdef COMPRESSED_ADD_VALUES
                 bool has_changed_add = addition_value.add(patch_id);
@@ -369,12 +382,16 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, hdt:
                     has_changed_add |= addition_value.set_local_change(patch_id);
                 if (has_changed_add)
                     tripleStore->insertAdditionSingle(&addition_key, &addition_value, cursor_additions);
-                if (!is_local_change) tripleStore->increment_addition_counts(patch_id, addition_key);
+                if (!is_local_change) {
+                    tripleStore->increment_addition_counts(patch_id, addition_key);
+                }
 #else
                 addition_value.add(patch_id);
                 if (is_local_change) addition_value.set_local_change(patch_id);
                 tripleStore->insertAdditionSingle(&addition_key, &addition_value, cursor_additions);
-                if (!is_local_change) tripleStore->increment_addition_counts(patch_id, addition_key);
+                if (!is_local_change) {
+                    tripleStore->increment_addition_counts(patch_id, addition_key);
+                }
 #endif
 #ifdef COMPRESSED_DEL_VALUES
                 bool has_changed_del = deletion_value.del(patch_id);
@@ -455,8 +472,6 @@ void PatchTree::append_unsafe(PatchElementIterator* patch_it, int patch_id, hdt:
 
     delete cursor_deletions;
     delete cursor_additions;
-
-    //delete patch_it;
 }
 
 bool PatchTree::append(PatchElementIterator* patch_it, int patch_id, hdt::ProgressListener* progressListener) {
