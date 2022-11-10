@@ -133,9 +133,10 @@ public:
     * Create new snapshots when relevant, according to the given strategy.
     * @param files The list of files to ingest as a pair of filenames and boolean indicating if it's additions.
     * @param patch_id The id of the patch.
+    * @param sort if the triples needs to be sorted before insertion
     * @return if ingestion has succeeded
     */
-    bool ingest(const std::vector<std::pair<hdt::IteratorTripleString*, bool>>& files, int patch_id, hdt::ProgressListener* progressListener = nullptr);
+    bool ingest(const std::vector<std::pair<hdt::IteratorTripleString*, bool>>& files, int patch_id, bool sort = false, hdt::ProgressListener* progressListener = nullptr);
 
 };
 

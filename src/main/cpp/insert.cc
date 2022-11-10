@@ -62,7 +62,7 @@ int main(int argc, char** argv) {
         }
     }
 
-    bool status = controller.ingest(files, patch_id, progressListener);
+    bool status = controller.ingest(files, patch_id, true, progressListener);
 
     if (progressListener)
         std::cout << std::endl;

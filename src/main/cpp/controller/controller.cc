@@ -593,11 +593,10 @@ PatchBuilderStreaming *Controller::new_patch_stream() {
     return new PatchBuilderStreaming(this);
 }
 
-bool Controller::ingest(const std::vector<std::pair<hdt::IteratorTripleString *, bool>> &files, int patch_id,
+bool Controller::ingest(const std::vector<std::pair<hdt::IteratorTripleString *, bool>> &files, int patch_id, bool sort,
                         hdt::ProgressListener *progressListener) {
 
 
-    bool sort = true;
     std::shared_ptr<DictionaryManager> dict;
 
     bool first = patch_id == 0;
