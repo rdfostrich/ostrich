@@ -9,7 +9,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - run: sudo apt-get update
-            - run: sudo apt-get -y install liblzo2-dev liblzma-dev zlib1g-dev build-essential libraptor2-dev libserd-dev
+            - run: sudo apt-get -y install liblzo2-dev liblzma-dev zlib1g-dev build-essential libraptor2-dev libserd-dev libboost-iostreams-dev
             - run: | 
                 wget https://dbmx.net/kyotocabinet/pkg/kyotocabinet-1.2.79.tar.gz
                 tar -xvzf kyotocabinet-1.2.79.tar.gz && mv kyotocabinet-1.2.79 kyotocabinet && rm kyotocabinet-1.2.79.tar.gz
