@@ -2,7 +2,7 @@
 #include "controller.h"
 #include "../evaluate/evaluator.h"
 
-PatchBuilderStreaming::PatchBuilderStreaming(Controller* controller, int patch_id, bool check_uniqueness, ProgressListener* progressListener)
+PatchBuilderStreaming::PatchBuilderStreaming(Controller* controller, int patch_id, bool check_uniqueness, hdt::ProgressListener* progressListener)
         : controller(controller), check_uniqueness(check_uniqueness), progressListener(progressListener) {
     int max_patch_id = controller->get_max_patch_id();
     int snapshot_id = controller->get_snapshot_manager()->get_latest_snapshot(max_patch_id);
@@ -25,7 +25,7 @@ void PatchBuilderStreaming::close() {
     thread.join();
 }
 
-PatchBuilderStreaming *PatchBuilderStreaming::triple(const TripleString& triple_const, bool addition) {
+PatchBuilderStreaming *PatchBuilderStreaming::triple(const hdt::TripleString& triple_const, bool addition) {
     if (patch_id == 0) {
         if (!addition) {
             throw std::exception(); // Impossible to add deletions in the first snapshot
@@ -33,17 +33,17 @@ PatchBuilderStreaming *PatchBuilderStreaming::triple(const TripleString& triple_
             buffer_triplestring.push_back(triple_const);
         }
     } else {
-        TripleString &triple = const_cast<TripleString &>(triple_const);
+        hdt::TripleString &triple = const_cast<hdt::TripleString &>(triple_const);
         buffer_patchelements.push(PatchElement(Triple(triple.getSubject(), triple.getPredicate(), triple.getObject(), dict), addition));
     }
     return this;
 }
 
-PatchBuilderStreaming* PatchBuilderStreaming::addition(const TripleString& triple) {
+PatchBuilderStreaming* PatchBuilderStreaming::addition(const hdt::TripleString& triple) {
     return this->triple(triple, true);
 }
 
-PatchBuilderStreaming* PatchBuilderStreaming::deletion(const TripleString& triple) {
+PatchBuilderStreaming* PatchBuilderStreaming::deletion(const hdt::TripleString& triple) {
     return this->triple(triple, false);
 }
 
@@ -83,9 +83,9 @@ bool PatchBuilderStreaming::hasNext() {
     return true;
 }
 
-TripleString* PatchBuilderStreaming::next() {
+hdt::TripleString* PatchBuilderStreaming::next() {
     if (buffer_triplestring_pos < buffer_triplestring.size()) {
-        return new TripleString(buffer_triplestring[buffer_triplestring_pos++]);
+        return new hdt::TripleString(buffer_triplestring[buffer_triplestring_pos++]);
     }
     return NULL;
 }
@@ -94,7 +94,7 @@ bool PatchBuilderStreaming::hasPrevious() {
     throw std::invalid_argument("Previous not supported in streaming patch builder.");
 }
 
-TripleString *PatchBuilderStreaming::previous() {
+hdt::TripleString *PatchBuilderStreaming::previous() {
     throw std::invalid_argument("Previous not supported in streaming patch builder.");
 }
 

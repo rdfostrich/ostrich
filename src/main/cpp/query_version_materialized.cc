@@ -20,7 +20,7 @@ int main(int argc, char** argv) {
     }
 
     // Load the store
-    Controller controller("./", TreeDB::TCOMPRESS, true);
+    Controller controller("./", kyotocabinet::TreeDB::TCOMPRESS, true);
 
     // Get query parameters
     std::string s(argv[2]);
@@ -37,8 +37,8 @@ int main(int argc, char** argv) {
     std::shared_ptr<DictionaryManager> dict = controller.get_dictionary_manager(patch_id);
     Triple triple_pattern(s, p, o, dict);
 
-    std::pair<size_t, ResultEstimationType> count = controller.get_version_materialized_count(triple_pattern, patch_id, true);
-    cerr << "Count: " << count.first << (count.second == EXACT ? "" : " (estimate)") << endl;
+    std::pair<size_t, hdt::ResultEstimationType> count = controller.get_version_materialized_count(triple_pattern, patch_id, true);
+    cerr << "Count: " << count.first << (count.second == hdt::EXACT ? "" : " (estimate)") << endl;
 
     TripleIterator* it = controller.get_version_materialized(triple_pattern, offset, patch_id);
     Triple triple(0, 0, 0);

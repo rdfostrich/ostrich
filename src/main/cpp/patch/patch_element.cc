@@ -1,8 +1,8 @@
 #include "patch_element.h"
 
 PatchElement::PatchElement() : triple(Triple()), addition(false), local_change(false) {}
-PatchElement::PatchElement(const Triple triple, bool addition) : triple(triple), addition(addition), local_change(false) {}
-PatchElement::PatchElement(const Triple triple, bool addition, bool local_change) : triple(triple), addition(addition), local_change(local_change) {}
+PatchElement::PatchElement(const Triple& triple, bool addition) : triple(triple), addition(addition), local_change(false) {}
+PatchElement::PatchElement(const Triple& triple, bool addition, bool local_change) : triple(triple), addition(addition), local_change(local_change) {}
 
 void PatchElement::set_triple(const Triple triple) {
     this->triple = triple;
@@ -32,6 +32,6 @@ const string PatchElement::to_string() const {
     return get_triple().to_string() + " (" + (is_addition() ? "+" : "-") + ")";
 }
 
-const string PatchElement::to_string(Dictionary& dict) const {
+const string PatchElement::to_string(hdt::Dictionary& dict) const {
     return get_triple().to_string(dict) + " (" + (is_addition() ? "+" : "-") + ")";
 }

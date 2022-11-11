@@ -4,7 +4,7 @@ PatchElementIterator::PatchElementIterator() = default;
 
 PatchElementIterator::~PatchElementIterator() = default;
 
-PatchElementIteratorTripleStrings::PatchElementIteratorTripleStrings(std::shared_ptr<DictionaryManager> dict, IteratorTripleString* it, bool additions)
+PatchElementIteratorTripleStrings::PatchElementIteratorTripleStrings(std::shared_ptr<DictionaryManager> dict, hdt::IteratorTripleString* it, bool additions)
         : dict(dict), it(it), additions(additions), passed(0) {}
 
 PatchElementIteratorTripleStrings::~PatchElementIteratorTripleStrings() {
@@ -13,7 +13,7 @@ PatchElementIteratorTripleStrings::~PatchElementIteratorTripleStrings() {
 
 bool PatchElementIteratorTripleStrings::next(PatchElement* element) {
     if (it->hasNext()) {
-        TripleString* tripleString = it->next();
+        hdt::TripleString* tripleString = it->next();
         element->set_triple(
                 Triple(tripleString->getSubject(), tripleString->getPredicate(), tripleString->getObject(), dict));
         element->set_addition(additions);
@@ -179,7 +179,7 @@ size_t PatchElementIteratorBuffered::getPassed() {
     return passed;
 }
 
-IteratorTripleStringVector::IteratorTripleStringVector(const std::vector<TripleString>* elements) : elements(elements) {
+IteratorTripleStringVector::IteratorTripleStringVector(const std::vector<hdt::TripleString>* elements) : elements(elements) {
     goToStart();
 }
 
@@ -187,8 +187,8 @@ bool IteratorTripleStringVector::hasNext() {
     return it != elements->end();
 }
 
-TripleString* IteratorTripleStringVector::next() {
-    return (TripleString*) &(*it++);
+hdt::TripleString* IteratorTripleStringVector::next() {
+    return (hdt::TripleString*) &(*it++);
 }
 
 void IteratorTripleStringVector::goToStart() {

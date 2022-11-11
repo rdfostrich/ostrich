@@ -3,12 +3,11 @@
 #include <dirent.h>
 #include <hdt/BasicHDT.hpp>
 #include "snapshot_manager.h"
-#include "hdt/BasicModifiableHDT.hpp"
-#include "../dictionary/dictionary_manager.h"
+#include "../patch/triple_store.h"
+#include "sorted_triple_iterator.h"
 
-using namespace hdt;
 
-SnapshotManager::SnapshotManager(string basePath, bool readonly, size_t cache_size) : basePath(basePath), max_loaded_snapshots(std::max((size_t)2,cache_size)), readonly(readonly) {
+SnapshotManager::SnapshotManager(std::string basePath, bool readonly, size_t cache_size) : basePath(basePath), max_loaded_snapshots(std::max((size_t)2,cache_size)), readonly(readonly) {
     detect_snapshots();
 }
 
@@ -34,7 +33,7 @@ int SnapshotManager::get_latest_snapshot(int patch_id) {
     return -1;
 }
 
-std::shared_ptr<HDT> SnapshotManager::load_snapshot(int snapshot_id) {
+std::shared_ptr<hdt::HDT> SnapshotManager::load_snapshot(int snapshot_id) {
     // We check if a snapshot is already loaded for the given snapshot_id
     update_cache(snapshot_id);
     auto it = loaded_snapshots.find(snapshot_id);
@@ -43,7 +42,7 @@ std::shared_ptr<HDT> SnapshotManager::load_snapshot(int snapshot_id) {
     }
 
     string fileName = basePath + SNAPSHOT_FILENAME_BASE(snapshot_id);
-    loaded_snapshots[snapshot_id] = std::shared_ptr<HDT>(hdt::HDTManager::mapIndexedHDT(fileName.c_str()));
+    loaded_snapshots[snapshot_id] = std::shared_ptr<hdt::HDT>(hdt::HDTManager::mapIndexedHDT(fileName.c_str()));
 
     // load dictionary as well
     loaded_dictionaries[snapshot_id] = std::make_shared<DictionaryManager>(basePath, snapshot_id, loaded_snapshots[snapshot_id]->getDictionary(), readonly);
@@ -51,7 +50,7 @@ std::shared_ptr<HDT> SnapshotManager::load_snapshot(int snapshot_id) {
     return loaded_snapshots[snapshot_id];
 }
 
-std::shared_ptr<HDT> SnapshotManager::get_snapshot(int snapshot_id) {
+std::shared_ptr<hdt::HDT> SnapshotManager::get_snapshot(int snapshot_id) {
     if(snapshot_id < 0) {
         return nullptr;
     }
@@ -69,26 +68,25 @@ std::shared_ptr<HDT> SnapshotManager::get_snapshot(int snapshot_id) {
     return it->second;
 }
 
-std::shared_ptr<HDT> SnapshotManager::create_snapshot(int snapshot_id, IteratorTripleString* triples, string base_uri, ProgressListener* listener) {
-    BasicHDT* basicHdt = new BasicHDT();
+std::shared_ptr<hdt::HDT> SnapshotManager::create_snapshot(int snapshot_id, hdt::IteratorTripleString* triples, string base_uri, hdt::ProgressListener* listener) {
+    hdt::BasicHDT* basicHdt = new hdt::BasicHDT();
     basicHdt->loadFromTriples(triples, base_uri, listener);
     basicHdt->saveToHDT((basePath + SNAPSHOT_FILENAME_BASE(snapshot_id)).c_str());
     delete basicHdt;
     return load_snapshot(snapshot_id);
 }
 
-std::shared_ptr<HDT> SnapshotManager::create_snapshot(int snapshot_id, string triples_file, string base_uri, RDFNotation notation) {
-    BasicHDT* basicHdt = new BasicHDT();
+std::shared_ptr<hdt::HDT> SnapshotManager::create_snapshot(int snapshot_id, string triples_file, string base_uri, hdt::RDFNotation notation) {
+    hdt::BasicHDT* basicHdt = new hdt::BasicHDT();
     basicHdt->loadFromRDF(triples_file.c_str(), base_uri, notation);
     basicHdt->saveToHDT((basePath + SNAPSHOT_FILENAME_BASE(snapshot_id)).c_str());
     delete basicHdt;
     return load_snapshot(snapshot_id);
 }
 
-const std::map<int, std::shared_ptr<HDT>>& SnapshotManager::detect_snapshots() {
+const std::map<int, std::shared_ptr<hdt::HDT>>& SnapshotManager::detect_snapshots() {
     std::regex r("snapshot_([0-9]*).hdt");
     std::smatch base_match;
-    //std::map<int, HDT*> snapshots = std::map<int, HDT*>();
     DIR *dir;
     struct dirent *ent;
     if ((dir = opendir(basePath.c_str())) != nullptr) {
@@ -119,11 +117,28 @@ std::vector<int> SnapshotManager::get_snapshots_ids() const {
     return ids;
 }
 
-IteratorTripleID* SnapshotManager::search_with_offset(std::shared_ptr<HDT> hdt, const Triple& triple_pattern, long offset) {
-    TripleID tripleId(triple_pattern.get_subject(), triple_pattern.get_predicate(), triple_pattern.get_object());
+hdt::IteratorTripleID* SnapshotManager::search_with_offset(std::shared_ptr<hdt::HDT> hdt, const Triple& triple_pattern, long offset, std::shared_ptr<DictionaryManager> dict, bool sort) {
+    size_t subject = triple_pattern.get_subject();
+    size_t predicate = triple_pattern.get_predicate();
+    size_t object = triple_pattern.get_object();
+    if (dict != nullptr) {
+        // Searching with IDs close to the max ID stored in HDT (i.e. ID + 1) can confuse some HDT iterators
+        // Those iterators will then return 'true' to has_next() and then crash on next() because they reach their limits
+        // So we work around by setting the max for ID not in HDT, which makes the iterators properly reply to has_next()
+        // That way we shouldn't have to catch exceptions everywhere because HDT is crashing
+        size_t max = std::numeric_limits<size_t>::max();
+        subject = subject > dict->getMaxHdtId() ? max : subject;
+        predicate = predicate > dict->getMaxHdtId() ? max : predicate;
+        object = object > dict->getMaxHdtId() ? max : object;
+    }
+    hdt::TripleID tripleId(subject, predicate, object);
 
     try {
-        IteratorTripleID* it = hdt->getTriples()->search(tripleId);
+        hdt::TripleComponentOrder qr_order = TripleStore::get_query_order(triple_pattern);
+        hdt::IteratorTripleID* it = hdt->getTriples()->search(tripleId);
+        if (sort && qr_order != hdt::SPO) {
+            it = new SortedTripleIterator(it, qr_order, dict);
+        }
         if(it->canGoTo()) {
             try {
                 // If we goTo() with offset == 0, and HDT internal iterator is a MiddleWaveletIterator
@@ -142,7 +157,7 @@ IteratorTripleID* SnapshotManager::search_with_offset(std::shared_ptr<HDT> hdt, 
         // HDT will crash when we are not using any triple component id's that are not available
         // in the HDT dict.
         // In that case, HDT will not contain any triples for the given pattern, so we return an empty iterator.
-        return new IteratorTripleID();
+        return new hdt::IteratorTripleID();
     }
 }
 

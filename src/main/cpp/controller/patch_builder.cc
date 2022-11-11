@@ -2,6 +2,7 @@
 #include "../evaluate/evaluator.h"
 #include "../snapshot/vector_triple_iterator.h"
 
+
 PatchBuilder::PatchBuilder(Controller* controller) : controller(controller), patch_id(-1) {
     int max_patch_id = controller->get_max_patch_id();
     int snapshot_id = controller->get_snapshot_manager()->get_latest_snapshot(max_patch_id);
@@ -18,7 +19,7 @@ PatchBuilder* PatchBuilder::set_patch_id(int patch_id) {
     return this;
 }
 
-void PatchBuilder::commit(ProgressListener* progressListener) {
+void PatchBuilder::commit(hdt::ProgressListener* progressListener) {
     if (patch_id < 0) {
         patch_id = controller->get_max_patch_id() + 1;
     }
@@ -33,9 +34,9 @@ void PatchBuilder::commit(ProgressListener* progressListener) {
     }
 }
 
-PatchBuilder *PatchBuilder::triple(const TripleString& triple_const, bool addition) {
+PatchBuilder *PatchBuilder::triple(const hdt::TripleString& triple_const, bool addition) {
     if (patch != nullptr) {
-        TripleString& triple = const_cast<TripleString&>(triple_const);
+        hdt::TripleString& triple = const_cast<hdt::TripleString&>(triple_const);
         patch->add_unsorted(PatchElement(Triple(triple.getSubject(), triple.getPredicate(), triple.getObject(), dict), addition));
     } else {
         triples.push_back(triple_const);
@@ -43,11 +44,11 @@ PatchBuilder *PatchBuilder::triple(const TripleString& triple_const, bool additi
     return this;
 }
 
-PatchBuilder* PatchBuilder::addition(const TripleString& triple) {
+PatchBuilder* PatchBuilder::addition(const hdt::TripleString& triple) {
     return this->triple(triple, true);
 }
 
-PatchBuilder* PatchBuilder::deletion(const TripleString& triple) {
+PatchBuilder* PatchBuilder::deletion(const hdt::TripleString& triple) {
     if (patch == nullptr) {
         throw std::exception(); // Impossible to add deletions in the first snapshot
     }

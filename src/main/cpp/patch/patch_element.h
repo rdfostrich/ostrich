@@ -12,8 +12,8 @@ protected:
     bool local_change;
 public:
     PatchElement();
-    PatchElement(const Triple triple, bool addition);
-    PatchElement(const Triple triple, bool addition, bool local_change);
+    PatchElement(const Triple& triple, bool addition);
+    PatchElement(const Triple& triple, bool addition, bool local_change);
     /**
      * Set the triple
      * @param triple The new triple
@@ -54,7 +54,7 @@ public:
      * @param dict The dictionary to decode from
      * @return The string representation of this patch.
      */
-    const string to_string(Dictionary& dict) const;
+    const string to_string(hdt::Dictionary& dict) const;
     //bool operator < (const PatchElement &rhs) const { return triple < rhs.triple || (triple == rhs.triple && !addition && rhs.addition); }
     bool operator == (const PatchElement &rhs) const { return triple == rhs.triple && addition == rhs.addition; }
     bool operator != (const PatchElement &rhs) const { return !operator==(rhs); }

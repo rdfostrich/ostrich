@@ -25,7 +25,7 @@ string Patch::to_string() const {
     return ret;
 }
 
-string Patch::to_string(Dictionary& dict) const {
+string Patch::to_string(hdt::Dictionary& dict) const {
     string ret;
     PatchIterator* it = iterator();
     while (it->has_next()) {
@@ -93,7 +93,7 @@ PatchIterator* PatchSorted::iterator() const {
     return new PatchIteratorVector(elements.cbegin(), elements.cend());
 }
 
-inline PatchPosition contains_and_increment_position(HashDB& m, size_t hash) {
+inline PatchPosition contains_and_increment_position(kyotocabinet::HashDB& m, size_t hash) {
     size_t _;
     char raw_key[sizeof(long)];
     char* raw_value;
@@ -121,12 +121,12 @@ inline PatchPosition contains_and_increment_position(HashDB& m, size_t hash) {
 }
 
 PatchPositions Patch::positions(const Triple& triple,
-                                HashDB& sp_,
-                                HashDB& s_o,
-                                HashDB& s__,
-                                HashDB& _po,
-                                HashDB& _p_,
-                                HashDB& __o,
+                                kyotocabinet::HashDB& sp_,
+                                kyotocabinet::HashDB& s_o,
+                                kyotocabinet::HashDB& s__,
+                                kyotocabinet::HashDB& _po,
+                                kyotocabinet::HashDB& _p_,
+                                kyotocabinet::HashDB& __o,
                                 PatchPosition& ___) {
     PatchPositions positions = PatchPositions();
     size_t hsp_ = triple.get_subject() | (triple.get_predicate() << 16);
@@ -262,7 +262,7 @@ PatchSorted* PatchHashed::join_sorted(const PatchIndexed &patch, PatchElementCom
     PatchIterator* it = patch.iterator();
     while (it->has_next()) {
         const PatchElement& element = it->next();
-        std::unordered_map<Triple, std::pair<bool, bool>>::iterator existing_element = elements.find(element.get_triple());
+        auto existing_element = elements.find(element.get_triple());
         if (existing_element != elements.end()) {
             PatchElement new_element(element);
             bool was_addition_change = existing_element->second.first != element.is_addition();
@@ -279,7 +279,7 @@ PatchSorted* PatchHashed::join_sorted(const PatchIndexed &patch, PatchElementCom
     delete it;
 
     // Add all elements from this patch that haven't been added yet
-    for (const std::pair<Triple, std::pair<bool, bool>>& element : elements) {
+    for (const auto& element : elements) {
         if (skip_elements.find(element.first) == skip_elements.end()) {
             new_patch->add_unsorted(PatchElement(element.first, element.second.first, element.second.second));
         }
@@ -291,7 +291,7 @@ PatchSorted* PatchHashed::join_sorted(const PatchIndexed &patch, PatchElementCom
 }
 
 PatchIteratorVector::PatchIteratorVector(std::vector<PatchElement>::const_iterator it, std::vector<PatchElement>::const_iterator it_end) : it(it), it_end(it_end) {}
-PatchIteratorVector::~PatchIteratorVector() {}
+PatchIteratorVector::~PatchIteratorVector() = default;
 
 bool PatchIteratorVector::has_next() {
     return it != it_end;
@@ -302,7 +302,7 @@ const PatchElement PatchIteratorVector::next() {
 }
 
 PatchIteratorHashed::PatchIteratorHashed(std::unordered_map<Triple, std::pair<bool, bool>>::const_iterator it, std::unordered_map<Triple, std::pair<bool, bool>>::const_iterator it_end) : it(it), it_end(it_end) {}
-PatchIteratorHashed::~PatchIteratorHashed() {}
+PatchIteratorHashed::~PatchIteratorHashed() = default;
 
 bool PatchIteratorHashed::has_next() {
     return it != it_end;

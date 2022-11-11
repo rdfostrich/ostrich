@@ -8,8 +8,8 @@
 #include "evaluator.h"
 #include "../simpleprogresslistener.h"
 
-void Evaluator::init(string basePath, string patchesBasePatch, int startIndex, int endIndex, ProgressListener* progressListener) {
-    controller = new Controller(basePath, TreeDB::TCOMPRESS);
+void Evaluator::init(string basePath, string patchesBasePatch, int startIndex, int endIndex, hdt::ProgressListener* progressListener) {
+    controller = new Controller(basePath, kyotocabinet::TreeDB::TCOMPRESS);
 
     cout << "---INSERTION START---" << endl;
     cout << "version,added,durationms,rate,accsize" << endl;
@@ -26,7 +26,7 @@ void Evaluator::init(string basePath, string patchesBasePatch, int startIndex, i
     cout << "---INSERTION END---" << endl;
 }
 
-void Evaluator::populate_controller_with_version(int patch_id, string path, ProgressListener* progressListener) {
+void Evaluator::populate_controller_with_version(int patch_id, string path, hdt::ProgressListener* progressListener) {
     std::smatch base_match;
     std::regex regex_additions("([a-z0-9]*).nt.additions.txt");
     std::regex regex_deletions("([a-z0-9]*).nt.deletions.txt");
@@ -66,7 +66,7 @@ void Evaluator::populate_controller_with_version(int patch_id, string path, Prog
                 if (first && additions) {
                     it_snapshot->appendIterator(get_from_file(full_path));
                 } else if(!first && (additions || deletions)) {
-                    IteratorTripleString *subIt = get_from_file(full_path);
+                    hdt::IteratorTripleString *subIt = get_from_file(full_path);
                     PatchElementIteratorTripleStrings* patchIt = new PatchElementIteratorTripleStrings(dict, subIt, additions);
                     it_patch->appendIterator(patchIt);
                 }
@@ -79,7 +79,7 @@ void Evaluator::populate_controller_with_version(int patch_id, string path, Prog
     if (first) {
         NOTIFYMSG(progressListener, "\nCreating snapshot...\n");
         std::cout.setstate(std::ios_base::failbit); // Disable cout info from HDT
-        std::shared_ptr<HDT> hdt = controller->get_snapshot_manager()->create_snapshot(0, it_snapshot, BASEURI, progressListener);
+        std::shared_ptr<hdt::HDT> hdt = controller->get_snapshot_manager()->create_snapshot(0, it_snapshot, BASEURI, progressListener);
         std::cout.clear();
         added = hdt->getTriples()->getNumberOfElements();
 
@@ -137,11 +137,11 @@ std::ifstream::pos_type Evaluator::filesize(string file) {
     return std::ifstream(file.c_str(), std::ifstream::ate | std::ifstream::binary).tellg();
 }
 
-IteratorTripleString* Evaluator::get_from_file(string file) {
-    return new RDFParserNtriples(file.c_str(), NTRIPLES);
+hdt::IteratorTripleString* Evaluator::get_from_file(string file) {
+    return new hdt::RDFParserNtriples(file.c_str(), hdt::NTRIPLES);
 }
 
-long long Evaluator::measure_lookup_version_materialized(Dictionary& dict, Triple triple_pattern, int offset, int patch_id, int limit, int replications, int& result_count) {
+long long Evaluator::measure_lookup_version_materialized(hdt::Dictionary& dict, Triple triple_pattern, int offset, int patch_id, int limit, int replications, int& result_count) {
     long long total = 0;
     for (int i = 0; i < replications; i++) {
         int limit_l = limit;
@@ -166,13 +166,13 @@ long long Evaluator::measure_count_version_materialized(Triple triple_pattern, i
     long long total = 0;
     for (int i = 0; i < replications; i++) {
         StopWatch st;
-        std::pair<size_t, ResultEstimationType> count = controller->get_version_materialized_count(triple_pattern, patch_id, true);
+        std::pair<size_t, hdt::ResultEstimationType> count = controller->get_version_materialized_count(triple_pattern, patch_id, true);
         total += st.stopReal();
     }
     return total / replications;
 }
 
-long long Evaluator::measure_lookup_delta_materialized(Dictionary& dict, Triple triple_pattern, int offset, int patch_id_start, int patch_id_end, int limit, int replications, int& result_count) {
+long long Evaluator::measure_lookup_delta_materialized(hdt::Dictionary& dict, Triple triple_pattern, int offset, int patch_id_start, int patch_id_end, int limit, int replications, int& result_count) {
     long long total = 0;
     for (int i = 0; i < replications; i++) {
         int limit_l = limit;
@@ -197,13 +197,13 @@ long long Evaluator::measure_count_delta_materialized(Triple triple_pattern, int
     long long total = 0;
     for (int i = 0; i < replications; i++) {
         StopWatch st;
-        std::pair<size_t, ResultEstimationType> count = controller->get_delta_materialized_count(triple_pattern, patch_id_start, patch_id_end, true);
+        std::pair<size_t, hdt::ResultEstimationType> count = controller->get_delta_materialized_count(triple_pattern, patch_id_start, patch_id_end, true);
         total += st.stopReal();
     }
     return total / replications;
 }
 
-long long Evaluator::measure_lookup_version(Dictionary& dict, Triple triple_pattern, int offset, int limit, int replications, int& result_count) {
+long long Evaluator::measure_lookup_version(hdt::Dictionary& dict, Triple triple_pattern, int offset, int limit, int replications, int& result_count) {
     long long total = 0;
     for (int i = 0; i < replications; i++) {
         int limit_l = limit;
@@ -227,7 +227,7 @@ long long Evaluator::measure_count_version(Triple triple_pattern, int replicatio
     long long total = 0;
     for (int i = 0; i < replications; i++) {
         StopWatch st;
-        std::pair<size_t, ResultEstimationType> count = controller->get_version_count(triple_pattern, true);
+        std::pair<size_t, hdt::ResultEstimationType> count = controller->get_version_count(triple_pattern, true);
         total += st.stopReal();
     }
     return total / replications;
@@ -276,8 +276,8 @@ void Evaluator::cleanup_controller() {
 
 
 void BearEvaluatorMS::init(string basePath, string patchesBasePatch, SnapshotCreationStrategy* strategy, int startIndex, int endIndex,
-                           ProgressListener *progressListener) {
-    controller = new Controller(basePath, strategy, TreeDB::TCOMPRESS);
+                           hdt::ProgressListener *progressListener) {
+    controller = new Controller(basePath, strategy, kyotocabinet::TreeDB::TCOMPRESS);
 //    cout << "---INSERTION START---" << endl;
 //    cout << "version,added,durationms,rate,accsize" << endl;
     DIR *dir;
@@ -295,7 +295,7 @@ void BearEvaluatorMS::init(string basePath, string patchesBasePatch, SnapshotCre
 }
 
 void BearEvaluatorMS::init_readonly(string basePath, bool warmup) {
-    controller = new Controller(basePath, TreeDB::TCOMPRESS, true, 32);
+    controller = new Controller(basePath, kyotocabinet::TreeDB::TCOMPRESS, true, 32);
     patch_count = controller->get_number_versions();
 
     if (warmup) {
@@ -359,7 +359,7 @@ void BearEvaluatorMS::cleanup_controller() {
     delete controller;
 }
 
-void BearEvaluatorMS::populate_controller_with_version(int patch_id, string path, ProgressListener *progressListener) {
+void BearEvaluatorMS::populate_controller_with_version(int patch_id, string path, hdt::ProgressListener *progressListener) {
     if (path.back() == '/') path.pop_back();
 
     std::string versions_ids(std::to_string(patch_id) + "-" + std::to_string(patch_id+1));
@@ -411,7 +411,7 @@ void BearEvaluatorMS::populate_controller_with_version(int patch_id, string path
     if (first) {
         NOTIFYMSG(progressListener, "\nCreating snapshot...\n");
         std::cout.setstate(std::ios_base::failbit); // Disable cout info from HDT
-        std::shared_ptr<HDT> hdt = controller->get_snapshot_manager()->create_snapshot(patch_id, it_snapshot, BASEURI, progressListener);
+        std::shared_ptr<hdt::HDT> hdt = controller->get_snapshot_manager()->create_snapshot(patch_id, it_snapshot, BASEURI, progressListener);
         std::cout.clear();
         added = hdt->getTriples()->getNumberOfElements();
     } else {
@@ -471,8 +471,8 @@ std::ifstream::pos_type BearEvaluatorMS::filesize(const string& file) {
     return std::ifstream(file.c_str(), std::ifstream::ate | std::ifstream::binary).tellg();
 }
 
-IteratorTripleString *BearEvaluatorMS::get_from_file(const string& file) {
-    return new RDFParserNtriples(file.c_str(), NTRIPLES);
+hdt::IteratorTripleString *BearEvaluatorMS::get_from_file(const string& file) {
+    return new hdt::RDFParserNtriples(file.c_str(), hdt::NTRIPLES);
 }
 
 uint64_t
@@ -533,7 +533,7 @@ BearEvaluatorMS::measure_count_version_materialized(const StringTriple& triple_p
     uint64_t total = 0;
     for (int i = 0; i < replications; i++) {
         StopWatch st;
-        std::pair<size_t, ResultEstimationType> count = controller->get_version_materialized_count(triple_pattern, patch_id, true);
+        std::pair<size_t, hdt::ResultEstimationType> count = controller->get_version_materialized_count(triple_pattern, patch_id, true);
         uint64_t time = st.stopReal();
         times.push_back(time);
         total += time;
@@ -584,7 +584,7 @@ uint64_t BearEvaluatorMS::measure_count_version(const StringTriple& triple_patte
     uint64_t total = 0;
     for (int i = 0; i < replications; i++) {
         StopWatch st;
-        std::pair<size_t, ResultEstimationType> count = controller->get_version_count(triple_pattern, true);
+        std::pair<size_t, hdt::ResultEstimationType> count = controller->get_version_count(triple_pattern, true);
         uint64_t time = st.stopReal();
         times.push_back(time);
         total += time;
@@ -641,7 +641,7 @@ uint64_t BearEvaluatorMS::measure_count_delta_materialized(const StringTriple &t
     uint64_t total = 0;
     for (int i = 0; i < replications; i++) {
         StopWatch st;
-        std::pair<size_t, ResultEstimationType> count = controller->get_delta_materialized_count(triple_pattern, patch_id_start, patch_id_end, true);
+        std::pair<size_t, hdt::ResultEstimationType> count = controller->get_delta_materialized_count(triple_pattern, patch_id_start, patch_id_end, true);
         uint64_t time = st.stopReal();
         times.push_back(time);
         total += time;

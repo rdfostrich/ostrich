@@ -11,7 +11,6 @@
 
 #define BASEURI "<http://example.org>"
 
-using namespace std;
 
 int main(int argc, char** argv) {
     if (argc < 2) {
@@ -25,7 +24,7 @@ int main(int argc, char** argv) {
     if (verbose) {
         param_offset += 1;
     }
-    ProgressListener* progressListener = verbose ? new SimpleProgressListener() : nullptr;
+    hdt::ProgressListener* progressListener = verbose ? new SimpleProgressListener() : nullptr;
 
     SnapshotCreationStrategy* strategy = nullptr;
     bool has_strat = std::string(argv[1 + param_offset]) == "-s";
@@ -40,13 +39,13 @@ int main(int argc, char** argv) {
 
     // Load the store
 
-    Controller controller("./", strategy, TreeDB::TCOMPRESS);
+    Controller controller("./", strategy, kyotocabinet::TreeDB::TCOMPRESS);
 
     // Get parameters
     int patch_id = std::stoi(argv[1 + param_offset]);
 
     // Read command line parameters
-    std::vector<std::pair<IteratorTripleString*, bool>> files;
+    std::vector<std::pair<hdt::IteratorTripleString*, bool>> files;
     bool additions = true;
     for (int file_id = 2 + param_offset; file_id < argc; file_id++) {
         std::string file(argv[file_id]);
@@ -58,12 +57,12 @@ int main(int argc, char** argv) {
                 cerr << "Could not find a file at location: " << file << endl;
                 return 1;
             }
-            IteratorTripleString *file_it = new RDFParserNtriples(file.c_str(), NTRIPLES);
+            hdt::IteratorTripleString *file_it = new hdt::RDFParserNtriples(file.c_str(), hdt::NTRIPLES);
             files.emplace_back(file_it, additions);
         }
     }
 
-    bool status = controller.ingest(files, patch_id, progressListener);
+    bool status = controller.ingest(files, patch_id, true, progressListener);
 
     if (progressListener)
         std::cout << std::endl;

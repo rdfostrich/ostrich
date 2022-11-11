@@ -10,17 +10,15 @@
 
 #define BASEURI "<http://example.org>"
 
-using namespace std;
-using namespace kyotocabinet;
 
 int main(int argc, char** argv) {
     if (argc < 6 || argc > 7) {
-        cerr << "ERROR: Query command must be invoked as 'patch_id_start patch_id_end subject predicate object [offset]' " << endl;
+        cerr << "ERROR: Query command must be invoked as 'patch_id patch_id_end subject predicate object [offset]' " << endl;
         return 1;
     }
 
     // Load the store
-    Controller controller("./", TreeDB::TCOMPRESS, true);
+    Controller controller("./", kyotocabinet::TreeDB::TCOMPRESS, true);
 
     // Get query parameters
     std::string s(argv[3]);
@@ -37,8 +35,8 @@ int main(int argc, char** argv) {
     // Construct query
     StringTriple triple_pattern(s, p, o);
 
-    std::pair<size_t, ResultEstimationType> count = controller.get_delta_materialized_count(triple_pattern, patch_id_start, patch_id_end, true);
-    cerr << "Count: " << count.first << (count.second == EXACT ? "" : " (estimate)") << endl;
+    std::pair<size_t, hdt::ResultEstimationType> count = controller.get_delta_materialized_count(triple_pattern, patch_id_start, patch_id_end, true);
+    cerr << "Count: " << count.first << (count.second == hdt::EXACT ? "" : " (estimate)") << endl;
 
     TripleDeltaIterator* it = controller.get_delta_materialized(triple_pattern, offset, patch_id_start, patch_id_end);
     TripleDelta triple_delta;

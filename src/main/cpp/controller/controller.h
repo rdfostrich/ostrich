@@ -34,12 +34,12 @@ public:
      */
     TripleIterator* get_version_materialized(const Triple &triple_pattern, int offset, int patch_id) const;
     TripleIterator* get_version_materialized(const StringTriple &triple_pattern, int offset, int patch_id) const;
-    std::pair<size_t, ResultEstimationType> get_version_materialized_count(const Triple& triple_pattern, int patch_id, bool allowEstimates = false) const;
-    std::pair<size_t, ResultEstimationType> get_version_materialized_count(const StringTriple& triple_pattern, int patch_id, bool allowEstimates = false) const;
+    std::pair<size_t, hdt::ResultEstimationType> get_version_materialized_count(const Triple& triple_pattern, int patch_id, bool allowEstimates = false) const;
+    std::pair<size_t, hdt::ResultEstimationType> get_version_materialized_count(const StringTriple& triple_pattern, int patch_id, bool allowEstimates = false) const;
     size_t get_version_materialized_count_estimated(const Triple& triple_pattern, int patch_id) const;
     /**
      * Get an addition/deletion iterator for all triples matching the given triple pattern with a certain offset
-     * in the list of all triples that have been added or removed from patch_id_start until patch_id_end.
+     * in the list of all triples that have been added or removed from patch_id until patch_id_end.
      * Triples are annotated with addition or deletion.
      * @param triple_pattern Only triples matching this pattern will be returned.
      * @param offset A certain offset the iterator should start with.
@@ -47,8 +47,8 @@ public:
      */
     TripleDeltaIterator* get_delta_materialized(const Triple &triple_pattern, int offset, int patch_id_start, int patch_id_end) const;
     TripleDeltaIterator* get_delta_materialized(const StringTriple &triple_pattern, int offset, int patch_id_start, int patch_id_end, bool use_plain_diff = false) const;
-    std::pair<size_t, ResultEstimationType> get_delta_materialized_count(const Triple& triple_pattern, int patch_id_start, int patch_id_end, bool allowEstimates = false) const;
-    std::pair<size_t, ResultEstimationType> get_delta_materialized_count(const StringTriple& triple_pattern, int patch_id_start, int patch_id_end, bool allowEstimates = false) const;
+    std::pair<size_t, hdt::ResultEstimationType> get_delta_materialized_count(const Triple& triple_pattern, int patch_id_start, int patch_id_end, bool allowEstimates = false) const;
+    std::pair<size_t, hdt::ResultEstimationType> get_delta_materialized_count(const StringTriple& triple_pattern, int patch_id_start, int patch_id_end, bool allowEstimates = false) const;
     size_t get_delta_materialized_count_estimated(const Triple& triple_pattern, int patch_id_start, int patch_id_end) const;
     /**
      * Get an iterator for all triples matching the given triple pattern with a certain offset
@@ -60,8 +60,8 @@ public:
      */
     TripleVersionsIterator* get_version(const StringTriple &triple_pattern, int offset) const;
     TripleVersionsIterator* get_version(const Triple &triple_pattern, int offset) const;
-    std::pair<size_t, ResultEstimationType> get_version_count(const Triple& triple_pattern, bool allowEstimates = false) const;
-    std::pair<size_t, ResultEstimationType> get_version_count(const StringTriple& triple_pattern, bool allowEstimates = false) const;
+    std::pair<size_t, hdt::ResultEstimationType> get_version_count(const Triple& triple_pattern, bool allowEstimates = false) const;
+    std::pair<size_t, hdt::ResultEstimationType> get_version_count(const StringTriple& triple_pattern, bool allowEstimates = false) const;
     size_t get_version_count_estimated(const Triple& triple_pattern) const;
 
     /**
@@ -73,7 +73,7 @@ public:
      * @return If the append succeeded.
      * @note The patch iterator MUST provide triples sorted by SPO.
      */
-    bool append(PatchElementIterator* patch_it, int patch_id, std::shared_ptr<DictionaryManager> dict, bool check_uniqueness = true, ProgressListener* progressListener = NULL);
+    bool append(PatchElementIterator* patch_it, int patch_id, std::shared_ptr<DictionaryManager> dict, bool check_uniqueness = true, hdt::ProgressListener* progressListener = NULL);
     /**
      * Add the given patch to a patch tree.
      * @param patch The patch to add.
@@ -82,7 +82,7 @@ public:
      * @param progressListener an optional progress listener.
      * @return If the append succeeded.
      */
-    bool append(const PatchSorted& patch, int patch_id, std::shared_ptr<DictionaryManager> dict, bool check_uniqueness = true, ProgressListener* progressListener = NULL);
+    bool append(const PatchSorted& patch, int patch_id, std::shared_ptr<DictionaryManager> dict, bool check_uniqueness = true, hdt::ProgressListener* progressListener = NULL);
 
     /**
      * @return The internal patchtree manager.
@@ -133,9 +133,10 @@ public:
     * Create new snapshots when relevant, according to the given strategy.
     * @param files The list of files to ingest as a pair of filenames and boolean indicating if it's additions.
     * @param patch_id The id of the patch.
+    * @param sort if the triples needs to be sorted before insertion
     * @return if ingestion has succeeded
     */
-    bool ingest(const std::vector<std::pair<IteratorTripleString*, bool>>& files, int patch_id, ProgressListener* progressListener = nullptr);
+    bool ingest(const std::vector<std::pair<hdt::IteratorTripleString*, bool>>& files, int patch_id, bool sort = false, hdt::ProgressListener* progressListener = nullptr);
 
 };
 
