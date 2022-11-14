@@ -60,7 +60,8 @@ set(COMMON_FILES
         src/main/cpp/patch/patch_element_iterator.cc src/main/cpp/patch/patch_element_iterator.h
         src/main/cpp/patch/triple_comparator.cc src/main/cpp/patch/triple_comparator.h
         src/main/cpp/controller/metadata_manager.cc src/main/cpp/controller/metadata_manager.h
-        src/main/cpp/patch/interval_list.h src/main/cpp/patch/variable_size_integer.h src/main/cpp/snapshot/sorted_triple_iterator.cc src/main/cpp/snapshot/sorted_triple_iterator.h)
+        src/main/cpp/patch/interval_list.h src/main/cpp/patch/variable_size_integer.h
+        src/main/cpp/snapshot/sorted_triple_iterator.cc src/main/cpp/snapshot/sorted_triple_iterator.h)
 
 set(TEST_FILES
         src/test/cpp/controller/controller.cc
@@ -79,7 +80,7 @@ set(TEST_FILES
         src/test/cpp/patch/variable_size_integer.cc)
 
 add_library(ostrich STATIC ${HDT_FILES} ${COMMON_FILES})
-target_compile_definitions(ostrich PUBLIC -DCOMPRESSED_ADD_VALUES -DCOMPRESSED_DEL_VALUES -DUSE_VSI -DUSE_VSI_T)
+#target_compile_definitions(ostrich PUBLIC -DCOMPRESSED_ADD_VALUES -DCOMPRESSED_DEL_VALUES -DUSE_VSI -DUSE_VSI_T)
 #target_compile_definitions(ostrich PUBLIC -DCOMPRESSED_ADD_VALUES -DCOMPRESSED_DEL_VALUES)
 #target_compile_definitions(ostrich PUBLIC -DUSE_VSI -DUSE_VSI_T)
 

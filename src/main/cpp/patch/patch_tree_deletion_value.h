@@ -109,16 +109,28 @@ typedef struct PatchPositions {
         std::memcpy(data+*size, buffer.data(), buffer.size());
         *size += buffer.size();
 #else
-        std::memcpy(data, this, sizeof(PatchPositions));
-        *size = sizeof(PatchPositions);
+        std::memcpy(data+*size, &sp_, sizeof(PatchPosition));
+        *size += sizeof(PatchPosition);
+        std::memcpy(data+*size, &s_o, sizeof(PatchPosition));
+        *size += sizeof(PatchPosition);
+        std::memcpy(data+*size, &s__, sizeof(PatchPosition));
+        *size += sizeof(PatchPosition);
+        std::memcpy(data+*size, &_po, sizeof(PatchPosition));
+        *size += sizeof(PatchPosition);
+        std::memcpy(data+*size, &_p_, sizeof(PatchPosition));
+        *size += sizeof(PatchPosition);
+        std::memcpy(data+*size, &__o, sizeof(PatchPosition));
+        *size += sizeof(PatchPosition);
+        std::memcpy(data+*size, &___, sizeof(PatchPosition));
+        *size += sizeof(PatchPosition);
 #endif
         return data;
     }
 
     size_t deserialize(const char* data) {
+        size_t offset = 0;
 #ifdef USE_VSI
         size_t decode_size = 0;
-        size_t offset = 0;
         this->sp_ = decode_SLEB128((const uint8_t*)data, &decode_size);
         offset += decode_size;
 
@@ -139,11 +151,23 @@ typedef struct PatchPositions {
 
         this->___ = decode_SLEB128((const uint8_t*)data+offset, &decode_size);
         offset += decode_size;
-        return offset;
 #else
-        std::memcpy(this, data, sizeof(PatchPositions));
-        return sizeof(PatchPositions);
+        std::memcpy(&sp_, data+offset, sizeof(PatchPosition));
+        offset += sizeof(PatchPosition);
+        std::memcpy(&s_o, data+offset, sizeof(PatchPosition));
+        offset += sizeof(PatchPosition);
+        std::memcpy(&s__, data+offset, sizeof(PatchPosition));
+        offset += sizeof(PatchPosition);
+        std::memcpy(&_po, data+offset, sizeof(PatchPosition));
+        offset += sizeof(PatchPosition);
+        std::memcpy(&_p_, data+offset, sizeof(PatchPosition));
+        offset += sizeof(PatchPosition);
+        std::memcpy(&__o, data+offset, sizeof(PatchPosition));
+        offset += sizeof(PatchPosition);
+        std::memcpy(&___, data+offset, sizeof(PatchPosition));
+        offset += sizeof(PatchPosition);
 #endif
+        return offset;
     }
 
     static size_t max_serialization_size() {
