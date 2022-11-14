@@ -262,6 +262,7 @@ void TripleStore::increment_addition_count(const TripleVersion& triple_version) 
     std::memcpy(raw_value, &pos, sizeof(PatchPosition));
     temp_count_additions->set(raw_key, tv_size, raw_value, sizeof(PatchPosition));
 
+    delete[] raw_key;
     delete[] raw_value;
 }
 

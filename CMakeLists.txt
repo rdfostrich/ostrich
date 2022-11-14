@@ -79,7 +79,7 @@ set(TEST_FILES
         src/test/cpp/patch/variable_size_integer.cc)
 
 add_library(ostrich STATIC ${HDT_FILES} ${COMMON_FILES})
-#target_compile_definitions(ostrich PUBLIC -DCOMPRESSED_ADD_VALUES -DCOMPRESSED_DEL_VALUES -DUSE_VSI -DUSE_VSI_T)
+target_compile_definitions(ostrich PUBLIC -DCOMPRESSED_ADD_VALUES -DCOMPRESSED_DEL_VALUES -DUSE_VSI -DUSE_VSI_T)
 #target_compile_definitions(ostrich PUBLIC -DCOMPRESSED_ADD_VALUES -DCOMPRESSED_DEL_VALUES)
 #target_compile_definitions(ostrich PUBLIC -DUSE_VSI -DUSE_VSI_T)
 
