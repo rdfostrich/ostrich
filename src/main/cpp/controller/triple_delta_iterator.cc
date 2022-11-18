@@ -45,9 +45,10 @@ template <class DV>
 bool ForwardPatchTripleDeltaIterator<DV>::next(TripleDelta* triple) {
     bool valid, addition;
     // This loop makes sure that if the triple is a deletion,
-    // and it was present in the snapshot, that it will be skipped.
-    while ((valid = this->it->next(triple->get_triple(), this->value))
-           && (!(addition = value->is_addition(it->get_patch_id_filter(), true)) && !value->exists_in_snapshot())) {}
+    // and it was not present in the snapshot, that it will be skipped.
+    while ((valid = this->it->next(triple->get_triple(), this->value)) // we have a triple (it valid)
+           && (!(addition = value->is_addition(it->get_patch_id_filter(), true)) // triple is a deletion
+           && !value->exists_in_snapshot())) {} // the triple does not exist in the snapshot
     if (valid) {
         triple->set_addition(addition);
     }
@@ -64,8 +65,8 @@ ForwardDiffPatchTripleDeltaIterator<DV>::ForwardDiffPatchTripleDeltaIterator(std
 template <class DV>
 bool ForwardDiffPatchTripleDeltaIterator<DV>::next(TripleDelta *triple) {
     bool valid;
-    while ((valid = this->it->next(triple->get_triple(), this->value))
-                    && this->value->is_delta_type_equal(patch_id_start, patch_id_end)) {}
+    while ((valid = this->it->next(triple->get_triple(), this->value))  // we have a triple (it valid)
+                    && this->value->is_delta_type_equal(patch_id_start, patch_id_end)) {}  // the triple exist in both version (so not a delta)
     if (valid) {
         triple->set_addition(this->value->is_addition(patch_id_end, true));
     }
