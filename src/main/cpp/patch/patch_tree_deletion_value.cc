@@ -493,6 +493,7 @@ DeltaPatchPositionsContainerBase::delta_serialize_position_vec(const vector<VerP
         size_t positions_data_size = 0;
         char* positions_data = position_vec[0].positions.serialize(&positions_data_size);
         std::memcpy(*data+*size, positions_data, positions_data_size);
+        delete[] positions_data;
         *size += positions_data_size;
         if (position_vec.size() > 1) {
             for (size_t i=1; i<position_vec.size(); i++) {
