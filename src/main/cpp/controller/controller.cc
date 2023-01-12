@@ -223,7 +223,10 @@ std::pair<size_t, hdt::ResultEstimationType> Controller::get_delta_materialized_
         }
         return std::make_pair(count, hdt::UP_TO);
     }
-    return std::make_pair(get_delta_materialized(triple_pattern, 0, patch_id_start, patch_id_end)->get_count(), hdt::EXACT);
+    auto dm_it = get_delta_materialized(triple_pattern, 0, patch_id_start, patch_id_end);
+    size_t count = dm_it->get_count();
+    delete dm_it;
+    return std::make_pair(count, hdt::EXACT);
 }
 
 size_t Controller::get_delta_materialized_count_estimated(const Triple &triple_pattern, int patch_id_start, int patch_id_end) const {
