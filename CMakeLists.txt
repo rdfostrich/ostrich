@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated -fsanitize=address -fsanitize-recover=address -fno-omit-frame-pointer") # for memory debugging, use with ASAN_OPTIONS=detect_stack_use_after_return=true detect_leaks=true halt_on_error=false
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated -fsanitize=address -fsanitize-recover=address -fno-omit-frame-pointer") # for memory debugging, use with ASAN_OPTIONS=detect_stack_use_after_return=true detect_leaks=true halt_on_error=false
 
 include(FetchContent)
 if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.24.0")
@@ -31,6 +31,7 @@ set(SOURCE_FILE_QUERY_VERSION_MATERIALIZED src/main/cpp/query_version_materializ
 set(SOURCE_FILE_QUERY_DELTA_MATERIALIZED src/main/cpp/query_delta_materialized.cc)
 set(SOURCE_FILE_QUERY_VERSION src/main/cpp/query_version.cc)
 set(SOURCE_FILE_INSERT src/main/cpp/insert.cc)
+set(SOURCE_FILE_STATS src/main/cpp/compute_statistics.cc)
 set(COMMON_FILES
         src/main/cpp/controller/controller.cc src/main/cpp/controller/controller.h
         src/main/cpp/patch/triple.cc src/main/cpp/patch/triple.h
@@ -64,7 +65,7 @@ set(COMMON_FILES
         src/main/cpp/patch/triple_comparator.cc src/main/cpp/patch/triple_comparator.h
         src/main/cpp/controller/metadata_manager.cc src/main/cpp/controller/metadata_manager.h
         src/main/cpp/patch/interval_list.h src/main/cpp/patch/variable_size_integer.h
-        src/main/cpp/snapshot/sorted_triple_iterator.cc src/main/cpp/snapshot/sorted_triple_iterator.h)
+        src/main/cpp/snapshot/sorted_triple_iterator.cc src/main/cpp/snapshot/sorted_triple_iterator.h src/main/cpp/controller/statistics.cc src/main/cpp/controller/statistics.h)
 
 set(TEST_FILES
         src/test/cpp/controller/controller.cc
@@ -131,6 +132,10 @@ target_link_libraries(${PROJECT_NAME_STR}-query-version ostrich)
 # Add insert executable
 add_executable(${PROJECT_NAME_STR}-insert ${SOURCE_FILE_INSERT})
 target_link_libraries(${PROJECT_NAME_STR}-insert ostrich)
+
+# Add statistics executable
+add_executable(${PROJECT_NAME_STR}-statistics ${SOURCE_FILE_STATS})
+target_link_libraries(${PROJECT_NAME_STR}-statistics ostrich)
 
 # Add gtest
 FetchContent_Declare(

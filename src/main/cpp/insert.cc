@@ -14,7 +14,7 @@
 
 int main(int argc, char** argv) {
     if (argc < 2) {
-        cerr << "ERROR: Insert command must be invoked as '[-v] [-s string int|float] patch_id [+|- file_1.nt [file_2.nt [...]]]*' " << endl;
+        std::cerr << "ERROR: Insert command must be invoked as '[-v] [-s string int|float] patch_id [+|- file_1.nt [file_2.nt [...]]]*' " << std::endl;
         return 1;
     }
 
@@ -54,7 +54,7 @@ int main(int argc, char** argv) {
         } else {
             ifstream f(file.c_str());
             if (!f.good()) {
-                cerr << "Could not find a file at location: " << file << endl;
+                std::cerr << "Could not find a file at location: " << file << endl;
                 return 1;
             }
             hdt::IteratorTripleString *file_it = new hdt::RDFParserNtriples(file.c_str(), hdt::NTRIPLES);
