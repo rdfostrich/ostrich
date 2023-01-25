@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated -fsanitize=address -fsanitize-recover=address -fno-omit-frame-pointer") # for memory debugging, use with ASAN_OPTIONS=detect_stack_use_after_return=true detect_leaks=true halt_on_error=false
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated -fsanitize=address -fsanitize-recover=address -fno-omit-frame-pointer") # for memory debugging, use with ASAN_OPTIONS=detect_stack_use_after_return=true detect_leaks=true halt_on_error=false
 
 include(FetchContent)
 if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.24.0")
@@ -46,7 +46,6 @@ set(COMMON_FILES
         src/main/cpp/patch/patch_tree_iterator.cc src/main/cpp/patch/patch_tree_iterator.h
         src/main/cpp/patch/triple_iterator.cc src/main/cpp/patch/triple_iterator.h
         src/main/cpp/patch/positioned_triple_iterator.cc src/main/cpp/patch/positioned_triple_iterator.h
-        src/main/cpp/patch/patch.h
         src/main/cpp/dictionary/dictionary_manager.cc src/main/cpp/dictionary/dictionary_manager.h
         src/main/cpp/snapshot/snapshot_manager.cc src/main/cpp/snapshot/snapshot_manager.h
         src/main/cpp/snapshot/vector_triple_iterator.cc src/main/cpp/snapshot/vector_triple_iterator.h
@@ -65,7 +64,8 @@ set(COMMON_FILES
         src/main/cpp/patch/triple_comparator.cc src/main/cpp/patch/triple_comparator.h
         src/main/cpp/controller/metadata_manager.cc src/main/cpp/controller/metadata_manager.h
         src/main/cpp/patch/interval_list.h src/main/cpp/patch/variable_size_integer.h
-        src/main/cpp/snapshot/sorted_triple_iterator.cc src/main/cpp/snapshot/sorted_triple_iterator.h src/main/cpp/controller/statistics.cc src/main/cpp/controller/statistics.h)
+        src/main/cpp/snapshot/sorted_triple_iterator.cc src/main/cpp/snapshot/sorted_triple_iterator.h
+        src/main/cpp/controller/statistics.cc src/main/cpp/controller/statistics.h)
 
 set(TEST_FILES
         src/test/cpp/controller/controller.cc
