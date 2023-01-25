@@ -236,7 +236,7 @@ size_t TripleVersionsIteratorMerged::get_count() {
     TripleVersions tv;
     while (next(&tv)) {
         count++;
-    } 
+    }
     return count;
 }
 
@@ -466,6 +466,7 @@ void TripleVersionsIteratorCombinedV2::add_iterator(TripleVersionsIterator *it) 
         }
     }
     triples_it = triples.begin();
+    delete t;
 }
 
 bool TripleVersionsIteratorCombinedV2::next(TripleVersions *triple_versions) {
