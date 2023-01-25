@@ -86,7 +86,7 @@ docker run --rm -it --entrypoint /opt/patchstore/build/ostrich_test ostrich
 ### Query
 ```bash
 docker run --rm -it --entrypoint /opt/ostrich/build/ostrich-query-version-materialized ostrich patch_id s p o
-docker run --rm -it --entrypoint /opt/ostrich/build/ostrich-delta-version-materialized ostrich patch_id patch_id_end s p o
+docker run --rm -it --entrypoint /opt/ostrich/build/ostrich-query-delta-materialized ostrich patch_id patch_id_end s p o
 docker run --rm -it --entrypoint /opt/ostrich/build/ostrich-query-version ostrich s p o
 ```
 
