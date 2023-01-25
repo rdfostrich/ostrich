@@ -86,6 +86,9 @@ size_t Statistics::entity_changes(int i, int j) {
 double Statistics::triple_to_entity_change(int i, int j, bool allow_estimates) {
     std::vector<std::string> subjects_union;
     sigma_ij(i, j, subjects_union);
+    if (subjects_union.empty()) {
+        return 0;
+    }
 
     size_t triple_count = 0;
     for (const auto& subject: subjects_union) {
