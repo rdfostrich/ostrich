@@ -22,6 +22,8 @@ private:
     std::map<int, std::shared_ptr<DictionaryManager>> loaded_dictionaries;
     bool readonly;
 
+    std::mutex mutex;
+
     void update_cache_internal(int accessed_id, int iterations);
 
 public:

@@ -20,6 +20,8 @@ private:
     int8_t kc_opts;
     bool readonly;
 
+    std::mutex mutex;
+
     void update_cache_internal(int accessed_id, int iterations);
 
 public:

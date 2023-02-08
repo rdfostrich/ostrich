@@ -10,6 +10,7 @@ PatchTreeManager::PatchTreeManager(string basePath, int8_t kc_opts, bool readonl
 PatchTreeManager::~PatchTreeManager() = default;
 
 bool PatchTreeManager::append(PatchElementIterator* patch_it, int patch_id, std::shared_ptr<DictionaryManager> dict, bool check_uniqueness, hdt::ProgressListener* progressListener) {
+    std::unique_lock<std::mutex> lock(mutex);
     int patchtree_id = get_patch_tree_id(patch_id);
     std::shared_ptr<PatchTree> patchtree;
     if(patchtree_id < 0) {
@@ -27,6 +28,7 @@ bool PatchTreeManager::append(PatchElementIterator* patch_it, int patch_id, std:
 
 bool PatchTreeManager::append(const PatchSorted &patch, int patch_id, std::shared_ptr<DictionaryManager> dict, bool check_uniqueness,
                               hdt::ProgressListener *progressListener) {
+    std::unique_lock<std::mutex> lock(mutex);
     PatchElementIteratorVector* it = new PatchElementIteratorVector(&patch.get_vector());
     bool ret = append(it, patch_id, dict, check_uniqueness, progressListener);
     delete it;
@@ -70,6 +72,7 @@ std::vector<int> PatchTreeManager::get_patch_trees_ids() const {
 }
 
 std::shared_ptr<PatchTree> PatchTreeManager::load_patch_tree(int patch_id_start, std::shared_ptr<DictionaryManager> dict) {
+    std::unique_lock<std::mutex> lock(mutex);
     update_cache(patch_id_start);
     auto it = loaded_patchtrees.find(patch_id_start);
     if (it != loaded_patchtrees.end() && it->second) {
@@ -80,6 +83,7 @@ std::shared_ptr<PatchTree> PatchTreeManager::load_patch_tree(int patch_id_start,
 }
 
 std::shared_ptr<PatchTree> PatchTreeManager::get_patch_tree(int patch_id_start, std::shared_ptr<DictionaryManager> dict) {
+    std::unique_lock<std::mutex> lock(mutex);
     if(patch_id_start < 0) {
         return nullptr;
     }
@@ -115,6 +119,7 @@ int PatchTreeManager::get_patch_tree_id(int patch_id) const {
 }
 
 Patch* PatchTreeManager::get_patch(int patch_id, std::shared_ptr<DictionaryManager> dict) {
+    std::unique_lock<std::mutex> lock(mutex);
     int patchtree_id = get_patch_tree_id(patch_id);
     if(patchtree_id < 0) {
         return new PatchSorted(dict);
@@ -123,6 +128,7 @@ Patch* PatchTreeManager::get_patch(int patch_id, std::shared_ptr<DictionaryManag
 }
 
 int PatchTreeManager::get_max_patch_id(std::shared_ptr<DictionaryManager> dict) {
+    std::unique_lock<std::mutex> lock(mutex);
     if (!loaded_patchtrees.empty()) {
         std::map<int, std::shared_ptr<PatchTree>>::const_iterator it = loaded_patchtrees.end();
         --it;
@@ -136,6 +142,7 @@ int PatchTreeManager::get_max_patch_id(std::shared_ptr<DictionaryManager> dict) 
 }
 
 void PatchTreeManager::update_cache(int accessed_patch_id) {
+    std::unique_lock<std::mutex> lock(mutex);
     update_cache_internal(accessed_patch_id, lru_map.size());
 }
 

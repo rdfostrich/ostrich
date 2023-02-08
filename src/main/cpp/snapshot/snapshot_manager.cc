@@ -14,6 +14,7 @@ SnapshotManager::SnapshotManager(std::string basePath, bool readonly, size_t cac
 SnapshotManager::~SnapshotManager() = default;
 
 int SnapshotManager::get_latest_snapshot(int patch_id) {
+    std::unique_lock<std::mutex> lock(mutex);
     auto it = loaded_snapshots.lower_bound(patch_id);
     if(it == loaded_snapshots.begin() && it == loaded_snapshots.end()) {
         return -1;
@@ -35,6 +36,7 @@ int SnapshotManager::get_latest_snapshot(int patch_id) {
 
 std::shared_ptr<hdt::HDT> SnapshotManager::load_snapshot(int snapshot_id) {
     // We check if a snapshot is already loaded for the given snapshot_id
+    std::unique_lock<std::mutex> lock(mutex);
     update_cache(snapshot_id);
     auto it = loaded_snapshots.find(snapshot_id);
     if (it != loaded_snapshots.end() && it->second) {
@@ -51,6 +53,7 @@ std::shared_ptr<hdt::HDT> SnapshotManager::load_snapshot(int snapshot_id) {
 }
 
 std::shared_ptr<hdt::HDT> SnapshotManager::get_snapshot(int snapshot_id) {
+    std::unique_lock<std::mutex> lock(mutex);
     if(snapshot_id < 0) {
         return nullptr;
     }
@@ -68,19 +71,27 @@ std::shared_ptr<hdt::HDT> SnapshotManager::get_snapshot(int snapshot_id) {
     return it->second;
 }
 
-std::shared_ptr<hdt::HDT> SnapshotManager::create_snapshot(int snapshot_id, hdt::IteratorTripleString* triples, string base_uri, hdt::ProgressListener* listener) {
-    hdt::BasicHDT* basicHdt = new hdt::BasicHDT();
-    basicHdt->loadFromTriples(triples, base_uri, listener);
-    basicHdt->saveToHDT((basePath + SNAPSHOT_FILENAME_BASE(snapshot_id)).c_str());
-    delete basicHdt;
+std::shared_ptr<hdt::HDT> SnapshotManager::create_snapshot(int snapshot_id, hdt::IteratorTripleString* triples, std::string base_uri, hdt::ProgressListener* listener) {
+    std::unique_lock<std::mutex> lock(mutex);
+    auto it = loaded_snapshots.find(snapshot_id);
+    if (it == loaded_snapshots.end()) {
+        auto *basicHdt = new hdt::BasicHDT();
+        basicHdt->loadFromTriples(triples, base_uri, listener);
+        basicHdt->saveToHDT((basePath + SNAPSHOT_FILENAME_BASE(snapshot_id)).c_str());
+        delete basicHdt;
+    }
     return load_snapshot(snapshot_id);
 }
 
-std::shared_ptr<hdt::HDT> SnapshotManager::create_snapshot(int snapshot_id, string triples_file, string base_uri, hdt::RDFNotation notation) {
-    hdt::BasicHDT* basicHdt = new hdt::BasicHDT();
-    basicHdt->loadFromRDF(triples_file.c_str(), base_uri, notation);
-    basicHdt->saveToHDT((basePath + SNAPSHOT_FILENAME_BASE(snapshot_id)).c_str());
-    delete basicHdt;
+std::shared_ptr<hdt::HDT> SnapshotManager::create_snapshot(int snapshot_id, std::string triples_file, std::string base_uri, hdt::RDFNotation notation) {
+    std::unique_lock<std::mutex> lock(mutex);
+    auto it = loaded_snapshots.find(snapshot_id);
+    if (it == loaded_snapshots.end()) {
+        hdt::BasicHDT *basicHdt = new hdt::BasicHDT();
+        basicHdt->loadFromRDF(triples_file.c_str(), base_uri, notation);
+        basicHdt->saveToHDT((basePath + SNAPSHOT_FILENAME_BASE(snapshot_id)).c_str());
+        delete basicHdt;
+    }
     return load_snapshot(snapshot_id);
 }
 
@@ -162,6 +173,7 @@ hdt::IteratorTripleID* SnapshotManager::search_with_offset(std::shared_ptr<hdt::
 }
 
 std::shared_ptr<DictionaryManager> SnapshotManager::get_dictionary_manager(int snapshot_id) {
+    std::unique_lock<std::mutex> lock(mutex);
     if(snapshot_id < 0) {
         return nullptr;
     }
@@ -196,6 +208,7 @@ int SnapshotManager::get_max_snapshot_id() {
 }
 
 void SnapshotManager::update_cache(int accessed_snapshot_id) {
+    std::unique_lock<std::mutex> lock(mutex);
     update_cache_internal(accessed_snapshot_id, lru_map.size());
 }
 
