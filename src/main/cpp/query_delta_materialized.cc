@@ -36,12 +36,12 @@ int main(int argc, char** argv) {
     StringTriple triple_pattern(s, p, o);
 
     std::pair<size_t, hdt::ResultEstimationType> count = controller.get_delta_materialized_count(triple_pattern, patch_id_start, patch_id_end, true);
-    cerr << "Count: " << count.first << (count.second == hdt::EXACT ? "" : " (estimate)") << endl;
+    std::cerr << "Count: " << count.first << (count.second == hdt::EXACT ? "" : " (estimate)") << std::endl;
 
     TripleDeltaIterator* it = controller.get_delta_materialized(triple_pattern, offset, patch_id_start, patch_id_end);
     TripleDelta triple_delta;
     while (it->next(&triple_delta)) {
-        cout << (triple_delta.is_addition() ? "+ " : "- ") << triple_delta.get_triple()->to_string(*(triple_delta.get_dictionary())) << endl;
+        std::cout << (triple_delta.is_addition() ? "+ " : "- ") << triple_delta.get_triple()->to_string(*(triple_delta.get_dictionary())) << std::endl;
     }
     delete it;
 

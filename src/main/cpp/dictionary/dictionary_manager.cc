@@ -58,7 +58,7 @@ void DictionaryManager::load() {
 }
 
 void DictionaryManager::save() {
-    ofstream dictFile;
+    std::ofstream dictFile;
     dictFile.open(basePath + PATCHDICT_FILENAME_BASE(snapshotId), ios_base::out | ios_base::binary);
     boost::iostreams::filtering_streambuf<boost::iostreams::output> out;
 #ifdef COMPRESS_DICT
@@ -72,9 +72,7 @@ void DictionaryManager::save() {
     patchDict->save(compressed, ci);
 }
 
-std::string DictionaryManager::idToString(size_t id,
-                                          hdt::TripleComponentRole position) {
-    unique_lock<mutex> lock(action_mutex);
+std::string DictionaryManager::idToString(size_t id, hdt::TripleComponentRole position) {
     if (id == 0) return "";
 
     // Check whether id is from HDT or not (MSB is not set)
@@ -82,12 +80,11 @@ std::string DictionaryManager::idToString(size_t id,
         return hdtDict->idToString(id, position);
     }
 
+    std::shared_lock<std::shared_mutex> lock(patch_dict_mutex);
     return patchDict->idToString(id - maxHdtId, position);
 }
 
-size_t DictionaryManager::stringToId(const std::string &str,
-                                     hdt::TripleComponentRole position) {
-    unique_lock<mutex> lock(action_mutex);
+size_t DictionaryManager::stringToId(const std::string &str, hdt::TripleComponentRole position) {
     // if string is empty, it's a variable, and thus, a zero
     if (str.empty()) return 0;
 
@@ -95,31 +92,35 @@ size_t DictionaryManager::stringToId(const std::string &str,
     size_t id;
     try {
         id = hdtDict->stringToId(str, position);
-        if (id > 0)
+        if (id > 0) {
             return id;
-    } catch (exception e) {
-    } // ID is not in there
+        }
+    } catch (std::exception e) {
+    } // String is not in there
 
-    // Set MSB to 1
+    std::shared_lock<std::shared_mutex> lock(patch_dict_mutex);
     id = patchDict->stringToId(str, position);
+    if (id == 0) {  // the string is not in PatchTree dictionary either
+        std::string err = "Unknown string: " + str;
+        throw std::runtime_error(err);
+    }
     return id + maxHdtId;
 }
 
-size_t DictionaryManager::insert(const std::string &str,
-                                 hdt::TripleComponentRole position) {
-    unique_lock<mutex> lock(action_mutex);
-
+size_t DictionaryManager::insert(const std::string &str, hdt::TripleComponentRole position) {
     if (str.empty()) return 0;
 
     // First ask HDT
     size_t id;
     try {
         id = hdtDict->stringToId(str, position);
-        if (id > 0)
+        if (id > 0) {
             return id;
-    } catch (exception e) {
+        }
+    } catch (std::exception e) {
     } // ID is not in there
 
+    std::unique_lock<std::shared_mutex> lock(patch_dict_mutex);
     size_t originalId = patchDict->stringToId(str, position);
     if (originalId == 0) {
         patchDict->insert(str, position == hdt::SUBJECT ? hdt::NOT_SHARED_SUBJECT : (position == hdt::PREDICATE ? hdt::NOT_SHARED_PREDICATE

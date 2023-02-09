@@ -4,6 +4,7 @@
 #define SNAPSHOT_FILENAME_BASE(id) ("snapshot_" + std::to_string(id) + ".hdt")
 
 #include <memory>
+#include <shared_mutex>
 #include <HDT.hpp>
 #include "../patch/patch.h"
 #include <Dictionary.hpp>
@@ -22,7 +23,7 @@ private:
     std::map<int, std::shared_ptr<DictionaryManager>> loaded_dictionaries;
     bool readonly;
 
-    std::mutex mutex;
+    std::shared_mutex mutex;
 
     void update_cache_internal(int accessed_id, int iterations);
 
@@ -76,7 +77,7 @@ public:
      * Get the ids of the available snapshots
      * @return the ids
      */
-    std::vector<int> get_snapshots_ids() const;
+    std::vector<int> get_snapshots_ids();
 
     /**
      * Search the given triple pattern in the given hdt file with a certain offset.

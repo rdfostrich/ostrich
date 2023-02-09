@@ -534,7 +534,7 @@ int Controller::get_max_patch_id() const {
     return max_patch_id;
 }
 
-void Controller::cleanup(string basePath, Controller* controller) {
+void Controller::cleanup(std::string basePath, Controller* controller) {
     // Delete patch files
     std::vector<int> patches = controller->get_patch_tree_manager()->get_patch_trees_ids();
     auto itP = patches.begin();

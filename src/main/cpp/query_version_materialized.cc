@@ -10,12 +10,10 @@
 
 #define BASEURI "<http://example.org>"
 
-using namespace std;
-using namespace kyotocabinet;
 
 int main(int argc, char** argv) {
     if (argc < 5 || argc > 6) {
-        cerr << "ERROR: Query command must be invoked as 'patch_id subject predicate object [offset]' " << endl;
+        std::cerr << "ERROR: Query command must be invoked as 'patch_id subject predicate object [offset]' " << std::endl;
         return 1;
     }
 
@@ -38,12 +36,12 @@ int main(int argc, char** argv) {
     Triple triple_pattern(s, p, o, dict);
 
     std::pair<size_t, hdt::ResultEstimationType> count = controller.get_version_materialized_count(triple_pattern, patch_id, true);
-    cerr << "Count: " << count.first << (count.second == hdt::EXACT ? "" : " (estimate)") << endl;
+    std::cerr << "Count: " << count.first << (count.second == hdt::EXACT ? "" : " (estimate)") << std::endl;
 
     TripleIterator* it = controller.get_version_materialized(triple_pattern, offset, patch_id);
     Triple triple(0, 0, 0);
     while (it->next(&triple)) {
-        cout << triple.to_string(*dict) << endl;
+        std::cout << triple.to_string(*dict) << std::endl;
     }
     delete it;
 

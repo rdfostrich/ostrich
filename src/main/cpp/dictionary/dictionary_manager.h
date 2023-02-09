@@ -8,8 +8,8 @@
 #include <dictionary/PlainDictionary.hpp>
 #include <HDTVocabulary.hpp>
 #include <Triples.hpp>
+#include <shared_mutex>
 #include <mutex>
-
 
 
 class DictionaryManager : public hdt::ModifiableDictionary {
@@ -22,7 +22,9 @@ class DictionaryManager : public hdt::ModifiableDictionary {
     int snapshotId;
     bool readonly;
 
-    std::mutex action_mutex;
+    // The snapshot dictionary is read only and can't change
+    // we only need to synchronise around the PatchTree dictionary
+    std::shared_mutex patch_dict_mutex;
 
     void updateMaxHdtId();
 public:
