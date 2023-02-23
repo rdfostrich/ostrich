@@ -345,7 +345,6 @@ std::pair<size_t, hdt::ResultEstimationType> Controller::get_version_count(const
 }
 
 std::pair<size_t, hdt::ResultEstimationType> Controller::get_version_count(const StringTriple &triple_pattern, bool allowEstimates) const {
-
     // If allowEstimate is true, when multiple snapshots exists, the count can overestimate the number of results.
     // This is due to triples being duplicated in multiple delta chains that can not be filtered out when only doing estimates.
     hdt::ResultEstimationType estimation_type_used = hdt::EXACT;
@@ -363,7 +362,7 @@ std::pair<size_t, hdt::ResultEstimationType> Controller::get_version_count(const
         count += snapshot_it->estimatedNumResults();
         std::shared_ptr<PatchTree> patchTree = patchTreeManager->get_patch_tree(0, dict);
         if (patchTree != nullptr) {
-            count += patchTree->addition_count(patchTree->get_max_patch_id(), pattern);
+            count += patchTree->addition_count(0, pattern);
         }
         count *= snapshots.size();
         estimation_type_used = hdt::APPROXIMATE;
