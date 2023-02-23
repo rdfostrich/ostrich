@@ -43,12 +43,25 @@ double Statistics::dynamicity(int i, int j) {
 }
 
 double Statistics::growth_ratio(int i, int j, bool allow_estimates) {
-    auto count_i = controller->get_version_materialized_count(StringTriple("", "", ""), i, allow_estimates);
-    auto count_j = controller->get_version_materialized_count(StringTriple("", "", ""), j, allow_estimates);
-    return (double)count_j.first/(double)count_i.first;
+//    auto count_i = controller->get_version_materialized_count(StringTriple("", "", ""), i, allow_estimates);
+//    auto count_j = controller->get_version_materialized_count(StringTriple("", "", ""), j, allow_estimates);
+    int count_i = 0;
+    Triple t;
+    auto vm_i = controller->get_version_materialized(StringTriple("", "", ""), 0 , i);
+    while (vm_i->next(&t)) {
+        count_i++;
+    }
+    delete vm_i;
+    int count_j = 0;
+    auto vm_j = controller->get_version_materialized(StringTriple("", "", ""), 0, j);
+    while (vm_j->next(&t)) {
+        count_j++;
+    }
+    delete vm_j;
+    return (double)count_j/(double)count_i;
 }
 
-void Statistics::sigma_ij(int i, int j, vector<std::string> &results) {
+void Statistics::sigma_ij(int i, int j, std::vector<std::string> &results) {
     Triple t;
     auto* si = new std::unordered_set<std::string>;
     auto vm_i = controller->get_version_materialized(StringTriple("", "", ""), 0, i);
@@ -59,7 +72,7 @@ void Statistics::sigma_ij(int i, int j, vector<std::string> &results) {
     delete vm_i;
 
     auto* sj = new std::unordered_set<std::string>;
-    auto vm_j = controller->get_version_materialized(StringTriple("", "", ""), 0, i);
+    auto vm_j = controller->get_version_materialized(StringTriple("", "", ""), 0, j);
     std::shared_ptr<DictionaryManager> dict_j = controller->get_dictionary_manager(j);
     while (vm_j->next(&t)) {
         sj->insert(t.get_subject(*dict_j));
@@ -83,7 +96,7 @@ size_t Statistics::entity_changes(int i, int j) {
     return subjects_union.size();
 }
 
-double Statistics::triple_to_entity_change(int i, int j, bool allow_estimates) {
+double Statistics::triple_to_entity_change(int i, int j, std::set<StringTriple>* consumed_triples, bool allow_estimates) {
     std::vector<std::string> subjects_union;
     sigma_ij(i, j, subjects_union);
     if (subjects_union.empty()) {
@@ -92,14 +105,28 @@ double Statistics::triple_to_entity_change(int i, int j, bool allow_estimates) {
 
     size_t triple_count = 0;
     for (const auto& subject: subjects_union) {
-        auto count = controller->get_delta_materialized_count(StringTriple(subject, "", ""), i, j, allow_estimates);
-        triple_count += count.first;
+        auto dm_it = controller->get_delta_materialized(StringTriple(subject, "", ""), 0, i, j);
+        TripleDelta td;
+        while (dm_it->next(&td)) {
+            if (consumed_triples != nullptr) {
+                std::string s = td.get_triple()->get_subject(*td.get_dictionary());
+                std::string p = td.get_triple()->get_predicate(*td.get_dictionary());
+                std::string o = td.get_triple()->get_object(*td.get_dictionary());
+                auto find_it = consumed_triples->find(StringTriple(s, p, o));
+                if (find_it == consumed_triples->end()) {
+                    consumed_triples->emplace(s, p, o);
+                    triple_count++;
+                }
+            } else {
+                triple_count++;
+            }
+        }
     }
 
     return (double)triple_count/(double)subjects_union.size();
 }
 
-size_t Statistics::object_updates(int i, int j) {
+size_t Statistics::object_updates(int i, int j, std::set<StringTriple>* consumed_triples) {
     size_t update_count = 0;
 
     auto dm_it = controller->get_delta_materialized(StringTriple("", "", ""), 0, i, j);
@@ -113,9 +140,21 @@ size_t Statistics::object_updates(int i, int j) {
             TripleDelta td2;
             while (replacement_lookup->next(&td2)) {
                 if (td2.is_addition() && (td2.get_triple()->get_object(*td2.get_dictionary()) != o)) {
-                    update_count++;
+                    if (consumed_triples != nullptr) {
+                        std::string s2 = td2.get_triple()->get_subject(*td2.get_dictionary());
+                        std::string p2 = td2.get_triple()->get_predicate(*td2.get_dictionary());
+                        std::string o2 = td2.get_triple()->get_object(*td2.get_dictionary());
+                        auto find_it = consumed_triples->find(StringTriple(s2, p2, o2));
+                        if (find_it == consumed_triples->end()) {
+                            consumed_triples->emplace(s2, p2, o2);
+                            update_count++;
+                        }
+                    } else {
+                        update_count++;
+                    }
                 }
             }
+            delete replacement_lookup;
         }
     }
     delete dm_it;
@@ -123,10 +162,10 @@ size_t Statistics::object_updates(int i, int j) {
     return update_count;
 }
 
-size_t Statistics::orphan_additions(int i, int j) {
+size_t Statistics::orphan_additions(int i, int j, std::set<StringTriple>* consumed_triples) {
     return 0;
 }
 
-size_t Statistics::orphan_deletions(int i, int j) {
+size_t Statistics::orphan_deletions(int i, int j, std::set<StringTriple>* consumed_triples) {
     return 0;
 }

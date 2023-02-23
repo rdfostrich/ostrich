@@ -24,10 +24,10 @@ public:
 
     // High level changes
     size_t entity_changes(int i, int j);
-    double triple_to_entity_change(int i, int j, bool allow_estimates = false);
-    size_t object_updates(int i, int j);
-    size_t orphan_additions(int i, int j);
-    size_t orphan_deletions(int i, int j);
+    double triple_to_entity_change(int i, int j, std::set<StringTriple>* consumed_triples = nullptr, bool allow_estimates = false);
+    size_t object_updates(int i, int j, std::set<StringTriple>* consumed_triples = nullptr);
+    size_t orphan_additions(int i, int j, std::set<StringTriple>* consumed_triples = nullptr);
+    size_t orphan_deletions(int i, int j, std::set<StringTriple>* consumed_triples = nullptr);
 };
 
 

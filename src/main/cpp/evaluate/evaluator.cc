@@ -7,6 +7,7 @@
 
 #include "evaluator.h"
 #include "../simpleprogresslistener.h"
+#include "../controller/statistics.h"
 
 void Evaluator::init(string basePath, string patchesBasePatch, int startIndex, int endIndex, hdt::ProgressListener* progressListener) {
     controller = new Controller(basePath, kyotocabinet::TreeDB::TCOMPRESS);
@@ -315,23 +316,23 @@ void BearEvaluatorMS::init_readonly(string basePath, bool warmup) {
     }
 }
 
-void BearEvaluatorMS::test_lookup(string s, string p, string o, int replications, int offset, int limit) {
+void BearEvaluatorMS::test_lookup(std::string s, std::string p, std::string o, int replications, int offset, int limit) {
     StringTriple triple_pattern(s, p, o);
-    cout << "---PATTERN START: " << triple_pattern.to_string() << endl;
+    std::cout << "---PATTERN START: " << triple_pattern.to_string() << std::endl;
 
-    cout << "--- ---VERSION MATERIALIZED" << endl;
-    cout << "patch,offset,limit,count-ms,median-mus,lookup-mus,results" << endl;
+    std::cout << "--- ---VERSION MATERIALIZED" << std::endl;
+    std::cout << "patch,offset,limit,count-ms,median-mus,lookup-mus,results" << std::endl;
     for(int i = 0; i < patch_count; i++) {
         int result_count1 = 0;
         uint64_t median_c;
         uint64_t dcount = measure_count_version_materialized(triple_pattern, i, replications, median_c);
         uint64_t median_t;
         uint64_t d1 = measure_lookup_version_materialized(triple_pattern, offset, i, limit, replications, result_count1, median_t);
-        cout << "" << i << "," << offset << "," << limit << "," << dcount << "," << median_t << "," << d1 << "," << result_count1 << endl;
+        std::cout << "" << i << "," << offset << "," << limit << "," << dcount << "," << median_t << "," << d1 << "," << result_count1 << std::endl;
     }
 
-    cout << "--- ---DELTA MATERIALIZED" << endl;
-    cout << "patch_start,patch_end,offset,limit,count-ms,median-mus,lookup-mus,results" << endl;
+    std:: cout << "--- ---DELTA MATERIALIZED" << endl;
+    std::cout << "patch_start,patch_end,offset,limit,count-ms,median-mus,lookup-mus,results" << endl;
     for(int i = 1; i < patch_count; i++) {
         for(int j = 0; j <= 1; j++) {
             if (i > j) {
@@ -340,26 +341,41 @@ void BearEvaluatorMS::test_lookup(string s, string p, string o, int replications
                 uint64_t dcount = measure_count_delta_materialized(triple_pattern, j, i, replications, median_c);
                 uint64_t median_t;
                 uint64_t d1 = measure_lookup_delta_materialized(triple_pattern, offset, j, i, limit, replications, result_count1, median_t);
-                cout << "" << j << "," << i << "," << offset << "," << limit << "," << dcount << "," << median_t << "," << d1 << "," << result_count1 << endl;
+                std::cout << "" << j << "," << i << "," << offset << "," << limit << "," << dcount << "," << median_t << "," << d1 << "," << result_count1 << std::endl;
             }
         }
     }
 
-    cout << "--- ---VERSION" << endl;
-    cout << "offset,limit,count-ms,median-mus,lookup-mus,results" << endl;
+    std::cout << "--- ---VERSION" << endl;
+    std::cout << "offset,limit,count-ms,median-mus,lookup-mus,results" << endl;
     int result_count1 = 0;
     uint64_t median_c;
     uint64_t dcount = measure_count_version(triple_pattern, replications, median_c);
     uint64_t median_t;
     uint64_t d1 = measure_lookup_version(triple_pattern, offset, limit, replications, result_count1, median_t);
-    cout << "" << offset << "," << limit << "," << dcount << "," << median_t << "," << d1 << "," << result_count1 << endl;
+    std::cout << "" << offset << "," << limit << "," << dcount << "," << median_t << "," << d1 << "," << result_count1 << std::endl;
+}
+
+void BearEvaluatorMS::compute_statistics() {
+    Statistics stat(controller);
+    std::cout << "Version,Change-ratio,Dynamicity,Growth-ratio,Entity-changes,Triple-to-entity-change,Object-updates" << std::endl;
+    for (int i = 1; i < patch_count; i++) {
+        std::set<StringTriple> consumed_triples;
+        double cr = stat.change_ratio(i-1, i);
+        double dyn = stat.dynamicity(i-1, i);
+        double gr = stat.growth_ratio(i-1, i);
+        size_t ec = stat.entity_changes(i-1, i);
+        double tec = stat.triple_to_entity_change(i-1, i, &consumed_triples);
+        size_t ou = stat.object_updates(i-1, i, &consumed_triples);
+        std::cout << i << "," << cr << "," << dyn << "," << gr << "," << ec << "," << tec << "," << ou << std::endl;
+    }
 }
 
 void BearEvaluatorMS::cleanup_controller() {
     delete controller;
 }
 
-void BearEvaluatorMS::populate_controller_with_version(int patch_id, string path, hdt::ProgressListener *progressListener) {
+void BearEvaluatorMS::populate_controller_with_version(int patch_id, std::string path, hdt::ProgressListener *progressListener) {
     if (path.back() == '/') path.pop_back();
 
     std::string versions_ids(std::to_string(patch_id) + "-" + std::to_string(patch_id+1));

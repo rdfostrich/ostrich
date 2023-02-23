@@ -18,14 +18,14 @@ private:
     int patch_count = 0;
     Controller* controller;
 public:
-    void init(string basePath, string patchesBasePatch, int startIndex, int endIndex, hdt::ProgressListener* progressListener = NULL);
-    void test_lookup(string s, string p, string o, int replications, int offset, int limit);
+    void init(std::string basePath, std::string patchesBasePatch, int startIndex, int endIndex, hdt::ProgressListener* progressListener = nullptr);
+    void test_lookup(std::string s, std::string p, std::string o, int replications, int offset, int limit);
     void cleanup_controller();
 protected:
-    void populate_controller_with_version(int patch_id, string path, hdt::ProgressListener* progressListener = NULL);
+    void populate_controller_with_version(int patch_id, std::string path, hdt::ProgressListener* progressListener = nullptr);
     std::ifstream::pos_type patchstore_size(Controller* controller);
-    std::ifstream::pos_type filesize(string file);
-    hdt::IteratorTripleString* get_from_file(string file);
+    std::ifstream::pos_type filesize(std::string file);
+    hdt::IteratorTripleString* get_from_file(std::string file);
     long long measure_lookup_version_materialized(hdt::Dictionary& dict, Triple triple_pattern, int offset, int patch_id, int limit, int replications, int& result_count);
     long long measure_count_version_materialized(Triple triple_pattern, int patch_id, int replications);
     long long measure_lookup_delta_materialized(hdt::Dictionary& dict, Triple triple_pattern, int offset, int patch_id_start, int patch_id_end, int limit, int replications, int& result_count);
@@ -50,15 +50,16 @@ private:
 
     static uint64_t compute_median(std::vector<uint64_t> values) ;
 public:
-    void init(string basePath, string patchesBasePatch, SnapshotCreationStrategy* strategy, int startIndex, int endIndex, hdt::ProgressListener* progressListener = NULL);
+    void init(std::string basePath, std::string patchesBasePatch, SnapshotCreationStrategy* strategy, int startIndex, int endIndex, hdt::ProgressListener* progressListener = nullptr);
     void init_readonly(string basePath, bool warmup = false);
-    void test_lookup(string s, string p, string o, int replications, int offset, int limit);
+    void test_lookup(std::string s, std::string p, std::string o, int replications, int offset, int limit);
+    void compute_statistics();
     void cleanup_controller();
 protected:
-    void populate_controller_with_version(int patch_id, string path, hdt::ProgressListener* progressListener = nullptr);
+    void populate_controller_with_version(int patch_id, std::string path, hdt::ProgressListener* progressListener = nullptr);
     static std::ifstream::pos_type patchstore_size(Controller* controller);
-    static std::ifstream::pos_type filesize(const string& file);
-    static hdt::IteratorTripleString* get_from_file(const string& file);
+    static std::ifstream::pos_type filesize(const std::string& file);
+    static hdt::IteratorTripleString* get_from_file(const std::string& file);
     uint64_t measure_lookup_version_materialized(const StringTriple& triple_pattern, int offset, int patch_id, int limit, int replications, int& result_count, uint64_t& median_t);
     uint64_t measure_count_version_materialized(const StringTriple& triple_pattern, int patch_id, int replications, uint64_t& median_t);
     uint64_t measure_lookup_delta_materialized(const StringTriple& triple_pattern, int offset, int patch_id_start, int patch_id_end, int limit, int replications, int& result_count, uint64_t& median_t);
