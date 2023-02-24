@@ -350,22 +350,54 @@ std::pair<size_t, hdt::ResultEstimationType> Controller::get_version_count(const
     hdt::ResultEstimationType estimation_type_used = hdt::EXACT;
     size_t count = 0;
     std::vector<int> snapshots = snapshotManager->get_snapshots_ids();
-    if (!allowEstimates) {
+    if (!allowEstimates && snapshots.size() > 1) {
         TripleVersionsIterator* it = get_version(triple_pattern, 0);
         count = it->get_count();
         delete it;
     } else {
-        std::shared_ptr<DictionaryManager> dict = snapshotManager->get_dictionary_manager(0);
-        Triple pattern = triple_pattern.get_as_triple(dict);
-        std::shared_ptr<hdt::HDT> snapshot = snapshotManager->get_snapshot(0);
-        hdt::IteratorTripleID* snapshot_it = SnapshotManager::search_with_offset(snapshot, pattern, 0);
-        count += snapshot_it->estimatedNumResults();
-        std::shared_ptr<PatchTree> patchTree = patchTreeManager->get_patch_tree(0, dict);
-        if (patchTree != nullptr) {
-            count += patchTree->addition_count(0, pattern);
+        for (int snapshot: snapshots) {
+            std::shared_ptr<DictionaryManager> dict = snapshotManager->get_dictionary_manager(snapshot);
+            Triple pattern = triple_pattern.get_as_triple(dict);
+            std::shared_ptr<hdt::HDT> hdt = snapshotManager->get_snapshot(snapshot);  // by using get_snapshot, we make sure it's loaded before use
+            hdt::IteratorTripleID *snapshot_it = SnapshotManager::search_with_offset(hdt, pattern, 0, dict);
+            size_t c = snapshot_it->estimatedNumResults();
+            hdt::ResultEstimationType tmp_est_type = snapshot_it->numResultEstimation();
+            if (!allowEstimates) {
+                while (snapshot_it->hasNext()) {
+                    snapshot_it->next();
+                    count++;
+                }
+            } else {
+                count += c;
+                if (tmp_est_type != hdt::EXACT)
+                    estimation_type_used = hdt::APPROXIMATE;
+            }
+            delete snapshot_it;
+
+            // Count the additions for all versions
+            // We get the ID of the next patch_tree (after the current snapshot)
+            int patch_tree_id = patchTreeManager->get_patch_tree_id(snapshot+1);;
+            if (patch_tree_id > -1) {
+                std::shared_ptr<PatchTree> patchTree = patchTreeManager->get_patch_tree(patch_tree_id, dict);
+                if (patchTree != nullptr) {
+                    if (allowEstimates) {
+                        count += patchTree->addition_count(snapshot, pattern);
+                    } else {
+                        auto it = patchTree->addition_iterator(pattern);
+                        Triple t;
+#if defined(COMPRESSED_ADD_VALUES) || defined(COMPRESSED_DEL_VALUES)
+                        PatchTreeValueBase<PatchTreeDeletionValue> del_val(patchTree->get_max_patch_id());
+#else
+                        PatchTreeValueBase<PatchTreeDeletionValue> del_val;
+#endif
+                        while (it->next(&t, &del_val)) {
+                            count++;
+                        }
+                        delete it;
+                    }
+                }
+            }
         }
-        count *= snapshots.size();
-        estimation_type_used = hdt::APPROXIMATE;
     }
     return std::make_pair(count, estimation_type_used);
 }
