@@ -10,41 +10,42 @@ double Statistics::change_ratio(int i, int j, bool allow_estimates) {
 }
 
 double Statistics::dynamicity(int i, int j) {
-    std::unordered_set<std::string> terms;
-    auto dm_it = controller->get_delta_materialized(StringTriple("", "", ""), 0, i, j);
-    TripleDelta t;
-    while (dm_it->next(&t)) {
-        terms.insert(t.get_triple()->get_subject(*t.get_dictionary()));
-        terms.insert(t.get_triple()->get_predicate(*t.get_dictionary()));
-        terms.insert(t.get_triple()->get_object(*t.get_dictionary()));
-    }
-    delete dm_it;
-
     Triple t_vm;
-    std::unordered_set<size_t> terms_i;
+    std::shared_ptr<DictionaryManager> dict_i = controller->get_dictionary_manager(i);
+    std::set<std::string> terms_i;
     auto vm_i = controller->get_version_materialized(StringTriple("", "", ""), 0, i);
     while (vm_i->next(&t_vm)) {
-        terms_i.insert(t_vm.get_subject());
-        terms_i.insert(t_vm.get_predicate());
-        terms_i.insert(t_vm.get_object());
+        terms_i.insert(t_vm.get_subject(*dict_i));
+        terms_i.insert(t_vm.get_predicate(*dict_i));
+        terms_i.insert(t_vm.get_object(*dict_i));
     }
     delete vm_i;
 
-    std::unordered_set<size_t> terms_j;
+    std::shared_ptr<DictionaryManager> dict_j = controller->get_dictionary_manager(j);
+    std::set<std::string> terms_j;
     auto vm_j = controller->get_version_materialized(StringTriple("", "", ""), 0, j);
     while (vm_j->next(&t_vm)) {
-        terms_j.insert(t_vm.get_subject());
-        terms_j.insert(t_vm.get_predicate());
-        terms_j.insert(t_vm.get_object());
+        terms_j.insert(t_vm.get_subject(*dict_j));
+        terms_j.insert(t_vm.get_predicate(*dict_j));
+        terms_j.insert(t_vm.get_object(*dict_j));
     }
     delete vm_j;
 
-    return (double)terms.size()/(double)(terms_i.size() + terms_j.size());
+    std::vector<std::string> added_terms;
+    std::set_difference(terms_j.begin(), terms_j.end(), terms_i.begin(), terms_i.end(), std::back_inserter(added_terms));
+    std::vector<std::string> deleted_terms;
+    std::set_difference(terms_i.begin(), terms_i.end(), terms_j.begin(), terms_j.end(), std::back_inserter(deleted_terms));
+
+    std::vector<std::string> changed_terms_union;
+    std::set_union(added_terms.begin(), added_terms.end(), deleted_terms.begin(), deleted_terms.end(), std::back_inserter(changed_terms_union));
+
+    std::vector<std::string> all_terms;
+    std::set_union(terms_i.begin(), terms_i.end(), terms_j.begin(), terms_j.end(), std::back_inserter(all_terms));
+
+    return (double)changed_terms_union.size()/(double)(all_terms.size());
 }
 
 double Statistics::growth_ratio(int i, int j, bool allow_estimates) {
-//    auto count_i = controller->get_version_materialized_count(StringTriple("", "", ""), i, allow_estimates);
-//    auto count_j = controller->get_version_materialized_count(StringTriple("", "", ""), j, allow_estimates);
     int count_i = 0;
     Triple t;
     auto vm_i = controller->get_version_materialized(StringTriple("", "", ""), 0 , i);
@@ -63,7 +64,7 @@ double Statistics::growth_ratio(int i, int j, bool allow_estimates) {
 
 void Statistics::sigma_ij(int i, int j, std::vector<std::string> &results) {
     Triple t;
-    auto* si = new std::unordered_set<std::string>;
+    auto* si = new std::set<std::string>;
     auto vm_i = controller->get_version_materialized(StringTriple("", "", ""), 0, i);
     std::shared_ptr<DictionaryManager> dict_i = controller->get_dictionary_manager(i);
     while (vm_i->next(&t)) {
@@ -71,7 +72,7 @@ void Statistics::sigma_ij(int i, int j, std::vector<std::string> &results) {
     }
     delete vm_i;
 
-    auto* sj = new std::unordered_set<std::string>;
+    auto* sj = new std::set<std::string>;
     auto vm_j = controller->get_version_materialized(StringTriple("", "", ""), 0, j);
     std::shared_ptr<DictionaryManager> dict_j = controller->get_dictionary_manager(j);
     while (vm_j->next(&t)) {
@@ -156,6 +157,7 @@ size_t Statistics::object_updates(int i, int j, std::set<StringTriple>* consumed
             }
             delete replacement_lookup;
         }
+//        std::cout << td.get_triple()->to_string(*td.get_dictionary()) << " " << td.is_addition() << std::endl;
     }
     delete dm_it;
 
