@@ -430,13 +430,6 @@ hdt::TripleComponentOrder PatchTreeTripleVersionsIteratorV2::get_order() {
 TripleVersionsIteratorCombinedV2::TripleVersionsIteratorCombinedV2(hdt::TripleComponentOrder order) : comparator(TripleComparator::get_triple_comparator(order)) {}
 
 void TripleVersionsIteratorCombinedV2::add_iterator(TripleVersionsIterator *it) {
-    auto merge_versions = [] (const std::vector<int>& v1, const std::vector<int>& v2, std::vector<int>& dest) {
-        dest.reserve(std::max(v1.size(), v2.size()));
-        std::merge(v1.begin(), v1.end(), v2.begin(), v2.end(), std::back_inserter(dest));
-        auto erase_it = std::unique(dest.begin(), dest.end());
-        dest.erase(erase_it, dest.end());
-    };
-
     auto* t = new TripleVersions;
     bool status = it->next(t);
     auto pos = std::lower_bound(triples.begin(), triples.end(), t, *comparator);
@@ -445,7 +438,7 @@ void TripleVersionsIteratorCombinedV2::add_iterator(TripleVersionsIterator *it) 
             int comp = comparator->compare(t, (*pos));
             if (comp == 0) {
                 std::vector<int> nv;
-                merge_versions(*(*pos)->get_versions(), *t->get_versions(), nv);
+                std::set_union((*pos)->get_versions()->begin(), (*pos)->get_versions()->end(), t->get_versions()->begin(), t->get_versions()->end(), std::back_inserter(nv));
                 (*pos)->get_versions()->clear();
                 (*pos)->get_versions()->insert((*pos)->get_versions()->begin(), nv.begin(), nv.end());
                 status = it->next(t);
