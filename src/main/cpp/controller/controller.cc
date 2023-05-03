@@ -8,10 +8,10 @@
 #define BASEURI "<http://example.org>"
 
 
-Controller::Controller(string basePath, int8_t kc_opts, bool readonly, size_t cache_size) : Controller(basePath, nullptr, kc_opts,
+Controller::Controller(const std::string& basePath, int8_t kc_opts, bool readonly, size_t cache_size) : Controller(basePath, nullptr, kc_opts,
                                                                                     readonly, cache_size) {}
 
-Controller::Controller(string basePath, SnapshotCreationStrategy *strategy, int8_t kc_opts, bool readonly, size_t cache_size)
+Controller::Controller(const std::string& basePath, SnapshotCreationStrategy *strategy, int8_t kc_opts, bool readonly, size_t cache_size)
         : patchTreeManager(new PatchTreeManager(basePath, kc_opts, readonly, cache_size)),
           snapshotManager(new SnapshotManager(basePath, readonly, cache_size)),
           strategy(strategy), metadata(nullptr) {
@@ -20,9 +20,11 @@ Controller::Controller(string basePath, SnapshotCreationStrategy *strategy, int8
         throw std::invalid_argument("The provided path '" + basePath + "' is not a valid directory.");
     }
 
-    // Get the metadata for snapshot creation
-    init_strategy_metadata();
-    metadata_manager = new MetadataManager(basePath, false);
+    if (!readonly) {
+        // Get the metadata for snapshot creation
+        init_strategy_metadata();
+        metadata_manager = new MetadataManager(basePath, false);
+    }
 }
 
 Controller::~Controller() {

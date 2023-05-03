@@ -22,8 +22,8 @@ private:
     MetadataManager* metadata_manager;
 
 public:
-    explicit Controller(string basePath, int8_t kc_opts = 0, bool readonly = false, size_t cache_size = 4);
-    Controller(string basePath, SnapshotCreationStrategy* strategy, int8_t kc_opts = 0, bool readonly = false, size_t cache_size = 4);
+    explicit Controller(const string& basePath, int8_t kc_opts = 0, bool readonly = false, size_t cache_size = 4);
+    Controller(const string& basePath, SnapshotCreationStrategy* strategy, int8_t kc_opts = 0, bool readonly = false, size_t cache_size = 4);
     ~Controller();
     /**
      * Get an iterator for all triples matching the given triple pattern with a certain offset
