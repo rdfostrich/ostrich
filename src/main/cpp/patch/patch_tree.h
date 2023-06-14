@@ -20,24 +20,22 @@
 #define PATCH_INSERT_BUFFER_SIZE 100
 #endif
 
-using namespace std;
-using namespace kyotocabinet;
 
 // A PatchTree can store Patches which are persisted to a file
 class PatchTree {
 private:
     TripleStore* tripleStore;
-    string metadata_filename;
+    std::string metadata_filename;
     int min_patch_id;
     int max_patch_id;
     bool readonly;
 
-    HashDB sp_;
-    HashDB s_o;
-    HashDB s__;
-    HashDB _po;
-    HashDB _p_;
-    HashDB __o;
+    kyotocabinet::HashDB sp_;
+    kyotocabinet::HashDB s_o;
+    kyotocabinet::HashDB s__;
+    kyotocabinet::HashDB _po;
+    kyotocabinet::HashDB _p_;
+    kyotocabinet::HashDB __o;
 protected:
     /**
      * Reconstruct the given patch id in the given patch.
@@ -61,7 +59,7 @@ public:
      * @note If an error occurs, some elements might have already been added.
      * If you want to change this behaviour, you'll have to first check if the patch elements are really new.
      */
-    void append_unsafe(PatchElementIterator *patch_it, int patch_id, ProgressListener *progressListener = NULL);
+    void append_unsafe(PatchElementIterator *patch_it, int patch_id, hdt::ProgressListener *progressListener = nullptr);
     /**
      * Append the given patch elements to the tree with given patch id.
      * This safe append will first check if the patch is completely new, only then it will add the data
@@ -70,7 +68,7 @@ public:
      * @param progressListener an optional progress listener.
      * @return If the patch was added, otherwise the patch was not completely new.
      */
-    bool append(PatchElementIterator* patch_it, int patch_id, ProgressListener* progressListener = NULL);
+    bool append(PatchElementIterator* patch_it, int patch_id, hdt::ProgressListener* progressListener = nullptr);
     /**
      * Append the given patch elements to the tree with given patch id.
      * This safe append will first check if the patch is completely new, only then it will add the data
@@ -79,7 +77,7 @@ public:
      * @param progressListener an optional progress listener.
      * @return If the patch was added, otherwise the patch was not completely new.
      */
-    bool append(const PatchSorted& patch, int patch_id, ProgressListener* progressListener = NULL);
+    bool append(const PatchSorted& patch, int patch_id, hdt::ProgressListener* progressListener = nullptr);
     /**
      * Check if the given patch element is present in the tree.
      * @param patch_element The patch element to look for
@@ -227,11 +225,11 @@ public:
     /**
      * @return The largest patch id that is currently available.
      */
-    const int get_max_patch_id();
+    int get_max_patch_id() const;
     /**
      * @return The smallest patch id that is currently available.
      */
-    const int get_min_patch_id();
+    int get_min_patch_id() const;
 protected:
     void write_metadata();
     void read_metadata();

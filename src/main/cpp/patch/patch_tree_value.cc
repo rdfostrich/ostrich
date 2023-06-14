@@ -1,8 +1,24 @@
 #include "patch_tree_value.h"
 
+#if defined(COMPRESSED_ADD_VALUES) || defined(COMPRESSED_DEL_VALUES)
+template<class DV>
+PatchTreeValueBase<DV>::PatchTreeValueBase(int max_patch_id) :
+#ifdef COMPRESSED_ADD_VALUES
+                                                               addition(new PatchTreeAdditionValue(max_patch_id)),
+#else
+                                                               addition(new PatchTreeAdditionValue()),
+#endif
+#ifdef COMPRESSED_DEL_VALUES
+                                                               deletion(new DV(max_patch_id)),
+#else
+                                                               deletion(new DV()),
+#endif
+                                                               has_addition(false), has_deletion(false) {}
+#else
 template <class DV>
 PatchTreeValueBase<DV>::PatchTreeValueBase() : addition(new PatchTreeAdditionValue()), deletion(new DV()),
-                                   has_addition(false), has_deletion(false) {}
+                                               has_addition(false), has_deletion(false) {}
+#endif
 
 template <class DV>
 PatchTreeValueBase<DV>::~PatchTreeValueBase() {
@@ -39,7 +55,7 @@ long PatchTreeValueBase<DV>::get_deletion_patch_id(int patch_id, bool exact) con
             return deletion->get_patchvalue_index(patch_id);
         } else {
             for(long i = deletion->get_size() - 1; i >= 0; i--) {
-                long patch_id_at = deletion->get_patch(i).get_patch_id();
+                long patch_id_at = deletion->get_patch_at(i).get_patch_id();
                 if (patch_id_at <= patch_id) {
                     return patch_id_at;
                 }
@@ -65,7 +81,7 @@ bool PatchTreeValueBase<DV>::exists_in_snapshot() const {
     // if the first deletion comes before the first addition (or there is no later addition).
     if (has_deletion) {
         if (has_addition) {
-            return deletion->get_patch(0).get_patch_id() < addition->get_patch_id_at(0);
+            return deletion->get_patch_at(0).get_patch_id() < addition->get_patch_id_at(0);
         }
         return true;
     }

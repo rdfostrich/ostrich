@@ -1,6 +1,3 @@
-[submodule "deps/gtest"]
-	path = deps/gtest
-	url = https://github.com/google/googletest.git
 [submodule "deps/hdt"]
 	path = deps/hdt
 	url = https://github.com/opelgrin/hdt-cpp.git

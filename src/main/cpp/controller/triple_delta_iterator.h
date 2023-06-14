@@ -35,12 +35,12 @@ public:
 
 // Triple delta iterator where elements only differences between two patches are emitted.
 template <class DV>
-class FowardDiffPatchTripleDeltaIterator : public ForwardPatchTripleDeltaIterator<DV> {
+class ForwardDiffPatchTripleDeltaIterator : public ForwardPatchTripleDeltaIterator<DV> {
 protected:
     int patch_id_start;
     int patch_id_end;
 public:
-    FowardDiffPatchTripleDeltaIterator(std::shared_ptr<PatchTree> patchTree, const Triple &triple_pattern, int patch_id_start, int patch_id_end, std::shared_ptr<DictionaryManager> dict);
+    ForwardDiffPatchTripleDeltaIterator(std::shared_ptr<PatchTree> patchTree, const Triple &triple_pattern, int patch_id_start, int patch_id_end, std::shared_ptr<DictionaryManager> dict);
     bool next(TripleDelta* triple);
 };
 
@@ -54,10 +54,10 @@ public:
 // This should always be the case with our system
 class SnapshotDiffIterator: public TripleDeltaIterator {
 private:
-    IteratorTripleID* snapshot_it_1;
-    IteratorTripleID* snapshot_it_2;
-    TripleID* t1;
-    TripleID* t2;
+    hdt::IteratorTripleID* snapshot_it_1;
+    hdt::IteratorTripleID* snapshot_it_2;
+    hdt::TripleID* t1;
+    hdt::TripleID* t2;
 
     std::shared_ptr<DictionaryManager> dict1;
     std::shared_ptr<DictionaryManager> dict2;
@@ -65,7 +65,7 @@ private:
     TripleComparator* comparator;
 
 public:
-    SnapshotDiffIterator(const StringTriple& triple_pattern, SnapshotManager* manager , int snapshot_1, int snapshot_2);
+    SnapshotDiffIterator(const StringTriple& triple_pattern, SnapshotManager* manager, int snapshot_1, int snapshot_2, hdt::TripleComponentOrder qr_order = hdt::SPO);
     ~SnapshotDiffIterator() override;
     bool next(TripleDelta* triple) override;
 };
@@ -102,7 +102,7 @@ private:
     std::vector<TripleDelta*> triples;
 
 public:
-    explicit SortedTripleDeltaIterator(TripleDeltaIterator* iterator, TripleComponentOrder order);
+    explicit SortedTripleDeltaIterator(TripleDeltaIterator* iterator, hdt::TripleComponentOrder order);
     ~SortedTripleDeltaIterator() override;
     bool next(TripleDelta* triple) override;
 };
@@ -121,7 +121,7 @@ private:
     TripleComparator* comparator;
 
 public:
-    MergeDiffIterator(TripleDeltaIterator* iterator_1, TripleDeltaIterator* iterator_2);
+    MergeDiffIterator(TripleDeltaIterator* iterator_1, TripleDeltaIterator* iterator_2, hdt::TripleComponentOrder qr_order = hdt::SPO);
     ~MergeDiffIterator() override;
     bool next(TripleDelta* triple) override;
 };
@@ -141,7 +141,7 @@ private:
     TripleComparator* comparator;
 
 public:
-    MergeDiffIteratorCase2(TripleDeltaIterator* iterator_1, TripleDeltaIterator* iterator_2);
+    MergeDiffIteratorCase2(TripleDeltaIterator* iterator_1, TripleDeltaIterator* iterator_2, hdt::TripleComponentOrder qr_order = hdt::SPO);
     ~MergeDiffIteratorCase2() override;
     bool next(TripleDelta* triple) override;
 };

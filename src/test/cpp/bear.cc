@@ -72,8 +72,8 @@ void test_lookups_for_queries_ms(BearEvaluatorMS &evaluator, const string& queri
 
 
 int main(int argc, char *argv[]) {
-    if (argc < 4 || argc > 8) {
-        std::cerr << "Usage: " << argv[0] << " ingest|ingest-query|query " << std::endl;
+    if (argc < 2 || argc > 8) {
+        std::cerr << "Usage: " << argv[0] << " ingest|ingest-query|query|stats " << std::endl;
         std::cerr << "\tcmd \"ingest\": strategy strategy_parameter path_to_patches start_index end_index" << std::endl;
         std::cerr
                 << "\tcmd \"ingest-query\": strategy strategy_parameter path_to_patches start_index end_index path_to_queries_file replications"
@@ -97,6 +97,9 @@ int main(int argc, char *argv[]) {
     } else if (std::strcmp("query", argv[1]) == 0) {
         evaluator.init_readonly("./", false);
         test_lookups_for_queries_ms(evaluator, ((std::string) argv[2]), stoi(argv[3]));
+    } else if (std::strcmp("stats", argv[1]) == 0) {
+        evaluator.init_readonly("./", false);
+        evaluator.compute_statistics();
     }
 
     delete listener;

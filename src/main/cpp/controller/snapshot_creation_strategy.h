@@ -6,8 +6,8 @@
 
 struct CreationStrategyMetadata {
     int patch_id = 0;
-    std::vector<size_t> delta_sizes;
-    std::vector<size_t> agg_delta_sizes;
+    std::vector<uint64_t> delta_sizes;
+    std::vector<uint64_t> agg_delta_sizes;
     size_t last_snapshot_size = 0;
     std::vector<uint64_t> version_sizes;
     std::vector<uint64_t> ingestion_times;

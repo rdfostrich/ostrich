@@ -10,7 +10,11 @@ PositionedTripleIterator::~PositionedTripleIterator() {
 
 bool PositionedTripleIterator::next(PositionedTriple *positioned_triple, bool silent_step, bool get_position) {
     PatchTreeKey key;
+#ifdef COMPRESSED_DEL_VALUES
+    PatchTreeDeletionValue value(patch_id);
+#else
     PatchTreeDeletionValue value;
+#endif
     bool ret = it->next_deletion(&key, &value, silent_step);
     if(ret) {
         positioned_triple->triple = key;

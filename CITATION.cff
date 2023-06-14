@@ -1,0 +1,28 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the article."
+authors:
+- family-names: "Taelman"
+  given-names: "Ruben"
+- family-names: "Vander Sande"
+  given-names: "Miel"
+title: "OSTRICH"
+version: 1.0.0
+doi: 10.5281/zenodo.883008
+date-released: 2017-10-01
+url: "https://github.com/rdfostrich/ostrich"
+preferred-citation:
+  type: article
+  authors:
+  - family-names: "Taelman"
+    given-names: "Ruben"
+  - family-names: "Vander Sande"
+    given-names: "Miel"
+  - family-names: "Van Herwegen"
+    given-names: "Joachim"
+  - family-names: "Verborgh"
+    given-names: "Ruben"
+  doi: "10.2139/ssrn.3248501"
+  journal: "Journal of Web Semantics"
+  month: 9
+  title: "Triple Storage for Random-Access Versioned Querying of RDF Archives"
+  year: 2018

@@ -3,18 +3,18 @@
 #include <dirent.h>
 #include <hdt/BasicHDT.hpp>
 #include "snapshot_manager.h"
-#include "hdt/BasicModifiableHDT.hpp"
-#include "../dictionary/dictionary_manager.h"
+#include "../patch/triple_store.h"
+#include "sorted_triple_iterator.h"
 
-using namespace hdt;
 
-SnapshotManager::SnapshotManager(string basePath, bool readonly, size_t cache_size) : basePath(basePath), max_loaded_snapshots(std::max((size_t)2,cache_size)), readonly(readonly) {
+SnapshotManager::SnapshotManager(std::string basePath, bool readonly, size_t cache_size) : basePath(basePath), max_loaded_snapshots(std::max((size_t)2,cache_size)), readonly(readonly) {
     detect_snapshots();
 }
 
 SnapshotManager::~SnapshotManager() = default;
 
 int SnapshotManager::get_latest_snapshot(int patch_id) {
+    std::shared_lock<std::shared_mutex> lock(mutex);
     auto it = loaded_snapshots.lower_bound(patch_id);
     if(it == loaded_snapshots.begin() && it == loaded_snapshots.end()) {
         return -1;
@@ -34,61 +34,87 @@ int SnapshotManager::get_latest_snapshot(int patch_id) {
     return -1;
 }
 
-std::shared_ptr<HDT> SnapshotManager::load_snapshot(int snapshot_id) {
+std::shared_ptr<hdt::HDT> SnapshotManager::load_snapshot(int snapshot_id) {
+    std::unique_lock<std::shared_mutex> lock(mutex);
+    std::shared_ptr<hdt::HDT> snapshot = nullptr;
     // We check if a snapshot is already loaded for the given snapshot_id
-    update_cache(snapshot_id);
     auto it = loaded_snapshots.find(snapshot_id);
     if (it != loaded_snapshots.end() && it->second) {
-        return it->second;
+        snapshot = it->second;
     }
 
-    string fileName = basePath + SNAPSHOT_FILENAME_BASE(snapshot_id);
-    loaded_snapshots[snapshot_id] = std::shared_ptr<HDT>(hdt::HDTManager::mapIndexedHDT(fileName.c_str()));
+    if (snapshot == nullptr) {
+        std::string fileName = basePath + SNAPSHOT_FILENAME_BASE(snapshot_id);
+        loaded_snapshots[snapshot_id] = std::shared_ptr<hdt::HDT>(hdt::HDTManager::mapIndexedHDT(fileName.c_str()));
 
-    // load dictionary as well
-    loaded_dictionaries[snapshot_id] = std::make_shared<DictionaryManager>(basePath, snapshot_id, loaded_snapshots[snapshot_id]->getDictionary(), readonly);
+        // load dictionary as well
+        loaded_dictionaries[snapshot_id] = std::make_shared<DictionaryManager>(basePath, snapshot_id, loaded_snapshots[snapshot_id]->getDictionary(), readonly);
 
-    return loaded_snapshots[snapshot_id];
+        update_cache(snapshot_id);
+        snapshot = loaded_snapshots[snapshot_id];
+    }
+
+    return snapshot;
 }
 
-std::shared_ptr<HDT> SnapshotManager::get_snapshot(int snapshot_id) {
+std::shared_ptr<hdt::HDT> SnapshotManager::get_snapshot(int snapshot_id) {
+    std::shared_ptr<hdt::HDT> snapshot = nullptr;
+    int sid = 0;
     if(snapshot_id < 0) {
-        return nullptr;
+        return snapshot;
     }
-    auto it = loaded_snapshots.find(snapshot_id);
-    if(it == loaded_snapshots.end()) {
-        if(it == loaded_snapshots.begin()) {
-            return nullptr; // We have an empty map
+    {
+        std::shared_lock<std::shared_mutex> lock(mutex);
+        auto it = loaded_snapshots.find(snapshot_id);
+        if (it == loaded_snapshots.end()) {
+            if (it == loaded_snapshots.begin()) {
+                return nullptr; // We have an empty map
+            }
+            it--;
         }
-        it--;
+        snapshot = it->second;
+        sid = it->first;
     }
-    if(it->second == nullptr) {
+    if(snapshot == nullptr) {
         return load_snapshot(snapshot_id);
     }
-    update_cache(it->first);
-    return it->second;
+    std::unique_lock<std::shared_mutex> x_lock(mutex);
+    update_cache(sid);
+    return snapshot;
 }
 
-std::shared_ptr<HDT> SnapshotManager::create_snapshot(int snapshot_id, IteratorTripleString* triples, string base_uri, ProgressListener* listener) {
-    BasicHDT* basicHdt = new BasicHDT();
-    basicHdt->loadFromTriples(triples, base_uri, listener);
-    basicHdt->saveToHDT((basePath + SNAPSHOT_FILENAME_BASE(snapshot_id)).c_str());
-    delete basicHdt;
+std::shared_ptr<hdt::HDT> SnapshotManager::create_snapshot(int snapshot_id, hdt::IteratorTripleString* triples, std::string base_uri, hdt::ProgressListener* listener) {
+    {
+        std::unique_lock<std::shared_mutex> lock(mutex);
+        auto it = loaded_snapshots.find(snapshot_id);
+        if (it == loaded_snapshots.end()) {
+            auto *basicHdt = new hdt::BasicHDT();
+            basicHdt->loadFromTriples(triples, base_uri, listener);
+            basicHdt->saveToHDT((basePath + SNAPSHOT_FILENAME_BASE(snapshot_id)).c_str());
+            delete basicHdt;
+        }
+    }
     return load_snapshot(snapshot_id);
 }
 
-std::shared_ptr<HDT> SnapshotManager::create_snapshot(int snapshot_id, string triples_file, string base_uri, RDFNotation notation) {
-    BasicHDT* basicHdt = new BasicHDT();
-    basicHdt->loadFromRDF(triples_file.c_str(), base_uri, notation);
-    basicHdt->saveToHDT((basePath + SNAPSHOT_FILENAME_BASE(snapshot_id)).c_str());
-    delete basicHdt;
+std::shared_ptr<hdt::HDT> SnapshotManager::create_snapshot(int snapshot_id, std::string triples_file, std::string base_uri, hdt::RDFNotation notation) {
+    {
+        std::unique_lock<std::shared_mutex> lock(mutex);
+        auto it = loaded_snapshots.find(snapshot_id);
+        if (it == loaded_snapshots.end()) {
+            auto *basicHdt = new hdt::BasicHDT();
+            basicHdt->loadFromRDF(triples_file.c_str(), base_uri, notation);
+            basicHdt->saveToHDT((basePath + SNAPSHOT_FILENAME_BASE(snapshot_id)).c_str());
+            delete basicHdt;
+        }
+    }
     return load_snapshot(snapshot_id);
 }
 
-const std::map<int, std::shared_ptr<HDT>>& SnapshotManager::detect_snapshots() {
+const std::map<int, std::shared_ptr<hdt::HDT>>& SnapshotManager::detect_snapshots() {
+    std::unique_lock<std::shared_mutex> lock(mutex);
     std::regex r("snapshot_([0-9]*).hdt");
     std::smatch base_match;
-    //std::map<int, HDT*> snapshots = std::map<int, HDT*>();
     DIR *dir;
     struct dirent *ent;
     if ((dir = opendir(basePath.c_str())) != nullptr) {
@@ -100,7 +126,9 @@ const std::map<int, std::shared_ptr<HDT>>& SnapshotManager::detect_snapshots() {
                 if (base_match.size() == 2) {
                     std::ssub_match base_sub_match = base_match[1];
                     std::string base = (std::string) base_sub_match.str();
-                    loaded_snapshots[std::stoi(base)] = nullptr; // Don't load the actual file, we do this lazily
+                    int snapshot_id = std::stoi(base);
+                    loaded_snapshots[snapshot_id] = nullptr; // Don't load the actual file, we do this lazily
+                    loaded_dictionaries[snapshot_id] = nullptr; // We create a slot for the snapshot's dictionary
                 }
             }
         }
@@ -109,7 +137,8 @@ const std::map<int, std::shared_ptr<HDT>>& SnapshotManager::detect_snapshots() {
     return loaded_snapshots;
 }
 
-std::vector<int> SnapshotManager::get_snapshots_ids() const {
+std::vector<int> SnapshotManager::get_snapshots_ids() {
+    std::shared_lock<std::shared_mutex> lock(mutex);
     std::vector<int> ids;
     for (const auto& kv: loaded_snapshots) {
         ids.push_back(kv.first);
@@ -117,11 +146,28 @@ std::vector<int> SnapshotManager::get_snapshots_ids() const {
     return ids;
 }
 
-IteratorTripleID* SnapshotManager::search_with_offset(std::shared_ptr<HDT> hdt, const Triple& triple_pattern, long offset) {
-    TripleID tripleId(triple_pattern.get_subject(), triple_pattern.get_predicate(), triple_pattern.get_object());
+hdt::IteratorTripleID* SnapshotManager::search_with_offset(std::shared_ptr<hdt::HDT> hdt, const Triple& triple_pattern, long offset, std::shared_ptr<DictionaryManager> dict, bool sort) {
+    size_t subject = triple_pattern.get_subject();
+    size_t predicate = triple_pattern.get_predicate();
+    size_t object = triple_pattern.get_object();
+    if (dict != nullptr) {
+        // Searching with IDs close to the max ID stored in HDT (i.e. ID + 1) can confuse some HDT iterators
+        // Those iterators will then return 'true' to has_next() and then crash on next() because they reach their limits
+        // So we work around by setting the max for ID not in HDT, which makes the iterators properly reply to has_next()
+        // That way we shouldn't have to catch exceptions everywhere because HDT is crashing
+        size_t max = std::numeric_limits<size_t>::max();
+        subject = subject > dict->getMaxHdtId() ? max : subject;
+        predicate = predicate > dict->getMaxHdtId() ? max : predicate;
+        object = object > dict->getMaxHdtId() ? max : object;
+    }
+    hdt::TripleID tripleId(subject, predicate, object);
 
     try {
-        IteratorTripleID* it = hdt->getTriples()->search(tripleId);
+        hdt::TripleComponentOrder qr_order = TripleStore::get_query_order(triple_pattern);
+        hdt::IteratorTripleID* it = hdt->getTriples()->search(tripleId);
+        if (sort && qr_order != hdt::SPO) {
+            it = new SortedTripleIterator(it, qr_order, dict);
+        }
         if(it->canGoTo()) {
             try {
                 // If we goTo() with offset == 0, and HDT internal iterator is a MiddleWaveletIterator
@@ -140,7 +186,7 @@ IteratorTripleID* SnapshotManager::search_with_offset(std::shared_ptr<HDT> hdt, 
         // HDT will crash when we are not using any triple component id's that are not available
         // in the HDT dict.
         // In that case, HDT will not contain any triples for the given pattern, so we return an empty iterator.
-        return new IteratorTripleID();
+        return new hdt::IteratorTripleID();
     }
 }
 
@@ -148,6 +194,8 @@ std::shared_ptr<DictionaryManager> SnapshotManager::get_dictionary_manager(int s
     if(snapshot_id < 0) {
         return nullptr;
     }
+    std::shared_ptr<DictionaryManager> dict = nullptr;
+    std::shared_lock<std::shared_mutex> s_lock(mutex);
     auto it = loaded_dictionaries.find(snapshot_id);
     if(it == loaded_dictionaries.end()) {
         if(it == loaded_dictionaries.begin()) {
@@ -155,19 +203,24 @@ std::shared_ptr<DictionaryManager> SnapshotManager::get_dictionary_manager(int s
         }
         it--;
     }
-    if (it->second == nullptr || loaded_snapshots[snapshot_id] == nullptr) {
+    dict = it->second;
+    s_lock.unlock();
+    std::unique_lock<std::shared_mutex> u_lock(mutex);
+    if (dict == nullptr || loaded_snapshots[snapshot_id] == nullptr) {
         // we make sure both the snapshot and dictionary are unloaded
         loaded_snapshots[snapshot_id] = nullptr;
         loaded_dictionaries[snapshot_id] = nullptr;
         // we load the snapshot
-        load_snapshot(snapshot_id);
+        u_lock.unlock();
+        auto s_ptr = load_snapshot(snapshot_id);
         return loaded_dictionaries[snapshot_id];
     }
     update_cache(snapshot_id);
-    return it->second;
+    return dict;
 }
 
 int SnapshotManager::get_max_snapshot_id() {
+    std::shared_lock<std::shared_mutex> lock(mutex);
     if (loaded_snapshots.empty())
         return -1;
     auto it = loaded_snapshots.end();

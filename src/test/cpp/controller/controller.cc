@@ -66,14 +66,36 @@ protected:
     }
 };
 
+class ControllerMSTest2 : public ::testing::Test {
+protected:
+    Controller* controller;
+    SnapshotCreationStrategy* strategy;
+
+    ControllerMSTest2() {
+        // Patch every 2 versions
+        // 0 (snapshot), 1 (patch), 2 (patch), 3 (snapshot), 4 (patch), ...
+        strategy = new CreateSnapshotEveryN(3);
+        controller = new Controller(TESTPATH, strategy);
+    }
+
+    virtual void SetUp() {
+
+    }
+
+    virtual void TearDown() {
+        Controller::cleanup(TESTPATH, controller);
+        clean_meta_files();
+    }
+};
+
 TEST_F(ControllerTest, GetEdge) {
     Triple t;
 
     // Build a snapshot
-    std::vector<TripleString> triples;
-    triples.push_back(TripleString("<a>", "<a>", "<a>"));
-    triples.push_back(TripleString("<a>", "<a>", "<b>"));
-    triples.push_back(TripleString("<a>", "<a>", "<c>"));
+    std::vector<hdt::TripleString> triples;
+    triples.push_back(hdt::TripleString("<a>", "<a>", "<a>"));
+    triples.push_back(hdt::TripleString("<a>", "<a>", "<b>"));
+    triples.push_back(hdt::TripleString("<a>", "<a>", "<c>"));
     VectorTripleIterator* it = new VectorTripleIterator(triples);
     controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     PatchTreeManager* patchTreeManager = controller->get_patch_tree_manager();
@@ -117,15 +139,15 @@ TEST_F(ControllerTest, GetEdge) {
 
 TEST_F(ControllerTest, PatchBuilder) {
     controller->new_patch_bulk()
-            ->addition(TripleString("a", "a", "a"))
-            ->addition(TripleString("b", "b", "b"))
-            ->addition(TripleString("c", "c", "c"))
+            ->addition(hdt::TripleString("a", "a", "a"))
+            ->addition(hdt::TripleString("b", "b", "b"))
+            ->addition(hdt::TripleString("c", "c", "c"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("a", "a", "a"))
-            ->addition(TripleString("d", "d", "d"))
-            ->deletion(TripleString("c", "c", "c"))
+            ->deletion(hdt::TripleString("a", "a", "a"))
+            ->addition(hdt::TripleString("d", "d", "d"))
+            ->deletion(hdt::TripleString("c", "c", "c"))
             ->commit();
 
     std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
@@ -135,15 +157,15 @@ TEST_F(ControllerTest, PatchBuilder) {
 
 TEST_F(ControllerTest, PatchBuilderStreaming) {
     controller->new_patch_stream()
-            ->addition(TripleString("a", "a", "a"))
-            ->addition(TripleString("b", "b", "b"))
-            ->addition(TripleString("c", "c", "c"))
+            ->addition(hdt::TripleString("a", "a", "a"))
+            ->addition(hdt::TripleString("b", "b", "b"))
+            ->addition(hdt::TripleString("c", "c", "c"))
             ->close();
 
     controller->new_patch_stream()
-            ->deletion(TripleString("a", "a", "a"))
-            ->addition(TripleString("d", "d", "d"))
-            ->deletion(TripleString("c", "c", "c"))
+            ->deletion(hdt::TripleString("a", "a", "a"))
+            ->addition(hdt::TripleString("d", "d", "d"))
+            ->deletion(hdt::TripleString("c", "c", "c"))
             ->close();
 
     std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
@@ -153,10 +175,10 @@ TEST_F(ControllerTest, PatchBuilderStreaming) {
 
 TEST_F(ControllerTest, GetVersionMaterializedSimple) {
     // Build a snapshot
-    std::vector<TripleString> triples;
-    triples.push_back(TripleString("<a>", "<a>", "<a>"));
-    triples.push_back(TripleString("<a>", "<a>", "<b>"));
-    triples.push_back(TripleString("<a>", "<a>", "<c>"));
+    std::vector<hdt::TripleString> triples;
+    triples.push_back(hdt::TripleString("<a>", "<a>", "<a>"));
+    triples.push_back(hdt::TripleString("<a>", "<a>", "<b>"));
+    triples.push_back(hdt::TripleString("<a>", "<a>", "<c>"));
     VectorTripleIterator* it = new VectorTripleIterator(triples);
     controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     PatchTreeManager* patchTreeManager = controller->get_patch_tree_manager();
@@ -236,11 +258,11 @@ TEST_F(ControllerTest, GetVersionMaterializedSimple) {
 
 TEST_F(ControllerTest, GetVersionMaterializedComplex1) {
     // Build a snapshot
-    std::vector<TripleString> triples;
-    triples.push_back(TripleString("g", "p", "o"));
-    triples.push_back(TripleString("s", "z", "o"));
-    triples.push_back(TripleString("h", "z", "o"));
-    triples.push_back(TripleString("h", "p", "o"));
+    std::vector<hdt::TripleString> triples;
+    triples.push_back(hdt::TripleString("g", "p", "o"));
+    triples.push_back(hdt::TripleString("s", "z", "o"));
+    triples.push_back(hdt::TripleString("h", "z", "o"));
+    triples.push_back(hdt::TripleString("h", "p", "o"));
     VectorTripleIterator* it = new VectorTripleIterator(triples);
     controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     PatchTreeManager* patchTreeManager = controller->get_patch_tree_manager();
@@ -412,11 +434,11 @@ TEST_F(ControllerTest, GetVersionMaterializedComplex1) {
 
 TEST_F(ControllerMSTest, GetVersionMaterializedComplexMS1) {
     // Build a snapshot
-    std::vector<TripleString> triples;
-    triples.push_back(TripleString("g", "p", "o"));
-    triples.push_back(TripleString("s", "z", "o"));
-    triples.push_back(TripleString("h", "z", "o"));
-    triples.push_back(TripleString("h", "p", "o"));
+    std::vector<hdt::TripleString> triples;
+    triples.push_back(hdt::TripleString("g", "p", "o"));
+    triples.push_back(hdt::TripleString("s", "z", "o"));
+    triples.push_back(hdt::TripleString("h", "z", "o"));
+    triples.push_back(hdt::TripleString("h", "p", "o"));
     VectorTripleIterator* it = new VectorTripleIterator(triples);
     controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     PatchTreeManager* patchTreeManager = controller->get_patch_tree_manager();
@@ -608,11 +630,11 @@ TEST_F(ControllerMSTest, GetVersionMaterializedComplexMS1) {
 
 TEST_F(ControllerTest, GetVersionMaterializedComplex2) {
     // Build a snapshot
-    std::vector<TripleString> triples;
-    triples.push_back(TripleString("g", "p", "o"));
-    triples.push_back(TripleString("s", "z", "o"));
-    triples.push_back(TripleString("h", "z", "o"));
-    triples.push_back(TripleString("h", "p", "o"));
+    std::vector<hdt::TripleString> triples;
+    triples.push_back(hdt::TripleString("g", "p", "o"));
+    triples.push_back(hdt::TripleString("s", "z", "o"));
+    triples.push_back(hdt::TripleString("h", "z", "o"));
+    triples.push_back(hdt::TripleString("h", "p", "o"));
     VectorTripleIterator* it = new VectorTripleIterator(triples);
     controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     PatchTreeManager* patchTreeManager = controller->get_patch_tree_manager();
@@ -784,11 +806,11 @@ TEST_F(ControllerTest, GetVersionMaterializedComplex2) {
 
 TEST_F(ControllerMSTest, GetVersionMaterializedComplexMS2) {
     // Build a snapshot
-    std::vector<TripleString> triples;
-    triples.push_back(TripleString("g", "p", "o"));
-    triples.push_back(TripleString("s", "z", "o"));
-    triples.push_back(TripleString("h", "z", "o"));
-    triples.push_back(TripleString("h", "p", "o"));
+    std::vector<hdt::TripleString> triples;
+    triples.push_back(hdt::TripleString("g", "p", "o"));
+    triples.push_back(hdt::TripleString("s", "z", "o"));
+    triples.push_back(hdt::TripleString("h", "z", "o"));
+    triples.push_back(hdt::TripleString("h", "p", "o"));
     VectorTripleIterator* it = new VectorTripleIterator(triples);
     controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
@@ -967,11 +989,11 @@ TEST_F(ControllerMSTest, GetVersionMaterializedComplexMS2) {
 
 TEST_F(ControllerTest, GetVersionMaterializedComplex3) {
     // Build a snapshot
-    std::vector<TripleString> triples;
-    triples.push_back(TripleString("g", "p", "o"));
-    triples.push_back(TripleString("s", "z", "o"));
-    triples.push_back(TripleString("h", "z", "o"));
-    triples.push_back(TripleString("h", "p", "o"));
+    std::vector<hdt::TripleString> triples;
+    triples.push_back(hdt::TripleString("g", "p", "o"));
+    triples.push_back(hdt::TripleString("s", "z", "o"));
+    triples.push_back(hdt::TripleString("h", "z", "o"));
+    triples.push_back(hdt::TripleString("h", "p", "o"));
     VectorTripleIterator* it = new VectorTripleIterator(triples);
     controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     PatchTreeManager* patchTreeManager = controller->get_patch_tree_manager();
@@ -1073,17 +1095,17 @@ TEST_F(ControllerTest, EdgeCaseVersionMaterialized1) {
      */
 
     // Build a snapshot
-    std::vector<TripleString> triples;
-    triples.push_back(TripleString("0", "0", "0"));
-    triples.push_back(TripleString("1", "1", "1"));
-    triples.push_back(TripleString("2", "2", "2"));
-    triples.push_back(TripleString("3", "3", "3"));
-    triples.push_back(TripleString("4", "4", "4"));
-    triples.push_back(TripleString("5", "5", "5"));
-    triples.push_back(TripleString("6", "6", "6"));
-    triples.push_back(TripleString("7", "7", "7"));
-    triples.push_back(TripleString("8", "8", "8"));
-    triples.push_back(TripleString("9", "9", "9"));
+    std::vector<hdt::TripleString> triples;
+    triples.push_back(hdt::TripleString("0", "0", "0"));
+    triples.push_back(hdt::TripleString("1", "1", "1"));
+    triples.push_back(hdt::TripleString("2", "2", "2"));
+    triples.push_back(hdt::TripleString("3", "3", "3"));
+    triples.push_back(hdt::TripleString("4", "4", "4"));
+    triples.push_back(hdt::TripleString("5", "5", "5"));
+    triples.push_back(hdt::TripleString("6", "6", "6"));
+    triples.push_back(hdt::TripleString("7", "7", "7"));
+    triples.push_back(hdt::TripleString("8", "8", "8"));
+    triples.push_back(hdt::TripleString("9", "9", "9"));
     VectorTripleIterator *it = new VectorTripleIterator(triples);
     controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     PatchTreeManager* patchTreeManager = controller->get_patch_tree_manager();
@@ -1129,11 +1151,11 @@ TEST_F(ControllerTest, EdgeCaseVersionMaterialized2) {
      */
 
     // Build a snapshot
-    std::vector<TripleString> triples;
-    triples.push_back(TripleString("a", "a", "a"));
-    triples.push_back(TripleString("b", "b", "b"));
-    triples.push_back(TripleString("y", "a", "a"));
-    triples.push_back(TripleString("z", "a", "a"));
+    std::vector<hdt::TripleString> triples;
+    triples.push_back(hdt::TripleString("a", "a", "a"));
+    triples.push_back(hdt::TripleString("b", "b", "b"));
+    triples.push_back(hdt::TripleString("y", "a", "a"));
+    triples.push_back(hdt::TripleString("z", "a", "a"));
     VectorTripleIterator* it = new VectorTripleIterator(triples);
     controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     PatchTreeManager* patchTreeManager = controller->get_patch_tree_manager();
@@ -1188,13 +1210,13 @@ TEST_F(ControllerTest, EdgeCaseVersionMaterialized3) {
      */
 
     // Build a snapshot
-    std::vector<TripleString> triples;
-    triples.push_back(TripleString("a", "a", "a"));
-    triples.push_back(TripleString("b", "a", "a"));
-    triples.push_back(TripleString("c", "c", "c"));
-    triples.push_back(TripleString("d", "a", "a"));
-    triples.push_back(TripleString("y", "a", "a"));
-    triples.push_back(TripleString("z", "a", "a"));
+    std::vector<hdt::TripleString> triples;
+    triples.push_back(hdt::TripleString("a", "a", "a"));
+    triples.push_back(hdt::TripleString("b", "a", "a"));
+    triples.push_back(hdt::TripleString("c", "c", "c"));
+    triples.push_back(hdt::TripleString("d", "a", "a"));
+    triples.push_back(hdt::TripleString("y", "a", "a"));
+    triples.push_back(hdt::TripleString("z", "a", "a"));
     VectorTripleIterator* it = new VectorTripleIterator(triples);
     controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     PatchTreeManager* patchTreeManager = controller->get_patch_tree_manager();
@@ -1274,15 +1296,15 @@ TEST_F(ControllerTest, VersionMaterializedOrder) {
      */
 
     // Build a snapshot
-    std::vector<TripleString> triples;
-    triples.push_back(TripleString("w", "a", "d"));
-    triples.push_back(TripleString("z", "a", "c"));
-    triples.push_back(TripleString("y", "a", "b"));
-    triples.push_back(TripleString("x", "a", "a"));
-    triples.push_back(TripleString("w", "b", "a"));
-    triples.push_back(TripleString("x", "b", "b"));
-    triples.push_back(TripleString("y", "b", "c"));
-    triples.push_back(TripleString("z", "b", "d"));
+    std::vector<hdt::TripleString> triples;
+    triples.push_back(hdt::TripleString("w", "a", "d"));
+    triples.push_back(hdt::TripleString("z", "a", "c"));
+    triples.push_back(hdt::TripleString("y", "a", "b"));
+    triples.push_back(hdt::TripleString("x", "a", "a"));
+    triples.push_back(hdt::TripleString("w", "b", "a"));
+    triples.push_back(hdt::TripleString("x", "b", "b"));
+    triples.push_back(hdt::TripleString("y", "b", "c"));
+    triples.push_back(hdt::TripleString("z", "b", "d"));
     VectorTripleIterator* it = new VectorTripleIterator(triples);
     controller->get_snapshot_manager()->create_snapshot(0, it, BASEURI);
     PatchTreeManager* patchTreeManager = controller->get_patch_tree_manager();
@@ -1323,17 +1345,17 @@ TEST_F(ControllerTest, VersionMaterializedOrder) {
 
 TEST_F(ControllerTest, GetDeltaMaterializedSnapshotPatch) {
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<a>"))
-            ->addition(TripleString("<a>", "<a>", "<b>"))
-            ->addition(TripleString("<a>", "<a>", "<c>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<b>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<c>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<a>", "<b>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "<b>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<d>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<d>"))
             ->commit();
 
     std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
@@ -1411,30 +1433,30 @@ TEST_F(ControllerTest, GetDeltaMaterializedSnapshotPatch) {
 
 TEST_F(ControllerMSTest, GetDeltaMaterializedSnapshotMS) {
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<a>"))
-            ->addition(TripleString("<a>", "<a>", "<b>"))
-            ->addition(TripleString("<a>", "<a>", "<c>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<b>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<c>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<a>", "<b>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "<b>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<d>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<d>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<e>"))
-            ->addition(TripleString("<a>", "<a>", "<f>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<e>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<f>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<a>", "<a>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<a>", "<e>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "<e>"))
             ->commit();
 
     // Expected version 0:
@@ -1538,32 +1560,32 @@ TEST_F(ControllerMSTest, GetDeltaMaterializedSnapshotMS) {
 
 TEST_F(ControllerMSTest, GetDeltaMaterializedPatchMS) {
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<a>"))
-            ->addition(TripleString("<a>", "<a>", "<b>"))
-            ->addition(TripleString("<a>", "<a>", "<c>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<b>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<c>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<a>", "<b>"))
-            ->addition(TripleString("<a>", "<b>", "<c>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "<b>"))
+            ->addition(hdt::TripleString("<a>", "<b>", "<c>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<b>", "<c>"))
-            ->addition(TripleString("<a>", "<a>", "<d>"))
+            ->deletion(hdt::TripleString("<a>", "<b>", "<c>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<d>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<e>"))
-            ->addition(TripleString("<a>", "<a>", "<f>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<e>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<f>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<a>", "<a>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<a>", "<e>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "<e>"))
             ->commit();
 
     // Expected version 0:
@@ -1603,6 +1625,10 @@ TEST_F(ControllerMSTest, GetDeltaMaterializedPatchMS) {
 
     // Case patch-patch two delta chain
     // Request between versions 1 and 3 for ? ? ?
+    // + <a> <a> <d>
+    // + <a> <a> <e>
+    // + <a> <a> <f>
+    // - <a> <b> <c>
     ASSERT_EQ(4, controller->get_delta_materialized_count(StringTriple("", "", ""), 1, 3).first) << "Count is incorrect";
     TripleDeltaIterator* it0 = controller->get_delta_materialized(StringTriple("", "", ""), 0, 1, 3);
 
@@ -1654,33 +1680,33 @@ TEST_F(ControllerMSTest, GetDeltaMaterializedPatchMS) {
 
 TEST_F(ControllerMSTest, GetDeltaMaterializedOrderMS) {
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<b>", "<a>"))
-            ->addition(TripleString("<a>", "<b>", "<b>"))
-            ->addition(TripleString("<a>", "<b>", "<c>"))
+            ->addition(hdt::TripleString("<a>", "<b>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<b>", "<b>"))
+            ->addition(hdt::TripleString("<a>", "<b>", "<c>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<b>", "<b>"))
-            ->addition(TripleString("<a>", "<b>", "<d>"))
+            ->deletion(hdt::TripleString("<a>", "<b>", "<b>"))
+            ->addition(hdt::TripleString("<a>", "<b>", "<d>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<b>", "<c>"))
-            ->addition(TripleString("<a>", "<b>", "<e>"))
+            ->deletion(hdt::TripleString("<a>", "<b>", "<c>"))
+            ->addition(hdt::TripleString("<a>", "<b>", "<e>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<b>", "<g>"))
-            ->addition(TripleString("<a>", "<b>", "<h>"))
+            ->addition(hdt::TripleString("<a>", "<b>", "<g>"))
+            ->addition(hdt::TripleString("<a>", "<b>", "<h>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<n>", "<b>", "<a>"))
+            ->addition(hdt::TripleString("<n>", "<b>", "<a>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<n>", "<b>", "<c>"))
-            ->addition(TripleString("<b>", "<b>", "<b>"))
+            ->addition(hdt::TripleString("<n>", "<b>", "<c>"))
+            ->addition(hdt::TripleString("<b>", "<b>", "<b>"))
             ->commit();
 
 
@@ -1799,12 +1825,24 @@ TEST_F(ControllerMSTest, GetDeltaMaterializedOrderMS) {
     TripleDeltaIterator* it3 = controller->get_delta_materialized(StringTriple("", "<b>", ""), 0, 0, 5);
 
     ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<n> <b> <a>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
     ASSERT_EQ("<a> <b> <b>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
     ASSERT_EQ(false, t.is_addition()) << "Element is incorrect";
 
     ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<b> <b> <b>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
     ASSERT_EQ("<a> <b> <c>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
     ASSERT_EQ(false, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<n> <b> <c>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
 
     ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
     ASSERT_EQ("<a> <b> <d>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
@@ -1820,18 +1858,6 @@ TEST_F(ControllerMSTest, GetDeltaMaterializedOrderMS) {
 
     ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
     ASSERT_EQ("<a> <b> <h>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
-    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
-
-    ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("<b> <b> <b>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
-    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
-
-    ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("<n> <b> <a>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
-    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
-
-    ASSERT_EQ(true, it3->next(&t)) << "Iterator has a no next value";
-    ASSERT_EQ("<n> <b> <c>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
     ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
 
     ASSERT_EQ(false, it3->next(&t)) << "Iterator should be finished";
@@ -1854,22 +1880,22 @@ TEST_F(ControllerMSTest, GetDeltaMaterializedOrderMS) {
 
 TEST_F(ControllerTest, GetDeltaMaterializedPatchPatch) {
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<a>"))
-            ->addition(TripleString("<a>", "<a>", "<b>"))
-            ->addition(TripleString("<a>", "<a>", "<c>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<b>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<c>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<a>", "<b>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "<b>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<d>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<d>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<e>"))
-            ->deletion(TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<e>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
@@ -1980,6 +2006,188 @@ TEST_F(ControllerTest, GetDeltaMaterializedPatchPatch) {
     ASSERT_EQ(false, it2_d->next(&t)) << "Iterator should be finished";
 }
 
+TEST_F(ControllerMSTest, EdgeCaseGetDeltaMaterializedMS) {
+    controller->new_patch_bulk()
+            ->addition(hdt::TripleString("<a>", "<a>", "\"a\"^^<http://example.org/literal>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "\"b\"^^<http://example.org/literal>"))
+            ->addition(hdt::TripleString("<a>", "<b>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<b>", "<c>"))
+            ->addition(hdt::TripleString("<a>", "<b>", "<d>"))
+            ->addition(hdt::TripleString("<a>", "<b>", "<f>"))
+            ->addition(hdt::TripleString("<a>", "<b>", "<z>"))
+            ->addition(hdt::TripleString("<c>", "<c>", "<c>"))
+            ->commit();
+
+    controller->new_patch_bulk()
+            ->deletion(hdt::TripleString("<a>", "<a>", "\"b\"^^<http://example.org/literal>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "\"z\"^^<http://example.org/literal>"))
+            ->deletion(hdt::TripleString("<a>", "<b>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<b>", "<g>"))
+            ->deletion(hdt::TripleString("<a>", "<b>", "<z>"))
+            ->addition(hdt::TripleString("<f>", "<f>", "<f>"))
+            ->addition(hdt::TripleString("<z>", "<z>", "<z>"))
+            ->commit();
+
+    controller->new_patch_bulk()
+            ->deletion(hdt::TripleString("<a>", "<a>", "\"z\"^^<http://example.org/literal>"))
+            ->deletion(hdt::TripleString("<f>", "<f>", "<f>"))
+            ->addition(hdt::TripleString("<f>", "<r>", "<s>"))
+            ->addition(hdt::TripleString("<q>", "<q>", "<q>"))
+            ->addition(hdt::TripleString("<r>", "<r>", "<r>"))
+            ->commit();
+
+    controller->new_patch_bulk()
+            ->deletion(hdt::TripleString("<z>", "<z>", "<z>"))
+            ->addition(hdt::TripleString("<z>", "<z>", "\"z\"^^<http://example.org/literal>"))
+            ->commit();
+
+    TripleDelta t;
+
+    ASSERT_EQ(7, controller->get_delta_materialized_count(StringTriple("", "", ""), 1, 3, false).first) << "Count is incorrect";
+    TripleDeltaIterator* it0 = controller->get_delta_materialized(StringTriple("", "", ""), 0, 1, 3);
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> \"z\"^^<http://example.org/literal>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(false, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<f> <f> <f>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(false, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<f> <r> <s>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<q> <q> <q>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<r> <r> <r>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<z> <z> \"z\"^^<http://example.org/literal>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<z> <z> <z>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(false, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(false, it0->next(&t)) << "Iterator should be finished";
+
+    // TODO: test between 0 and 3
+    // TODO: test between 0 and 2
+}
+
+
+TEST_F(ControllerMSTest2, EdgeCaseGetDeltaMaterializedMS2) {
+    // Snapshot 0
+    // <a> <a> <a>
+    // <a> <a> <b>
+    controller->new_patch_bulk()
+            ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<b>"))
+            ->commit();
+
+    // Patch 1
+    // <a> <a> <a>
+    // <a> <a> <b>
+    // <a> <a> <c>
+    controller->new_patch_bulk()
+            ->addition(hdt::TripleString("<a>", "<a>", "<c>"))
+            ->commit();
+
+    // Patch 2
+    // <a> <a> <a>
+    // <a> <a> <b>
+    // <a> <a> <c>
+    // <a> <a> <d>
+    controller->new_patch_bulk()
+            ->addition(hdt::TripleString("<a>", "<a>", "<d>"))
+            ->commit();
+
+    // Snapshot 3
+    // <a> <a> <a>
+    // <a> <a> <c>
+    // <a> <a> <d>
+    // <a> <a> <e>
+    controller->new_patch_bulk()
+            ->deletion(hdt::TripleString("<a>", "<a>", "<b>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<e>"))
+            ->commit();
+
+    // Patch 4
+    // <a> <a> <a>
+    // <a> <a> <b>
+    // <a> <a> <c>
+    // <a> <a> <d>
+    controller->new_patch_bulk()
+            ->addition(hdt::TripleString("<a>", "<a>", "<b>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "<e>"))
+            ->commit();
+
+    // Patch 5
+    // <a> <a> <a>
+    // <a> <a> <c>
+    // <a> <a> <d>
+    // <a> <a> <e>
+    controller->new_patch_bulk()
+            ->deletion(hdt::TripleString("<a>", "<a>", "<b>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<e>"))
+            ->commit();
+
+    TripleDelta t;
+
+    // Expected delta 0 -> 5
+    // - <a> <a> <b>
+    // + <a> <a> <c>
+    // + <a> <a> <d>
+    // + <a> <a> <e>
+    ASSERT_EQ(4, controller->get_delta_materialized_count(StringTriple("", "", ""), 0, 5, false).first) << "Count is incorrect";
+    TripleDeltaIterator* it0 = controller->get_delta_materialized(StringTriple("", "", ""), 0, 0, 5);
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <b>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(false, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <c>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <d>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <e>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(false, it0->next(&t)) << "Iterator should be finished";
+
+    // Expected delta 1 -> 5
+    // - <a> <a> <b>
+    // + <a> <a> <d>
+    // + <a> <a> <e>
+    ASSERT_EQ(3, controller->get_delta_materialized_count(StringTriple("", "", ""), 1, 5, false).first) << "Count is incorrect";
+    TripleDeltaIterator* it1 = controller->get_delta_materialized(StringTriple("", "", ""), 0, 1, 5);
+
+    ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <b>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(false, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <d>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(true, it1->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <e>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(true, t.is_addition()) << "Element is incorrect";
+
+    ASSERT_EQ(false, it1->next(&t)) << "Iterator should be finished";
+}
+
+
 TEST_F(ControllerTest, EdgeCaseGetDeltaMaterialized1) {
     /*
      * Test if DM between two patches is correct.
@@ -1987,27 +2195,27 @@ TEST_F(ControllerTest, EdgeCaseGetDeltaMaterialized1) {
      * We check if DM 1-2 correctly emits the addition, and if DM 3-4 correctly emits the deletion.
      */
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<z>", "<z>", "<z>"))
+            ->addition(hdt::TripleString("<z>", "<z>", "<z>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<b>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<b>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<a>", "<a>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<a>", "<b>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "<b>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<y>", "<y>", "<y>"))
+            ->addition(hdt::TripleString("<y>", "<y>", "<y>"))
             ->commit();
 
     std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
@@ -2061,23 +2269,23 @@ TEST_F(ControllerTest, EdgeCaseGetDeltaMaterialized2) {
      * Test if DM is correct if we repeatedly add and remove the same triple.
      */
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<a>", "<a>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<a>", "<a>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
@@ -2140,23 +2348,23 @@ TEST_F(ControllerTest, EdgeCaseGetDeltaMaterialized3) {
      * and the triple *is not* present in the snapshot.
      */
     controller->new_patch_bulk()
-            ->addition(TripleString("<dummy>", "<dummy>", "<dummy>"))
+            ->addition(hdt::TripleString("<dummy>", "<dummy>", "<dummy>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<dummy2>", "<dummy2>", "<dummy2>"))
+            ->addition(hdt::TripleString("<dummy2>", "<dummy2>", "<dummy2>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<dummy3>", "<dummy3>", "<dummy3>"))
+            ->addition(hdt::TripleString("<dummy3>", "<dummy3>", "<dummy3>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<a>", "<a>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
@@ -2204,23 +2412,23 @@ TEST_F(ControllerTest, EdgeCaseGetDeltaMaterialized4) {
      * and the triple *is* present in the snapshot.
      */
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<dummy>", "<dummy>", "<dummy>"))
+            ->addition(hdt::TripleString("<dummy>", "<dummy>", "<dummy>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<a>", "<a>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<dummy2>", "<dummy2>", "<dummy2>"))
+            ->addition(hdt::TripleString("<dummy2>", "<dummy2>", "<dummy2>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
@@ -2269,15 +2477,15 @@ TEST_F(ControllerTest, EdgeCaseGetDeltaMaterialized5) {
      * and the triple *is not* present in the snapshot.
      */
     controller->new_patch_bulk()
-            ->addition(TripleString("<dummy>", "<dummy>", "<dummy>"))
+            ->addition(hdt::TripleString("<dummy>", "<dummy>", "<dummy>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<a>", "<a>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
@@ -2320,15 +2528,15 @@ TEST_F(ControllerTest, EdgeCaseGetDeltaMaterialized6) {
      * and the triple *is* present in the snapshot.
      */
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<a>", "<a>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
             ->commit();
 
     std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
@@ -2368,9 +2576,9 @@ TEST_F(ControllerTest, EdgeCaseGetDeltaMaterialized6) {
 
 TEST_F(ControllerTest, GetVersionSnapshot) {
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<a>"))
-            ->addition(TripleString("<a>", "<a>", "<b>"))
-            ->addition(TripleString("<a>", "<a>", "<c>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<b>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<c>"))
             ->commit();
 
     std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
@@ -2529,17 +2737,17 @@ TEST_F(ControllerTest, GetVersionSnapshot) {
 
 TEST_F(ControllerTest, GetVersion) {
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<a>"))
-            ->addition(TripleString("<a>", "<a>", "<b>"))
-            ->addition(TripleString("<a>", "<a>", "<c>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<b>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<c>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->deletion(TripleString("<a>", "<a>", "<b>"))
+            ->deletion(hdt::TripleString("<a>", "<a>", "<b>"))
             ->commit();
 
     controller->new_patch_bulk()
-            ->addition(TripleString("<a>", "<a>", "<d>"))
+            ->addition(hdt::TripleString("<a>", "<a>", "<d>"))
             ->commit();
 
     std::shared_ptr<DictionaryManager> dict = controller->get_snapshot_manager()->get_dictionary_manager(0);
@@ -2762,28 +2970,33 @@ TEST_F(ControllerTest, GetVersion) {
     TripleVersionsIterator* it17 = controller->get_version(Triple("", "", "<d>", dict), 1);
 
     ASSERT_EQ(false, it17->next(&t)) << "Iterator should be finished";
+
+    // Request with offset > number of results
+    TripleVersionsIterator* it18 = controller->get_version(Triple("", "", "", dict), 20);
+
+    ASSERT_EQ(false, it18->next(&t)) << "Iterator should be finished";
 }
 
 
 TEST_F(ControllerMSTest, GetVersionMS) {
     controller->new_patch_bulk()
-    ->addition(TripleString("<a>", "<a>", "<a>"))
-    ->addition(TripleString("<a>", "<a>", "<b>"))
-    ->addition(TripleString("<a>", "<a>", "<c>"))
+    ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
+    ->addition(hdt::TripleString("<a>", "<a>", "<b>"))
+    ->addition(hdt::TripleString("<a>", "<a>", "<c>"))
     ->commit();
 
     controller->new_patch_bulk()
-    ->deletion(TripleString("<a>", "<a>", "<b>"))
+    ->deletion(hdt::TripleString("<a>", "<a>", "<b>"))
     ->commit();
 
     controller->new_patch_bulk()
-    ->addition(TripleString("<a>", "<a>", "<d>"))
+    ->addition(hdt::TripleString("<a>", "<a>", "<d>"))
     ->commit();
 
     controller->new_patch_bulk()
-    ->addition(TripleString("<a>", "<b>", "<c>"))
-    ->addition(TripleString("<a>", "<b>", "<d>"))
-    ->deletion(TripleString("<a>", "<a>", "<a>"))
+    ->addition(hdt::TripleString("<a>", "<b>", "<c>"))
+    ->addition(hdt::TripleString("<a>", "<b>", "<d>"))
+    ->deletion(hdt::TripleString("<a>", "<a>", "<a>"))
     ->commit();
 
     // Expected version 0:
@@ -3098,4 +3311,194 @@ TEST_F(ControllerMSTest, GetVersionMS) {
 
     ASSERT_EQ(false, it19->next(&t)) << "Iterator should be finished";
 
+}
+
+
+TEST_F(ControllerMSTest2, GetVersionMS2) {
+    // 0
+    // <a> <a> <a>
+    // <a> <b> <a>
+    controller->new_patch_bulk()
+            ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<b>", "<a>"))
+            ->commit();
+
+    // 1
+    // <a> <a> <a>
+    controller->new_patch_bulk()
+            ->deletion(hdt::TripleString("<a>", "<b>", "<a>"))
+            ->commit();
+
+    // 2
+    // <a> <a> <a>
+    // <a> <c> <a>
+    controller->new_patch_bulk()
+            ->addition(hdt::TripleString("<a>", "<c>", "<a>"))
+            ->commit();
+
+    // 3
+    // <a> <c> <a>
+    // <a> <d> <a>
+    // <a> <e> <a>
+    controller->new_patch_bulk()
+            ->deletion(hdt::TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<d>", "<a>"))
+            ->addition(hdt::TripleString("<a>", "<e>", "<a>"))
+            ->commit();
+
+    // 4
+    // <a> <d> <a>
+    // <a> <e> <a>
+    controller->new_patch_bulk()
+            ->deletion(hdt::TripleString("<a>", "<c>", "<a>"))
+            ->commit();
+
+    // 5
+    // <a> <e> <a>
+    controller->new_patch_bulk()
+            ->deletion(hdt::TripleString("<a>", "<d>", "<a>"))
+            ->commit();
+
+    // 6
+    // <a> <b> <a>
+    // <a> <e> <a>
+    controller->new_patch_bulk()
+            ->addition(hdt::TripleString("<a>", "<b>", "<a>"))
+            ->commit();
+
+    // 7
+    // <a> <b> <a>
+    // <a> <c> <a>
+    // <a> <e> <a>
+    controller->new_patch_bulk()
+            ->addition(hdt::TripleString("<a>", "<c>", "<a>"))
+            ->commit();
+
+    std::vector<int> v_aaa = {0,1,2};
+    std::vector<int> v_aba = {0,6,7};
+    std::vector<int> v_aca = {2,3,7};
+    std::vector<int> v_ada = {3,4};
+    std::vector<int> v_aea = {3,4,5,6,7};
+
+    TripleVersions t;
+
+    ASSERT_EQ(5, controller->get_version_count(StringTriple("", "", "")).first) << "Count is incorrect";
+    TripleVersionsIterator* it0 = controller->get_version(StringTriple("", "", ""), 0);
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <a>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(v_aaa, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <b> <a>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(v_aba, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <c> <a>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(v_aca, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <d> <a>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(v_ada, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <e> <a>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(v_aea, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(false, it0->next(&t)) << "Iterator should be finished";
+}
+
+
+TEST_F(ControllerMSTest2, GetVersionMS3) {
+    // 0
+    // <a> <a> <a>
+    // <b> <a> <b>
+    controller->new_patch_bulk()
+            ->addition(hdt::TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<b>", "<a>", "<b>"))
+            ->commit();
+
+    // 1
+    // <a> <a> <a>
+    controller->new_patch_bulk()
+            ->deletion(hdt::TripleString("<b>", "<a>", "<b>"))
+            ->commit();
+
+    // 2
+    // <a> <a> <a>
+    // <c> <a> <c>
+    controller->new_patch_bulk()
+            ->addition(hdt::TripleString("<c>", "<a>", "<c>"))
+            ->commit();
+
+    // 3
+    // <c> <a> <c>
+    // <d> <a> <d>
+    // <e> <a> <e>
+    controller->new_patch_bulk()
+            ->deletion(hdt::TripleString("<a>", "<a>", "<a>"))
+            ->addition(hdt::TripleString("<d>", "<a>", "<d>"))
+            ->addition(hdt::TripleString("<e>", "<a>", "<e>"))
+            ->commit();
+
+    // 4
+    // <d> <a> <d>
+    // <e> <a> <e>
+    controller->new_patch_bulk()
+            ->deletion(hdt::TripleString("<c>", "<a>", "<c>"))
+            ->commit();
+
+    // 5
+    // <e> <a> <e>
+    controller->new_patch_bulk()
+            ->deletion(hdt::TripleString("<d>", "<a>", "<d>"))
+            ->commit();
+
+    // 6
+    // <b> <a> <b>
+    // <e> <a> <e>
+    controller->new_patch_bulk()
+            ->addition(hdt::TripleString("<b>", "<a>", "<b>"))
+            ->commit();
+
+    // 7
+    // <b> <a> <b>
+    // <c> <a> <c>
+    // <e> <a> <e>
+    controller->new_patch_bulk()
+            ->addition(hdt::TripleString("<c>", "<a>", "<c>"))
+            ->commit();
+
+    std::vector<int> v_aaa = {0,1,2};
+    std::vector<int> v_bab = {0,6,7};
+    std::vector<int> v_cac = {2,3,7};
+    std::vector<int> v_dad = {3,4};
+    std::vector<int> v_eae = {3,4,5,6,7};
+
+    TripleVersions t;
+
+    ASSERT_EQ(5, controller->get_version_count(StringTriple("", "<a>", "")).first) << "Count is incorrect";
+    TripleVersionsIterator* it0 = controller->get_version(StringTriple("", "<a>", ""), 0);
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<a> <a> <a>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(v_aaa, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<b> <a> <b>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(v_bab, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<c> <a> <c>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(v_cac, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<d> <a> <d>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(v_dad, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(true, it0->next(&t)) << "Iterator has a no next value";
+    ASSERT_EQ("<e> <a> <e>.", t.get_triple()->to_string(*(t.get_dictionary()))) << "Element is incorrect";
+    ASSERT_EQ(v_eae, *(t.get_versions())) << "Element is incorrect";
+
+    ASSERT_EQ(false, it0->next(&t)) << "Iterator should be finished";
 }

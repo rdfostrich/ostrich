@@ -1,0 +1,28 @@
+name: test-on-commit
+
+on:
+    push:
+        branches: [master]
+
+jobs:
+    test:
+        runs-on: ubuntu-latest
+        steps:
+            - run: sudo apt-get update
+            - run: sudo apt-get -y install liblzo2-dev liblzma-dev zlib1g-dev build-essential libraptor2-dev libserd-dev libboost-iostreams-dev
+            - run: | 
+                wget https://dbmx.net/kyotocabinet/pkg/kyotocabinet-1.2.79.tar.gz
+                tar -xvzf kyotocabinet-1.2.79.tar.gz && mv kyotocabinet-1.2.79 kyotocabinet && rm kyotocabinet-1.2.79.tar.gz
+                cd kyotocabinet
+                ./configure --enable-lzo --enable-lzma
+                make -j
+                sudo make install
+            - uses: actions/checkout@v3
+              with:
+                submodules: 'recursive'
+            - run: |
+                  mkdir build
+                  cd build
+                  cmake -DCMAKE_BUILD_TYPE=Debug .. -Wno-deprecated
+                  make -j
+            - run: ./build/ostrich_test

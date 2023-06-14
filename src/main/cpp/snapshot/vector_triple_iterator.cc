@@ -1,15 +1,14 @@
 #include <SingleTriple.hpp>
 #include "vector_triple_iterator.h"
 
-using namespace hdt;
 
-VectorTripleIterator::VectorTripleIterator(std::vector<TripleString> triples) : triples(triples), pos(-1) {}
+VectorTripleIterator::VectorTripleIterator(std::vector<hdt::TripleString> triples) : triples(triples), pos(-1) {}
 
 bool VectorTripleIterator::hasNext() {
     return pos + 1 < triples.size();
 }
 
-TripleString* VectorTripleIterator::next() {
+hdt::TripleString* VectorTripleIterator::next() {
     return &triples[++pos];
 }
 
@@ -17,7 +16,7 @@ bool VectorTripleIterator::hasPrevious() {
     return pos >= 0;
 }
 
-TripleString* VectorTripleIterator::previous() {
+hdt::TripleString* VectorTripleIterator::previous() {
     return &triples[pos--];
 }
 
