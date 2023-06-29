@@ -14,7 +14,7 @@ Controller::Controller(const std::string& basePath, int8_t kc_opts, bool readonl
 Controller::Controller(const std::string& basePath, SnapshotCreationStrategy *strategy, int8_t kc_opts, bool readonly, size_t cache_size)
         : patchTreeManager(new PatchTreeManager(basePath, kc_opts, readonly, cache_size)),
           snapshotManager(new SnapshotManager(basePath, readonly, cache_size)),
-          strategy(strategy), metadata(nullptr) {
+          strategy(strategy), metadata(nullptr), metadata_manager(nullptr) {
     struct stat sb{};
     if (!(stat(basePath.c_str(), &sb) == 0 && S_ISDIR(sb.st_mode))) {
         throw std::invalid_argument("The provided path '" + basePath + "' is not a valid directory.");
