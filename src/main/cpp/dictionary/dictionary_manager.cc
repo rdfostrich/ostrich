@@ -11,28 +11,26 @@
 
 #include "dictionary_manager.h"
 
-using namespace std;
-using namespace hdt;
 
-constexpr size_t bitmask_value = 1ULL << (8 * sizeof(size_t) - 1);
-
-DictionaryManager::DictionaryManager(string basePath, int snapshotId, Dictionary *hdtDict, PlainDictionary *patchDict, bool readonly)
-        : basePath(std::move(basePath)), snapshotId(snapshotId), hdtDict(hdtDict), patchDict(patchDict), bitmask(bitmask_value), readonly(readonly) {
+DictionaryManager::DictionaryManager(string basePath, int snapshotId, Dictionary *hdtDict, hdt::PlainDictionary *patchDict, bool readonly)
+        : basePath(std::move(basePath)), snapshotId(snapshotId), hdtDict(hdtDict), patchDict(patchDict), maxHdtId(0), readonly(readonly) {
+    updateMaxHdtId();
     load();
 };
 
 DictionaryManager::DictionaryManager(string basePath, int snapshotId, Dictionary *hdtDict, bool readonly)
-        : basePath(std::move(basePath)), snapshotId(snapshotId), hdtDict(hdtDict), bitmask(bitmask_value), readonly(readonly) {
+        : basePath(std::move(basePath)), snapshotId(snapshotId), hdtDict(hdtDict), maxHdtId(0), readonly(readonly) {
+    updateMaxHdtId();
     // Create additional dictionary
-    patchDict = new PlainDictionary();
+    patchDict = new hdt::PlainDictionary();
     load();
 };
 
 DictionaryManager::DictionaryManager(string basePath, int snapshotId, bool readonly)
-        : basePath(std::move(basePath)), snapshotId(snapshotId), bitmask(bitmask_value), readonly(readonly) {
+        : basePath(std::move(basePath)), snapshotId(snapshotId), maxHdtId(0), readonly(readonly) {
     // Create two empty default dictionaries dictionary,
-    hdtDict = new PlainDictionary();
-    patchDict = new PlainDictionary();
+    hdtDict = new hdt::PlainDictionary();
+    patchDict = new hdt::PlainDictionary();
     load();
 };
 
@@ -53,14 +51,14 @@ void DictionaryManager::load() {
         in.push(dictFile);
         in.set_auto_close(false);
         std::istream decompressed(&in);
-        ControlInformation ci = ControlInformation();
+        hdt::ControlInformation ci = hdt::ControlInformation();
         ci.load(decompressed);
         patchDict->load(decompressed, ci);
     }
 }
 
 void DictionaryManager::save() {
-    ofstream dictFile;
+    std::ofstream dictFile;
     dictFile.open(basePath + PATCHDICT_FILENAME_BASE(snapshotId), ios_base::out | ios_base::binary);
     boost::iostreams::filtering_streambuf<boost::iostreams::output> out;
 #ifdef COMPRESS_DICT
@@ -70,26 +68,23 @@ void DictionaryManager::save() {
 
     out.set_auto_close(false);
     std::ostream compressed(&out);
-    ControlInformation ci = ControlInformation();
+    hdt::ControlInformation ci = hdt::ControlInformation();
     patchDict->save(compressed, ci);
 }
 
-std::string DictionaryManager::idToString(size_t id,
-                                          TripleComponentRole position) {
-    unique_lock<mutex> lock(action_mutex);
+std::string DictionaryManager::idToString(size_t id, hdt::TripleComponentRole position) {
     if (id == 0) return "";
 
     // Check whether id is from HDT or not (MSB is not set)
-    if (!(id & bitmask)) {
+    if (id <= maxHdtId) {
         return hdtDict->idToString(id, position);
     }
 
-    return patchDict->idToString(id - bitmask, position);
+    std::shared_lock<std::shared_mutex> lock(patch_dict_mutex);
+    return patchDict->idToString(id - maxHdtId, position);
 }
 
-size_t DictionaryManager::stringToId(const std::string &str,
-                                           TripleComponentRole position) {
-    unique_lock<mutex> lock(action_mutex);
+size_t DictionaryManager::stringToId(const std::string &str, hdt::TripleComponentRole position) {
     // if string is empty, it's a variable, and thus, a zero
     if (str.empty()) return 0;
 
@@ -97,48 +92,51 @@ size_t DictionaryManager::stringToId(const std::string &str,
     size_t id;
     try {
         id = hdtDict->stringToId(str, position);
-        if (id > 0)
+        if (id > 0) {
             return id;
-    } catch (exception e) {
-    } // ID is not in there
+        }
+    } catch (std::exception e) {
+    } // String is not in there
 
-    // Set MSB to 1
+    std::shared_lock<std::shared_mutex> lock(patch_dict_mutex);
     id = patchDict->stringToId(str, position);
-    return bitmask | id;
+    if (id == 0) {  // the string is not in PatchTree dictionary either
+        std::string err = "Unknown string: " + str;
+        throw std::runtime_error(err);
+    }
+    return id + maxHdtId;
 }
 
-size_t DictionaryManager::insert(const std::string &str,
-                                       TripleComponentRole position) {
-    unique_lock<mutex> lock(action_mutex);
-
+size_t DictionaryManager::insert(const std::string &str, hdt::TripleComponentRole position) {
     if (str.empty()) return 0;
 
     // First ask HDT
     size_t id;
     try {
         id = hdtDict->stringToId(str, position);
-        if (id > 0)
+        if (id > 0) {
             return id;
-    } catch (exception e) {
+        }
+    } catch (std::exception e) {
     } // ID is not in there
 
+    std::unique_lock<std::shared_mutex> lock(patch_dict_mutex);
     size_t originalId = patchDict->stringToId(str, position);
     if (originalId == 0) {
-        patchDict->insert(str, position == SUBJECT ? NOT_SHARED_SUBJECT : (position == PREDICATE ? NOT_SHARED_PREDICATE
-                                                                                                 : NOT_SHARED_OBJECT));
-//        patchDict->insert(str, position);
+        patchDict->insert(str, position == hdt::SUBJECT ? hdt::NOT_SHARED_SUBJECT : (position == hdt::PREDICATE ? hdt::NOT_SHARED_PREDICATE
+                                                                                                 : hdt::NOT_SHARED_OBJECT));
         originalId = patchDict->stringToId(str, position);
     }
-    id = bitmask | originalId;
+    id  = originalId + maxHdtId;
 
     return id;
 }
 
-Dictionary* DictionaryManager::getHdtDict() const {
+hdt::Dictionary* DictionaryManager::getHdtDict() const {
     return hdtDict;
 }
 
-ModifiableDictionary* DictionaryManager::getPatchDict() const {
+hdt::ModifiableDictionary* DictionaryManager::getPatchDict() const {
     return patchDict;
 }
 
@@ -194,66 +192,78 @@ size_t DictionaryManager::getMaxObjectID() {
     return patchDict->getMaxObjectID();
 }
 
-void DictionaryManager::populateHeader(Header &header, string rootNode) {}
+void DictionaryManager::populateHeader(hdt::Header &header, string rootNode) {}
 
-void DictionaryManager::save(std::ostream &output, ControlInformation &ci, ProgressListener *listener) {
+void DictionaryManager::save(std::ostream &output, hdt::ControlInformation &ci, hdt::ProgressListener *listener) {
     patchDict->save(output, ci, listener);
 }
 
-void DictionaryManager::load(std::istream &input, ControlInformation &ci, ProgressListener *listener) {
+void DictionaryManager::load(std::istream &input, hdt::ControlInformation &ci, hdt::ProgressListener *listener) {
     patchDict->load(input, ci, listener);
 }
 
-size_t DictionaryManager::load(unsigned char *ptr, unsigned char *ptrMax, ProgressListener *listener) {
+size_t DictionaryManager::load(unsigned char *ptr, unsigned char *ptrMax, hdt::ProgressListener *listener) {
     return patchDict->load(ptr, ptrMax, listener);
 }
 
-void DictionaryManager::import(Dictionary *other, ProgressListener *listener) {}
+void DictionaryManager::import(Dictionary *other, hdt::ProgressListener *listener) {}
 
-IteratorUCharString *DictionaryManager::getSubjects() {
+hdt::IteratorUCharString *DictionaryManager::getSubjects() {
     return new DictManagerIterator(hdtDict->getSubjects(), patchDict->getSubjects());
 }
 
-IteratorUCharString *DictionaryManager::getPredicates() {
+hdt::IteratorUCharString *DictionaryManager::getPredicates() {
     return new DictManagerIterator(hdtDict->getPredicates(), patchDict->getPredicates());
 }
 
-IteratorUCharString *DictionaryManager::getObjects() {
+hdt::IteratorUCharString *DictionaryManager::getObjects() {
     return new DictManagerIterator(hdtDict->getObjects(), patchDict->getObjects());
 }
 
-IteratorUCharString *DictionaryManager::getShared() {
+hdt::IteratorUCharString *DictionaryManager::getShared() {
     return new DictManagerIterator(hdtDict->getShared(), patchDict->getShared());
 }
 
-void DictionaryManager::startProcessing(ProgressListener *listener) {}
-void DictionaryManager::stopProcessing(ProgressListener *listener) {}
+void DictionaryManager::startProcessing(hdt::ProgressListener *listener) {}
+void DictionaryManager::stopProcessing(hdt::ProgressListener *listener) {}
 
 string DictionaryManager::getType() {
-    return HDTVocabulary::HDT_DICTIONARY_BASE+"Manager>";
+    return hdt::HDTVocabulary::HDT_DICTIONARY_BASE+"Manager>";
 }
 
 size_t DictionaryManager::getMapping() {
     return hdtDict->getMapping() + patchDict->getMapping();
 }
 
-void DictionaryManager::getSuggestions(const char *base, TripleComponentRole role, std::vector<string> &out, int maxResults) {}
+void DictionaryManager::getSuggestions(const char *base, hdt::TripleComponentRole role, std::vector<string> &out, int maxResults) {}
 
-hdt::IteratorUCharString* DictionaryManager::getSuggestions(const char *prefix, TripleComponentRole role) {
+hdt::IteratorUCharString* DictionaryManager::getSuggestions(const char *prefix, hdt::TripleComponentRole role) {
     return nullptr;
 }
 
-hdt::IteratorUInt* DictionaryManager::getIDSuggestions(const char *prefix, TripleComponentRole role) {
+hdt::IteratorUInt* DictionaryManager::getIDSuggestions(const char *prefix, hdt::TripleComponentRole role) {
     return nullptr;
 }
 
-int DictionaryManager::compareComponent(size_t componentId1, size_t componentId2,
-                                        TripleComponentRole role) {
-    size_t sharedCount = hdtDict->getNshared();
-    bool shared1 = componentId1 > sharedCount;
-    bool shared2 = componentId2 > sharedCount;
-    if (shared1 == shared2) {
-        return static_cast<int>(componentId1 - componentId2);
+int DictionaryManager::compareComponent(size_t componentId1, size_t componentId2, hdt::TripleComponentRole role) {
+    if (componentId1 <= maxHdtId && componentId2 <= maxHdtId) {
+        size_t sharedCount = hdtDict->getNshared();
+        bool shared1 = componentId1 > sharedCount;
+        bool shared2 = componentId2 > sharedCount;
+        if (shared1 == shared2) {
+            return static_cast<int>(componentId1 - componentId2);
+        }
     }
     return idToString(componentId1, role).compare(idToString(componentId2, role));
+}
+
+size_t DictionaryManager::getMaxHdtId() const {
+    return maxHdtId;
+}
+
+void DictionaryManager::updateMaxHdtId() {
+    size_t max_s = hdtDict->getMaxSubjectID();
+    size_t max_p = hdtDict->getMaxPredicateID();
+    size_t max_o = hdtDict->getMaxObjectID();
+    maxHdtId = std::max({max_s, max_p, max_o});
 }

@@ -7,9 +7,6 @@
 #include <Dictionary.hpp>
 #include "../dictionary/dictionary_manager.h"
 
-using namespace std;
-using namespace hdt;
-
 // A Triple holds a subject, predicate and object
 class Triple {
 protected:
@@ -19,54 +16,54 @@ protected:
 public:
     Triple();
 
-    Triple(const TripleID &triple);
+    explicit Triple(const hdt::TripleID &triple);
 
     Triple(size_t subject, size_t predicate, size_t object);
 
-    Triple(const string &s, const string &p, const string &o, std::shared_ptr<ModifiableDictionary> dict);
+    Triple(const string &s, const string &p, const string &o, std::shared_ptr<hdt::ModifiableDictionary> dict);
 
     /**
      * @return The subject
      */
-    const size_t get_subject() const;
+    size_t get_subject() const;
 
     /**
      * @return The predicate
      */
-    const size_t get_predicate() const;
+    size_t get_predicate() const;
 
     /**
      * @return The object
      */
-    const size_t get_object() const;
+    size_t get_object() const;
 
     /**
      * @param dict The dictionary to decode from
      * @return The subject
      */
-    const string get_subject(Dictionary &dict) const;
+    string get_subject(hdt::Dictionary &dict) const;
 
     /**
      * @param dict The dictionary to decode from
      * @return The predicate
      */
-    const string get_predicate(Dictionary &dict) const;
+    string get_predicate(hdt::Dictionary &dict) const;
 
     /**
      * @param dict The dictionary to decode from
      * @return The object
      */
-    const string get_object(Dictionary &dict) const;
+    string get_object(hdt::Dictionary &dict) const;
 
     /**
      * @return The string representation of this triple.
      */
-    const string to_string() const;
+    string to_string() const;
 
     /**
      * @return The decoded string representation of this triple.
      */
-    const string to_string(Dictionary &dict) const;
+    string to_string(hdt::Dictionary &dict) const;
 
     /**
      * Serialize this value to a byte array
@@ -111,6 +108,7 @@ protected:
     int patch_id;
     Triple triple;
 public:
+    TripleVersion();
     TripleVersion(int patch_id, const Triple &triple);
 
     /**
@@ -119,6 +117,12 @@ public:
      * @return The byte array
      */
     const char *serialize(size_t *size) const;
+    /**
+     * Deserialize the given byte array to this object.
+     * @param data The data to deserialize from.
+     * @param size The size of the byte array
+     */
+    void deserialize(const char *data, size_t size);
 };
 
 namespace std {
@@ -142,7 +146,7 @@ public:
     StringTriple();
     StringTriple(std::string s, std::string p, std::string o);
 
-    Triple get_as_triple(std::shared_ptr<ModifiableDictionary> dict) const;
+    Triple get_as_triple(std::shared_ptr<hdt::ModifiableDictionary> dict) const;
 
     std::string get_subject() const;
     std::string get_predicate() const;
@@ -154,6 +158,7 @@ public:
     std::string to_string() const;
 
     bool operator==(const StringTriple& other) const;
+    bool operator!=(const StringTriple& other) const;
     bool operator<(const StringTriple& other) const;
 };
 

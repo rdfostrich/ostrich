@@ -40,8 +40,8 @@ build/ostrich_test
 ### Query
 ```bash
 build/ostrich-query-version-materialized patch_id s p o
-build/ostrich-query-delta-materialized patch_id_start patch_id_end s p o
-build/ostrich-query-version patch_id_start s p o
+build/ostrich-query-delta-materialized patch_id patch_id_end s p o
+build/ostrich-query-version patch_id s p o
 ```
 
 ### Insert
@@ -54,13 +54,13 @@ Input deltas must be sorted in SPO-order.
 ### Evaluate
 Only load changesets from a path structured as `path_to_patch_directory/patch_id/main.nt.additions.txt` and `path_to_patch_directory/patch_id/main.nt.deletions.txt`.
 ```bash
-build/ostrich-evaluate path_to_patch_directory patch_id_start patch_id_end
+build/ostrich-evaluate path_to_patch_directory patch_id patch_id_end
 ```
 CSV-formatted insert data will be emitted: `version,added,durationms,rate,accsize`.
 
 Load changesets AND query with triple patterns from the given file on separate lines, with the given number of replications.
 ```bash
-build/ostrich-evaluate path_to_patch_directory patch_id_start patch_id_end patch_to_queries/queries.txt s|p|o nr_replications
+build/ostrich-evaluate path_to_patch_directory patch_id patch_id_end patch_to_queries/queries.txt s|p|o nr_replications
 ```
 CSV-formatted query data will be emitted (time in microseconds) for all versions for the three query types: `patch,offset,limit,count-ms,lookup-mus,results`.
 
@@ -86,7 +86,7 @@ docker run --rm -it --entrypoint /opt/patchstore/build/ostrich_test ostrich
 ### Query
 ```bash
 docker run --rm -it --entrypoint /opt/ostrich/build/ostrich-query-version-materialized ostrich patch_id s p o
-docker run --rm -it --entrypoint /opt/ostrich/build/ostrich-delta-version-materialized ostrich patch_id_start patch_id_end s p o
+docker run --rm -it --entrypoint /opt/ostrich/build/ostrich-query-delta-materialized ostrich patch_id patch_id_end s p o
 docker run --rm -it --entrypoint /opt/ostrich/build/ostrich-query-version ostrich s p o
 ```
 
@@ -99,17 +99,17 @@ docker run --rm -it --entrypoint /opt/ostrich/build/ostrich-insert ostrich [-v] 
 
 Only load changesets from a path structured as `path_to_patch_directory/patch_id/main.nt.additions.txt` and `path_to_patch_directory/patch_id/main.nt.deletions.txt`.
 ```bash
-docker run --rm -it -v path_to_patch_directory:/var/patches ostrich /var/patches patch_id_start patch_id_end
+docker run --rm -it -v path_to_patch_directory:/var/patches ostrich /var/patches patch_id patch_id_end
 ```
 
 Load changesets AND query with triple patterns from the given file on separate lines, with the given number of replications.
 ```bash
-docker run --rm -it -v path_to_patch_directory:/var/patches -v patch_to_queries:/var/queries ostrich /var/patches patch_id_start patch_id_end /var/queries/queries.txt s|p|o nr_replications
+docker run --rm -it -v path_to_patch_directory:/var/patches -v patch_to_queries:/var/queries ostrich /var/patches patch_id patch_id_end /var/queries/queries.txt s|p|o nr_replications
 ```
 
 Enable debug mode:
 ```bash
-docker run --rm -it -v path_to_patch_directory:/var/patches -v patch_to_queries:/var/queries -v path_to_crash_dir:/crash --privileged=true ostrich --debug /var/patches patch_id_start patch_id_end /var/queries/queries.txt s|p|o nr_replications
+docker run --rm -it -v path_to_patch_directory:/var/patches -v patch_to_queries:/var/queries -v path_to_crash_dir:/crash --privileged=true ostrich --debug /var/patches patch_id patch_id_end /var/queries/queries.txt s|p|o nr_replications
 ```
 
 ## Compiler variables

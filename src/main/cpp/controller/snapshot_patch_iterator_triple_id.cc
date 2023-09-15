@@ -2,14 +2,14 @@
 #include "snapshot_patch_iterator_triple_id.h"
 #include "../snapshot/snapshot_manager.h"
 
-SnapshotPatchIteratorTripleID::SnapshotPatchIteratorTripleID(IteratorTripleID* snapshot_it,
+SnapshotPatchIteratorTripleID::SnapshotPatchIteratorTripleID(hdt::IteratorTripleID* snapshot_it,
                                                              PositionedTripleIterator* deletion_it,
-                                                             PatchTreeKeyComparator* spo_comparator, std::shared_ptr<HDT> snapshot,
+                                                             PatchTreeKeyComparator* spo_comparator, std::shared_ptr<hdt::HDT> snapshot,
                                                              const Triple& triple_pattern, std::shared_ptr<PatchTree> patchTree,
-                                                             int patch_id, int offset, PatchPosition deletion_count)
+                                                             int patch_id, int offset, PatchPosition deletion_count, std::shared_ptr<DictionaryManager> dict)
         : snapshot_it(snapshot_it), deletion_it(deletion_it), addition_it(nullptr), spo_comparator(spo_comparator),
           snapshot(snapshot), triple_pattern(triple_pattern), patchTree(patchTree), patch_id(patch_id), offset(offset),
-          deletion_count(deletion_count) {
+          deletion_count(deletion_count), dict(dict) {
     if (deletion_it != nullptr) {
         // Reset the filter, because from here on we only need to know if a triple is in the tree or not.
         // So we don't need the filter, because this will introduce unnecessary (possibly huge for specific triple patterns) overhead.
@@ -29,7 +29,7 @@ bool SnapshotPatchIteratorTripleID::next(Triple* triple) {
     while(snapshot_it != nullptr || addition_it != nullptr) {
         if (snapshot_it != nullptr && snapshot_it->hasNext()) { // Emit triples from snapshot - deletions
             // Find snapshot triple
-            TripleID* snapshot_triple = snapshot_it->next();
+            hdt::TripleID* snapshot_triple = snapshot_it->next();
             triple->set_subject(snapshot_triple->getSubject());
             triple->set_predicate(snapshot_triple->getPredicate());
             triple->set_object(snapshot_triple->getObject());
@@ -48,7 +48,7 @@ bool SnapshotPatchIteratorTripleID::next(Triple* triple) {
             const char* data = triple->serialize(&size);
             deletion_it->getPatchTreeIterator()->getDeletionCursor()->jump(data, size);
             deletion_it->getPatchTreeIterator()->set_triple_pattern_filter(*triple); // Only match a single triple to force early-breaking
-            free((void *) data);
+            delete[] data;
 
             while (found_triple_before_snapshot_triple) {
                 if (has_last_deleted_triple || deletion_it->next(last_deleted_triple, false, false)) {
@@ -76,10 +76,10 @@ bool SnapshotPatchIteratorTripleID::next(Triple* triple) {
         } else { // Emit additions
             if (snapshot_it != nullptr) {
                 // Calculate the offset for our addition iterator.
-                long snapshot_count = snapshot_it->numResultEstimation() == EXACT ? snapshot_it->estimatedNumResults() : -1;
+                long snapshot_count = snapshot_it->numResultEstimation() == hdt::EXACT ? snapshot_it->estimatedNumResults() : -1;
                 if (snapshot_count == -1) {
                     snapshot_count = 0;
-                    IteratorTripleID *tmp_it = SnapshotManager::search_with_offset(snapshot, triple_pattern, 0);
+                    hdt::IteratorTripleID *tmp_it = SnapshotManager::search_with_offset(snapshot, triple_pattern, 0, dict);
                     while (tmp_it->hasNext()) {
                         tmp_it->next();
                         snapshot_count++;

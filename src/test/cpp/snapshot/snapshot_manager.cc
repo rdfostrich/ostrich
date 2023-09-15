@@ -17,10 +17,10 @@ protected:
     virtual void SetUp() {
         snapshotManager = new SnapshotManager(TESTPATH);
 
-        std::vector<TripleString> triples;
-        triples.push_back(TripleString("<a>", "<a>", "<a>"));
-        triples.push_back(TripleString("<a>", "<a>", "<b>"));
-        triples.push_back(TripleString("<a>", "<a>", "<c>"));
+        std::vector<hdt::TripleString> triples;
+        triples.push_back(hdt::TripleString("<a>", "<a>", "<a>"));
+        triples.push_back(hdt::TripleString("<a>", "<a>", "<b>"));
+        triples.push_back(hdt::TripleString("<a>", "<a>", "<c>"));
         it = new VectorTripleIterator(triples);
     }
 
@@ -60,7 +60,7 @@ TEST_F(SnapshotManagerTest, DetectSnapshotsTrees) {
 }
 
 TEST_F(SnapshotManagerTest, GetSnapshot) {
-    std::shared_ptr<HDT> snapshot = snapshotManager->create_snapshot(100, it, BASEURI);
+    std::shared_ptr<hdt::HDT> snapshot = snapshotManager->create_snapshot(100, it, BASEURI);
     ASSERT_EQ(snapshot, snapshotManager->get_snapshot(100));
 }
 

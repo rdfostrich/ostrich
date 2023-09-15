@@ -59,7 +59,11 @@ TEST_F(PatchTreeTest, AppendUnsafeContains) {
     PatchTreeKey iteratorKey = Triple("s1", "p1", "o1", dict);
     PatchTreeIterator it = patchTree->iterator(&iteratorKey);
     PatchTreeKey key;
+#if defined(COMPRESSED_ADD_VALUES) || defined(COMPRESSED_DEL_VALUES)
+    PatchTreeValue value(patchTree->get_max_patch_id()+1);
+#else
     PatchTreeValue value;
+#endif
 
     ASSERT_EQ(true, it.next(&key, &value)) << "Iterator does not contain an element after append";
     ASSERT_EQ("s1 p1 o1.", key.to_string(*dict)) << "Found key is incorrect";
@@ -145,6 +149,7 @@ TEST_F(PatchTreeTest, AppendRemove) {
 TEST_F(PatchTreeTest, RepeatAppendRemove1) {
     for(int i = 0; i < 10; i++) {
         PatchSorted patch(dict);
+        bool is_add = i % 2;
         patch.add(PatchElement(Triple("a", "a", "a", dict), i % 2));
         ASSERT_EQ(true, patchTree->append(patch, i)) << "Appending a patch failed at an iteration";
     }
@@ -198,7 +203,11 @@ TEST_F(PatchTreeTest, IteratorOrder) {
     PatchTreeKey iteratorKey = Triple("a", "a", "a", dict);
     PatchTreeIterator it = patchTree->iterator(&iteratorKey); // Iterate starting from the given triple.
     PatchTreeKey key;
+#if defined(COMPRESSED_ADD_VALUES) || defined(COMPRESSED_DEL_VALUES)
+    PatchTreeValue value(patchTree->get_max_patch_id()+1);
+#else
     PatchTreeValue value;
+#endif
 
     ASSERT_EQ(true, it.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("a p o.", key.to_string(*dict)) << "First key is incorrect";
@@ -262,7 +271,11 @@ TEST_F(PatchTreeTest, PatchIterator) {
     PatchTreeKey iteratorKey = Triple("s", "a", "o", dict);
     PatchTreeIterator it = patchTree->iterator(&iteratorKey, 2, false); // Iterate over all elements of patch 2 starting from "s a o."
     PatchTreeKey key;
+#if defined(COMPRESSED_ADD_VALUES) || defined(COMPRESSED_DEL_VALUES)
+    PatchTreeValue value(patchTree->get_max_patch_id()+1);
+#else
     PatchTreeValue value;
+#endif
 
     ASSERT_EQ(true, it.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("s a o.", key.to_string(*dict)) << "Fourth key is incorrect";
@@ -312,7 +325,11 @@ TEST_F(PatchTreeTest, OffsetFilteredPatchIterator) {
 
     PatchTreeIterator it = patchTree->iterator(2, false); // Iterate over all elements of patch only 2
     PatchTreeKey key;
+#if defined(COMPRESSED_ADD_VALUES) || defined(COMPRESSED_DEL_VALUES)
+    PatchTreeValue value(patchTree->get_max_patch_id()+1);
+#else
     PatchTreeValue value;
+#endif
 
     ASSERT_EQ(true, it.next(&key, &value)) << "Iterator has a no next value";
     ASSERT_EQ("a p o.", key.to_string(*dict)) << "First key is incorrect";
@@ -624,7 +641,11 @@ TEST_F(PatchTreeTest, RelativePatchPositions) {
 
     PatchTreeIterator it = patchTree->iterator(1, false); // Iterate over all elements of patch 1
     PatchTreeKey key;
+#if defined(COMPRESSED_ADD_VALUES) || defined(COMPRESSED_DEL_VALUES)
+    PatchTreeValue value(patchTree->get_max_patch_id()+1);
+#else
     PatchTreeValue value;
+#endif
 
     // Expected order for patch 1:
     // a b c +
@@ -785,7 +806,11 @@ TEST_F(PatchTreeTest, RelativePatchPositions2) {
 
     PatchTreeIterator it1 = patchTree->iterator(1, false); // Iterate over all elements of patch 1
     PatchTreeKey key;
+#if defined(COMPRESSED_ADD_VALUES) || defined(COMPRESSED_DEL_VALUES)
+    PatchTreeValue value(patchTree->get_max_patch_id()+1);
+#else
     PatchTreeValue value;
+#endif
 
     // Expected order for patch 1:
     // a a a -
@@ -1499,16 +1524,16 @@ TEST_F(PatchTreeTest, DeletionValue) {
 
 TEST_F(PatchTreeTest, DeletionValueAfter) {
     PatchSorted patch1(dict);
-    patch1.add(PatchElement(Triple(1, 1, 1), false));
-    patch1.add(PatchElement(Triple(2, 2, 2), true));
-    patch1.add(PatchElement(Triple(3, 3, 3), false));
-    patch1.add(PatchElement(Triple(2, 3, 1), true));
+    patch1.add(PatchElement(Triple("1", "1", "1", dict), false));
+    patch1.add(PatchElement(Triple("2", "2", "2", dict), true));
+    patch1.add(PatchElement(Triple("3", "3", "3", dict), false));
+    patch1.add(PatchElement(Triple("2", "3", "1", dict), true));
     patchTree->append(patch1, 1);
 
     PatchSorted patch2(dict);
-    patch2.add(PatchElement(Triple(1, 1, 1), true));
-    patch2.add(PatchElement(Triple(9, 9, 9), false));
-    patch1.add(PatchElement(Triple(2, 3, 1), false));
+    patch2.add(PatchElement(Triple("1", "1", "1", dict), true));
+    patch2.add(PatchElement(Triple("9", "9", "9", dict), false));
+    patch1.add(PatchElement(Triple("2", "3", "1", dict), false));
     patchTree->append(patch2, 2);
 
     // Patch 1
@@ -1524,22 +1549,22 @@ TEST_F(PatchTreeTest, DeletionValueAfter) {
     // 3 3 3 -
     // 9 9 9 -
 
-    ASSERT_NE((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after<PatchTreeDeletionValueElement>(Triple(1, 1, 1))) << "Deletion value must not be null";
-    ASSERT_NE((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after<PatchTreeDeletionValueElement>(Triple(3, 3, 3))) << "Deletion value must not be null";
-    ASSERT_NE((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after<PatchTreeDeletionValueElement>(Triple(9, 9, 9))) << "Deletion value must not be null";
+    ASSERT_NE((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after<PatchTreeDeletionValueElement>(Triple("1", "1", "1", dict))) << "Deletion value must not be null";
+    ASSERT_NE((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after<PatchTreeDeletionValueElement>(Triple("3", "3", "3", dict))) << "Deletion value must not be null";
+    ASSERT_NE((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after<PatchTreeDeletionValueElement>(Triple("9", "9", "9", dict))) << "Deletion value must not be null";
 
-    ASSERT_EQ((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after<PatchTreeDeletionValueElement>(Triple(2, 2, 2))) << "Addition value must be null";
-    ASSERT_EQ((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after<PatchTreeDeletionValueElement>(Triple(2, 3, 1))) << "Local deletion value must be null";
+    ASSERT_EQ((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after<PatchTreeDeletionValueElement>(Triple("2", "2", "2", dict))) << "Addition value must be null";
+    ASSERT_EQ((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after<PatchTreeDeletionValueElement>(Triple("2", "3", "1", dict))) << "Local deletion value must be null";
 
-    ASSERT_EQ((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after<PatchTreeDeletionValueElement>(Triple(8, 8, 8))) << "Deletion value must be null";
-    ASSERT_EQ((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after<PatchTreeDeletionValueElement>(Triple(3, 2, 1))) << "Deletion value must be null";
-    ASSERT_EQ((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after<PatchTreeDeletionValueElement>(Triple(1, 2, 2))) << "Deletion value must be null";
+    ASSERT_EQ((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after<PatchTreeDeletionValueElement>(Triple("8", "8", "8", dict))) << "Deletion value must be null";
+    ASSERT_EQ((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after<PatchTreeDeletionValueElement>(Triple("3", "2", "1", dict))) << "Deletion value must be null";
+    ASSERT_EQ((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after<PatchTreeDeletionValueElement>(Triple("1", "2", "2", dict))) << "Deletion value must be null";
 
-    ASSERT_NE((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after<PatchTreeDeletionValueElement>(Triple(1, 1, 0))) << "Deletion value must not be null";
-    ASSERT_NE((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after<PatchTreeDeletionValueElement>(Triple(1, 0, 0))) << "Deletion value must not be null";
-    ASSERT_NE((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after<PatchTreeDeletionValueElement>(Triple(0, 0, 0))) << "Deletion value must not be null";
-    ASSERT_NE((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after<PatchTreeDeletionValueElement>(Triple(9, 9, 0))) << "Deletion value must not be null";
-    ASSERT_NE((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after<PatchTreeDeletionValueElement>(Triple(9, 0, 0))) << "Deletion value must not be null";
+    ASSERT_NE((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after<PatchTreeDeletionValueElement>(Triple("1", "1", "", dict))) << "Deletion value must not be null";
+    ASSERT_NE((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after<PatchTreeDeletionValueElement>(Triple("1", "", "", dict))) << "Deletion value must not be null";
+    ASSERT_NE((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after<PatchTreeDeletionValueElement>(Triple("", "", "", dict))) << "Deletion value must not be null";
+    ASSERT_NE((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after<PatchTreeDeletionValueElement>(Triple("9", "9", "", dict))) << "Deletion value must not be null";
+    ASSERT_NE((PatchTreeDeletionValue*) NULL, patchTree->get_deletion_value_after<PatchTreeDeletionValueElement>(Triple("9", "", "", dict))) << "Deletion value must not be null";
 }
 
 TEST_F(PatchTreeTest, GetDeletionPatchPositions) {

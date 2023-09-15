@@ -19,14 +19,6 @@ protected:
 
     std::string a, b, c, d, e, f, g, h, i, literal, literal2, literal3, empty;
 
-    size_t patch_id_a;
-    size_t patch_id_b;
-    size_t patch_id_c;
-
-    size_t hdt_id_a;
-    size_t hdt_id_b;
-    size_t hdt_id_c;
-
     DictionaryManagerTest() {}
 
     virtual void SetUp() {
@@ -47,15 +39,6 @@ protected:
         literal2 = "\"This is a second literal.\"^^xsd:string",
         literal3 = "\"zzzzzz\"^^xsd:string";
 
-        size_t bitmask = 1ULL << (8 * sizeof(size_t) - 1);
-        patch_id_a = bitmask +1;
-        patch_id_b = bitmask +2;
-        patch_id_c = bitmask +3;
-
-        hdt_id_a = 1;
-        hdt_id_b = 2;
-        hdt_id_c = 3;
-
         role = SUBJECT;
     }
 
@@ -65,6 +48,9 @@ protected:
 };
 
 TEST_F(DictionaryManagerTest, Insert) {
+    size_t patch_id_a = 1;
+    size_t patch_id_b = 2;
+    size_t patch_id_c = 3;
     size_t idA = dict->insert(a, role);
     size_t idB = dict->insert(b, role);
     size_t idC = dict->insert(c, role);
@@ -78,6 +64,9 @@ TEST_F(DictionaryManagerTest, Insert) {
 }
 
 TEST_F(DictionaryManagerTest, Lookup) {
+    size_t patch_id_a = 1;
+    size_t patch_id_b = 2;
+    size_t patch_id_c = 3;
     dict->insert(a, role);
     dict->insert(b, role);
     dict->insert(c, role);
@@ -106,6 +95,10 @@ TEST_F(DictionaryManagerTest, Lookup) {
 }
 
 TEST_F(DictionaryManagerTest, SnapshotDictionary) {
+    size_t hdt_id_a = 1;
+    size_t hdt_id_b = 2;
+    size_t hdt_id_c = 3;
+    size_t patch_id_a = 4;
     ModifiableDictionary *hdtDict = new PlainDictionary();
     hdtDict->insert(a, role);
     hdtDict->insert(b, role);
@@ -183,7 +176,6 @@ TEST_F(DictionaryManagerTest, HdtDictionary) {
     size_t idB = dict->stringToId(b, OBJECT);
     size_t idC_O = dict->stringToId(c, OBJECT);
 
-
     EXPECT_EQ(1, idA_S);
     EXPECT_EQ(2, idC_S);
     EXPECT_EQ(3, idE);
@@ -201,7 +193,6 @@ TEST_F(DictionaryManagerTest, HdtDictionary) {
 // was added as subject before
     EXPECT_EQ(1, idA_O);
     EXPECT_EQ(2, idC_O);
-
 
     // p: a f h
     // predicates are stored seperately and sorted
@@ -227,11 +218,12 @@ TEST_F(DictionaryManagerTest, HdtDictionary) {
     size_t idA1_copy = dict->insert(a, SUBJECT);
     size_t idA2_copy = dict->insert(a, PREDICATE);
     size_t idA3_copy = dict->insert(a, OBJECT);
-    EXPECT_EQ(hdt_id_a, idA1_copy);
-    EXPECT_EQ(hdt_id_a, idA2_copy);
-    EXPECT_EQ(hdt_id_a, idA3_copy);
+    EXPECT_EQ(1, idA1_copy);
+    EXPECT_EQ(1, idA2_copy);
+    EXPECT_EQ(1, idA3_copy);
 
     // Should return first patch id
+    size_t patch_id_a = dict->getMaxHdtId() + 1;
     size_t idD = dict->insert(d, SUBJECT);
     size_t idD2 = dict->insert(d, OBJECT);
     EXPECT_EQ(patch_id_a, idD);
@@ -262,15 +254,13 @@ TEST_F(DictionaryManagerTest, SaveAndLoad) {
     delete dict;
     dict = new DictionaryManager(TESTPATH, 0);
 
-    size_t base = 1ULL << 63;
-
-    EXPECT_EQ(base+1, dict->stringToId(a, SUBJECT));
-    EXPECT_EQ(base+1, dict->stringToId(b, PREDICATE));
-    EXPECT_EQ(base+1, dict->stringToId(c, OBJECT));
-    EXPECT_EQ(base+2, dict->stringToId(d, SUBJECT));
-    EXPECT_EQ(base+2, dict->stringToId(e, PREDICATE));
-    EXPECT_EQ(base+2, dict->stringToId(f, OBJECT));
-    EXPECT_EQ(base+3, dict->stringToId(g, SUBJECT));
-    EXPECT_EQ(base+3, dict->stringToId(h, PREDICATE));
-    EXPECT_EQ(base+3, dict->stringToId(i, OBJECT));
+    EXPECT_EQ(1, dict->stringToId(a, SUBJECT));
+    EXPECT_EQ(1, dict->stringToId(b, PREDICATE));
+    EXPECT_EQ(1, dict->stringToId(c, OBJECT));
+    EXPECT_EQ(2, dict->stringToId(d, SUBJECT));
+    EXPECT_EQ(2, dict->stringToId(e, PREDICATE));
+    EXPECT_EQ(2, dict->stringToId(f, OBJECT));
+    EXPECT_EQ(3, dict->stringToId(g, SUBJECT));
+    EXPECT_EQ(3, dict->stringToId(h, PREDICATE));
+    EXPECT_EQ(3, dict->stringToId(i, OBJECT));
 }

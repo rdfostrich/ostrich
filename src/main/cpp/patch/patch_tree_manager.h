@@ -5,6 +5,7 @@
 #include <map>
 #include <list>
 #include <memory>
+#include <shared_mutex>
 #include "patch_tree.h"
 
 class PatchTreeManager {
@@ -20,6 +21,9 @@ private:
     int8_t kc_opts;
     bool readonly;
 
+    std::shared_mutex mutex;
+    std::mutex append_mutex;
+
     void update_cache_internal(int accessed_id, int iterations);
 
 public:
@@ -34,7 +38,7 @@ public:
      * @param progressListener an optional progress listener.
      * @return If the append succeeded.
      */
-    bool append(PatchElementIterator* patch_it, int patch_id, std::shared_ptr<DictionaryManager> dict, bool check_uniqueness = true, ProgressListener* progressListener = NULL);
+    bool append(PatchElementIterator* patch_it, int patch_id, std::shared_ptr<DictionaryManager> dict, bool check_uniqueness = true, hdt::ProgressListener* progressListener = nullptr);
     /**
      * Add the given patch to a patch tree.
      * @param patch The patch to add.
@@ -44,7 +48,7 @@ public:
      * @param progressListener an optional progress listener.
      * @return If the append succeeded.
      */
-    bool append(const PatchSorted& patch, int patch_id, std::shared_ptr<DictionaryManager> dict, bool check_uniqueness = true, ProgressListener* progressListener = NULL);
+    bool append(const PatchSorted& patch, int patch_id, std::shared_ptr<DictionaryManager> dict, bool check_uniqueness = true, hdt::ProgressListener* progressListener = nullptr);
     /**
      * Find all patch trees in the current directory.
      * @return The found patch trees
@@ -56,7 +60,7 @@ public:
      * Get the ids of the patch trees
      * @return a vector of ids
      */
-    std::vector<int> get_patch_trees_ids() const;
+    std::vector<int> get_patch_trees_ids();
 
     /**
      * Load the corresponding patch tree in memory.
@@ -84,7 +88,7 @@ public:
      * @param patch_id The id of a patch.
      * @return The id of the patch tree, can be -1 if the patch_id is not present in any tree.
      */
-    int get_patch_tree_id(int patch_id) const;
+    int get_patch_tree_id(int patch_id);
     /**
      * Get the patch with the given id.
      * @param patch_id The id of a patch.

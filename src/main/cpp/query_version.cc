@@ -1,6 +1,5 @@
 #include <iostream>
 #include <kchashdb.h>
-#include <unistd.h>
 #include <cstring>
 
 #include "../../main/cpp/patch/patch_tree.h"
@@ -10,8 +9,6 @@
 
 #define BASEURI "<http://example.org>"
 
-using namespace std;
-using namespace kyotocabinet;
 
 int main(int argc, char** argv) {
     if (argc < 4 || argc > 5) {
@@ -20,7 +17,7 @@ int main(int argc, char** argv) {
     }
 
     // Load the store
-    Controller controller("./", TreeDB::TCOMPRESS, true);
+    Controller controller("./", kyotocabinet::TreeDB::TCOMPRESS, true);
 
     // Get query parameters
     std::string s(argv[1]);
@@ -35,15 +32,15 @@ int main(int argc, char** argv) {
     // Construct query
     StringTriple triple_pattern(s, p, o);
 
-    std::pair<size_t, ResultEstimationType> count = controller.get_version_count(triple_pattern, true);
-    cerr << "Count: " << count.first << (count.second == EXACT ? "" : " (estimate)") << endl;
+    std::pair<size_t, hdt::ResultEstimationType> count = controller.get_version_count(triple_pattern, true);
+    cerr << "Count: " << count.first << (count.second == hdt::EXACT ? "" : " (estimate)") << endl;
 
     TripleVersionsIterator* it = controller.get_version(triple_pattern, offset);
     TripleVersions triple_versions;
     while (it->next(&triple_versions)) {
         std::stringstream vect;
         std::copy(triple_versions.get_versions()->begin(), triple_versions.get_versions()->end(), std::ostream_iterator<int>(vect, " "));
-        cout << triple_versions.get_triple()->to_string(*(triple_versions.get_dictionary())) << " :: [ " << vect.str() << "]" << endl;
+        std::cout << triple_versions.get_triple()->to_string(*(triple_versions.get_dictionary())) << " :: [ " << vect.str() << "]" << std::endl;
     }
     delete it;
 

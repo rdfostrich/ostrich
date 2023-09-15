@@ -9,9 +9,6 @@
 
 #define BASEURI "<http://example.org>"
 
-using namespace std;
-using namespace kyotocabinet;
-
 vector<string> split(string data, const string& token) {
     vector<string> output;
     size_t pos = string::npos; // size_t to avoid improbable overflow
@@ -37,9 +34,9 @@ string remove_brackets(string element) {
 void test_lookups_for_queries(Evaluator &evaluator, const string& queriesFilePath, int replications) {
     std::ifstream queriesFile(queriesFilePath);
     std::string line;
-    cout << "---QUERIES START: " << queriesFilePath << "---" << endl;
+    std::cout << "---QUERIES START: " << queriesFilePath << "---" << std::endl;
     while (std::getline(queriesFile, line)) {
-        vector<string> line_split = split(line, " ");
+        std::vector<string> line_split = split(line, " ");
         evaluator.test_lookup(
                 remove_brackets(line_split[0]),
                 remove_brackets(line_split[1]),
@@ -49,15 +46,15 @@ void test_lookups_for_queries(Evaluator &evaluator, const string& queriesFilePat
                 line_split.size() > 4 ? std::stoi(line_split[4]) : -2 // limit
         );
     }
-    cout << "---QUERIES END---" << endl;
+    std::cout << "---QUERIES END---" << std::endl;
 }
 
 void test_lookups_for_queries_ms(BearEvaluatorMS &evaluator, const string& queriesFilePath, int replications) {
     std::ifstream queriesFile(queriesFilePath);
     std::string line;
-    cout << "---QUERIES START: " << queriesFilePath << "---" << endl;
+    std::cout << "---QUERIES START: " << queriesFilePath << "---" << std::endl;
     while (std::getline(queriesFile, line)) {
-        vector<string> line_split = split(line, " ");
+        std::vector<string> line_split = split(line, " ");
         evaluator.test_lookup(
                 remove_brackets(line_split[0]),
                 remove_brackets(line_split[1]),
@@ -67,13 +64,13 @@ void test_lookups_for_queries_ms(BearEvaluatorMS &evaluator, const string& queri
                 -2 // limit
         );
     }
-    cout << "---QUERIES END---" << endl;
+    std::cout << "---QUERIES END---" << std::endl;
 }
 
 
 int main(int argc, char *argv[]) {
-    if (argc < 4 || argc > 8) {
-        std::cerr << "Usage: " << argv[0] << " ingest|ingest-query|query " << std::endl;
+    if (argc < 4 || argc > 9) {
+        std::cerr << "Usage: " << argv[0] << " ingest|ingest-query|query|stats " << std::endl;
         std::cerr << "\tcmd \"ingest\": strategy strategy_parameter path_to_patches start_index end_index" << std::endl;
         std::cerr
                 << "\tcmd \"ingest-query\": strategy strategy_parameter path_to_patches start_index end_index path_to_queries_file replications"
@@ -97,6 +94,9 @@ int main(int argc, char *argv[]) {
     } else if (std::strcmp("query", argv[1]) == 0) {
         evaluator.init_readonly("./", false);
         test_lookups_for_queries_ms(evaluator, ((std::string) argv[2]), stoi(argv[3]));
+    } else if (std::strcmp("stats", argv[1]) == 0) {
+        evaluator.init_readonly("./", false);
+        evaluator.compute_statistics();
     }
 
     delete listener;
