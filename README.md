@@ -1,7 +1,7 @@
 # OSTRICH
 _Offset-enabled TRIple store for CHangesets_
 
-[![Build Status](https://travis-ci.org/rdfostrich/ostrich.svg?branch=master)](https://travis-ci.org/rdfostrich/ostrich)
+[![test-on-commit](https://github.com/rdfostrich/ostrich/actions/workflows/ostrich_test.yml/badge.svg)](https://github.com/rdfostrich/ostrich/actions/workflows/ostrich_test.yml)
 [![Docker Automated Build](https://img.shields.io/docker/automated/rdfostrich/ostrich.svg)](https://hub.docker.com/r/rdfostrich/ostrich/)
 [![DOI](https://zenodo.org/badge/97819866.svg)](https://zenodo.org/badge/latestdoi/97819866)
 
@@ -14,11 +14,17 @@ It provides several built-in algorithms to enable efficient iterator-based queri
 Insertion is done by first inserting a dataset snapshot, which is encoded in [HDT](rdfhdt.org).
 After that, deltas can be inserted, which contain additions and deletions based on the last delta or snapshot.
 
-More details on OSTRICH can be found in our [**journal**](https://rdfostrich.github.io/article-jws2018-ostrich/) or [demo](https://rdfostrich.github.io/article-demo/) articles.
+Learn more about the internals of OSTRICH in the following articles:
+
+- [Triple Storage for Random-Access Versioned Querying of RDF Archives](https://rdfostrich.github.io/article-jws2018-ostrich/)
+- [Scaling Large RDF Archives To Very Long Histories](http://luisgalarraga.de/docs/ICSC_2023.pdf)
+- [OSTRICH: Versioned Random-Access Triple Store](https://rdfostrich.github.io/article-demo/)
+- [GLENDA: Querying RDF Archives with full SPARQL](https://2023.eswc-conferences.org/wp-content/uploads/2023/05/paper_Pelgrin_2023_GLENDA.pdf)
 
 ## Building
 
-OSTRICH requires ZLib, Kyoto Cabinet and CMake (compilation only) to be installed.
+OSTRICH requires ZLib, Kyoto Cabinet, Boost, Serd, Raptor2 and CMake (compilation only) to be installed.
+Inspect our [CI workflow file](https://github.com/rdfostrich/ostrich/blob/master/.github/workflows/ostrich_test.yml) to see how dependencies are installed on Ubuntu.
 
 Compile:
 ```bash
@@ -142,7 +148,7 @@ we would appreciate a citation of our [article](https://rdfostrich.github.io/art
 ```
 
 ## License
-This software is written by [Ruben Taelman](http://rubensworks.net/) and colleagues.
+This software is written by [Ruben Taelman](http://rubensworks.net/), [Olivier Pelgrin](https://github.com/opelgrin), and colleagues.
 
-This code is copyrighted by [Ghent University – imec](http://idlab.ugent.be/)
-and released under the [MIT license](http://opensource.org/licenses/MIT).
+This code is copyrighted by [Ghent University – imec](http://idlab.ugent.be/) and [Aalborg University](https://www.cs.aau.dk/research/dkw-data-knowledge-and-web-engineering),
+and is released under the [MIT license](http://opensource.org/licenses/MIT).
