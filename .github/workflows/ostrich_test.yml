@@ -6,7 +6,7 @@ on:
 
 jobs:
     test:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-22.04
         steps:
             - run: sudo apt-get update
             - run: sudo apt-get -y install liblzo2-dev liblzma-dev zlib1g-dev build-essential libraptor2-dev libserd-dev libboost-iostreams-dev
