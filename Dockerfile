@@ -6,7 +6,7 @@ RUN cd /opt && tar -xzf kyotocabinet-1.2.79.tar.gz && mv kyotocabinet-1.2.79 kyo
 RUN apt-get update
 
 # Download and install boost
-RUN cd /opt && curl -LO https://boostorg.jfrog.io/artifactory/main/release/1.80.0/source/boost_1_80_0.tar.gz
+RUN cd /opt && curl -LO https://archives.boost.io/release/1.80.0/source/boost_1_80_0.tar.gz
 RUN cd /opt && tar -xzf boost_1_80_0.tar.gz && mv boost_1_80_0 boost && rm boost_1_80_0.tar.gz
 RUN cd /opt/boost && ./bootstrap.sh --with-libraries=iostreams && ./b2 install
 
